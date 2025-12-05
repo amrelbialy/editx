@@ -1,0 +1,42 @@
+{
+  "name": "@creative-editor/react-editor",
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "tsc && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@creative-editor/engine": "workspace:*",
+    "clsx": "^2.1.0",
+    "lodash-es": "^4.17.21",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^2.5.0",
+    "zustand": "^5.0.0",
+    "pixi.js": "^8.5.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.0",
+    "tailwindcss": "^4.1.17",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}
