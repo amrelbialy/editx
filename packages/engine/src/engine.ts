@@ -1,50 +1,120 @@
+import { BlockStore } from './block/block-store';
+import { BlockData } from './block/block.types';
 import { Command } from './controller/commands';
-import { CreativeDocument } from './document/document.types';
+import { EventAPI, BlockEvent } from './event-api';
 import { EventBus } from './events/event-bus';
 import { HistoryManager, Patch } from './history-manager';
-import { LayerAPI } from './layer';
 import { RendererAdapter } from './render-adapter';
 
 export class Engine {
-  #doc: CreativeDocument;
+  #blockStore: BlockStore;
   #events = new EventBus();
+  #eventApi: EventAPI;
   #history = new HistoryManager();
   #renderer: RendererAdapter | null;
-  #dirty = new Set<string>();
-  #selection: string[] = [];
+  #dirty = new Set<number>();
+  #selection: number[] = [];
 
-  constructor(opts: { renderer?: RendererAdapter }) {
-    this.#doc = {
-      id: 'doc-1',
-      version: 1,
-      scene: null,
-      layers: {},
-    };
+  #activeSceneId: number | null = null;
+  #activePageId: number | null = null;
 
+  #batching = false;
+  #batchPatches: Patch[] = [];
+
+  constructor(opts: { renderer?: RendererAdapter; blockStore?: BlockStore }) {
+    this.#blockStore = opts.blockStore ?? new BlockStore();
     this.#renderer = opts.renderer ?? null;
+    this.#eventApi = new EventAPI();
   }
 
-  // INTERNAL
-  #markDirty(patches: Patch[]) {
-    patches.forEach((p) => this.#dirty.add(p.id));
+  get event(): EventAPI {
+    return this.#eventApi;
   }
 
-  exec(command: Command) {
-    const patches = command.do(this.#doc);
+  getBlockStore(): BlockStore {
+    return this.#blockStore;
+  }
 
-    console.log('patches', patches);
-    if (patches && patches.length > 0) {
-      this.#history.push(patches);
-      this.#markDirty(patches);
-      this.#events.emit(
-        'nodes:updated',
-        patches.map((p) => p.id)
-      );
+  getRenderer(): RendererAdapter | null {
+    return this.#renderer;
+  }
+
+  // --- Active scene/page ---
+
+  setActiveScene(id: number) {
+    this.#activeSceneId = id;
+  }
+
+  getActiveScene(): number | null {
+    return this.#activeSceneId;
+  }
+
+  setActivePage(id: number) {
+    this.#activePageId = id;
+  }
+
+  getActivePage(): number | null {
+    return this.#activePageId;
+  }
+
+  // --- Batch ---
+
+  beginBatch() {
+    this.#batching = true;
+    this.#batchPatches = [];
+  }
+
+  endBatch() {
+    this.#batching = false;
+    if (this.#batchPatches.length > 0) {
+      this.#history.push(this.#batchPatches);
+      this.#enqueueBlockEvents(this.#batchPatches);
     }
-    console.log('this.#doc', this.#doc);
-    console.log('history', this.#history);
+    this.#batchPatches = [];
     this.#flush();
   }
+
+  // --- Command execution ---
+
+  exec(command: Command) {
+    const patches = command.do();
+
+    if (patches && patches.length > 0) {
+      this.#markDirty(patches);
+
+      if (this.#batching) {
+        this.#batchPatches.push(...patches);
+      } else {
+        this.#history.push(patches);
+        this.#enqueueBlockEvents(patches);
+      }
+    }
+
+    if (!this.#batching) {
+      this.#flush();
+    }
+  }
+
+  #markDirty(patches: Patch[]) {
+    patches.forEach((p) => this.#dirty.add(Number(p.id)));
+  }
+
+  #enqueueBlockEvents(patches: Patch[]) {
+    for (const p of patches) {
+      const blockId = Number(p.id);
+      let type: BlockEvent['type'];
+      if (p.before === null) {
+        type = 'created';
+      } else if (p.after === null) {
+        type = 'destroyed';
+      } else {
+        type = 'updated';
+      }
+      this.#eventApi._enqueue({ type, block: blockId });
+    }
+  }
+
+  // --- Undo / Redo ---
 
   undo() {
     const patches = this.#history.undo();
@@ -77,61 +147,64 @@ export class Engine {
     this.#events.emit('history:clear');
   }
 
-  // PATCH APPLICATION
-  #applyPatches(patches: Patch[]) {
-    patches.forEach((p) => {
-      if (p.after === null) {
-        delete this.#doc.layers[p.id];
-      } else {
-        this.#doc.layers[p.id] = p.after;
-      }
-      this.#dirty.add(p.id);
-    });
+  // --- Patch application (undo/redo) ---
 
-    this.#events.emit(
-      'nodes:updated',
-      patches.map((p) => p.id)
-    );
+  #applyPatches(patches: Patch[]) {
+    for (const p of patches) {
+      const numId = Number(p.id);
+      if (p.after === null) {
+        this.#blockStore.destroy(numId);
+      } else {
+        this.#blockStore.restore(p.after as BlockData);
+      }
+      this.#dirty.add(numId);
+    }
+
+    this.#enqueueBlockEvents(patches);
   }
 
-  // RENDER FLUSH
+  // --- Render flush ---
+
   #flush() {
-    console.log('flush', this.#renderer);
     if (!this.#renderer) return;
 
     const dirtyIds = [...this.#dirty];
-    console.log('dirtyIds', dirtyIds);
     this.#dirty.clear();
 
     for (const id of dirtyIds) {
-      const node = this.#doc.layers[id];
-      console.log('node', node);
-      this.#renderer.createLayer(id, node);
+      const block = this.#blockStore.get(id);
+      if (block) {
+        this.#renderer.syncBlock(id, block);
+      } else {
+        this.#renderer.removeBlock(id);
+      }
     }
 
-    console.log('dirtyIds', dirtyIds);
     this.#renderer.renderFrame();
+
+    // Deliver bundled events AFTER render — end of update cycle
+    this.#eventApi._flush();
   }
 
-  // Selection
-  setSelection(ids: string[]) {
+  // --- Selection ---
+
+  setSelection(ids: number[]) {
     this.#selection = ids;
     this.#events.emit('selection:changed', ids);
+
+    if (ids.length > 0) {
+      this.#renderer?.showTransformer(ids);
+    } else {
+      this.#renderer?.hideTransformer();
+    }
   }
 
-  getSelection() {
+  getSelection(): number[] {
     return [...this.#selection];
   }
 
-  getRenderer() {
-    return this.#renderer;
-  }
+  // --- Legacy events (selection, stage:click, history) ---
 
-  getDocument() {
-    return this.#doc;
-  }
-
-  // EVENTS
   on(event: string, cb: Function) {
     return this.#events.on(event, cb);
   }
@@ -140,14 +213,7 @@ export class Engine {
     return this.#events.off(event, cb);
   }
 
-  // SCENE
-  async createScene(layout: { width: number; height: number; background: string }) {
-    this.#doc.scene = {
-      width: layout.width,
-      height: layout.height,
-      background: layout.background,
-    };
-
-    await this.#renderer?.createScene(layout);
+  emit(event: string, payload?: any) {
+    this.#events.emit(event, payload);
   }
 }

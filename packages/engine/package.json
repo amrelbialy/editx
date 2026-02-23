@@ -16,6 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "konva": "^10.0.12",
     "pixi.js": "^8.5.0"
   },
   "devDependencies": {

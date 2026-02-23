@@ -1,114 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { useEditorStore } from '../store/editor-store';
-import { Layer, UpdateLayerCommand } from '@creative-editor/engine';
+import React from 'react';
+import type { CreativeEngine } from '@creative-editor/engine';
+import {
+  useSelectedBlockId,
+  useBlockFloat,
+  useBlockColor,
+  useBlockType,
+} from '../hooks/use-engine';
 
 interface PropertiesPanelProps {
-  layer: Layer | null;
-  onUpdate?: (layerId: string, updates: Partial<Layer>) => void;
+  engine: CreativeEngine;
 }
 
-export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
-  document,
-  controller,
-}) => {
-  useEditorStore((state) => state.transformTick);
-  const selectedLayerId = useEditorStore((state) => state.selectedLayerId);
+function colorToHex(c: { r: number; g: number; b: number; a: number }): string {
+  const r = Math.round(c.r * 255);
+  const g = Math.round(c.g * 255);
+  const b = Math.round(c.b * 255);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
 
-  const layer = selectedLayerId ? document.getLayer(selectedLayerId) : null;
+function hexToColor(hex: string): { r: number; g: number; b: number; a: number } {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return { r, g, b, a: 1 };
+}
 
-  if (!layer) {
+export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ engine }) => {
+  const selectedBlockId = useSelectedBlockId(engine);
+
+  console.log("selectedBlockId", selectedBlockId);
+  if (selectedBlockId === null || !engine.block.exists(selectedBlockId)) {
     return (
-      <div className="w-64 bg-white border-l border-gray-200 p-4">
-        <h2 className="text-lg font-semibold mb-4">Properties</h2>
-        <p className="text-sm text-gray-500">No layer selected</p>
+      <div className="w-60 bg-white border-l border-gray-200 p-4">
+        <h2 className="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wide">Properties</h2>
+        <p className="text-sm text-gray-400">No block selected</p>
       </div>
     );
   }
 
-  const handleChange = (field: keyof Layer, value: string | number) => {
-    console.log('handleChange', field, value, layer.id);
-    controller?.run(new UpdateLayerCommand(document, layer.id, { [field]: value }));
+  return <BlockProperties engine={engine} blockId={selectedBlockId} />;
+};
+
+interface BlockPropertiesProps {
+  engine: CreativeEngine;
+  blockId: number;
+}
+
+const BlockProperties: React.FC<BlockPropertiesProps> = ({ engine, blockId }) => {
+  const type = useBlockType(engine, blockId);
+  const x = useBlockFloat(engine, blockId, 'transform/position/x');
+  const y = useBlockFloat(engine, blockId, 'transform/position/y');
+  const w = useBlockFloat(engine, blockId, 'transform/size/width');
+  const h = useBlockFloat(engine, blockId, 'transform/size/height');
+  const rotation = useBlockFloat(engine, blockId, 'transform/rotation');
+  const opacity = useBlockFloat(engine, blockId, 'appearance/opacity');
+  const fillColor = useBlockColor(engine, blockId, 'fill/color');
+
+  const handleFloat = (key: string, value: string) => {
+    const num = parseFloat(value);
+    if (!isNaN(num)) engine.block.setFloat(blockId, key, num);
   };
 
-  console.log('layerUpdated', layer);
+  const handleColor = (hex: string) => {
+    engine.block.setColor(blockId, 'fill/color', hexToColor(hex));
+  };
+
   return (
-    <div className="w-64 bg-white border-l border-gray-200 p-4 overflow-y-auto">
-      <h2 className="text-lg font-semibold mb-4">Properties</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+    <div className="w-60 bg-white border-l border-gray-200 p-4 overflow-y-auto">
+      <h2 className="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wide">Properties</h2>
+
+      <p className="text-xs text-gray-400 mb-3">
+        {type} #{blockId}
+      </p>
+
+      <div className="space-y-3">
+        <fieldset className="space-y-1">
+          <legend className="text-xs font-medium text-gray-500">Position</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="text-xs text-gray-500">X</span>
+              <input
+                type="number"
+                value={Math.round(x)}
+                onChange={(e) => handleFloat('transform/position/x', e.target.value)}
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-gray-500">Y</span>
+              <input
+                type="number"
+                value={Math.round(y)}
+                onChange={(e) => handleFloat('transform/position/y', e.target.value)}
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-1">
+          <legend className="text-xs font-medium text-gray-500">Size</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="text-xs text-gray-500">W</span>
+              <input
+                type="number"
+                value={Math.round(w)}
+                onChange={(e) => handleFloat('transform/size/width', e.target.value)}
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-gray-500">H</span>
+              <input
+                type="number"
+                value={Math.round(h)}
+                onChange={(e) => handleFloat('transform/size/height', e.target.value)}
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <label className="block">
+          <span className="text-xs font-medium text-gray-500">Rotation</span>
           <input
-            type="text"
-            value={layer.name || ''}
-            onChange={(e) => handleChange('name', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            type="number"
+            value={Math.round(rotation)}
+            onChange={(e) => handleFloat('transform/rotation', e.target.value)}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
           />
-        </div>
+        </label>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">X</label>
-            <input
-              type="number"
-              value={layer.x ?? 0}
-              onChange={(e) => handleChange('x', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Y</label>
-            <input
-              type="number"
-              value={layer.y ?? 0}
-              onChange={(e) => handleChange('y', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Width</label>
-            <input
-              type="number"
-              value={layer.width ?? 0}
-              onChange={(e) => handleChange('width', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Height</label>
-            <input
-              type="number"
-              value={layer.height ?? 0}
-              onChange={(e) => handleChange('height', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Opacity</label>
+        <label className="block">
+          <span className="text-xs font-medium text-gray-500">Opacity</span>
           <input
             type="number"
             min="0"
             max="1"
             step="0.1"
-            value={layer.opacity ?? 1}
-            onChange={(e) => handleChange('opacity', parseFloat(e.target.value) || 1)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            value={opacity}
+            onChange={(e) => handleFloat('appearance/opacity', e.target.value)}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fill</label>
+        <label className="block">
+          <span className="text-xs font-medium text-gray-500">Fill</span>
           <input
             type="color"
-            value={layer.fill || '#000000'}
-            onChange={(e) => handleChange('fill', e.target.value)}
-            className="w-full h-10 border border-gray-300 rounded"
+            value={colorToHex(fillColor)}
+            onChange={(e) => handleColor(e.target.value)}
+            className="w-full h-8 border border-gray-300 rounded cursor-pointer"
           />
-        </div>
+        </label>
       </div>
     </div>
   );

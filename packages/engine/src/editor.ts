@@ -10,11 +10,7 @@ export class EditorAPI {
     this.#renderer = engine.getRenderer();
   }
 
-  //
-  // -----------------------------
-  // HISTORY
-  // -----------------------------
-  //
+  // --- History ---
 
   undo() {
     this.#engine.undo();
@@ -36,17 +32,13 @@ export class EditorAPI {
     this.#engine.clearHistory();
   }
 
-  //
-  // -----------------------------
-  // SELECTION
-  // -----------------------------
-  //
+  // --- Selection ---
 
-  setSelection(ids: string[]) {
+  setSelection(ids: number[]) {
     this.#engine.setSelection(ids);
   }
 
-  getSelection(): string[] {
+  getSelection(): number[] {
     return this.#engine.getSelection();
   }
 
@@ -54,12 +46,7 @@ export class EditorAPI {
     this.#engine.setSelection([]);
   }
 
-  //
-  // -----------------------------
-  // VIEWPORT / CAMERA
-  // (img.ly style)
-  // -----------------------------
-  //
+  // --- Viewport / Camera ---
 
   setZoom(zoom: number) {
     this.#renderer?.setZoom(zoom);
@@ -70,13 +57,11 @@ export class EditorAPI {
   }
 
   zoomIn(step = 0.1) {
-    const z = this.getZoom();
-    this.setZoom(z + step);
+    this.setZoom(this.getZoom() + step);
   }
 
   zoomOut(step = 0.1) {
-    const z = this.getZoom();
-    this.setZoom(Math.max(0.1, z - step));
+    this.setZoom(Math.max(0.1, this.getZoom() - step));
   }
 
   resetZoom() {
@@ -92,41 +77,24 @@ export class EditorAPI {
     this.#renderer?.panTo(x + dx, y + dy);
   }
 
-  //
-  // -----------------------------
-  // FITTING / CENTERING
-  // -----------------------------
-  //
+  // --- Fitting / Centering ---
 
   fitToScreen(padding = 24) {
-    const scene = this.#engine.getDocument().scene;
+    const store = this.#engine.getBlockStore();
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) return;
+
+    const sceneBlock = store.get(sceneId);
+    if (!sceneBlock) return;
 
     this.#renderer?.fitToScreen({
-      width: scene.width,
-      height: scene.height,
+      width: (sceneBlock.properties['scene/width'] as number) ?? 1080,
+      height: (sceneBlock.properties['scene/height'] as number) ?? 1080,
       padding,
     });
   }
 
-  centerOnLayer(layerId: string) {
-    const doc = this.#engine.getDocument();
-    const layer = doc.layers[layerId];
-
-    if (!layer) return;
-
-    this.#renderer?.centerOnRect({
-      x: layer.transform.x,
-      y: layer.transform.y,
-      width: layer.props.width,
-      height: layer.props.height,
-    });
-  }
-
-  //
-  // -----------------------------
-  // COORDINATE TRANSFORMS
-  // -----------------------------
-  //
+  // --- Coordinate Transforms ---
 
   screenToWorld(pt: { x: number; y: number }) {
     return this.#renderer?.screenToWorld(pt);
@@ -134,15 +102,5 @@ export class EditorAPI {
 
   worldToScreen(pt: { x: number; y: number }) {
     return this.#renderer?.worldToScreen(pt);
-  }
-
-  //
-  // -----------------------------
-  // VIEWPORT INFO
-  // -----------------------------
-  //
-
-  getViewport() {
-    return this.#renderer?.getViewport();
   }
 }

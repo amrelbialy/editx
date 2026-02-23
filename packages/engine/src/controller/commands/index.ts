@@ -1,4 +1,7 @@
 export { default as PatchCommand } from './patch-command';
 export type { Command } from './commands.types';
-export { CreateLayerCommand } from './create-layer-command';
-export { UpdateLayerCommand } from './update-layer-command';
+export { CreateBlockCommand } from './create-block-command';
+export { SetPropertyCommand } from './set-property-command';
+export { DestroyBlockCommand } from './destroy-block-command';
+export { AppendChildCommand } from './append-child-command';
+export { RemoveChildCommand } from './remove-child-command';

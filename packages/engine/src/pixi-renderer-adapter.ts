@@ -9,10 +9,12 @@ import {
   // settings as pixiSettings,
 } from 'pixi.js';
 
-import type { RendererAdapter } from './render-adapter';
-import { initDevtools } from '@pixi/devtools';
+// import type { RendererAdapter } from './render-adapter';
+// import { initDevtools } from '@pixi/devtools';
+// import { Transformer } from './transformer/transformer';
 
-export class PixiRendererAdapter implements RendererAdapter {
+// TODO: Update to new RendererAdapter interface (block-based) in a future pass
+export class PixiRendererAdapter {
   #app!: Application;
   #rootEl!: HTMLElement;
 
@@ -94,42 +96,47 @@ export class PixiRendererAdapter implements RendererAdapter {
     height: number;
     background: string;
   }): Promise<void> {
+    console.log('devicePixelRatio', window.devicePixelRatio);
+    console.log('layout', layout);
     await this.#app.init({
-      background: layout.background ?? '#ffffff',
-      resizeTo: this.#rootEl,
+      background: layout.background ?? 'grey',
+      // resizeTo: window,
       width: layout.width,
       height: layout.height,
+      resolution: window.devicePixelRatio,
+      // autoDensity: true,
     });
+
+    console.log(
+      'app',
+      this.#app.renderer.width,
+      this.#app.renderer.height,
+      this.#app.renderer
+    );
+    console.log('stage', this.#app.stage.width, this.#app.stage.height);
 
     this.#transformerLayer = new Container();
     this.#transformerLayer.label = 'Transformer';
-    this.#transformerLayer.tint = 'blue';
-    this.#guidesLayer = new Container();
-    this.#guidesLayer.label = 'Guider';
-    this.#guidesLayer.tint = 'green';
-    this.#overlayLayer = new Container();
-    this.#overlayLayer.label = 'Overlayer';
-    this.#overlayLayer.tint = 'red';
+    // this.#guidesLayer = new Container();
+    // this.#guidesLayer.label = 'Guider';
+    // this.#guidesLayer.tint = 'green';
+    // this.#overlayLayer = new Container();
+    // this.#overlayLayer.label = 'Overlayer';
+    // this.#overlayLayer.tint = 'red';
 
     // overlay layers always above camera content
-    this.#app.stage.addChild(this.#camera);
+    // this.#app.stage.addChild(this.#camera);
     this.#app.stage.addChild(this.#transformerLayer);
-    this.#app.stage.addChild(this.#guidesLayer);
-    this.#app.stage.addChild(this.#overlayLayer);
-
-    this.createPage('1', {
-      width: 100,
-      height: 100,
-      background: 'green',
-    });
+    // this.#app.stage.addChild(this.#guidesLayer);
+    // this.#app.stage.addChild(this.#overlayLayer);
 
     console.log('createScene', {
       app: this.#app,
       camera: this.#camera,
       rootEl: this.#rootEl,
       transformerLayer: this.#transformerLayer,
-      guidesLayer: this.#guidesLayer,
-      overlayLayer: this.#overlayLayer,
+      // guidesLayer: this.#guidesLayer,
+      // overlayLayer: this.#overlayLayer,
     });
 
     // const renderLayer = new RenderLayer();
@@ -137,9 +144,16 @@ export class PixiRendererAdapter implements RendererAdapter {
     // this.#app.stage.addChild(renderLayer);
     this.#rootEl.appendChild(this.#app.canvas);
 
+    // this.createPage('1', {
+    //   width: 100,
+    //   height: 100,
+    //   background: 'green',
+    // });
+
     console.log('rootEl.clientWidth', this.#rootEl.clientWidth);
     console.log('rootEl.clientHeight', this.#rootEl.clientHeight);
 
+    this.showTransformerForLayer('1');
     // this.renderFrame();
     // needs to create scene data structure and render logic
     // support multi page support in scene with caching but not for now but create the ground work for it
@@ -169,7 +183,7 @@ export class PixiRendererAdapter implements RendererAdapter {
     this.#pageContainers.set(pageId, container);
     console.log('createPage', container);
     this.#camera.addChild(container);
-    // this._fitPagePosition(container); // optional: position page at center or configured layout
+    this._fitPagePosition(container); // optional: position page at center or configured layout
 
     this.showTransformerForLayer(pageId);
     // // create thumbnail proactively or lazily (we keep lazy behavior by default)
@@ -265,30 +279,60 @@ export class PixiRendererAdapter implements RendererAdapter {
     console.log('pageContainers', this.#pageContainers);
     const target = this.#layerMap.get(layerId) || this.#pageContainers.get(layerId);
     console.log('showTransformerForLayer', target);
-    if (!target) return;
+    // if (!target) return;
     // clear
     this.#transformerLayer.removeChildren();
 
-    // bounding box
-    const bounds = target.getBounds();
-    console.log('bounds', bounds);
-    const rect = new Graphics();
-    rect.rect(bounds.x, bounds.y, bounds.width, bounds.height);
-    rect.fill('transparent');
-    rect.setStrokeStyle({ width: 1, color: 0x007aff });
-    // rect.zIndex = 1000;
+    const sprite = new Graphics();
+    const container = new Container();
+    container.addChild(sprite);
+    sprite.rect(500, 100, 100, 100);
+    sprite.fill('orange');
+    // sprite.position.set(-200, 200);
+    // sprite.pivot.set(sprite.width / 2, sprite.height / 2);
+    // sprite.rotation = Math.PI;
+    // const b = sprite.getBounds();
+    // sprite.x = -b.width / 2;
+    // sprite.y = -b.height / 2;
+    // container.pivot.set(0, 0);
+
+    console.log('sprite.position', sprite.position);
+    console.log('sprite.worldTransform', sprite.worldTransform);
+    console.log('sprite.bounds', sprite.bounds);
+    // sprite.rotation = Math.PI / 2;
+    this.#app.stage.addChild(container);
+
+    console.log('pivot', sprite.pivot, sprite.worldTransform, sprite.localTransform);
+
+    const transformer = new Transformer(this.#app, sprite);
+
+    console.log('transformer', transformer);
+    // this.#app.stage.addChild(transformer);
+    this.#transformerLayer.addChild(transformer);
+
+    sprite.position.set(-200, 200);
+    transformer.position.set(-200, 200);
+
+    // // bounding box
+    // const bounds = target.getBounds();
+    // console.log('bounds', bounds);
+    // const rect = new Graphics();
+    // rect.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     // rect.fill('transparent');
-    // rect.endFill();
+    // rect.setStrokeStyle({ width: 1, color: 0x007aff });
+    // // rect.zIndex = 1000;
+    // // rect.fill('transparent');
+    // // rect.endFill();
 
-    // // simple handles: corners (visual only)
-    // const handle = new Graphics();
-    // handle.rect(bounds.x - 6, bounds.y - 6, 12, 12);
-    // handle.fill('transparent');
+    // // // simple handles: corners (visual only)
+    // // const handle = new Graphics();
+    // // handle.rect(bounds.x - 6, bounds.y - 6, 12, 12);
+    // // handle.fill('transparent');
 
-    console.log('rect', rect);
-    // console.log('handle', handle);
-    this.#transformerLayer.addChild(rect);
-    console.log('transformerLayer', this.#transformerLayer);
+    // console.log('rect', rect);
+    // // console.log('handle', handle);
+    // this.#transformerLayer.addChild(rect);
+    // console.log('transformerLayer', this.#transformerLayer);
     // this.renderFrame();
   }
 
