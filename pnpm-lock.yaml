@@ -24,6 +24,9 @@ importers:
       '@creative-editor/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@creative-editor/image-editor':
+        specifier: workspace:*
+        version: link:../../packages/image-editor
       '@creative-editor/react-editor':
         specifier: workspace:*
         version: link:../../packages/react-editor
@@ -68,6 +71,34 @@ importers:
         specifier: ^8.5.0
         version: 8.14.3
     devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
+  packages/image-editor:
+    dependencies:
+      '@creative-editor/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@creative-editor/react-editor':
+        specifier: workspace:*
+        version: link:../react-editor
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.0)
+      zustand:
+        specifier: ^5.0.0
+        version: 5.0.8(@types/react@19.2.6)(react@19.2.0)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.6
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.6)
       typescript:
         specifier: ^5.6.0
         version: 5.9.3

@@ -20,6 +20,10 @@ export default defineConfig({
         __dirname,
         '../../packages/react-editor/src'
       ),
+      '@creative-editor/image-editor': path.resolve(
+        __dirname,
+        '../../packages/image-editor/src'
+      ),
     },
   },
 });
