@@ -14,7 +14,10 @@
   "scripts": {
     "build": "tsc && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@creative-editor/engine": "workspace:*",

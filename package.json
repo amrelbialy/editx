@@ -6,11 +6,18 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test -- --coverage"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "happy-dom": "^20.7.0",
     "turbo": "^2.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.0.18"
   },
   "packageManager": "pnpm@10.23.0",
   "engines": {
