@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { CreativeEngine } from "@creative-editor/engine";
+import { CreativeEngine, FILL_COLOR } from "@creative-editor/engine";
 import { useEditorStore } from "../store/editor-store";
 import { Toolbar } from "./toolbar";
 import { LayerPanel } from "./layer-panel";
@@ -39,7 +39,7 @@ export const CreativeEditor: React.FC = () => {
           blockId = engine.block.create("graphic");
           engine.block.setKind(blockId, "rect");
           engine.block.setSize(blockId, 100, 100);
-          engine.block.setColor(blockId, "fill/color", {
+          engine.block.setColor(blockId, FILL_COLOR, {
             r: 0.85,
             g: 0.85,
             b: 0.85,
@@ -49,7 +49,7 @@ export const CreativeEditor: React.FC = () => {
           blockId = engine.block.create("graphic");
           engine.block.setKind(blockId, "ellipse");
           engine.block.setSize(blockId, 100, 100);
-          engine.block.setColor(blockId, "fill/color", {
+          engine.block.setColor(blockId, FILL_COLOR, {
             r: 0.85,
             g: 0.85,
             b: 0.85,
@@ -76,12 +76,12 @@ export const CreativeEditor: React.FC = () => {
 
     return () => {
       disposed = true;
+      engineRef.current?.dispose();
     };
   }, []);
 
   const engine = engineRef.current;
-  console.log("engine", engine);
-  console.log("ready", ready);
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <Toolbar />

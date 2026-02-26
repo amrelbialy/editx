@@ -1,11 +1,30 @@
-import { BlockData, BlockType, Color, PropertyValue } from "./block.types";
-import { getBlockDefaults } from "./block-defaults";
+import { BlockData, BlockType, Color, PropertyValue } from './block.types';
+import { getBlockDefaults } from './block-defaults';
+import { BlockHierarchy } from './block-hierarchy';
+import { BlockProperties } from './block-properties';
+import { BlockSnapshot } from './block-snapshot';
 
+/**
+ * Central block registry. Owns the blocks Map and delegates domain logic
+ * to focused sub-modules (hierarchy, properties, snapshots).
+ */
 export class BlockStore {
   #blocks = new Map<number, BlockData>();
   #nextId = 1;
 
-  create(type: BlockType, kind = ""): number {
+  #hierarchy: BlockHierarchy;
+  #properties: BlockProperties;
+  #snapshots: BlockSnapshot;
+
+  constructor() {
+    this.#hierarchy = new BlockHierarchy(this.#blocks);
+    this.#properties = new BlockProperties(this.#blocks);
+    this.#snapshots = new BlockSnapshot(this.#blocks);
+  }
+
+  // --- CRUD ---
+
+  create(type: BlockType, kind = ''): number {
     const id = this.#nextId++;
     const block: BlockData = {
       id,
@@ -32,13 +51,7 @@ export class BlockStore {
     const block = this.#blocks.get(id);
     if (!block) return;
 
-    // Unparent from parent
-    if (block.parentId !== null) {
-      const parent = this.#blocks.get(block.parentId);
-      if (parent) {
-        parent.children = parent.children.filter((c) => c !== id);
-      }
-    }
+    this.#hierarchy.unparent(id);
 
     // Recursively destroy children
     for (const childId of [...block.children]) {
@@ -48,89 +61,14 @@ export class BlockStore {
     this.#blocks.delete(id);
   }
 
-  // --- Hierarchy ---
-
-  appendChild(parentId: number, childId: number): void {
-    const parent = this.#blocks.get(parentId);
-    const child = this.#blocks.get(childId);
-    if (!parent || !child) return;
-
-    // Remove from old parent if any
-    if (child.parentId !== null && child.parentId !== parentId) {
-      const oldParent = this.#blocks.get(child.parentId);
-      if (oldParent) {
-        oldParent.children = oldParent.children.filter((c) => c !== childId);
-      }
-    }
-
-    child.parentId = parentId;
-    if (!parent.children.includes(childId)) {
-      parent.children.push(childId);
-    }
-  }
-
-  removeChild(parentId: number, childId: number): void {
-    const parent = this.#blocks.get(parentId);
-    const child = this.#blocks.get(childId);
-    if (!parent || !child) return;
-
-    parent.children = parent.children.filter((c) => c !== childId);
-    if (child.parentId === parentId) {
-      child.parentId = null;
-    }
-  }
-
-  getChildren(id: number): number[] {
-    return this.#blocks.get(id)?.children.slice() ?? [];
-  }
-
-  getParent(id: number): number | null {
-    return this.#blocks.get(id)?.parentId ?? null;
-  }
-
-  // --- Properties ---
-
-  setProperty(id: number, key: string, value: PropertyValue): void {
-    const block = this.#blocks.get(id);
-    if (!block) return;
-    block.properties[key] = value;
-    // console.log("setProperty", id, key, value);
-    // console.log("block", block);
-  }
-
-  getProperty(id: number, key: string): PropertyValue | undefined {
-    return this.#blocks.get(id)?.properties[key];
-  }
-
-  getFloat(id: number, key: string): number {
-    const v = this.getProperty(id, key);
-    return typeof v === "number" ? v : 0;
-  }
-
-  getString(id: number, key: string): string {
-    const v = this.getProperty(id, key);
-    return typeof v === "string" ? v : "";
-  }
-
-  getBool(id: number, key: string): boolean {
-    const v = this.getProperty(id, key);
-    return typeof v === "boolean" ? v : false;
-  }
-
-  getColor(id: number, key: string): Color {
-    const v = this.getProperty(id, key);
-    if (v && typeof v === "object" && "r" in v) return v as Color;
-    return { r: 0, g: 0, b: 0, a: 1 };
-  }
-
-  // --- Type / Kind ---
+  // --- Type / Kind / Name ---
 
   getType(id: number): BlockType | undefined {
     return this.#blocks.get(id)?.type;
   }
 
   getKind(id: number): string {
-    return this.#blocks.get(id)?.kind ?? "";
+    return this.#blocks.get(id)?.kind ?? '';
   }
 
   setKind(id: number, kind: string): void {
@@ -144,7 +82,7 @@ export class BlockStore {
   }
 
   getName(id: number): string {
-    return this.#blocks.get(id)?.name ?? "";
+    return this.#blocks.get(id)?.name ?? '';
   }
 
   // --- Query ---
@@ -165,43 +103,62 @@ export class BlockStore {
     return result;
   }
 
-  getPropertyKeys(id: number): string[] {
-    return Object.keys(this.#blocks.get(id)?.properties ?? {});
+  // --- Hierarchy (delegated) ---
+
+  appendChild(parentId: number, childId: number): void {
+    this.#hierarchy.appendChild(parentId, childId);
   }
 
-  // --- Snapshot for undo/redo ---
+  removeChild(parentId: number, childId: number): void {
+    this.#hierarchy.removeChild(parentId, childId);
+  }
+
+  getChildren(id: number): number[] {
+    return this.#hierarchy.getChildren(id);
+  }
+
+  getParent(id: number): number | null {
+    return this.#hierarchy.getParent(id);
+  }
+
+  // --- Properties (delegated) ---
+
+  setProperty(id: number, key: string, value: PropertyValue): void {
+    this.#properties.setProperty(id, key, value);
+  }
+
+  getProperty(id: number, key: string): PropertyValue | undefined {
+    return this.#properties.getProperty(id, key);
+  }
+
+  getFloat(id: number, key: string): number {
+    return this.#properties.getFloat(id, key);
+  }
+
+  getString(id: number, key: string): string {
+    return this.#properties.getString(id, key);
+  }
+
+  getBool(id: number, key: string): boolean {
+    return this.#properties.getBool(id, key);
+  }
+
+  getColor(id: number, key: string): Color {
+    return this.#properties.getColor(id, key);
+  }
+
+  getPropertyKeys(id: number): string[] {
+    return this.#properties.getPropertyKeys(id);
+  }
+
+  // --- Snapshots (delegated) ---
 
   snapshot(id: number): BlockData | null {
-    const block = this.#blocks.get(id);
-    if (!block) return null;
-
-    return {
-      ...block,
-      children: [...block.children],
-      properties: this.#deepCopyProperties(block.properties),
-    };
+    return this.#snapshots.snapshot(id);
   }
 
   restore(data: BlockData): void {
-    this.#blocks.set(data.id, {
-      ...data,
-      children: [...data.children],
-      properties: this.#deepCopyProperties(data.properties),
-    });
-  }
-
-  #deepCopyProperties(
-    props: Record<string, PropertyValue>
-  ): Record<string, PropertyValue> {
-    const copy: Record<string, PropertyValue> = {};
-    for (const key in props) {
-      const v = props[key];
-      if (v && typeof v === "object" && "r" in v) {
-        copy[key] = { ...(v as Color) };
-      } else {
-        copy[key] = v;
-      }
-    }
-    return copy;
+    this.#snapshots.restore(data);
   }
 }
+

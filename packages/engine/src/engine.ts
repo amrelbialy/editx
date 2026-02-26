@@ -205,15 +205,15 @@ export class Engine {
 
   // --- Legacy events (selection, stage:click, history) ---
 
-  on(event: string, cb: Function) {
+  on(event: string, cb: (...args: any[]) => void) {
     return this.#events.on(event, cb);
   }
 
-  off(event: string, cb: Function) {
+  off(event: string, cb: (...args: any[]) => void) {
     return this.#events.off(event, cb);
   }
 
-  emit(event: string, payload?: any) {
-    this.#events.emit(event, payload);
+  emit(event: string, ...args: any[]) {
+    this.#events.emit(event, ...args);
   }
 }

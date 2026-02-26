@@ -3,6 +3,7 @@ import {
   CreateBlockCommand,
   DestroyBlockCommand,
   SetPropertyCommand,
+  SetKindCommand,
   AppendChildCommand,
   RemoveChildCommand,
 } from '../controller/commands';
@@ -41,16 +42,7 @@ export class BlockAPI {
 
   setKind(id: number, kind: string): void {
     const store = this.#engine.getBlockStore();
-    // Kind is stored on the block directly, use a property for undo
-    const before = store.snapshot(id);
-    store.setKind(id, kind);
-    const after = store.snapshot(id);
-    if (before && after) {
-      // Push through engine so it gets into history and flushes
-      this.#engine.exec({
-        do: () => [{ id: String(id), before, after }],
-      });
-    }
+    this.#engine.exec(new SetKindCommand(store, id, kind));
   }
 
   // --- Hierarchy ---
@@ -93,27 +85,32 @@ export class BlockAPI {
 
   // --- Property setters ---
 
-  setFloat(id: number, key: string, value: number): void {
+  /** Generic property setter — typed variants below are convenience wrappers. */
+  setProperty(id: number, key: string, value: PropertyValue): void {
     const store = this.#engine.getBlockStore();
     this.#engine.exec(new SetPropertyCommand(store, id, key, value));
+  }
+
+  setFloat(id: number, key: string, value: number): void {
+    this.setProperty(id, key, value);
   }
 
   setString(id: number, key: string, value: string): void {
-    const store = this.#engine.getBlockStore();
-    this.#engine.exec(new SetPropertyCommand(store, id, key, value));
+    this.setProperty(id, key, value);
   }
 
   setBool(id: number, key: string, value: boolean): void {
-    const store = this.#engine.getBlockStore();
-    this.#engine.exec(new SetPropertyCommand(store, id, key, value));
+    this.setProperty(id, key, value);
   }
 
   setColor(id: number, key: string, value: Color): void {
-    const store = this.#engine.getBlockStore();
-    this.#engine.exec(new SetPropertyCommand(store, id, key, value));
+    this.setProperty(id, key, value);
   }
 
-  // --- Convenience setters (batched for single undo step) ---
+  // --- Convenience setters ---
+  // These call beginBatch/endBatch. When called from an outer batch
+  // (e.g. onBlockTransformEnd in creative-engine.ts), the inner batch
+  // is a no-op — this is intentional.
 
   setPosition(id: number, x: number, y: number): void {
     this.#engine.beginBatch();

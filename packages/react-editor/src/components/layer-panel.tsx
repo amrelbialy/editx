@@ -10,7 +10,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
   const selectedBlockId = useSelectedBlockId(engine);
   const pageId = engine.scene.getCurrentPage();
   const blockIds = useBlockChildren(engine, pageId);
-  console.log("blockIds", blockIds);
+
   return (
     <div className="w-56 bg-white border-r border-gray-200 p-4 overflow-y-auto">
       <h2 className="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wide">

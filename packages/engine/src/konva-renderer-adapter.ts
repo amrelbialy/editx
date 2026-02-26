@@ -1,16 +1,8 @@
-import Konva from 'konva';
-import type { RendererAdapter } from './render-adapter';
-import type { BlockData, Color } from './block/block.types';
-
-function colorToHex(c: Color): string {
-  const r = Math.round(c.r * 255);
-  const g = Math.round(c.g * 255);
-  const b = Math.round(c.b * 255);
-  if (c.a < 1) {
-    return `rgba(${r},${g},${b},${c.a})`;
-  }
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
+import Konva from "konva";
+import type { RendererAdapter } from "./render-adapter";
+import type { BlockData, Color } from "./block/block.types";
+import { colorToHex } from "./utils/color";
+import { loadImage, clearImageCache } from "./utils/image-loader";
 
 export class KonvaRendererAdapter implements RendererAdapter {
   #stage!: Konva.Stage;
@@ -28,19 +20,31 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // Interaction callbacks
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (blockId: number, transform: { x: number; y: number; width: number; height: number; rotation: number }) => void;
+  onBlockTransformEnd?: (
+    blockId: number,
+    transform: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      rotation: number;
+    }
+  ) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
 
   async init(root: HTMLElement): Promise<void> {
     this.#rootEl = root;
   }
 
-  async createScene(sceneBlock: BlockData, pageBlock: BlockData): Promise<void> {
-    const pageW = (pageBlock.properties['page/width'] as number) ?? 1080;
-    const pageH = (pageBlock.properties['page/height'] as number) ?? 1080;
+  async createScene(
+    sceneBlock: BlockData,
+    pageBlock: BlockData
+  ): Promise<void> {
+    const pageW = (pageBlock.properties["page/width"] as number) ?? 1080;
+    const pageH = (pageBlock.properties["page/height"] as number) ?? 1080;
 
     this.#stage = new Konva.Stage({
-      container: this.#rootEl,
+      container: this.#rootEl as HTMLDivElement,
       width: this.#rootEl.clientWidth,
       height: this.#rootEl.clientHeight,
     });
@@ -50,13 +54,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#stage.add(this.#contentLayer);
 
     // Page background rect
-    const fillColor = pageBlock.properties['fill/color'];
+    const fillColor = pageBlock.properties["fill/color"];
     this.#pageRect = new Konva.Rect({
       x: 0,
       y: 0,
       width: pageW,
       height: pageH,
-      fill: fillColor && typeof fillColor === 'object' ? colorToHex(fillColor as Color) : '#ffffff',
+      fill:
+        fillColor && typeof fillColor === "object"
+          ? colorToHex(fillColor as Color)
+          : "#ffffff",
       listening: false,
     });
     this.#contentLayer.add(this.#pageRect);
@@ -68,15 +75,21 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#transformer = new Konva.Transformer({
       rotateEnabled: true,
       enabledAnchors: [
-        'top-left', 'top-right', 'bottom-left', 'bottom-right',
-        'middle-left', 'middle-right', 'top-center', 'bottom-center',
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "middle-left",
+        "middle-right",
+        "top-center",
+        "bottom-center",
       ],
     });
     this.#uiLayer.add(this.#transformer);
 
     this.#selectionRect = new Konva.Rect({
-      fill: 'rgba(0,120,215,0.15)',
-      stroke: 'rgba(0,120,215,0.6)',
+      fill: "rgba(0,120,215,0.15)",
+      stroke: "rgba(0,120,215,0.6)",
       strokeWidth: 1,
       visible: false,
     });
@@ -92,15 +105,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   syncBlock(id: number, block: BlockData): void {
     // Skip scene/page blocks — they're handled by createScene
-    if (block.type === 'scene' || block.type === 'page') return;
+    if (block.type === "scene" || block.type === "page") return;
 
-    let node = this.#nodeMap.get(id);
+    let node: Konva.Node | undefined = this.#nodeMap.get(id);
 
     if (!node) {
-      node = this.#createNode(id, block);
-      if (!node) return;
+      const created = this.#createNode(id, block);
+      if (!created) return;
+      node = created;
       this.#nodeMap.set(id, node);
-      this.#contentLayer.add(node);
+      this.#contentLayer.add(node as Konva.Group | Konva.Shape);
     }
 
     this.#updateNode(node, block);
@@ -172,7 +186,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#applyCamera();
   }
 
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }): void {
+  centerOnRect(rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }): void {
     if (!this.#stage) return;
     const stageW = this.#stage.width();
     const stageH = this.#stage.height();
@@ -210,6 +229,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   dispose(): void {
     this.#stage?.destroy();
     this.#nodeMap.clear();
+    clearImageCache();
   }
 
   // --- Private helpers ---
@@ -224,19 +244,27 @@ export class KonvaRendererAdapter implements RendererAdapter {
   }
 
   #createNode(id: number, block: BlockData): Konva.Node | null {
-    const kind = block.kind || 'rect';
+    const kind = block.kind || "rect";
 
     let node: Konva.Shape;
 
-    if (block.type === 'text') {
+    if (block.type === "image") {
+      node = new Konva.Image({
+        name: `block-${id}`,
+        draggable: false,
+        image: undefined as unknown as CanvasImageSource,
+      });
+    } else if (block.type === "text") {
       node = new Konva.Text({
         name: `block-${id}`,
         draggable: true,
       });
-    } else if (kind === 'ellipse') {
+    } else if (kind === "ellipse") {
       node = new Konva.Ellipse({
         name: `block-${id}`,
         draggable: true,
+        radiusX: 50,
+        radiusY: 50,
       });
     } else {
       node = new Konva.Rect({
@@ -247,12 +275,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
     (node as any).__blockId = id;
 
-    node.on('dragend', () => {
+    node.on("dragend", () => {
       const pos = node.position();
       this.onBlockDragEnd?.(id, pos.x, pos.y);
     });
 
-    node.on('transformend', () => {
+    node.on("transformend", () => {
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       this.onBlockTransformEnd?.(id, {
@@ -272,59 +300,81 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #updateNode(node: Konva.Node, block: BlockData): void {
     const props = block.properties;
 
-    const x = (props['transform/position/x'] as number) ?? 0;
-    const y = (props['transform/position/y'] as number) ?? 0;
-    const width = (props['transform/size/width'] as number) ?? 100;
-    const height = (props['transform/size/height'] as number) ?? 100;
-    const rotation = (props['transform/rotation'] as number) ?? 0;
-    const opacity = (props['appearance/opacity'] as number) ?? 1;
-    const visible = (props['appearance/visible'] as boolean) ?? true;
+    const x = (props["transform/position/x"] as number) ?? 0;
+    const y = (props["transform/position/y"] as number) ?? 0;
+    const width = (props["transform/size/width"] as number) ?? 100;
+    const height = (props["transform/size/height"] as number) ?? 100;
+    const rotation = (props["transform/rotation"] as number) ?? 0;
+    const opacity = (props["appearance/opacity"] as number) ?? 1;
+    const visible = (props["appearance/visible"] as boolean) ?? true;
 
     node.setAttrs({ x, y, rotation, opacity, visible });
 
-    if (block.type === 'text') {
+    if (block.type === "image") {
+      const imgNode = node as Konva.Image;
+      imgNode.width(width);
+      imgNode.height(height);
+      const src = (props["image/src"] as string) ?? "";
+      if (src && (imgNode as any).__loadedSrc !== src) {
+        (imgNode as any).__loadedSrc = src;
+        loadImage(src).then((htmlImg) => {
+          imgNode.image(htmlImg);
+          this.#stage?.batchDraw();
+        });
+      }
+      return;
+    }
+
+    if (block.type === "text") {
       const textNode = node as Konva.Text;
-      textNode.text((props['text/content'] as string) ?? 'Text');
-      textNode.fontSize((props['text/fontSize'] as number) ?? 24);
-      textNode.fontFamily((props['text/fontFamily'] as string) ?? 'Arial');
+      textNode.text((props["text/content"] as string) ?? "Text");
+      textNode.fontSize((props["text/fontSize"] as number) ?? 24);
+      textNode.fontFamily((props["text/fontFamily"] as string) ?? "Arial");
       textNode.width(width);
-      const fillColor = props['fill/color'];
-      if (fillColor && typeof fillColor === 'object') {
+      const fillColor = props["fill/color"];
+      if (fillColor && typeof fillColor === "object") {
         textNode.fill(colorToHex(fillColor as Color));
       }
     } else if (node instanceof Konva.Ellipse) {
       (node as Konva.Ellipse).radiusX(width / 2);
       (node as Konva.Ellipse).radiusY(height / 2);
-      const fillColor = props['fill/color'];
-      if (fillColor && typeof fillColor === 'object') {
+      const fillColor = props["fill/color"];
+      if (fillColor && typeof fillColor === "object") {
         (node as Konva.Ellipse).fill(colorToHex(fillColor as Color));
       }
-      const strokeColor = props['stroke/color'];
-      if (strokeColor && typeof strokeColor === 'object') {
+      const strokeColor = props["stroke/color"];
+      if (strokeColor && typeof strokeColor === "object") {
         (node as Konva.Ellipse).stroke(colorToHex(strokeColor as Color));
-        (node as Konva.Ellipse).strokeWidth((props['stroke/width'] as number) ?? 0);
+        (node as Konva.Ellipse).strokeWidth(
+          (props["stroke/width"] as number) ?? 0
+        );
       }
     } else if (node instanceof Konva.Rect) {
       node.width(width);
       node.height(height);
-      const fillColor = props['fill/color'];
-      if (fillColor && typeof fillColor === 'object') {
+      const fillColor = props["fill/color"];
+      if (fillColor && typeof fillColor === "object") {
         (node as Konva.Rect).fill(colorToHex(fillColor as Color));
       }
-      const strokeColor = props['stroke/color'];
-      if (strokeColor && typeof strokeColor === 'object') {
+      const strokeColor = props["stroke/color"];
+      if (strokeColor && typeof strokeColor === "object") {
         (node as Konva.Rect).stroke(colorToHex(strokeColor as Color));
-        (node as Konva.Rect).strokeWidth((props['stroke/width'] as number) ?? 0);
+        (node as Konva.Rect).strokeWidth(
+          (props["stroke/width"] as number) ?? 0
+        );
       }
     }
   }
 
   #setupInteraction(): void {
-    let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+    let x1 = 0,
+      y1 = 0,
+      x2 = 0,
+      y2 = 0;
     let selecting = false;
 
     // Click on stage background → deselect
-    this.#stage.on('click tap', (e) => {
+    this.#stage.on("click tap", (e) => {
       if (this.#selectionRect.visible() && this.#selectionRect.width() > 0) {
         return;
       }
@@ -339,13 +389,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
       // Check if click was on a block node
       const blockId = (e.target as any).__blockId as number | undefined;
       if (blockId !== undefined) {
-        const shiftKey = (e.evt as MouseEvent).shiftKey || (e.evt as MouseEvent).ctrlKey || (e.evt as MouseEvent).metaKey;
+        const shiftKey =
+          (e.evt as MouseEvent).shiftKey ||
+          (e.evt as MouseEvent).ctrlKey ||
+          (e.evt as MouseEvent).metaKey;
         this.onBlockClick?.(blockId, { shiftKey });
       }
     });
 
     // Selection rectangle
-    this.#stage.on('mousedown touchstart', (e) => {
+    this.#stage.on("mousedown touchstart", (e) => {
       if (e.target !== this.#stage && e.target !== this.#pageRect) return;
 
       const pos = this.#stage.getPointerPosition();
@@ -367,7 +420,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       });
     });
 
-    this.#stage.on('mousemove touchmove', () => {
+    this.#stage.on("mousemove touchmove", () => {
       if (!selecting) return;
 
       const pos = this.#stage.getPointerPosition();
@@ -385,7 +438,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#uiLayer.batchDraw();
     });
 
-    this.#stage.on('mouseup touchend', () => {
+    this.#stage.on("mouseup touchend", () => {
       if (!selecting) return;
       selecting = false;
 

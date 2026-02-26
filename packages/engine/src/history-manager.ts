@@ -1,9 +1,9 @@
-// import { Patch } from './Patch';
+import type { BlockData } from './block/block.types';
 
 export interface Patch {
   id: string;
-  before: any;
-  after: any;
+  before: BlockData | null;
+  after: BlockData | null;
 }
 
 export class HistoryManager {

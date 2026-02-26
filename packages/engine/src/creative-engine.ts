@@ -3,7 +3,8 @@ import { Engine } from './engine';
 import { EditorAPI } from './editor';
 import { EventAPI } from './event-api';
 import { SceneAPI } from './scene';
-import { KonvaRendererAdapter } from './konva-renderer-adapter';
+import { KonvaRendererAdapter } from './konva/konva-renderer-adapter';
+import { clearImageCache } from './utils/image-loader';
 
 export class CreativeEngine {
   block: BlockAPI;
@@ -11,6 +12,8 @@ export class CreativeEngine {
   event: EventAPI;
   scene: SceneAPI;
   core: Engine;
+
+  #disposed = false;
 
   private constructor(params: {
     core: Engine;
@@ -25,7 +28,15 @@ export class CreativeEngine {
     this.event = params.core.event;
   }
 
-  static async create(opts: { container: HTMLElement; renderer?: 'konva' | 'pixi' }) {
+  /** Clean up the engine, renderer, and caches. Safe to call multiple times. */
+  dispose(): void {
+    if (this.#disposed) return;
+    this.#disposed = true;
+    this.core.getRenderer()?.dispose();
+    clearImageCache();
+  }
+
+  static async create(opts: { container: HTMLElement }) {
     const adapter = new KonvaRendererAdapter();
     await adapter.init(opts.container);
 
