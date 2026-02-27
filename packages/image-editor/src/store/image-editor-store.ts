@@ -6,6 +6,17 @@ export interface OriginalImageInfo {
   src: string;
   width: number;
   height: number;
+  /** Human-readable filename extracted from source (for save/export). */
+  name: string;
+}
+
+export interface ShownImageDimensions {
+  /** Pixel width as rendered on canvas. */
+  width: number;
+  /** Pixel height as rendered on canvas. */
+  height: number;
+  /** Scale factor applied to original dimensions. */
+  scale: number;
 }
 
 interface ImageEditorState {
@@ -14,6 +25,8 @@ interface ImageEditorState {
   isLoading: boolean;
   imageBlockId: number | null;
   error: string | null;
+  /** The image dimensions as rendered on canvas (after initial fit-to-screen). */
+  shownImageDimensions: ShownImageDimensions | null;
 
   setActiveTool: (tool: ImageEditorTool) => void;
   setOriginalImage: (info: OriginalImageInfo) => void;
@@ -21,6 +34,7 @@ interface ImageEditorState {
   setImageBlockId: (id: number | null) => void;
   setError: (msg: string | null) => void;
   clearError: () => void;
+  setShownImageDimensions: (dims: ShownImageDimensions) => void;
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
@@ -29,6 +43,7 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   isLoading: true,
   imageBlockId: null,
   error: null,
+  shownImageDimensions: null,
 
   setActiveTool: (tool) => set({ activeTool: tool }),
   setOriginalImage: (info) => set({ originalImage: info }),
@@ -36,4 +51,5 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   setImageBlockId: (id) => set({ imageBlockId: id }),
   setError: (msg) => set({ error: msg }),
   clearError: () => set({ error: null }),
+  setShownImageDimensions: (dims) => set({ shownImageDimensions: dims }),
 }));

@@ -22,6 +22,12 @@ vi.mock('@creative-editor/engine', () => {
         setPosition: vi.fn(),
         appendChild: vi.fn(),
       },
+      editor: {
+        getZoom: vi.fn().mockReturnValue(0.5),
+        getPan: vi.fn().mockReturnValue({ x: 10, y: 20 }),
+        setZoom: vi.fn(),
+        panTo: vi.fn(),
+      },
       dispose: vi.fn(),
     };
     latestMockEngine = eng;
@@ -72,6 +78,14 @@ vi.mock('./utils/correct-orientation', () => ({
   correctOrientation: vi.fn().mockRejectedValue(new Error('not a blob')),
 }));
 
+vi.mock('./utils/is-same-source', () => ({
+  isSameSource: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock('./utils/extract-filename', () => ({
+  extractFilename: vi.fn().mockReturnValue('test-image'),
+}));
+
 vi.mock('./components/toolbar', () => ({
   ImageEditorToolbar: () => React.createElement('div', { 'data-testid': 'toolbar' }),
 }));
@@ -88,6 +102,7 @@ describe('ImageEditor', () => {
       isLoading: true,
       imageBlockId: null,
       error: null,
+      shownImageDimensions: null,
     });
   });
 
@@ -267,6 +282,33 @@ describe('ImageEditor', () => {
 
     await waitFor(() => {
       expect(mockLoadImage).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('stores shownImageDimensions after load', async () => {
+    render(
+      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+    );
+
+    await waitFor(() => {
+      const dims = useImageEditorStore.getState().shownImageDimensions;
+      expect(dims).not.toBeNull();
+      // Mock engine getZoom returns 0.5, image 800x600
+      expect(dims!.width).toBe(400);
+      expect(dims!.height).toBe(300);
+      expect(dims!.scale).toBe(0.5);
+    });
+  });
+
+  it('stores extracted filename in originalImage.name', async () => {
+    render(
+      React.createElement(ImageEditor, { src: 'https://example.com/sunset.jpg' })
+    );
+
+    await waitFor(() => {
+      const img = useImageEditorStore.getState().originalImage;
+      expect(img).not.toBeNull();
+      expect(img!.name).toBe('test-image');
     });
   });
 });

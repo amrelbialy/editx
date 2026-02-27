@@ -165,6 +165,27 @@ Target: Pure logic and utilities in isolation.
 | `image-editor/src/utils/downscale-image.test.ts`     | Preserves original dimensions in result when downscaling                                   | ✅     |
 | `image-editor/src/utils/downscale-image.test.ts`     | Returns a data URL from the offscreen canvas                                               | ✅     |
 | `image-editor/src/utils/downscale-image.test.ts`     | Handles exact boundary (25 MP) without downscaling                                         | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Two identical URL strings → `true`                                                         | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Two different URL strings → `false`                                                        | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Same `File` reference → `true`                                                             | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Different `File` instances → `false`                                                       | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Same `HTMLImageElement` → `true`                                                           | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | Different `HTMLImageElement` → `false`                                                     | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | `undefined` vs `undefined` → `true`                                                        | ✅     |
+| `image-editor/src/utils/is-same-source.test.ts`      | `undefined` vs string → `false`                                                            | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Extracts filename from URL path (e.g. `sunset.jpg` → `sunset`)                             | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Strips query parameters from URL                                                           | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Handles URL with hash fragment                                                             | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Returns `'image'` for data URLs                                                            | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Returns `'image'` for blob URLs                                                            | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Uses `file.name` for `File` input                                                          | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Returns `'image'` for `Blob` input                                                         | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Uses `.name` property from `HTMLImageElement`                                              | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Falls back to extracting from `.src` for `HTMLImageElement` without `.name`                | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Returns `'canvas'` for `HTMLCanvasElement`                                                 | ✅     |
+| `image-editor/src/utils/extract-filename.test.ts`    | Returns `'image'` for unrecognized/empty sources                                           | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `setShownImageDimensions()` stores width, height, scale                                    | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `setOriginalImage()` stores `name` field                                                   | ✅     |
 
 ### Component Tests
 
@@ -182,6 +203,10 @@ Target: React component rendering and user-facing behavior using React Testing L
 | `image-editor/src/image-editor.test.tsx` | Handles `dragover` event (prevents default for drop zone)          | ✅     |
 | `image-editor/src/image-editor.test.tsx` | Handles `drop` with image file → re-initializes with dropped file  | ✅     |
 | `image-editor/src/image-editor.test.tsx` | Handles `paste` with image blob → re-initializes with pasted image | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Sets `shownImageDimensions` in store after loading                 | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Extracts and stores filename from URL source                       | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Skips duplicate load when `isSameSource` returns true              | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Preserves zoom/pan when `keepZoomOnSourceChange` is true           | ✅     |
 
 ### Integration Tests
 
@@ -199,7 +224,7 @@ Target: Engine + Renderer working together end-to-end.
 | Package        | Test Files | Tests | Status         |
 | -------------- | ---------- | ----- | -------------- |
 | `engine`       | 14         | 238   | ✅ All passing |
-| `image-editor` | 5          | 55    | ✅ All passing |
+| `image-editor` | 7          | 78    | ✅ All passing |
 
 ### When to Run
 
@@ -327,6 +352,70 @@ Create `packages/image-editor/src/utils/validate-image.ts`:
 - **Fix**: Add `src` to the `useEffect` dependency list. On source change: dispose old engine, clear caches for old source, re-initialize with new image.
 - Full dispose-and-reinit (rather than incremental update) — simpler and avoids subtle state leaks.
 
+### Area 5: Load Flow Hardening (Filerobot Parity)
+
+Gaps identified by comparing with filerobot's `BaseLayer`, `useLoadMainSource`, `useSetOriginalSource`, `loadImage`, `isSameSource`, `getOriginalSourceInitialScale`, and `extractNameFromUrl`.
+
+#### 5.1 Source deduplication (`isSameSource`)
+
+- Before calling `initEditor`, compare the new source with the currently loaded source.
+- If the **same URL / File / Blob / HTMLImageElement** is already loaded, **skip the entire init**.
+- Avoids destroying and recreating the engine when React re-renders with the same `src` prop (or StrictMode double-mount).
+- Add helper `isSameSource(a, b)` in `packages/image-editor/src/utils/is-same-source.ts`.
+- **Filerobot ref:** `isSameSource.js` — compares by identity for HTMLImageElement, by key-equality for objects.
+
+#### 5.2 Filename extraction from URL
+
+- Extract a human-readable filename from the image source URL (e.g. `https://example.com/photos/sunset.jpg` → `sunset`).
+- Store it in `originalImage.name` so the save/export dialog can suggest a default filename.
+- Add helper `extractFilename(source)` in `packages/image-editor/src/utils/extract-filename.ts`.
+- For `File` inputs, use `file.name`; for `Blob`, use `'image'`; for `HTMLImageElement`, use element `.name` or extract from `.src`.
+- **Filerobot ref:** `extractNameFromUrl.js`, `loadImage.js` sets `imageElement.name`.
+
+#### 5.3 "Never scale up" initial fit
+
+- In `KonvaRendererAdapter.fitToScreen()`, clamp the computed scale to `Math.min(scale, 1)` so images smaller than the viewport are shown at **native 1:1 resolution** instead of being upscaled and looking pixelated.
+- Currently `fitToScreen` uses `Math.min(scaleX, scaleY)` which can exceed 1.0 for small images.
+- **Filerobot ref:** `getOriginalSourceInitialScale.js` returns `1` when canvas is larger than image.
+
+#### 5.4 Track `shownImageDimensions` in store
+
+- Add `shownImageDimensions: { width, height, scale } | null` to the Zustand store.
+- After `fitToScreen`, compute and store the pixel dimensions as rendered on canvas (natural dims × initial scale).
+- These dimensions are needed by the crop tool (Feature 2) for coordinate mapping, and by resize for accurate preview.
+- **Filerobot ref:** BaseLayer computes `scaledOriginalSource = { width: originalSource.width * initialScale, height: ... }` and stores `shownImageDimensions` in state.
+
+#### 5.5 Graceful fallback when dimensions are known
+
+- If image loading fails but the caller provided explicit `width`/`height` (e.g. `src = { src: url, width: 800, height: 600 }`), still set `originalImage` dimensions (without `src`) so the UI can render a skeleton/placeholder at the correct aspect ratio instead of a generic error.
+- **Filerobot ref:** `setOriginalSourceIfDimensionsFound()` in `useSetOriginalSource.js`.
+
+#### 5.6 Skip loading spinner on metadata-only source change
+
+- When the `src` prop changes but the actual image URL is the **same** (e.g. only `width`/`height` metadata changed), skip the loading spinner and re-initialize silently.
+- Avoids a jarring flash/spinner when only non-visual properties changed.
+- **Filerobot ref:** `useLoadMainSource.js` checks `isSrcLinkNotChanged` and skips `handleLoading` wrapper.
+
+#### 5.7 Concurrent load guard
+
+- Track the currently-loading source URL in a ref (`loadingSourceRef`).
+- If `initEditor` is called while a load for the **same source** is already in progress, skip the duplicate.
+- Prevents wasted work from React StrictMode double-mount or rapid prop changes.
+- **Filerobot ref:** `imageBeingLoadedSrc` ref in `useSetOriginalSource.js`.
+
+#### 5.8 Preserve HTMLImageElement `.name` metadata
+
+- When an `HTMLImageElement` is passed as source, carry its `.name` property into `originalImage.name`.
+- If `.name` is empty, fall back to extracting from `.src` via the filename extractor (5.2).
+- **Filerobot ref:** `useSetOriginalSource.js` preserves `imgToLoad.name`, sets from `defaultSavedImageName` config.
+
+#### 5.9 Preserve zoom/pan on source change (opt-in)
+
+- Add an optional prop `keepZoomOnSourceChange?: boolean` (default `false`).
+- When `true` and the source changes, after re-init preserve the previous `zoom` and `pan` state instead of resetting to `fitToScreen`.
+- Useful for before/after comparisons or swapping image variants.
+- **Filerobot ref:** `keepZoomOnSourceChange` config in `useLoadMainSource.js`.
+
 ### Filerobot Reference (Improvements)
 
 | Filerobot File                     | Relevant For                                                                |
@@ -352,20 +441,36 @@ Create `packages/image-editor/src/utils/validate-image.ts`:
 9. **2.2 + 2.3** — Drag-and-drop + paste
 10. **2.4** — Demo app enhancements
 11. **4.4** — Source change support
+12. **5.1** — Source deduplication
+13. **5.2 + 5.8** — Filename extraction + HTMLImageElement name
+14. **5.3 + 5.4** — Never scale up + shownImageDimensions
+15. **5.5 + 5.6** — Graceful fallback + skip spinner
+16. **5.7** — Concurrent load guard
+17. **5.9** — Preserve zoom on source change
 
 ### Improvement Acceptance Criteria
 
-- [ ] Invalid URL → error overlay with retry button; retry with valid URL → loads correctly
-- [ ] Cross-origin image without CORS headers → image still renders (tainted canvas warning in console)
-- [ ] Renderer image load failure → placeholder shown instead of blank node
-- [ ] `HTMLImageElement`, `HTMLCanvasElement`, data URL, File, Blob → all load correctly
-- [ ] Drag image file from desktop onto editor → image loads
-- [ ] Copy image, Ctrl+V in editor → image loads
-- [ ] Demo app has URL input, drag-and-drop zone, paste instructions
-- [ ] 60 MB file → rejected with "file too large" error
-- [ ] 10000×10000 image → warning shown, image downscaled for working resolution
-- [ ] Mobile photo with EXIF rotation → displays upright
-- [ ] Browser window resize → canvas reflows, image stays centered
-- [ ] Same URL loaded twice → only one network request (single shared cache)
-- [ ] Blob URL revoked → no stale cache hits
-- [ ] Change `src` prop → old image replaced with new one
+- [x] Invalid URL → error overlay with retry button; retry with valid URL → loads correctly
+- [x] Cross-origin image without CORS headers → image still renders (tainted canvas warning in console)
+- [x] Renderer image load failure → placeholder shown instead of blank node
+- [x] `HTMLImageElement`, `HTMLCanvasElement`, data URL, File, Blob → all load correctly
+- [x] Drag image file from desktop onto editor → image loads
+- [x] Copy image, Ctrl+V in editor → image loads
+- [x] Demo app has URL input, drag-and-drop zone, paste instructions
+- [x] 60 MB file → rejected with "file too large" error
+- [x] 10000×10000 image → warning shown, image downscaled for working resolution
+- [x] Mobile photo with EXIF rotation → displays upright
+- [x] Browser window resize → canvas reflows, image stays centered
+- [x] Same URL loaded twice → only one network request (single shared cache)
+- [x] Blob URL revoked → no stale cache hits
+- [x] Change `src` prop → old image replaced with new one
+- [x] Same `src` prop re-rendered → no engine destroy/recreate (deduplication)
+- [x] Image loaded from URL → `originalImage.name` contains extracted filename
+- [x] File dropped → `originalImage.name` contains `file.name`
+- [x] 200×200 image in 1920×1080 viewport → shown at native 1:1, not upscaled
+- [x] After load, `shownImageDimensions` in store reflects actual canvas pixel size
+- [x] Image load fails with known width/height → placeholder skeleton at correct aspect ratio
+- [x] Metadata-only source change → no loading spinner flash
+- [x] React StrictMode double-mount → only one load in progress
+- [x] `HTMLImageElement` with `.name` → name preserved in originalImage
+- [x] `keepZoomOnSourceChange={true}` + src change → zoom/pan preserved

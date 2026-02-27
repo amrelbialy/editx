@@ -77,6 +77,10 @@ export class EditorAPI {
     this.#renderer?.panTo(x + dx, y + dy);
   }
 
+  getPan(): { x: number; y: number } {
+    return this.#renderer?.getPan() ?? { x: 0, y: 0 };
+  }
+
   // --- Fitting / Centering ---
 
   fitToScreen(padding = 24) {

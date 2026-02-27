@@ -10,6 +10,7 @@ describe('useImageEditorStore', () => {
       isLoading: true,
       imageBlockId: null,
       error: null,
+      shownImageDimensions: null,
     });
   });
 
@@ -52,7 +53,7 @@ describe('useImageEditorStore', () => {
 
   describe('setOriginalImage', () => {
     it('updates originalImage', () => {
-      const info = { src: 'test.png', width: 100, height: 200 };
+      const info = { src: 'test.png', width: 100, height: 200, name: 'test' };
       useImageEditorStore.getState().setOriginalImage(info);
       expect(useImageEditorStore.getState().originalImage).toEqual(info);
     });
@@ -96,6 +97,18 @@ describe('useImageEditorStore', () => {
       useImageEditorStore.getState().setError('Network failure');
       useImageEditorStore.getState().clearError();
       expect(useImageEditorStore.getState().error).toBeNull();
+    });
+  });
+
+  describe('shownImageDimensions', () => {
+    it('is null initially', () => {
+      expect(useImageEditorStore.getState().shownImageDimensions).toBeNull();
+    });
+
+    it('setShownImageDimensions updates the dimensions', () => {
+      const dims = { width: 400, height: 300, scale: 0.5 };
+      useImageEditorStore.getState().setShownImageDimensions(dims);
+      expect(useImageEditorStore.getState().shownImageDimensions).toEqual(dims);
     });
 
     it('is a no-op when error is already null', () => {

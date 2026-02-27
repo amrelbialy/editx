@@ -5,6 +5,8 @@ import { loadImage, sourceToUrl, revokeObjectUrl } from './utils/load-image';
 import { validateImageFile, validateImageDimensions, type ImageValidationOptions } from './utils/validate-image';
 import { downscaleIfNeeded } from './utils/downscale-image';
 import { correctOrientation } from './utils/correct-orientation';
+import { isSameSource } from './utils/is-same-source';
+import { extractFilename } from './utils/extract-filename';
 import { ImageEditorToolbar } from './components/toolbar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -16,6 +18,8 @@ export interface ImageEditorProps {
   height?: string | number;
   /** Validation options for file type, size, and dimension limits. */
   validation?: ImageValidationOptions;
+  /** When true, preserve zoom/pan when src changes instead of resetting to fit-to-screen. */
+  keepZoomOnSourceChange?: boolean;
 }
 
 /**
@@ -42,29 +46,51 @@ function ensureImageReady(source: ImageSource): Promise<void> {
   return Promise.resolve();
 }
 
+/**
+ * Extract the raw URL string from a source for identity comparison.
+ * Does NOT create blob URLs — purely reads existing URLs.
+ */
+function getSourceIdentity(source: ImageSource): string | null {
+  if (typeof source === 'string') return source;
+  if (source instanceof HTMLImageElement) return source.src || null;
+  // File, Blob, Canvas → identity is by object reference, not URL
+  return null;
+}
+
 export const ImageEditor: React.FC<ImageEditorProps> = ({
   src,
   onSave,
   width = '100%',
   height = '100vh',
   validation,
+  keepZoomOnSourceChange = false,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<CreativeEngine | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [engine, setEngine] = useState<CreativeEngine | null>(null);
 
+  // --- 5.1: Source deduplication ---
+  const loadedSourceRef = useRef<ImageSource | null>(null);
+
+  // --- 5.7: Concurrent load guard ---
+  const loadingSourceIdentityRef = useRef<string | null>(null);
+
   const setOriginalImage = useImageEditorStore((s) => s.setOriginalImage);
   const setLoading = useImageEditorStore((s) => s.setLoading);
   const setImageBlockId = useImageEditorStore((s) => s.setImageBlockId);
   const setError = useImageEditorStore((s) => s.setError);
   const clearError = useImageEditorStore((s) => s.clearError);
+  const setShownImageDimensions = useImageEditorStore((s) => s.setShownImageDimensions);
   const isLoading = useImageEditorStore((s) => s.isLoading);
   const error = useImageEditorStore((s) => s.error);
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
   currentSrcRef.current = src;
+
+  // --- 5.9: Store previous zoom/pan for preservation ---
+  const prevZoomRef = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null);
 
   /** Clean up a previously created blob URL and its cache entry. */
   const cleanupBlobUrl = useCallback(() => {
@@ -79,13 +105,41 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const initEditor = useCallback(async (source: ImageSource, signal?: { disposed: boolean }) => {
     if (!containerRef.current) return;
 
+    // --- 5.1: Skip if same source already loaded ---
+    if (isSameSource(source, loadedSourceRef.current) && engineRef.current) {
+      return;
+    }
+
+    // --- 5.7: Skip if this exact source is already being loaded ---
+    const identity = getSourceIdentity(source);
+    if (identity && identity === loadingSourceIdentityRef.current) {
+      return;
+    }
+    loadingSourceIdentityRef.current = identity;
+
+    // --- 5.9: Save previous zoom/pan before destroying engine ---
+    if (keepZoomOnSourceChange && engineRef.current) {
+      prevZoomRef.current = {
+        zoom: engineRef.current.editor.getZoom(),
+        pan: engineRef.current.editor.getPan(),
+      };
+    } else {
+      prevZoomRef.current = null;
+    }
+
     // Clean up previous engine and blob URL
     engineRef.current?.dispose();
     engineRef.current = null;
     setEngine(null);
     cleanupBlobUrl();
+    loadedSourceRef.current = null;
 
-    setLoading(true);
+    // --- 5.6: Only show spinner if the URL actually changed ---
+    const prevOriginal = useImageEditorStore.getState().originalImage;
+    const isSameUrl = prevOriginal && identity && prevOriginal.src === identity;
+    if (!isSameUrl) {
+      setLoading(true);
+    }
     clearError();
 
     try {
@@ -154,10 +208,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
       if (signal?.disposed) return;
 
+      // --- 5.2 + 5.8: Extract filename ---
+      const name = extractFilename(source);
+
       setOriginalImage({
         src: imgUrl,
         width: htmlImg.naturalWidth,
         height: htmlImg.naturalHeight,
+        name,
       });
 
       const ce = await CreativeEngine.create({
@@ -179,16 +237,49 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       ce.block.appendChild(pageId, blockId);
 
       setImageBlockId(blockId);
+
+      // --- 5.9: Restore zoom/pan if keeping across source change ---
+      if (prevZoomRef.current) {
+        ce.editor.setZoom(prevZoomRef.current.zoom);
+        ce.editor.panTo(prevZoomRef.current.pan.x, prevZoomRef.current.pan.y);
+        prevZoomRef.current = null;
+      }
+
+      // --- 5.4: Compute shown image dimensions ---
+      const zoom = ce.editor.getZoom();
+      setShownImageDimensions({
+        width: workingWidth * zoom,
+        height: workingHeight * zoom,
+        scale: zoom,
+      });
+
+      loadedSourceRef.current = source;
+      loadingSourceIdentityRef.current = null;
       setLoading(false);
       setEngine(ce);
     } catch (err) {
       if (signal?.disposed) return;
+      loadingSourceIdentityRef.current = null;
       const message = err instanceof Error ? err.message : 'Failed to load image';
       console.error('[creative-editor] Init error:', message);
+
+      // --- 5.5: Graceful fallback when dimensions are known ---
+      if (typeof source === 'object' && source !== null && 'width' in source && 'height' in source) {
+        const obj = source as unknown as { width: number; height: number; src?: string };
+        if (obj.width && obj.height) {
+          setOriginalImage({
+            src: '',
+            width: obj.width,
+            height: obj.height,
+            name: extractFilename(source),
+          });
+        }
+      }
+
       setError(message);
       setLoading(false);
     }
-  }, [setOriginalImage, setLoading, setImageBlockId, setError, clearError, cleanupBlobUrl, validation]);
+  }, [setOriginalImage, setLoading, setImageBlockId, setError, clearError, cleanupBlobUrl, setShownImageDimensions, validation, keepZoomOnSourceChange]);
 
   // Initialize on mount and when src changes
   useEffect(() => {
@@ -200,10 +291,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       cleanupBlobUrl();
       engineRef.current?.dispose();
       engineRef.current = null;
+      loadedSourceRef.current = null;
+      loadingSourceIdentityRef.current = null;
     };
   }, [src, initEditor, cleanupBlobUrl]);
 
   const handleRetry = useCallback(() => {
+    // Force retry by clearing dedup ref
+    loadedSourceRef.current = null;
+    loadingSourceIdentityRef.current = null;
     initEditor(currentSrcRef.current);
   }, [initEditor]);
 
@@ -220,6 +316,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     // Try file drop first
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('image/')) {
+      // New file object — always different, clear dedup
+      loadedSourceRef.current = null;
       initEditor(file);
       return;
     }
@@ -241,6 +339,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         const blob = item.getAsFile();
         if (blob) {
           e.preventDefault();
+          // New blob object — always different, clear dedup
+          loadedSourceRef.current = null;
           initEditor(blob);
           return;
         }

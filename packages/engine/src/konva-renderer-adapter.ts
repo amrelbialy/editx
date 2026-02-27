@@ -200,7 +200,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const stageH = this.#stage.height();
     const scaleX = (stageW - opts.padding * 2) / opts.width;
     const scaleY = (stageH - opts.padding * 2) / opts.height;
-    const scale = Math.min(scaleX, scaleY);
+    // Never scale up — show small images at native 1:1 resolution
+    const scale = Math.min(scaleX, scaleY, 1);
 
     this.#zoom = scale;
     this.#pan = {
