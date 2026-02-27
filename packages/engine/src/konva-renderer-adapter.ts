@@ -16,6 +16,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #nodeMap = new Map<number, Konva.Node>();
   #zoom = 1;
   #pan = { x: 0, y: 0 };
+  #pageWidth = 1080;
+  #pageHeight = 1080;
+  #resizeObserver: ResizeObserver | null = null;
 
   // Interaction callbacks
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
@@ -97,8 +100,29 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
     this.#setupInteraction();
 
+    // Store page dimensions for re-fitting on resize
+    this.#pageWidth = pageW;
+    this.#pageHeight = pageH;
+
     // Center page on screen
     this.fitToScreen({ width: pageW, height: pageH, padding: 48 });
+
+    // Watch for container resizes and re-fit
+    this.#resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width: w, height: h } = entry.contentRect;
+        if (w > 0 && h > 0 && this.#stage) {
+          this.#stage.width(w);
+          this.#stage.height(h);
+          this.fitToScreen({
+            width: this.#pageWidth,
+            height: this.#pageHeight,
+            padding: 48,
+          });
+        }
+      }
+    });
+    this.#resizeObserver.observe(this.#rootEl);
   }
 
   // --- Block lifecycle ---
@@ -227,6 +251,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Cleanup ---
 
   dispose(): void {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
     this.#stage?.destroy();
     this.#nodeMap.clear();
     clearImageCache();
@@ -317,10 +343,37 @@ export class KonvaRendererAdapter implements RendererAdapter {
       const src = (props["image/src"] as string) ?? "";
       if (src && (imgNode as any).__loadedSrc !== src) {
         (imgNode as any).__loadedSrc = src;
-        loadImage(src).then((htmlImg) => {
-          imgNode.image(htmlImg);
-          this.#stage?.batchDraw();
-        });
+        loadImage(src)
+          .then((htmlImg) => {
+            imgNode.image(htmlImg);
+            this.#stage?.batchDraw();
+          })
+          .catch(() => {
+            // Render a placeholder "broken image" indicator
+            console.warn(
+              `[creative-editor] Failed to load image for block, showing placeholder: ${src}`
+            );
+            imgNode.image(undefined as unknown as CanvasImageSource);
+            // Draw a light-gray rect with an X as a broken-image indicator
+            imgNode.sceneFunc((context, shape) => {
+              const w = shape.width();
+              const h = shape.height();
+              context.beginPath();
+              context.rect(0, 0, w, h);
+              context.fillStrokeShape(shape);
+              // X indicator
+              context.beginPath();
+              context.moveTo(w * 0.3, h * 0.3);
+              context.lineTo(w * 0.7, h * 0.7);
+              context.moveTo(w * 0.7, h * 0.3);
+              context.lineTo(w * 0.3, h * 0.7);
+              context.strokeStyle = '#999';
+              context.lineWidth = 2;
+              context.stroke();
+            });
+            imgNode.fill('#e5e7eb');
+            this.#stage?.batchDraw();
+          });
       }
       return;
     }

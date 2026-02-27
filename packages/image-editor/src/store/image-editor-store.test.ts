@@ -9,6 +9,7 @@ describe('useImageEditorStore', () => {
       originalImage: null,
       isLoading: true,
       imageBlockId: null,
+      error: null,
     });
   });
 
@@ -27,6 +28,10 @@ describe('useImageEditorStore', () => {
 
     it('imageBlockId is null', () => {
       expect(useImageEditorStore.getState().imageBlockId).toBeNull();
+    });
+
+    it('error is null', () => {
+      expect(useImageEditorStore.getState().error).toBeNull();
     });
   });
 
@@ -70,6 +75,32 @@ describe('useImageEditorStore', () => {
       useImageEditorStore.getState().setImageBlockId(42);
       useImageEditorStore.getState().setImageBlockId(null);
       expect(useImageEditorStore.getState().imageBlockId).toBeNull();
+    });
+  });
+
+  describe('setError', () => {
+    it('sets error message', () => {
+      useImageEditorStore.getState().setError('Something went wrong');
+      expect(useImageEditorStore.getState().error).toBe('Something went wrong');
+    });
+
+    it('can set error to null', () => {
+      useImageEditorStore.getState().setError('Error');
+      useImageEditorStore.getState().setError(null);
+      expect(useImageEditorStore.getState().error).toBeNull();
+    });
+  });
+
+  describe('clearError', () => {
+    it('clears a previously set error', () => {
+      useImageEditorStore.getState().setError('Network failure');
+      useImageEditorStore.getState().clearError();
+      expect(useImageEditorStore.getState().error).toBeNull();
+    });
+
+    it('is a no-op when error is already null', () => {
+      useImageEditorStore.getState().clearError();
+      expect(useImageEditorStore.getState().error).toBeNull();
     });
   });
 });

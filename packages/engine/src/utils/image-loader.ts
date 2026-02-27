@@ -3,6 +3,10 @@ const imageCache = new Map<string, HTMLImageElement>();
 /**
  * Load an image from a URL with caching.
  * Subsequent calls with the same `src` return the cached element.
+ *
+ * If the load fails with `crossOrigin = 'anonymous'`, retries once without
+ * the crossOrigin attribute (CORS fallback). The canvas will be tainted but
+ * the image will still display. A console warning is logged in that case.
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   const cached = imageCache.get(src);
@@ -16,7 +20,20 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
       resolve(img);
     };
     img.onerror = () => {
-      reject(new Error(`Failed to load image: ${src}`));
+      // CORS fallback: retry without crossOrigin attribute
+      const fallback = new Image();
+      fallback.onload = () => {
+        console.warn(
+          `[creative-editor] Image loaded without CORS headers. ` +
+          `The canvas will be tainted and export may be blocked: ${src}`
+        );
+        imageCache.set(src, fallback);
+        resolve(fallback);
+      };
+      fallback.onerror = () => {
+        reject(new Error(`Failed to load image: ${src}`));
+      };
+      fallback.src = src;
     };
     img.src = src;
   });

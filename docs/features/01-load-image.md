@@ -124,6 +124,88 @@ Initial state:
 7. Create `image-editor-store.ts`
 8. Wire up in `apps/demo` and test
 
+## Testing Phase
+
+### Unit Tests
+
+Target: Pure logic and utilities in isolation.
+
+| Test File                                            | What to Test                                                                               | Status |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------ |
+| `engine/src/__tests__/block-defaults.test.ts`        | Image block defaults include all expected properties (`image/src`, transforms, appearance) | ✅     |
+| `engine/src/utils/load-image.test.ts`                | `loadImage()` resolves with an `HTMLImageElement` for a valid URL                          | ✅     |
+| `engine/src/utils/load-image.test.ts`                | `loadImage()` rejects for an invalid/broken URL                                            | ✅     |
+| `engine/src/utils/load-image.test.ts`                | `sourceToUrl()` returns the URL string as-is for string input                              | ✅     |
+| `engine/src/utils/load-image.test.ts`                | `sourceToUrl()` creates an object URL for `File`/`Blob` input                              | ✅     |
+| `engine/src/utils/load-image.test.ts`                | CORS fallback: retries without `crossOrigin` attribute on first failure                    | ✅     |
+| `engine/src/utils/load-image.test.ts`                | CORS fallback: succeeds on second attempt → image rendered, tainted canvas                 | ✅     |
+| `engine/src/utils/load-image.test.ts`                | CORS fallback: rejects if both attempts fail                                               | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | Store initializes with `isLoading: true`, `activeTool: 'select'`, `error: null`            | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `setOriginalImage()` updates `originalImage` with width, height, src                       | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `setError(msg)` sets `error` state to the message string                                   | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `clearError()` resets `error` back to `null`                                               | ✅     |
+| `image-editor/src/store/image-editor-store.test.ts`  | `reset()` clears error along with other state                                              | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | Accepts valid image MIME types (jpeg, png, webp, gif, svg, bmp)                            | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | Rejects non-image MIME types (text/plain, application/pdf)                                 | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | Rejects files exceeding max file size (default 50 MB)                                      | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | Returns warning for files in the warning zone (> 20 MB, < 50 MB)                           | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | Respects custom `maxFileSize`, `warnFileSize`, `acceptedTypes` options                     | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | `validateImageDimensions()` rejects images exceeding max pixels (default 16000 px)         | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | `validateImageDimensions()` warns for large images (> 8000 px)                             | ✅     |
+| `image-editor/src/utils/validate-image.test.ts`      | `validateImageDimensions()` passes for images within limits                                | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Corrects an image File and returns a canvas with correct dimensions                        | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Corrects a Blob and returns a canvas                                                       | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Returns canvas with matching width/height from `createImageBitmap`                         | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Rejects if `createImageBitmap` fails                                                       | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Calls `createImageBitmap` with `imageOrientation: 'from-image'`                            | ✅     |
+| `image-editor/src/utils/correct-orientation.test.ts` | Draws the bitmap onto a 2D canvas context                                                  | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Returns the image as-is when below the megapixel budget                                    | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Downscales images exceeding the megapixel budget (preserves aspect ratio)                  | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Uses custom `maxMegapixels` parameter                                                      | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Preserves original dimensions in result when downscaling                                   | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Returns a data URL from the offscreen canvas                                               | ✅     |
+| `image-editor/src/utils/downscale-image.test.ts`     | Handles exact boundary (25 MP) without downscaling                                         | ✅     |
+
+### Component Tests
+
+Target: React component rendering and user-facing behavior using React Testing Library.
+
+| Test File                                | What to Test                                                       | Status |
+| ---------------------------------------- | ------------------------------------------------------------------ | ------ |
+| `image-editor/src/image-editor.test.tsx` | Renders a container div and initializes the engine                 | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Shows a loading state while the image is being loaded              | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Displays the image once loaded (canvas element present)            | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Shows an error overlay when the image fails to load                | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Shows a retry button on error; retry re-triggers init              | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Cleans up engine on unmount via `dispose()`                        | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Container div has `tabIndex` for keyboard/paste events             | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Handles `dragover` event (prevents default for drop zone)          | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Handles `drop` with image file → re-initializes with dropped file  | ✅     |
+| `image-editor/src/image-editor.test.tsx` | Handles `paste` with image blob → re-initializes with pasted image | ✅     |
+
+### Integration Tests
+
+Target: Engine + Renderer working together end-to-end.
+
+| Test File                                            | What to Test                                                                                         | Status |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------ |
+| `engine/src/__tests__/image-block-rendering.test.ts` | Creating an image block and setting `image/src` triggers the renderer to create a `Konva.Image` node | ✅     |
+| `engine/src/__tests__/image-block-rendering.test.ts` | Scene dimensions match the image's natural width/height                                              | ✅     |
+| `engine/src/__tests__/image-block-rendering.test.ts` | Image block is not draggable after creation                                                          | ✅     |
+| `engine/src/__tests__/image-block-rendering.test.ts` | Image cache returns the same element for repeated loads of the same URL                              | ✅     |
+
+### Test Summary
+
+| Package        | Test Files | Tests | Status         |
+| -------------- | ---------- | ----- | -------------- |
+| `engine`       | 14         | 238   | ✅ All passing |
+| `image-editor` | 5          | 55    | ✅ All passing |
+
+### When to Run
+
+- **Unit tests**: On every save / pre-commit hook
+- **Component + Integration tests**: On every PR / before merging
+
 ## Acceptance Criteria
 
 - [x] Passing a URL to `<ImageEditor src="..." />` loads and displays the image
@@ -137,9 +219,7 @@ Initial state:
 
 ## Improvements
 
-**Status:** not started
-
-The initial implementation covers the happy path. The following improvements harden Feature 1 for real-world use, add missing input methods, handle edge cases, and fix tech debt — all before moving to Feature 2.
+**Status:** done The following improvements harden Feature 1 for real-world use, add missing input methods, handle edge cases, and fix tech debt — all before moving to Feature 2.
 
 ### Area 1: Error Handling & Loading States (Robustness)
 

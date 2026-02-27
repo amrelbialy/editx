@@ -33,6 +33,31 @@ class FailImage {
   }
 }
 
+/**
+ * A mock Image class that fails on the first attempt (with crossOrigin set)
+ * but succeeds on the second attempt (CORS fallback without crossOrigin).
+ */
+let corsFallbackCallCount = 0;
+class CORSFallbackImage {
+  crossOrigin = '';
+  private _src = '';
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  get src() { return this._src; }
+  set src(value: string) {
+    this._src = value;
+    corsFallbackCallCount++;
+    if (this.crossOrigin === 'anonymous') {
+      // First attempt with CORS → fail
+      setTimeout(() => this.onerror?.(), 0);
+    } else {
+      // Retry without CORS → succeed
+      setTimeout(() => this.onload?.(), 0);
+    }
+  }
+}
+
 describe('image-loader', () => {
   let originalImage: typeof globalThis.Image;
 
@@ -72,6 +97,39 @@ describe('image-loader', () => {
       await expect(loadImage('https://example.com/fail.png')).rejects.toThrow(
         'Failed to load image'
       );
+    });
+
+    it('retries without crossOrigin on CORS failure (fallback)', async () => {
+      corsFallbackCallCount = 0;
+      globalThis.Image = CORSFallbackImage as any;
+
+      const img = await loadImage('https://example.com/cors-fail.png');
+      expect(img).toBeDefined();
+      expect(img.src).toBe('https://example.com/cors-fail.png');
+      // Should have been called twice: once with CORS, once without
+      expect(corsFallbackCallCount).toBe(2);
+    });
+
+    it('CORS fallback image has no crossOrigin attribute', async () => {
+      corsFallbackCallCount = 0;
+      globalThis.Image = CORSFallbackImage as any;
+
+      const img = await loadImage('https://example.com/cors-no-attr.png');
+      // The fallback image should NOT have crossOrigin set
+      expect(img.crossOrigin).toBe('');
+    });
+
+    it('CORS fallback logs a console warning', async () => {
+      corsFallbackCallCount = 0;
+      globalThis.Image = CORSFallbackImage as any;
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await loadImage('https://example.com/cors-warn.png');
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('without CORS headers')
+      );
+      warnSpy.mockRestore();
     });
   });
 
