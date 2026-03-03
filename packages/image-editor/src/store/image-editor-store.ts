@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 export type ImageEditorTool = 'select' | 'crop' | 'rotate' | 'adjust' | 'filter' | 'resize' | 'shapes' | 'text' | 'pen';
 
+export type CropPresetId = 'free' | 'original' | '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
+
 export interface OriginalImageInfo {
   src: string;
   width: number;
@@ -23,33 +25,39 @@ interface ImageEditorState {
   activeTool: ImageEditorTool;
   originalImage: OriginalImageInfo | null;
   isLoading: boolean;
-  imageBlockId: number | null;
+  editableBlockId: number | null;
   error: string | null;
   /** The image dimensions as rendered on canvas (after initial fit-to-screen). */
   shownImageDimensions: ShownImageDimensions | null;
 
+  /** Current crop preset (only meaningful when activeTool === 'crop'). */
+  cropPreset: CropPresetId;
+
   setActiveTool: (tool: ImageEditorTool) => void;
   setOriginalImage: (info: OriginalImageInfo) => void;
   setLoading: (loading: boolean) => void;
-  setImageBlockId: (id: number | null) => void;
+  setEditableBlockId: (id: number | null) => void;
   setError: (msg: string | null) => void;
   clearError: () => void;
   setShownImageDimensions: (dims: ShownImageDimensions) => void;
+  setCropPreset: (preset: CropPresetId) => void;
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
   activeTool: 'select',
   originalImage: null,
   isLoading: true,
-  imageBlockId: null,
+  editableBlockId: null,
   error: null,
   shownImageDimensions: null,
+  cropPreset: 'free',
 
   setActiveTool: (tool) => set({ activeTool: tool }),
   setOriginalImage: (info) => set({ originalImage: info }),
   setLoading: (loading) => set({ isLoading: loading }),
-  setImageBlockId: (id) => set({ imageBlockId: id }),
+  setEditableBlockId: (id) => set({ editableBlockId: id }),
   setError: (msg) => set({ error: msg }),
   clearError: () => set({ error: null }),
   setShownImageDimensions: (dims) => set({ shownImageDimensions: dims }),
+  setCropPreset: (preset) => set({ cropPreset: preset }),
 }));

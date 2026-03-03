@@ -13,7 +13,6 @@ export class Engine {
   #history = new HistoryManager();
   #renderer: RendererAdapter | null;
   #dirty = new Set<number>();
-  #selection: number[] = [];
 
   #activeSceneId: number | null = null;
   #activePageId: number | null = null;
@@ -173,6 +172,7 @@ export class Engine {
 
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
+      console.log('syncing block', id, block);
       if (block) {
         this.#renderer.syncBlock(id, block);
       } else {
@@ -186,24 +186,7 @@ export class Engine {
     this.#eventApi._flush();
   }
 
-  // --- Selection ---
-
-  setSelection(ids: number[]) {
-    this.#selection = ids;
-    this.#events.emit('selection:changed', ids);
-
-    if (ids.length > 0) {
-      this.#renderer?.showTransformer(ids);
-    } else {
-      this.#renderer?.hideTransformer();
-    }
-  }
-
-  getSelection(): number[] {
-    return [...this.#selection];
-  }
-
-  // --- Legacy events (selection, stage:click, history) ---
+  // --- Events (selection, stage:click, history) ---
 
   on(event: string, cb: (...args: any[]) => void) {
     return this.#events.on(event, cb);

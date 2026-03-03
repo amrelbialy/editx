@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BlockAPI } from './block-api';
 import { Engine } from '../engine';
-import { POSITION_X, POSITION_Y, SIZE_WIDTH, SIZE_HEIGHT, OPACITY, VISIBLE, FILL_COLOR } from './property-keys';
+import { POSITION_X, POSITION_Y, SIZE_WIDTH, SIZE_HEIGHT, OPACITY, VISIBLE, FILL_COLOR, CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED, CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO, CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED } from './property-keys';
 import type { Color } from './block.types';
+import { createMockRenderer } from '../__tests__/mocks/mock-renderer';
 
 describe('BlockAPI', () => {
   let engine: Engine;
@@ -212,6 +213,368 @@ describe('BlockAPI', () => {
       const id = block.create('graphic');
       const keys = block.getPropertyKeys(id);
       expect(keys).toContain(POSITION_X);
+    });
+  });
+
+  describe('crop properties on image blocks', () => {
+    it('image block has crop defaults', () => {
+      const id = block.create('image');
+      expect(block.getFloat(id, CROP_X)).toBe(0);
+      expect(block.getFloat(id, CROP_Y)).toBe(0);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(0);
+      expect(block.getFloat(id, CROP_HEIGHT)).toBe(0);
+      expect(block.getBool(id, CROP_ENABLED)).toBe(false);
+    });
+
+    it('can set and get crop properties', () => {
+      const id = block.create('image');
+      block.setFloat(id, CROP_X, 50);
+      block.setFloat(id, CROP_Y, 30);
+      block.setFloat(id, CROP_WIDTH, 400);
+      block.setFloat(id, CROP_HEIGHT, 300);
+      block.setBool(id, CROP_ENABLED, true);
+
+      expect(block.getFloat(id, CROP_X)).toBe(50);
+      expect(block.getFloat(id, CROP_Y)).toBe(30);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(400);
+      expect(block.getFloat(id, CROP_HEIGHT)).toBe(300);
+      expect(block.getBool(id, CROP_ENABLED)).toBe(true);
+    });
+
+    it('crop property changes are undoable', () => {
+      const id = block.create('image');
+      block.setBool(id, CROP_ENABLED, true);
+      block.setFloat(id, CROP_X, 100);
+
+      engine.undo();
+      expect(block.getFloat(id, CROP_X)).toBe(0);
+
+      engine.undo();
+      expect(block.getBool(id, CROP_ENABLED)).toBe(false);
+
+      engine.redo();
+      expect(block.getBool(id, CROP_ENABLED)).toBe(true);
+    });
+
+    it('batch groups multiple crop changes into one undo step', () => {
+      const id = block.create('image');
+      engine.beginBatch();
+      block.setFloat(id, CROP_X, 10);
+      block.setFloat(id, CROP_Y, 20);
+      block.setFloat(id, CROP_WIDTH, 300);
+      block.setFloat(id, CROP_HEIGHT, 200);
+      block.setBool(id, CROP_ENABLED, true);
+      engine.endBatch();
+
+      // All changes should undo in one step
+      engine.undo();
+      expect(block.getFloat(id, CROP_X)).toBe(0);
+      expect(block.getFloat(id, CROP_Y)).toBe(0);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(0);
+      expect(block.getFloat(id, CROP_HEIGHT)).toBe(0);
+      expect(block.getBool(id, CROP_ENABLED)).toBe(false);
+    });
+  });
+
+  // ── CESDK-style Block Crop API ─────────────────────
+
+  describe('CESDK-style crop API', () => {
+    it('supportsCrop returns true for image and page blocks', () => {
+      const img = block.create('image');
+      const page = block.create('page');
+      const gfx = block.create('graphic');
+      const txt = block.create('text');
+
+      expect(block.supportsCrop(img)).toBe(true);
+      expect(block.supportsCrop(page)).toBe(true);
+      expect(block.supportsCrop(gfx)).toBe(false);
+      expect(block.supportsCrop(txt)).toBe(false);
+    });
+
+    it('hasCrop returns false when crop is not enabled', () => {
+      const img = block.create('image');
+      const page = block.create('page');
+
+      // CROP_ENABLED defaults to false, so hasCrop is false
+      expect(block.hasCrop(img)).toBe(false);
+      expect(block.hasCrop(page)).toBe(false);
+    });
+
+    it('hasCrop returns true after enabling crop', () => {
+      const img = block.create('image');
+      block.setBool(img, CROP_ENABLED, true);
+      expect(block.hasCrop(img)).toBe(true);
+    });
+
+    it('image block has extended crop defaults', () => {
+      const id = block.create('image');
+      expect(block.getCropScaleX(id)).toBe(1);
+      expect(block.getCropScaleY(id)).toBe(1);
+      expect(block.getCropRotation(id)).toBe(0);
+      expect(block.getCropScaleRatio(id)).toBe(1);
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(false);
+      expect(block.getBool(id, CROP_FLIP_VERTICAL)).toBe(false);
+      expect(block.isCropAspectRatioLocked(id)).toBe(false);
+    });
+
+    it('setCropTranslationX / getCropTranslationX', () => {
+      const id = block.create('image');
+      block.setCropTranslationX(id, 42);
+      expect(block.getCropTranslationX(id)).toBe(42);
+      // Should map to the underlying crop/x property
+      expect(block.getFloat(id, CROP_X)).toBe(42);
+    });
+
+    it('setCropTranslationY / getCropTranslationY', () => {
+      const id = block.create('image');
+      block.setCropTranslationY(id, 77);
+      expect(block.getCropTranslationY(id)).toBe(77);
+      expect(block.getFloat(id, CROP_Y)).toBe(77);
+    });
+
+    it('setCropScaleX / getCropScaleX', () => {
+      const id = block.create('image');
+      block.setCropScaleX(id, 500);
+      expect(block.getCropScaleX(id)).toBe(500);
+      expect(block.getFloat(id, CROP_SCALE_X)).toBe(500);
+    });
+
+    it('setCropScaleY / getCropScaleY', () => {
+      const id = block.create('image');
+      block.setCropScaleY(id, 300);
+      expect(block.getCropScaleY(id)).toBe(300);
+      expect(block.getFloat(id, CROP_SCALE_Y)).toBe(300);
+    });
+
+    it('setCropRotation / getCropRotation', () => {
+      const id = block.create('image');
+      block.setCropRotation(id, Math.PI / 4);
+      expect(block.getCropRotation(id)).toBe(Math.PI / 4);
+      expect(block.getFloat(id, CROP_ROTATION)).toBe(Math.PI / 4);
+    });
+
+    it('setCropScaleRatio / getCropScaleRatio', () => {
+      const id = block.create('image');
+      block.setCropScaleRatio(id, 2.5);
+      expect(block.getCropScaleRatio(id)).toBe(2.5);
+      expect(block.getFloat(id, CROP_SCALE_RATIO)).toBe(2.5);
+    });
+
+    it('flipCropHorizontal toggles the horizontal flip state', () => {
+      const id = block.create('image');
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(false);
+
+      block.flipCropHorizontal(id);
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(true);
+
+      block.flipCropHorizontal(id);
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(false);
+    });
+
+    it('flipCropVertical toggles the vertical flip state', () => {
+      const id = block.create('image');
+      expect(block.getBool(id, CROP_FLIP_VERTICAL)).toBe(false);
+
+      block.flipCropVertical(id);
+      expect(block.getBool(id, CROP_FLIP_VERTICAL)).toBe(true);
+
+      block.flipCropVertical(id);
+      expect(block.getBool(id, CROP_FLIP_VERTICAL)).toBe(false);
+    });
+
+    it('isCropAspectRatioLocked / setCropAspectRatioLocked', () => {
+      const id = block.create('image');
+      expect(block.isCropAspectRatioLocked(id)).toBe(false);
+
+      block.setCropAspectRatioLocked(id, true);
+      expect(block.isCropAspectRatioLocked(id)).toBe(true);
+
+      block.setCropAspectRatioLocked(id, false);
+      expect(block.isCropAspectRatioLocked(id)).toBe(false);
+    });
+
+    it('resetCrop resets all crop properties to defaults', () => {
+      const id = block.create('image');
+
+      // Set various crop properties
+      block.setCropTranslationX(id, 50);
+      block.setCropTranslationY(id, 30);
+      block.setFloat(id, CROP_WIDTH, 400);
+      block.setFloat(id, CROP_HEIGHT, 300);
+      block.setBool(id, CROP_ENABLED, true);
+      block.setCropScaleX(id, 2);
+      block.setCropScaleY(id, 3);
+      block.setCropRotation(id, 1.5);
+      block.setCropScaleRatio(id, 2);
+      block.flipCropHorizontal(id);
+      block.flipCropVertical(id);
+      block.setCropAspectRatioLocked(id, true);
+
+      // Reset
+      block.resetCrop(id);
+
+      // All should be back to defaults
+      expect(block.getCropTranslationX(id)).toBe(0);
+      expect(block.getCropTranslationY(id)).toBe(0);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(0);
+      expect(block.getFloat(id, CROP_HEIGHT)).toBe(0);
+      expect(block.getBool(id, CROP_ENABLED)).toBe(false);
+      expect(block.getCropScaleX(id)).toBe(1);
+      expect(block.getCropScaleY(id)).toBe(1);
+      expect(block.getCropRotation(id)).toBe(0);
+      expect(block.getCropScaleRatio(id)).toBe(1);
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(false);
+      expect(block.getBool(id, CROP_FLIP_VERTICAL)).toBe(false);
+      expect(block.isCropAspectRatioLocked(id)).toBe(false);
+    });
+
+    it('resetCrop is undoable as a single step', () => {
+      const id = block.create('image');
+      block.setCropTranslationX(id, 50);
+      block.setCropScaleX(id, 2);
+      block.flipCropHorizontal(id);
+
+      block.resetCrop(id);
+      expect(block.getCropTranslationX(id)).toBe(0);
+
+      engine.undo();
+      expect(block.getCropTranslationX(id)).toBe(50);
+      expect(block.getCropScaleX(id)).toBe(2);
+      expect(block.getBool(id, CROP_FLIP_HORIZONTAL)).toBe(true);
+    });
+
+    it('adjustCropToFillFrame sets crop to full block dimensions', () => {
+      const id = block.create('image');
+      // Image block has default size 100x100
+      block.adjustCropToFillFrame(id);
+
+      expect(block.getCropTranslationX(id)).toBe(0);
+      expect(block.getCropTranslationY(id)).toBe(0);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(100);
+      expect(block.getFloat(id, CROP_HEIGHT)).toBe(100);
+      expect(block.getBool(id, CROP_ENABLED)).toBe(true);
+    });
+
+    it('adjustCropToFillFrame is undoable as a single step', () => {
+      const id = block.create('image');
+      block.setCropTranslationX(id, 20);
+      block.setFloat(id, CROP_WIDTH, 50);
+
+      block.adjustCropToFillFrame(id);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(100);
+
+      engine.undo();
+      expect(block.getCropTranslationX(id)).toBe(20);
+      expect(block.getFloat(id, CROP_WIDTH)).toBe(50);
+    });
+
+    it('crop API methods are undoable', () => {
+      const id = block.create('image');
+      block.setCropRotation(id, Math.PI / 2);
+      block.setCropScaleRatio(id, 3);
+
+      engine.undo();
+      expect(block.getCropScaleRatio(id)).toBe(1);
+
+      engine.undo();
+      expect(block.getCropRotation(id)).toBe(0);
+
+      engine.redo();
+      expect(block.getCropRotation(id)).toBe(Math.PI / 2);
+    });
+  });
+
+  // ── Selection ──────────────────────────────────────────
+
+  describe('selection', () => {
+    it('select() selects a single block', () => {
+      const id = block.create('graphic');
+      block.select(id);
+      expect(block.isSelected(id)).toBe(true);
+      expect(block.findAllSelected()).toEqual([id]);
+    });
+
+    it('select() deselects previously selected blocks', () => {
+      const a = block.create('graphic');
+      const b = block.create('graphic');
+      block.select(a);
+      block.select(b);
+      expect(block.isSelected(a)).toBe(false);
+      expect(block.isSelected(b)).toBe(true);
+      expect(block.findAllSelected()).toEqual([b]);
+    });
+
+    it('setSelected(id, true) adds to selection', () => {
+      const a = block.create('graphic');
+      const b = block.create('graphic');
+      block.select(a);
+      block.setSelected(b, true);
+      expect(block.isSelected(a)).toBe(true);
+      expect(block.isSelected(b)).toBe(true);
+      expect(block.findAllSelected()).toEqual(expect.arrayContaining([a, b]));
+    });
+
+    it('setSelected(id, false) removes from selection', () => {
+      const a = block.create('graphic');
+      const b = block.create('graphic');
+      block.select(a);
+      block.setSelected(b, true);
+      block.setSelected(a, false);
+      expect(block.isSelected(a)).toBe(false);
+      expect(block.findAllSelected()).toEqual([b]);
+    });
+
+    it('isSelected returns false for unselected blocks', () => {
+      const id = block.create('graphic');
+      expect(block.isSelected(id)).toBe(false);
+    });
+
+    it('findAllSelected returns empty array when nothing selected', () => {
+      expect(block.findAllSelected()).toEqual([]);
+    });
+
+    it('findAllSelected returns a copy', () => {
+      const id = block.create('graphic');
+      block.select(id);
+      const sel = block.findAllSelected();
+      sel.push(999);
+      expect(block.findAllSelected()).toEqual([id]);
+    });
+
+    it('deselectAll clears all selection', () => {
+      const a = block.create('graphic');
+      const b = block.create('graphic');
+      block.select(a);
+      block.setSelected(b, true);
+      block.deselectAll();
+      expect(block.findAllSelected()).toEqual([]);
+    });
+
+    it('emits selection:changed event', () => {
+      const handler = vi.fn();
+      engine.on('selection:changed', handler);
+      const id = block.create('graphic');
+      block.select(id);
+      expect(handler).toHaveBeenCalledWith([id]);
+    });
+
+    it('calls renderer.showTransformer when selecting', () => {
+      const renderer = createMockRenderer();
+      const eng = new Engine({ renderer });
+      const b = new BlockAPI(eng);
+      const id = b.create('graphic');
+      b.select(id);
+      expect(renderer.showTransformer).toHaveBeenCalledWith([id]);
+    });
+
+    it('calls renderer.hideTransformer when deselecting all', () => {
+      const renderer = createMockRenderer();
+      const eng = new Engine({ renderer });
+      const b = new BlockAPI(eng);
+      const id = b.create('graphic');
+      b.select(id);
+      b.deselectAll();
+      expect(renderer.hideTransformer).toHaveBeenCalled();
     });
   });
 });

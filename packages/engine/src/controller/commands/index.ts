@@ -6,3 +6,6 @@ export { SetKindCommand } from './set-kind-command';
 export { DestroyBlockCommand } from './destroy-block-command';
 export { AppendChildCommand } from './append-child-command';
 export { RemoveChildCommand } from './remove-child-command';
+export { SetPageMarginsCommand } from './set-page-margins-command';
+export type { PageMargins } from './set-page-margins-command';
+export { SetPageImageCommand } from './set-page-image-command';

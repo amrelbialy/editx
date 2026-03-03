@@ -1,11 +1,12 @@
 import Konva from 'konva';
 import type { RendererAdapter } from '../render-adapter';
-import type { BlockData, Color } from '../block/block.types';
-import { PAGE_WIDTH, PAGE_HEIGHT, FILL_COLOR } from '../block/property-keys';
-import { colorToHex } from '../utils/color';
+import type { BlockData } from '../block/block.types';
+import type { CropRect } from '../utils/crop-math';
+import { PAGE_WIDTH, PAGE_HEIGHT } from '../block/property-keys';
 import { clearImageCache } from '../utils/image-loader';
 import { KonvaCamera } from './konva-camera';
 import { KonvaNodeFactory } from './konva-node-factory';
+import { KonvaCropOverlay } from './konva-crop-overlay';
 import { setupInteraction } from './konva-interaction-handler';
 
 export class KonvaRendererAdapter implements RendererAdapter {
@@ -15,11 +16,11 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #uiLayer!: Konva.Layer;
   #transformer!: Konva.Transformer;
   #selectionRect!: Konva.Rect;
-  #pageRect!: Konva.Rect;
 
   #nodeMap = new Map<number, Konva.Node>();
   #camera!: KonvaCamera;
   #nodeFactory!: KonvaNodeFactory;
+  #cropOverlay!: KonvaCropOverlay;
 
   // Interaction callbacks (set by CreativeEngine after construction)
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
@@ -29,6 +30,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     transform: { x: number; y: number; width: number; height: number; rotation: number },
   ) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
+  onCropChange?: (rect: CropRect) => void;
 
   async init(root: HTMLElement): Promise<void> {
     this.#rootEl = root;
@@ -47,20 +49,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
     // Content layer: page background + design blocks
     this.#contentLayer = new Konva.Layer();
     this.#stage.add(this.#contentLayer);
-
-    const fillColor = pageBlock.properties[FILL_COLOR];
-    this.#pageRect = new Konva.Rect({
-      x: 0,
-      y: 0,
-      width: pageW,
-      height: pageH,
-      fill:
-        fillColor && typeof fillColor === 'object'
-          ? colorToHex(fillColor as Color)
-          : '#ffffff',
-      listening: false,
-    });
-    this.#contentLayer.add(this.#pageRect);
 
     // UI layer: transformer + selection rect
     this.#uiLayer = new Konva.Layer();
@@ -89,13 +77,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
     });
     this.#uiLayer.add(this.#selectionRect);
 
-    // Wire up sub-modules
     this.#camera = new KonvaCamera(this.#stage, this.#contentLayer, this.#uiLayer);
     this.#nodeFactory = new KonvaNodeFactory(this.#stage);
+    this.#cropOverlay = new KonvaCropOverlay(
+      this.#uiLayer,
+      (rect) => { this.onCropChange?.(rect); },
+      (rect) => { this.#camera.fitToRect(rect, 24); },
+    );
 
     setupInteraction({
       stage: this.#stage,
-      pageRect: this.#pageRect,
       selectionRect: this.#selectionRect,
       uiLayer: this.#uiLayer,
       nodeMap: this.#nodeMap,
@@ -112,7 +103,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Block lifecycle ---
 
   syncBlock(id: number, block: BlockData): void {
-    if (block.type === 'scene' || block.type === 'page') return;
+    if (block.type === 'scene') return;
+    // Guard: renderer not yet initialised (createScene hasn't run)
+    if (!this.#nodeFactory) return;
 
     let node = this.#nodeMap.get(id);
 
@@ -180,11 +173,69 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!this.#stage) return;
     this.#camera.centerOnRect(rect);
   }
+  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24): void {
+    if (!this.#stage) return;
+    this.#camera.fitToRect(rect, padding);
+  }
   screenToWorld(pt: { x: number; y: number }): { x: number; y: number } {
     return this.#camera.screenToWorld(pt);
   }
   worldToScreen(pt: { x: number; y: number }): { x: number; y: number } {
     return this.#camera.worldToScreen(pt);
+  }
+
+  // --- Crop overlay ---
+
+  showCropOverlay(blockId: number, imageRect: CropRect, initialCrop?: CropRect): void {
+    // Hide the normal transformer while crop mode is active
+    this.hideTransformer();
+
+    // Temporarily expand the page node to show the full original image.
+    // After a previous crop commit the page node is sized to the cropped
+    // dimensions – we need to restore it to original size so the crop
+    // overlay aligns correctly and the user sees the full image.
+    console.log('nodeMap before showing crop overlay', this.#nodeMap);
+    const pageNode = this.#nodeMap.get(blockId);
+    if (pageNode && pageNode.getAttr('isPage')) {
+      const group = pageNode as Konva.Group;
+      const bgRect = group.children[0] as Konva.Rect;
+      const imgNode = group.children[1] as Konva.Image;
+
+      if (imgNode.visible()) {
+        imgNode.width(imageRect.width);
+        imgNode.height(imageRect.height);
+        imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
+        // Keep flip offsets consistent with the expanded size
+        if (imgNode.scaleX() < 0) imgNode.offsetX(imageRect.width);
+        if (imgNode.scaleY() < 0) imgNode.offsetY(imageRect.height);
+      }
+      bgRect.width(imageRect.width);
+      bgRect.height(imageRect.height);
+    }
+
+    this.#cropOverlay.show(imageRect, initialCrop);
+    // Redraw both content and UI layers
+    this.#stage.batchDraw();
+  }
+
+  hideCropOverlay(): void {
+    this.#cropOverlay.hide();
+  }
+
+  setCropRect(rect: CropRect): void {
+    this.#cropOverlay.setCropRect(rect);
+  }
+
+  setCropRatio(ratio: number | null): void {
+    this.#cropOverlay.setRatio(ratio);
+  }
+
+  getCropRect(): CropRect | null {
+    return this.#cropOverlay.isVisible() ? this.#cropOverlay.getCropRect() : null;
+  }
+
+  getCropImageRect(): CropRect | null {
+    return this.#cropOverlay.isVisible() ? this.#cropOverlay.getImageRect() : null;
   }
 
   // --- Render ---
@@ -196,6 +247,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Cleanup ---
 
   dispose(): void {
+    this.#cropOverlay?.destroy();
     this.#stage?.destroy();
     this.#nodeMap.clear();
     clearImageCache();

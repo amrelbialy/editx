@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { CreativeEngine, IMAGE_SRC, evictImage } from '@creative-editor/engine';
-import { useImageEditorStore } from './store/image-editor-store';
+import {
+  CreativeEngine, evictImage,
+  toPrecisedFloat,
+} from '@creative-editor/engine';
+import { useImageEditorStore, type CropPresetId, type ImageEditorTool } from './store/image-editor-store';
 import { loadImage, sourceToUrl, revokeObjectUrl } from './utils/load-image';
 import { validateImageFile, validateImageDimensions, type ImageValidationOptions } from './utils/validate-image';
 import { downscaleIfNeeded } from './utils/downscale-image';
@@ -8,6 +11,8 @@ import { correctOrientation } from './utils/correct-orientation';
 import { isSameSource } from './utils/is-same-source';
 import { extractFilename } from './utils/extract-filename';
 import { ImageEditorToolbar } from './components/toolbar';
+import { CropPanel } from './components/panels/crop-panel';
+import { CropActionBar } from './components/crop-action-bar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
 
@@ -78,12 +83,16 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   const setOriginalImage = useImageEditorStore((s) => s.setOriginalImage);
   const setLoading = useImageEditorStore((s) => s.setLoading);
-  const setImageBlockId = useImageEditorStore((s) => s.setImageBlockId);
+  const setEditableBlockId = useImageEditorStore((s) => s.setEditableBlockId);
   const setError = useImageEditorStore((s) => s.setError);
   const clearError = useImageEditorStore((s) => s.clearError);
   const setShownImageDimensions = useImageEditorStore((s) => s.setShownImageDimensions);
   const isLoading = useImageEditorStore((s) => s.isLoading);
   const error = useImageEditorStore((s) => s.error);
+  const activeTool = useImageEditorStore((s) => s.activeTool);
+  const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
+  const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
+  const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
@@ -230,13 +239,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       const pageId = ce.scene.getCurrentPage();
       if (pageId === null) return;
 
-      const blockId = ce.block.create('image');
-      ce.block.setString(blockId, IMAGE_SRC, workingUrl);
-      ce.block.setSize(blockId, workingWidth, workingHeight);
-      ce.block.setPosition(blockId, 0, 0);
-      ce.block.appendChild(pageId, blockId);
+      // Set IMAGE_SRC directly on the page — the page IS the image (page-as-image).
+      ce.block.setPageImageSrc(pageId, workingUrl);
+      // Store original image dimensions for crop re-entry.
+      ce.block.setPageImageOriginalDimensions(pageId, workingWidth, workingHeight);
 
-      setImageBlockId(blockId);
+      setEditableBlockId(pageId);
 
       // --- 5.9: Restore zoom/pan if keeping across source change ---
       if (prevZoomRef.current) {
@@ -279,7 +287,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       setError(message);
       setLoading(false);
     }
-  }, [setOriginalImage, setLoading, setImageBlockId, setError, clearError, cleanupBlobUrl, setShownImageDimensions, validation, keepZoomOnSourceChange]);
+  }, [setOriginalImage, setLoading, setEditableBlockId, setError, clearError, cleanupBlobUrl, setShownImageDimensions, validation, keepZoomOnSourceChange]);
 
   // Initialize on mount and when src changes
   useEffect(() => {
@@ -348,6 +356,94 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     }
   }, [initEditor]);
 
+  // ── Crop tool integration ───────────────────────────
+
+  /** Resolve numeric ratio from a preset ID. */
+  const resolveRatio = useCallback((presetId: CropPresetId): number | null => {
+    const originalImage = useImageEditorStore.getState().originalImage;
+    switch (presetId) {
+      case 'free': return null;
+      case 'original': return originalImage ? toPrecisedFloat(originalImage.width / originalImage.height) : null;
+      case '1:1': return 1;
+      case '4:3': return toPrecisedFloat(4 / 3);
+      case '3:4': return toPrecisedFloat(3 / 4);
+      case '16:9': return toPrecisedFloat(16 / 9);
+      case '9:16': return toPrecisedFloat(9 / 16);
+      default: return null;
+    }
+  }, []);
+
+  /** Enter crop mode on the editable block. */
+  const enterCropMode = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.editor.setEditMode('Crop', { blockId: editableBlockId });
+    setCropPreset('free');
+    setActiveTool('crop');
+  }, [editableBlockId, setCropPreset, setActiveTool]);
+
+  /** Exit crop mode and return to Transform. */
+  const exitCropMode = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    ce.editor.setEditMode('Transform');
+    ce.editor.fitToScreen();
+    setActiveTool('select');
+  }, [setActiveTool]);
+
+  /** Handle toolbar tool selection — orchestrates engine mode + store state. */
+  const handleToolChange = useCallback((tool: ImageEditorTool) => {
+    if (tool === 'crop') {
+      enterCropMode();
+    } else {
+      // If leaving crop mode, tear it down via the engine first
+      if (activeTool === 'crop') {
+        const ce = engineRef.current;
+        if (ce) {
+          ce.editor.setEditMode('Transform');
+          ce.editor.fitToScreen();
+        }
+      }
+      setActiveTool(tool);
+    }
+  }, [activeTool, enterCropMode, setActiveTool]);
+
+  /** Called when user selects a crop preset in the panel. */
+  const handleCropPresetChange = useCallback((presetId: CropPresetId) => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+
+    const ratio = resolveRatio(presetId);
+    ce.block.applyCropRatio(editableBlockId, ratio);
+  }, [resolveRatio, editableBlockId]);
+
+  /** Apply the crop: exit crop mode (auto-commits) + re-fit camera. */
+  const handleCropApply = useCallback(() => {
+    console.log('Apply crop clicked');
+    const ce = engineRef.current;
+    if (!ce) return;
+
+    // setEditMode('Transform') auto-commits the current crop overlay.
+    ce.editor.setEditMode('Transform');
+    ce.editor.fitToScreen();
+    setActiveTool('select');
+  }, [setActiveTool]);
+
+  /** Cancel crop: exit (auto-commits), then undo to discard, re-fit camera. */
+  const handleCropCancel = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+
+    // Exit crop mode (auto-commits), then undo to discard the commit.
+    ce.editor.setEditMode('Transform');
+    ce.editor.undo();
+    ce.editor.fitToScreen();
+    setActiveTool('select');
+  }, [setActiveTool]);
+
+  const isCropMode = activeTool === 'crop';
+
+  console.log('activeTool:', activeTool,isCropMode);
   return (
     <div
       style={{ width, height }}
@@ -357,9 +453,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       onPaste={handlePaste}
       tabIndex={0}
     >
-      <ImageEditorToolbar />
+      <ImageEditorToolbar onToolChange={handleToolChange} />
       <div className="flex flex-1 overflow-hidden">
-        <div ref={containerRef} className="flex-1 h-full" />
+        {isCropMode && (
+          <CropPanel onPresetChange={handleCropPresetChange} />
+        )}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div ref={containerRef} className="relative flex-1 min-h-0" />
+          {isCropMode && (
+            <CropActionBar onApply={handleCropApply} onCancel={handleCropCancel} />
+          )}
+        </div>
       </div>
 
       {/* Loading overlay */}

@@ -8,7 +8,6 @@ export interface InteractionCallbacks {
 
 export interface InteractionDeps {
   stage: Konva.Stage;
-  pageRect: Konva.Rect;
   selectionRect: Konva.Rect;
   uiLayer: Konva.Layer;
   nodeMap: Map<number, Konva.Node>;
@@ -20,8 +19,26 @@ export interface InteractionDeps {
  * Binds mouse/touch interaction events to the Konva stage:
  * click-to-select, marquee selection rectangle, and stage click.
  */
+/** Returns true if the target is a background element (stage or page background). */
+function isBackground(target: Konva.Node, stage: Konva.Stage): boolean {
+  return target === stage || target.getAttr('isPageBackground') === true;
+}
+
+/**
+ * Walk up from a clicked Konva node to find the nearest ancestor (or self)
+ * that has a `blockId` attribute. Returns null if none found.
+ */
+function findBlockNode(target: Konva.Node): Konva.Node | null {
+  let current: Konva.Node | null = target;
+  while (current) {
+    if (current.getAttr('blockId') !== undefined) return current;
+    current = current.getParent();
+  }
+  return null;
+}
+
 export function setupInteraction(deps: InteractionDeps): void {
-  const { stage, pageRect, selectionRect, uiLayer, nodeMap, camera, callbacks } = deps;
+  const { stage, selectionRect, uiLayer, nodeMap, camera, callbacks } = deps;
 
   let x1 = 0,
     y1 = 0,
@@ -35,17 +52,18 @@ export function setupInteraction(deps: InteractionDeps): void {
       return;
     }
 
-    if (e.target === stage || e.target === pageRect) {
+    if (isBackground(e.target, stage)) {
       const pos = stage.getPointerPosition();
       const worldPos = pos ? camera.screenToWorld(pos) : { x: 0, y: 0 };
       callbacks.onStageClick?.(worldPos);
       return;
     }
 
-    // Check if click was on a block node
+    // Check if click was on a block node (skip pages — they aren't selectable)
     const target = e.target as Konva.Node;
-    const blockId = target.getAttr('blockId') as number | undefined;
-    if (blockId !== undefined) {
+    const clickNode = findBlockNode(target);
+    const blockId = clickNode?.getAttr('blockId') as number | undefined;
+    if (blockId !== undefined && !clickNode?.getAttr('isPage')) {
       const shiftKey =
         (e.evt as MouseEvent).shiftKey ||
         (e.evt as MouseEvent).ctrlKey ||
@@ -56,7 +74,7 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Selection rectangle — mousedown
   stage.on('mousedown touchstart', (e) => {
-    if (e.target !== stage && e.target !== pageRect) return;
+    if (!isBackground(e.target, stage)) return;
 
     const pos = stage.getPointerPosition();
     if (!pos) return;
@@ -104,6 +122,8 @@ export function setupInteraction(deps: InteractionDeps): void {
       const selBox = selectionRect.getClientRect();
       const selectedIds: number[] = [];
       for (const [blockId, node] of nodeMap) {
+        // Skip page blocks — they aren't selectable
+        if (node.getAttr('isPage')) continue;
         if (Konva.Util.haveIntersection(selBox, node.getClientRect())) {
           selectedIds.push(blockId);
         }

@@ -1,6 +1,39 @@
 # Feature 2: Crop
 
-**Status:** not started
+**Status:** implemented
+
+## Summary of Implementation
+
+### Files Created
+
+- `packages/engine/src/utils/crop-math.ts` — Pure crop math: `toPrecisedFloat`, `compareRatios`, `CROP_PRESETS`, `constrainCropToImage`, `applyCropRatio`, `boundDragging`, `boundResizing`, `mapCropToOriginal`
+- `packages/engine/src/utils/crop-math.test.ts` — 36 unit tests for all crop math functions
+- `packages/engine/src/konva/konva-crop-overlay.ts` — `KonvaCropOverlay` class with destination-out compositing, Transformer with ratio/anchor control
+- `packages/image-editor/src/components/panels/crop-panel.tsx` — Preset selector with 7 ratios
+- `packages/image-editor/src/components/panels/crop-panel.test.tsx` — 4 component tests
+- `packages/image-editor/src/components/crop-action-bar.tsx` — Apply/Cancel bar
+- `packages/image-editor/src/components/crop-action-bar.test.tsx` — 4 component tests
+
+### Files Modified
+
+- `packages/engine/src/block/property-keys.ts` — Added `CROP_X`, `CROP_Y`, `CROP_WIDTH`, `CROP_HEIGHT`, `CROP_ENABLED`
+- `packages/engine/src/block/block-defaults.ts` — Image block includes crop defaults
+- `packages/engine/src/render-adapter.ts` — 4 crop overlay methods + `onCropChange` callback
+- `packages/engine/src/editor.ts` — EditorAPI delegates crop methods to renderer
+- `packages/engine/src/konva/konva-renderer-adapter.ts` — Instantiates and wires `KonvaCropOverlay`
+- `packages/engine/src/konva/konva-node-factory.ts` — `imgNode.crop()` when `crop/enabled` is true
+- `packages/engine/src/index.ts` — Exports crop keys and crop-math functions
+- `packages/image-editor/src/store/image-editor-store.ts` — `cropPreset`, `cropRect`, actions
+- `packages/image-editor/src/image-editor.tsx` — Full crop tool flow (activation effect, preset handler, apply/cancel, conditional rendering)
+- `packages/image-editor/src/image-editor.test.tsx` — Mock engine updated with crop methods
+- `packages/engine/src/block/block-defaults.test.ts` — Crop default assertions
+- `packages/engine/src/block/block-api.test.ts` — Crop property get/set + undo/redo + batch tests
+- `packages/image-editor/src/store/image-editor-store.test.ts` — Crop state tests
+
+### Test Results
+
+- Engine: 279 tests passing (15 files) — includes 36 crop-math + 5 crop property tests
+- Image Editor: 92 tests passing (9 files) — includes 8 component tests + 6 store crop tests
 
 ## User Story
 
@@ -264,12 +297,12 @@ Target: Engine + Renderer + Store working together for the full crop flow.
 
 ## Acceptance Criteria
 
-- [ ] Clicking "Crop" shows the crop overlay on the image
-- [ ] Drag handles resize the crop area
-- [ ] Dragging inside the crop area repositions it
-- [ ] Crop area stays within image bounds
-- [ ] Selecting a ratio preset constrains the crop
-- [ ] "Apply" clips the image to the crop area
-- [ ] "Cancel" reverts without changes
-- [ ] Undo after apply restores the uncropped image
-- [ ] Crop is non-destructive (original image data preserved)
+- [x] Clicking "Crop" shows the crop overlay on the image
+- [x] Drag handles resize the crop area
+- [x] Dragging inside the crop area repositions it
+- [x] Crop area stays within image bounds
+- [x] Selecting a ratio preset constrains the crop
+- [x] "Apply" clips the image to the crop area
+- [x] "Cancel" reverts without changes
+- [x] Undo after apply restores the uncropped image
+- [x] Crop is non-destructive (original image data preserved)

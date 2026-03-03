@@ -1,5 +1,7 @@
 export type BlockType = 'scene' | 'page' | 'graphic' | 'text' | 'image' | 'group';
 
+export type PageLayoutMode = 'VerticalStack' | 'HorizontalStack' | 'DepthStack' | 'Free';
+
 export interface Color {
   r: number;
   g: number;

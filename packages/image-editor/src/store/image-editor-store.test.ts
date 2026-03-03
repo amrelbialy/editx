@@ -8,9 +8,10 @@ describe('useImageEditorStore', () => {
       activeTool: 'select',
       originalImage: null,
       isLoading: true,
-      imageBlockId: null,
+      editableBlockId: null,
       error: null,
       shownImageDimensions: null,
+      cropPreset: 'free',
     });
   });
 
@@ -27,8 +28,8 @@ describe('useImageEditorStore', () => {
       expect(useImageEditorStore.getState().isLoading).toBe(true);
     });
 
-    it('imageBlockId is null', () => {
-      expect(useImageEditorStore.getState().imageBlockId).toBeNull();
+    it('editableBlockId is null', () => {
+      expect(useImageEditorStore.getState().editableBlockId).toBeNull();
     });
 
     it('error is null', () => {
@@ -66,16 +67,16 @@ describe('useImageEditorStore', () => {
     });
   });
 
-  describe('setImageBlockId', () => {
-    it('updates imageBlockId', () => {
-      useImageEditorStore.getState().setImageBlockId(42);
-      expect(useImageEditorStore.getState().imageBlockId).toBe(42);
+  describe('setEditableBlockId', () => {
+    it('updates editableBlockId', () => {
+      useImageEditorStore.getState().setEditableBlockId(42);
+      expect(useImageEditorStore.getState().editableBlockId).toBe(42);
     });
 
     it('can set back to null', () => {
-      useImageEditorStore.getState().setImageBlockId(42);
-      useImageEditorStore.getState().setImageBlockId(null);
-      expect(useImageEditorStore.getState().imageBlockId).toBeNull();
+      useImageEditorStore.getState().setEditableBlockId(42);
+      useImageEditorStore.getState().setEditableBlockId(null);
+      expect(useImageEditorStore.getState().editableBlockId).toBeNull();
     });
   });
 
@@ -114,6 +115,25 @@ describe('useImageEditorStore', () => {
     it('is a no-op when error is already null', () => {
       useImageEditorStore.getState().clearError();
       expect(useImageEditorStore.getState().error).toBeNull();
+    });
+  });
+
+  describe('crop state', () => {
+    it('cropPreset defaults to free', () => {
+      expect(useImageEditorStore.getState().cropPreset).toBe('free');
+    });
+
+    it('setCropPreset updates cropPreset', () => {
+      useImageEditorStore.getState().setCropPreset('4:3');
+      expect(useImageEditorStore.getState().cropPreset).toBe('4:3');
+    });
+
+    it('setCropPreset cycles through all presets', () => {
+      const presetIds = ['free', 'original', '1:1', '4:3', '3:4', '16:9', '9:16'] as const;
+      for (const id of presetIds) {
+        useImageEditorStore.getState().setCropPreset(id);
+        expect(useImageEditorStore.getState().cropPreset).toBe(id);
+      }
     });
   });
 });

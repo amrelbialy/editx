@@ -43,23 +43,22 @@ export class CreativeEngine {
     const core = new Engine({ renderer: adapter });
     const block = new BlockAPI(core);
     const editor = new EditorAPI(core);
+    editor._setBlockAPI(block);
+    // Wire up crop overlay routing: block.applyCropRatio → editor crop module
+    block._setApplyCropRatioHandler((ratio) => editor._getCrop().applyCropRatio(ratio));
     const scene = new SceneAPI(core, block);
 
     adapter.onBlockClick = (blockId, event) => {
-      const current = core.getSelection();
       if (event.shiftKey) {
-        if (current.includes(blockId)) {
-          core.setSelection(current.filter((id) => id !== blockId));
-        } else {
-          core.setSelection([...current, blockId]);
-        }
+        const selected = block.isSelected(blockId);
+        block.setSelected(blockId, !selected);
       } else {
-        core.setSelection([blockId]);
+        block.select(blockId);
       }
     };
 
     adapter.onStageClick = (worldPos) => {
-      core.setSelection([]);
+      block.deselectAll();
       core.emit('stage:click', worldPos);
     };
 

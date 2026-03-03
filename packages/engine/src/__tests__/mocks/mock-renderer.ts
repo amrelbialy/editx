@@ -18,10 +18,18 @@ export function createMockRenderer(): RendererAdapter {
     panTo: vi.fn(),
     getPan: vi.fn().mockReturnValue({ x: 0, y: 0 }),
     fitToScreen: vi.fn(),
+    fitToRect: vi.fn(),
     centerOnRect: vi.fn(),
     screenToWorld: vi.fn().mockImplementation((pt) => pt),
     worldToScreen: vi.fn().mockImplementation((pt) => pt),
     renderFrame: vi.fn(),
     dispose: vi.fn(),
+    setCursor: vi.fn(),
+    showCropOverlay: vi.fn(),
+    hideCropOverlay: vi.fn(),
+    setCropRect: vi.fn(),
+    setCropRatio: vi.fn(),
+    getCropRect: vi.fn().mockReturnValue(null),
+    getCropImageRect: vi.fn().mockReturnValue(null),
   };
 }

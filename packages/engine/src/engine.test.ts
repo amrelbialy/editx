@@ -240,43 +240,7 @@ describe('Engine', () => {
     });
   });
 
-  describe('selection', () => {
-    it('setSelection / getSelection', () => {
-      const engine = new Engine({});
-      engine.setSelection([1, 2]);
-      expect(engine.getSelection()).toEqual([1, 2]);
-    });
-
-    it('getSelection returns a copy', () => {
-      const engine = new Engine({});
-      engine.setSelection([1, 2]);
-      const sel = engine.getSelection();
-      sel.push(3);
-      expect(engine.getSelection()).toEqual([1, 2]);
-    });
-
-    it('emits selection:changed event', () => {
-      const engine = new Engine({});
-      const handler = vi.fn();
-      engine.on('selection:changed', handler);
-      engine.setSelection([5]);
-      expect(handler).toHaveBeenCalledWith([5]);
-    });
-
-    it('calls renderer.showTransformer when selecting', () => {
-      const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
-      engine.setSelection([1, 2]);
-      expect(renderer.showTransformer).toHaveBeenCalledWith([1, 2]);
-    });
-
-    it('calls renderer.hideTransformer when deselecting', () => {
-      const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
-      engine.setSelection([]);
-      expect(renderer.hideTransformer).toHaveBeenCalled();
-    });
-  });
+  // Selection tests moved to block-api.test.ts (selection is owned by BlockAPI now)
 
   describe('active scene / page', () => {
     it('setActiveScene / getActiveScene', () => {

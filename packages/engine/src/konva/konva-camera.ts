@@ -59,6 +59,25 @@ export class KonvaCamera {
     this.#applyCamera();
   }
 
+  /**
+   * Zoom and pan so that the given world-space rectangle fills the viewport
+   * with the specified padding.
+   */
+  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24): void {
+    const stageW = this.#stage.width();
+    const stageH = this.#stage.height();
+    const scaleX = (stageW - padding * 2) / rect.width;
+    const scaleY = (stageH - padding * 2) / rect.height;
+    const scale = Math.min(scaleX, scaleY);
+
+    this.#zoom = scale;
+    this.#pan = {
+      x: stageW / 2 - (rect.x + rect.width / 2) * scale,
+      y: stageH / 2 - (rect.y + rect.height / 2) * scale,
+    };
+    this.#applyCamera();
+  }
+
   screenToWorld(pt: { x: number; y: number }): { x: number; y: number } {
     return {
       x: (pt.x - this.#pan.x) / this.#zoom,

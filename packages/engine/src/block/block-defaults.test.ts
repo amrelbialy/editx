@@ -9,6 +9,9 @@ import {
   IMAGE_SRC,
   PAGE_WIDTH, PAGE_HEIGHT,
   SCENE_WIDTH, SCENE_HEIGHT,
+  CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
+  CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
+  CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED,
 } from './property-keys';
 
 const ALL_TYPES: BlockType[] = ['scene', 'page', 'graphic', 'text', 'image', 'group'];
@@ -84,6 +87,26 @@ describe('getBlockDefaults', () => {
       expect(d[IMAGE_SRC]).toBe('');
       expect(d[POSITION_X]).toBe(0);
       expect(d[OPACITY]).toBe(1);
+    });
+
+    it('has crop defaults (all zero, disabled)', () => {
+      const d = getBlockDefaults('image');
+      expect(d[CROP_X]).toBe(0);
+      expect(d[CROP_Y]).toBe(0);
+      expect(d[CROP_WIDTH]).toBe(0);
+      expect(d[CROP_HEIGHT]).toBe(0);
+      expect(d[CROP_ENABLED]).toBe(false);
+    });
+
+    it('has extended crop defaults (CESDK-style)', () => {
+      const d = getBlockDefaults('image');
+      expect(d[CROP_SCALE_X]).toBe(1);
+      expect(d[CROP_SCALE_Y]).toBe(1);
+      expect(d[CROP_ROTATION]).toBe(0);
+      expect(d[CROP_SCALE_RATIO]).toBe(1);
+      expect(d[CROP_FLIP_HORIZONTAL]).toBe(false);
+      expect(d[CROP_FLIP_VERTICAL]).toBe(false);
+      expect(d[CROP_ASPECT_RATIO_LOCKED]).toBe(false);
     });
   });
 

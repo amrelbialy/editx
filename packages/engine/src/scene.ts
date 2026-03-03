@@ -1,4 +1,10 @@
 import { BlockAPI } from './block/block-api';
+import type { PageLayoutMode } from './block/block.types';
+import {
+  SCENE_PAGE_DIMS_WIDTH, SCENE_PAGE_DIMS_HEIGHT,
+  SCENE_ASPECT_RATIO_LOCK, SCENE_LAYOUT,
+  PAGE_WIDTH, PAGE_HEIGHT,
+} from './block/property-keys';
 import { Engine } from './engine';
 
 export class SceneAPI {
@@ -18,12 +24,14 @@ export class SceneAPI {
     const sceneId = this.#block.create('scene');
     this.#block.setFloat(sceneId, 'scene/width', width);
     this.#block.setFloat(sceneId, 'scene/height', height);
+    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_WIDTH, width);
+    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_HEIGHT, height);
     this.#engine.setActiveScene(sceneId);
 
     // Create first page block
     const pageId = this.#block.create('page');
-    this.#block.setFloat(pageId, 'page/width', width);
-    this.#block.setFloat(pageId, 'page/height', height);
+    this.#block.setFloat(pageId, PAGE_WIDTH, width);
+    this.#block.setFloat(pageId, PAGE_HEIGHT, height);
     this.#block.appendChild(sceneId, pageId);
     this.#engine.setActivePage(pageId);
 
@@ -32,7 +40,10 @@ export class SceneAPI {
     const sceneBlock = store.get(sceneId);
     const pageBlock = store.get(pageId);
     if (sceneBlock && pageBlock) {
-      await this.#engine.getRenderer()?.createScene(sceneBlock, pageBlock);
+      const renderer = this.#engine.getRenderer();
+      await renderer?.createScene(sceneBlock, pageBlock);
+      // Sync the page block so the page node is rendered
+      renderer?.syncBlock(pageId, pageBlock);
     }
 
     // Clear history so scene creation isn't undoable
@@ -59,20 +70,72 @@ export class SceneAPI {
     const sceneId = this.#engine.getActiveScene();
     if (sceneId === null) throw new Error('No active scene');
 
-    const store = this.#engine.getBlockStore();
-    const sceneBlock = store.get(sceneId);
-    const width = opts.width ?? (sceneBlock?.properties['scene/width'] as number) ?? 1080;
-    const height = opts.height ?? (sceneBlock?.properties['scene/height'] as number) ?? 1080;
+    const defaults = this.getDefaultPageDimensions();
+    const width = opts.width ?? defaults.width;
+    const height = opts.height ?? defaults.height;
 
     const pageId = this.#block.create('page');
-    this.#block.setFloat(pageId, 'page/width', width);
-    this.#block.setFloat(pageId, 'page/height', height);
+    this.#block.setFloat(pageId, PAGE_WIDTH, width);
+    this.#block.setFloat(pageId, PAGE_HEIGHT, height);
     this.#block.appendChild(sceneId, pageId);
+
+    this.#engine.setActivePage(pageId);
 
     return pageId;
   }
 
   setActivePage(pageId: number): void {
     this.#engine.setActivePage(pageId);
+  }
+
+  // ── Scene-level page dimensions ──────────────────────
+
+  /**
+   * Sets the default page dimensions for the scene.
+   * New pages inherit these dimensions.
+   */
+  setDefaultPageDimensions(width: number, height: number): void {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error('No active scene');
+    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_WIDTH, width);
+    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_HEIGHT, height);
+  }
+
+  /** Gets the default page dimensions from the scene. */
+  getDefaultPageDimensions(): { width: number; height: number } {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) return { width: 1080, height: 1080 };
+    return {
+      width: this.#block.getFloat(sceneId, SCENE_PAGE_DIMS_WIDTH) || 1080,
+      height: this.#block.getFloat(sceneId, SCENE_PAGE_DIMS_HEIGHT) || 1080,
+    };
+  }
+
+  /** Sets whether the scene's aspect ratio should be locked. */
+  setAspectRatioLock(locked: boolean): void {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error('No active scene');
+    this.#block.setBool(sceneId, SCENE_ASPECT_RATIO_LOCK, locked);
+  }
+
+  /** Gets whether the scene's aspect ratio is locked. */
+  isAspectRatioLocked(): boolean {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) return false;
+    return this.#block.getBool(sceneId, SCENE_ASPECT_RATIO_LOCK);
+  }
+
+  /** Sets the page layout mode for the scene. */
+  setPageLayout(layout: PageLayoutMode): void {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error('No active scene');
+    this.#block.setString(sceneId, SCENE_LAYOUT, layout);
+  }
+
+  /** Gets the current page layout mode. */
+  getPageLayout(): PageLayoutMode {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) return 'Free';
+    return (this.#block.getString(sceneId, SCENE_LAYOUT) || 'Free') as PageLayoutMode;
   }
 }

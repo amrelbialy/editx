@@ -12,16 +12,20 @@ const tools: { id: ImageEditorTool; label: string; icon: string }[] = [
   { id: 'pen', label: 'Draw', icon: '✎' },
 ];
 
-export const ImageEditorToolbar: React.FC = () => {
+export interface ImageEditorToolbarProps {
+  /** Called when the user clicks a tool button. Parent decides how to handle mode transitions. */
+  onToolChange?: (tool: ImageEditorTool) => void;
+}
+
+export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({ onToolChange }) => {
   const activeTool = useImageEditorStore((s) => s.activeTool);
-  const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
 
   return (
     <div className="flex items-center gap-1 px-4 py-2 bg-gray-800 border-b border-gray-700">
       {tools.map((tool) => (
         <button
           key={tool.id}
-          onClick={() => setActiveTool(tool.id)}
+          onClick={() => onToolChange?.(tool.id)}
           className={`
             flex flex-col items-center px-3 py-1.5 rounded text-xs transition-colors
             ${activeTool === tool.id
