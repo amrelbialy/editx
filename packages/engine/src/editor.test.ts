@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Engine } from './engine';
-import { EditorAPI } from './editor';
+import { EditorAPI } from './editor/editor-api';
 import { BlockAPI } from './block/block-api';
 import { CreateBlockCommand, SetPropertyCommand } from './controller/commands';
 import { createMockRenderer } from './__tests__/mocks/mock-renderer';
