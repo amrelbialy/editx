@@ -12,6 +12,7 @@ import { isSameSource } from './utils/is-same-source';
 import { extractFilename } from './utils/extract-filename';
 import { ImageEditorToolbar } from './components/toolbar';
 import { CropPanel } from './components/panels/crop-panel';
+import { RotatePanel } from './components/panels/rotate-panel';
 import { CropActionBar } from './components/crop-action-bar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -93,6 +94,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
+
+  // --- Rotate & Flip local state (read from engine, updated on actions) ---
+  const [rotationState, setRotationState] = useState({ rotation: 0, flipH: false, flipV: false });
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
@@ -391,6 +395,19 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     setActiveTool('select');
   }, [setActiveTool]);
 
+  // --- Rotate & Flip helpers ---
+
+  /** Read rotation/flip state from engine into local state. */
+  const syncRotationState = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    setRotationState({
+      rotation: ce.block.getImageRotation(editableBlockId),
+      flipH: ce.block.isCropFlippedHorizontal(editableBlockId),
+      flipV: ce.block.isCropFlippedVertical(editableBlockId),
+    });
+  }, [editableBlockId]);
+
   /** Handle toolbar tool selection — orchestrates engine mode + store state. */
   const handleToolChange = useCallback((tool: ImageEditorTool) => {
     if (tool === 'crop') {
@@ -405,8 +422,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         }
       }
       setActiveTool(tool);
+
+      // Sync rotation state when entering rotate mode
+      if (tool === 'rotate') {
+        syncRotationState();
+      }
     }
-  }, [activeTool, enterCropMode, setActiveTool]);
+  }, [activeTool, enterCropMode, setActiveTool, syncRotationState]);
 
   /** Called when user selects a crop preset in the panel. */
   const handleCropPresetChange = useCallback((presetId: CropPresetId) => {
@@ -419,7 +441,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   /** Apply the crop: exit crop mode (auto-commits) + re-fit camera. */
   const handleCropApply = useCallback(() => {
-    console.log('Apply crop clicked');
     const ce = engineRef.current;
     if (!ce) return;
 
@@ -441,9 +462,54 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     setActiveTool('select');
   }, [setActiveTool]);
 
-  const isCropMode = activeTool === 'crop';
+  const handleRotationChange = useCallback((angle: number) => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.setImageRotation(editableBlockId, angle);
+    setRotationState((prev) => ({ ...prev, rotation: angle }));
+  }, [editableBlockId]);
 
-  console.log('activeTool:', activeTool,isCropMode);
+  const handleRotateClockwise = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.rotateClockwise(editableBlockId);
+    ce.editor.fitToScreen();
+    syncRotationState();
+  }, [editableBlockId, syncRotationState]);
+
+  const handleRotateCounterClockwise = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.rotateCounterClockwise(editableBlockId);
+    ce.editor.fitToScreen();
+    syncRotationState();
+  }, [editableBlockId, syncRotationState]);
+
+  const handleFlipHorizontal = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.flipCropHorizontal(editableBlockId);
+    setRotationState((prev) => ({ ...prev, flipH: !prev.flipH }));
+  }, [editableBlockId]);
+
+  const handleFlipVertical = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.flipCropVertical(editableBlockId);
+    setRotationState((prev) => ({ ...prev, flipV: !prev.flipV }));
+  }, [editableBlockId]);
+
+  const handleRotateReset = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    ce.block.resetRotationAndFlip(editableBlockId);
+    ce.editor.fitToScreen();
+    setRotationState({ rotation: 0, flipH: false, flipV: false });
+  }, [editableBlockId]);
+
+  const isCropMode = activeTool === 'crop';
+  const isRotateMode = activeTool === 'rotate';
+
   return (
     <div
       style={{ width, height }}
@@ -457,6 +523,19 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       <div className="flex flex-1 overflow-hidden">
         {isCropMode && (
           <CropPanel onPresetChange={handleCropPresetChange} />
+        )}
+        {isRotateMode && (
+          <RotatePanel
+            rotation={rotationState.rotation}
+            flipH={rotationState.flipH}
+            flipV={rotationState.flipV}
+            onRotationChange={handleRotationChange}
+            onRotateClockwise={handleRotateClockwise}
+            onRotateCounterClockwise={handleRotateCounterClockwise}
+            onFlipHorizontal={handleFlipHorizontal}
+            onFlipVertical={handleFlipVertical}
+            onReset={handleRotateReset}
+          />
         )}
         <div className="flex flex-col flex-1 overflow-hidden">
           <div ref={containerRef} className="relative flex-1 min-h-0" />

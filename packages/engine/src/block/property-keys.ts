@@ -28,6 +28,7 @@ export const FONT_FAMILY = 'text/fontFamily' as const;
 export const IMAGE_SRC = 'image/src' as const;
 export const IMAGE_ORIGINAL_WIDTH = 'image/originalWidth' as const;
 export const IMAGE_ORIGINAL_HEIGHT = 'image/originalHeight' as const;
+export const IMAGE_ROTATION = 'image/rotation' as const;
 
 // ── Crop ─────────────────────────────────────────────
 export const CROP_X = 'crop/x' as const;

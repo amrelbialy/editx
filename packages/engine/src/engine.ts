@@ -172,7 +172,6 @@ export class Engine {
 
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
-      console.log('syncing block', id, block);
       if (block) {
         this.#renderer.syncBlock(id, block);
       } else {

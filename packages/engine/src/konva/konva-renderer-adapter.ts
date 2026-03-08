@@ -186,15 +186,17 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   // --- Crop overlay ---
 
-  showCropOverlay(blockId: number, imageRect: CropRect, initialCrop?: CropRect): void {
+  showCropOverlay(
+    blockId: number,
+    imageRect: CropRect,
+    initialCrop?: CropRect,
+    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+  ): void {
     // Hide the normal transformer while crop mode is active
     this.hideTransformer();
 
-    // Temporarily expand the page node to show the full original image.
-    // After a previous crop commit the page node is sized to the cropped
-    // dimensions – we need to restore it to original size so the crop
-    // overlay aligns correctly and the user sees the full image.
-    console.log('nodeMap before showing crop overlay', this.#nodeMap);
+    // Expand the page node to show the full original image while keeping
+    // rotation/flip intact — the crop overlay works in visual (rotated) space.
     const pageNode = this.#nodeMap.get(blockId);
     if (pageNode && pageNode.getAttr('isPage')) {
       const group = pageNode as Konva.Group;
@@ -202,12 +204,30 @@ export class KonvaRendererAdapter implements RendererAdapter {
       const imgNode = group.children[1] as Konva.Image;
 
       if (imgNode.visible()) {
-        imgNode.width(imageRect.width);
-        imgNode.height(imageRect.height);
+        // Use explicit rotation from block store (always up-to-date)
+        const rotation = transform?.rotation ?? 0;
+        const flipH = transform?.flipH ?? false;
+        const flipV = transform?.flipV ?? false;
+
+        // Source (pre-rotation) image dimensions — passed explicitly from the editor
+        const sourceW = transform?.sourceWidth ?? imageRect.width;
+        const sourceH = transform?.sourceHeight ?? imageRect.height;
+
+        // Apply rotation and flip from block state
+        imgNode.rotation(rotation);
+        imgNode.scaleX(flipH ? -1 : 1);
+        imgNode.scaleY(flipV ? -1 : 1);
+
+        // Render full source image (clear any previous Konva crop)
+        imgNode.width(sourceW);
+        imgNode.height(sourceH);
         imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
-        // Keep flip offsets consistent with the expanded size
-        if (imgNode.scaleX() < 0) imgNode.offsetX(imageRect.width);
-        if (imgNode.scaleY() < 0) imgNode.offsetY(imageRect.height);
+
+        // Re-center rotation/flip within the visual bounds
+        imgNode.offsetX(sourceW / 2);
+        imgNode.offsetY(sourceH / 2);
+        imgNode.x(imageRect.width / 2);
+        imgNode.y(imageRect.height / 2);
       }
       bgRect.width(imageRect.width);
       bgRect.height(imageRect.height);

@@ -10,6 +10,7 @@ import {
   PAGE_WIDTH, PAGE_HEIGHT,
   IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
   CROP_ENABLED, CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT,
+  IMAGE_ROTATION, CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
 } from './block/property-keys';
 
 describe('EditorAPI — Edit Mode Management', () => {
@@ -231,6 +232,7 @@ describe('EditorAPI — Edit Mode Management', () => {
         blockId,
         { x: 0, y: 0, width: 200, height: 100 },
         undefined,
+        { rotation: 0, flipH: false, flipV: false, sourceWidth: 200, sourceHeight: 100 },
       );
     });
 
@@ -453,6 +455,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
       pageId,
       { x: 0, y: 0, width: 1920, height: 1080 },
       { x: 100, y: 50, width: 960, height: 540 },
+      { rotation: 0, flipH: false, flipV: false, sourceWidth: 1920, sourceHeight: 1080 },
     );
   });
 
@@ -472,7 +475,61 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
       pageId,
       { x: 0, y: 0, width: 500, height: 500 },
       undefined,
+      { rotation: 0, flipH: false, flipV: false, sourceWidth: 500, sourceHeight: 500 },
     );
+  });
+
+  it('setupCropOverlay swaps imageRect dims after 90° rotation', () => {
+    const store = engine.getBlockStore();
+    // Create a portrait page with original dims 640×960
+    const pageId = createPageWithImage(640, 960);
+
+    // Rotate 90° CW — swaps PAGE_WIDTH/HEIGHT to 960×640
+    block.rotateClockwise(pageId);
+
+    expect(store.getFloat(pageId, IMAGE_ROTATION)).toBe(90);
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(960);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(640);
+
+    // Enter crop mode
+    block.select(pageId);
+    vi.mocked(renderer.showCropOverlay).mockClear();
+    editor.setEditMode('Crop');
+
+    // Should show overlay with VISUAL (rotated) dims 960×640, NOT source 640×960
+    expect(renderer.showCropOverlay).toHaveBeenCalledWith(
+      pageId,
+      { x: 0, y: 0, width: 960, height: 640 },
+      undefined,
+      { rotation: 90, flipH: false, flipV: false, sourceWidth: 640, sourceHeight: 960 },
+    );
+  });
+
+  it('setupCropOverlay transforms existing crop to visual space after rotation', () => {
+    const store = engine.getBlockStore();
+    const pageId = createPageWithImage(640, 960);
+
+    // Simulate: previous crop in source space, then rotation
+    store.setProperty(pageId, IMAGE_ROTATION, 90);
+    store.setProperty(pageId, PAGE_WIDTH, 960);
+    store.setProperty(pageId, PAGE_HEIGHT, 640);
+    store.setProperty(pageId, CROP_ENABLED, true);
+    // Source crop rect: x=0, y=0, w=640, h=480 in pre-rotation space
+    store.setProperty(pageId, CROP_X, 0);
+    store.setProperty(pageId, CROP_Y, 0);
+    store.setProperty(pageId, CROP_WIDTH, 640);
+    store.setProperty(pageId, CROP_HEIGHT, 480);
+
+    block.select(pageId);
+    vi.mocked(renderer.showCropOverlay).mockClear();
+    editor.setEditMode('Crop');
+
+    // Verify the overlay was called with visual-space imageRect (960×640)
+    const call = vi.mocked(renderer.showCropOverlay).mock.calls[0];
+    expect(call[1]).toEqual({ x: 0, y: 0, width: 960, height: 640 });
+    // Initial crop should be transformed to visual space (non-undefined)
+    expect(call[2]).toBeDefined();
+    expect(call[3]).toEqual({ rotation: 90, flipH: false, flipV: false, sourceWidth: 640, sourceHeight: 960 });
   });
 
   it('block.resetCrop restores page to original dimensions', () => {
@@ -545,5 +602,147 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(607);
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
+  });
+});
+
+describe('BlockAPI — Image Rotation & Flip', () => {
+  let engine: Engine;
+  let block: BlockAPI;
+  let editor: EditorAPI;
+  let renderer: RendererAdapter;
+  let pageId: number;
+
+  beforeEach(() => {
+    renderer = createMockRenderer();
+    engine = new Engine({ renderer });
+    block = new BlockAPI(engine);
+    editor = new EditorAPI(engine);
+    editor._setBlockAPI(block);
+
+    // Create a page (1920 × 1080 landscape image)
+    const store = engine.getBlockStore();
+    const cmd = new CreateBlockCommand(store, 'page');
+    engine.exec(cmd);
+    pageId = cmd.getCreatedId()!;
+    store.setProperty(pageId, PAGE_WIDTH, 1920);
+    store.setProperty(pageId, PAGE_HEIGHT, 1080);
+    store.setProperty(pageId, IMAGE_SRC, 'test.jpg');
+    store.setProperty(pageId, IMAGE_ORIGINAL_WIDTH, 1920);
+    store.setProperty(pageId, IMAGE_ORIGINAL_HEIGHT, 1080);
+  });
+
+  // --- setImageRotation / getImageRotation ---
+
+  it('default image rotation is 0', () => {
+    expect(block.getImageRotation(pageId)).toBe(0);
+  });
+
+  it('sets and gets arbitrary rotation', () => {
+    block.setImageRotation(pageId, 45);
+    expect(block.getImageRotation(pageId)).toBe(45);
+  });
+
+  it('clamps rotation to [-180, 180]', () => {
+    block.setImageRotation(pageId, 200);
+    expect(block.getImageRotation(pageId)).toBe(180);
+
+    block.setImageRotation(pageId, -270);
+    expect(block.getImageRotation(pageId)).toBe(-180);
+  });
+
+  // --- rotateClockwise ---
+
+  it('rotateClockwise rotates by +90° and swaps page dims', () => {
+    block.rotateClockwise(pageId);
+    const store = engine.getBlockStore();
+    expect(block.getImageRotation(pageId)).toBe(90);
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
+  });
+
+  it('rotateClockwise wraps from 90→180 without dim swap', () => {
+    block.rotateClockwise(pageId);
+    block.rotateClockwise(pageId);
+    const store = engine.getBlockStore();
+    // 180° normalizes to -180 or 180
+    const rot = block.getImageRotation(pageId);
+    expect(Math.abs(rot)).toBe(180);
+    // After two CW 90° rotations, dims should be back to original
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1920);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
+  });
+
+  it('rotateClockwise is undoable as a single batch', () => {
+    block.rotateClockwise(pageId);
+    expect(block.getImageRotation(pageId)).toBe(90);
+
+    editor.undo();
+    expect(block.getImageRotation(pageId)).toBe(0);
+    const store = engine.getBlockStore();
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1920);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
+  });
+
+  // --- rotateCounterClockwise ---
+
+  it('rotateCounterClockwise rotates by -90° and swaps page dims', () => {
+    block.rotateCounterClockwise(pageId);
+    const store = engine.getBlockStore();
+    expect(block.getImageRotation(pageId)).toBe(-90);
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
+  });
+
+  // --- flipCropHorizontal / flipCropVertical ---
+
+  it('flipCropHorizontal toggles the flip flag', () => {
+    const store = engine.getBlockStore();
+    expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
+
+    block.flipCropHorizontal(pageId);
+    expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(true);
+
+    block.flipCropHorizontal(pageId);
+    expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
+  });
+
+  it('flipCropVertical toggles the flip flag', () => {
+    const store = engine.getBlockStore();
+    expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
+
+    block.flipCropVertical(pageId);
+    expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(true);
+
+    block.flipCropVertical(pageId);
+    expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
+  });
+
+  // --- resetRotationAndFlip ---
+
+  it('resetRotationAndFlip restores everything to defaults', () => {
+    block.rotateClockwise(pageId);
+    block.flipCropHorizontal(pageId);
+    block.flipCropVertical(pageId);
+
+    block.resetRotationAndFlip(pageId);
+    const store = engine.getBlockStore();
+    expect(block.getImageRotation(pageId)).toBe(0);
+    expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
+    expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
+    // Dims restored from original image size
+    expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1920);
+    expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
+  });
+
+  it('resetRotationAndFlip is undoable as a single batch', () => {
+    block.rotateClockwise(pageId);
+    block.flipCropHorizontal(pageId);
+
+    block.resetRotationAndFlip(pageId);
+    expect(block.getImageRotation(pageId)).toBe(0);
+
+    editor.undo();
+    expect(block.getImageRotation(pageId)).toBe(90);
+    expect(engine.getBlockStore().getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(true);
   });
 });

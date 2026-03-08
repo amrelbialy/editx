@@ -13,11 +13,12 @@ import {
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED,
   PAGE_WIDTH, PAGE_HEIGHT,
-  IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT, IMAGE_ROTATION,
   PAGE_MARGIN_ENABLED, PAGE_MARGIN_TOP, PAGE_MARGIN_BOTTOM,
   PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
   FILL_COLOR,
 } from './property-keys';
+import { normalizeRotation } from '../utils/rotation-math';
 
 export class BlockAPI {
   #engine: Engine;
@@ -378,10 +379,20 @@ export class BlockAPI {
     this.setBool(id, CROP_FLIP_HORIZONTAL, !current);
   }
 
+  /** Returns true if the content is flipped horizontally. */
+  isCropFlippedHorizontal(id: number): boolean {
+    return this.getBool(id, CROP_FLIP_HORIZONTAL);
+  }
+
   /** Flips the content vertically within its crop frame. */
   flipCropVertical(id: number): void {
     const current = this.getBool(id, CROP_FLIP_VERTICAL);
     this.setBool(id, CROP_FLIP_VERTICAL, !current);
+  }
+
+  /** Returns true if the content is flipped vertically. */
+  isCropFlippedVertical(id: number): boolean {
+    return this.getBool(id, CROP_FLIP_VERTICAL);
   }
 
   /** Checks if the crop aspect ratio is locked for a block. */
@@ -477,5 +488,87 @@ export class BlockAPI {
       bottom: this.getFloat(id, PAGE_MARGIN_BOTTOM),
       left: this.getFloat(id, PAGE_MARGIN_LEFT),
     };
+  }
+
+  // ── Image Rotation & Flip ────────────────────────────
+
+  /**
+   * Set the image rotation on the given block.
+   * Value is clamped to [-180, 180].
+   */
+  setImageRotation(id: number, angleDeg: number): void {
+    const clamped = Math.max(-180, Math.min(180, angleDeg));
+    this.setFloat(id, IMAGE_ROTATION, clamped);
+  }
+
+  /** Get the current image rotation in degrees. */
+  getImageRotation(id: number): number {
+    return this.getFloat(id, IMAGE_ROTATION);
+  }
+
+  /**
+   * Rotate the image clockwise by 90°.
+   * Swaps page dimensions for page blocks. Single undo batch.
+   */
+  rotateClockwise(id: number): void {
+    const current = this.getFloat(id, IMAGE_ROTATION);
+    const newAngle = normalizeRotation(current + 90);
+
+    this.#engine.beginBatch();
+    this.setFloat(id, IMAGE_ROTATION, newAngle);
+
+    // Swap page dimensions for page blocks
+    const blockType = this.getType(id);
+    if (blockType === 'page') {
+      const pageW = this.getFloat(id, PAGE_WIDTH);
+      const pageH = this.getFloat(id, PAGE_HEIGHT);
+      this.setFloat(id, PAGE_WIDTH, pageH);
+      this.setFloat(id, PAGE_HEIGHT, pageW);
+    }
+    this.#engine.endBatch();
+  }
+
+  /**
+   * Rotate the image counter-clockwise by 90°.
+   * Swaps page dimensions for page blocks. Single undo batch.
+   */
+  rotateCounterClockwise(id: number): void {
+    const current = this.getFloat(id, IMAGE_ROTATION);
+    const newAngle = normalizeRotation(current - 90);
+
+    this.#engine.beginBatch();
+    this.setFloat(id, IMAGE_ROTATION, newAngle);
+
+    const blockType = this.getType(id);
+    if (blockType === 'page') {
+      const pageW = this.getFloat(id, PAGE_WIDTH);
+      const pageH = this.getFloat(id, PAGE_HEIGHT);
+      this.setFloat(id, PAGE_WIDTH, pageH);
+      this.setFloat(id, PAGE_HEIGHT, pageW);
+    }
+    this.#engine.endBatch();
+  }
+
+  /**
+   * Reset rotation and flip to defaults.
+   * Single undo batch.
+   */
+  resetRotationAndFlip(id: number): void {
+    this.#engine.beginBatch();
+    this.setFloat(id, IMAGE_ROTATION, 0);
+    this.setBool(id, CROP_FLIP_HORIZONTAL, false);
+    this.setBool(id, CROP_FLIP_VERTICAL, false);
+
+    // Restore page dimensions from original image dims if available
+    const blockType = this.getType(id);
+    if (blockType === 'page') {
+      const origW = this.getFloat(id, IMAGE_ORIGINAL_WIDTH);
+      const origH = this.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
+      if (origW > 0 && origH > 0) {
+        this.setFloat(id, PAGE_WIDTH, origW);
+        this.setFloat(id, PAGE_HEIGHT, origH);
+      }
+    }
+    this.#engine.endBatch();
   }
 }

@@ -63,7 +63,12 @@ export interface RendererAdapter {
   //
   // Crop overlay
   //
-  showCropOverlay(blockId: number, imageRect: CropRect, initialCrop?: CropRect): void;
+  showCropOverlay(
+    blockId: number,
+    imageRect: CropRect,
+    initialCrop?: CropRect,
+    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+  ): void;
   hideCropOverlay(): void;
   setCropRect(rect: CropRect): void;
   setCropRatio(ratio: number | null): void;

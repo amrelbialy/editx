@@ -3,10 +3,13 @@ import type { CropRect } from '../utils/crop-math';
 import { SetPropertyCommand } from '../controller/commands';
 import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
+  CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
   SIZE_WIDTH, SIZE_HEIGHT,
   PAGE_WIDTH, PAGE_HEIGHT,
   IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_ROTATION,
 } from '../block/property-keys';
+import { normalizeRotation, getSizeAfterRotation, sourceCropToVisual, visualCropToSource } from '../utils/rotation-math';
 
 /**
  * Internal crop module — manages the crop overlay lifecycle and auto-commit.
@@ -45,15 +48,13 @@ export class EditorCrop {
   setupCropOverlay(blockId: number): CropRect | null {
     const store = this.#ctx.engine.getBlockStore();
     const block = store.get(blockId);
-    console.log('setting up crop overlay for block', blockId, block);
     if (!block) return null;
 
     this.#cropBlockId = blockId;
 
     const blockType = store.getType(blockId);
 
-    // Use original image dimensions if available (set on image load).
-    // This ensures re-entering crop after a commit shows the full original image.
+    // Source (pre-rotation) image dimensions
     const origW = store.getFloat(blockId, IMAGE_ORIGINAL_WIDTH);
     const origH = store.getFloat(blockId, IMAGE_ORIGINAL_HEIGHT);
 
@@ -71,23 +72,36 @@ export class EditorCrop {
       imgH = store.getFloat(blockId, SIZE_HEIGHT);
     }
 
-    const imageRect: CropRect = { x: 0, y: 0, width: imgW, height: imgH };
-    console.log('determined image rect for crop overlay', imageRect);
+    // Current rotation & flip
+    const rotation = store.getFloat(blockId, IMAGE_ROTATION);
+    const flipH = store.getBool(blockId, CROP_FLIP_HORIZONTAL);
+    const flipV = store.getBool(blockId, CROP_FLIP_VERTICAL);
+
+    // Compute visual (post-rotation) full-image bounds for the overlay.
+    // For exact 90°/270°, swap W↔H. For arbitrary angles, compute the AABB.
+    const { width: visualW, height: visualH } = getSizeAfterRotation(imgW, imgH, rotation);
+    const imageRect: CropRect = { x: 0, y: 0, width: visualW, height: visualH };
+
+    // Existing crop is stored in source space — transform to visual space
     const cropEnabled = store.getBool(blockId, CROP_ENABLED);
     const cropX = store.getFloat(blockId, CROP_X);
     const cropY = store.getFloat(blockId, CROP_Y);
     const cropW = store.getFloat(blockId, CROP_WIDTH);
     const cropH = store.getFloat(blockId, CROP_HEIGHT);
 
-    const initialCrop = cropEnabled && cropW > 0 && cropH > 0
-      ? { x: cropX, y: cropY, width: cropW, height: cropH }
-      : undefined;
+    let initialCrop: CropRect | undefined;
+    if (cropEnabled && cropW > 0 && cropH > 0) {
+      initialCrop = sourceCropToVisual(
+        { x: cropX, y: cropY, width: cropW, height: cropH },
+        imgW, imgH, rotation, flipH, flipV,
+      );
+    }
 
-    console.log('block crop properties', { blockId, cropEnabled, cropX, cropY, cropW, cropH });
-    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop);
+    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, {
+      rotation, flipH, flipV, sourceWidth: imgW, sourceHeight: imgH,
+    });
 
     // Fit the camera to the crop area (or the full image when no crop exists)
-    // so the viewport shows the relevant region (img.ly-style).
     const fitRect = initialCrop ?? imageRect;
     this.#ctx.renderer?.fitToRect(fitRect, 24);
 
@@ -128,31 +142,85 @@ export class EditorCrop {
   #commitCropToBlock(): CropRect | null {
     const id = this.#cropBlockId;
     if (id === null) return null;
-    const rect = this.#ctx.renderer?.getCropRect() ?? null;
-    if (!rect) return null;
-    console.log('auto-committing crop for block', id, rect);
+    const visualRect = this.#ctx.renderer?.getCropRect() ?? null;
+    if (!visualRect) return null;
     const store = this.#ctx.engine.getBlockStore();
     const engine = this.#ctx.engine;
-    engine.beginBatch();
-    engine.exec(new SetPropertyCommand(store, id, CROP_X, rect.x));
-    engine.exec(new SetPropertyCommand(store, id, CROP_Y, rect.y));
-    engine.exec(new SetPropertyCommand(store, id, CROP_WIDTH, rect.width));
-    engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, rect.height));
-    engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, true));
-    // Resize page to match the crop dimensions (img.ly-style crop)
+
+    // Source image dimensions
+    const origW = store.getFloat(id, IMAGE_ORIGINAL_WIDTH);
+    const origH = store.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
     const blockType = store.getType(id);
+    let imgW: number, imgH: number;
+    if (origW > 0 && origH > 0) {
+      imgW = origW; imgH = origH;
+    } else if (blockType === 'page') {
+      imgW = store.getFloat(id, PAGE_WIDTH);
+      imgH = store.getFloat(id, PAGE_HEIGHT);
+    } else {
+      imgW = store.getFloat(id, SIZE_WIDTH);
+      imgH = store.getFloat(id, SIZE_HEIGHT);
+    }
+
+    // Transform visual crop rect back to source-image space for Konva .crop()
+    const rotation = store.getFloat(id, IMAGE_ROTATION);
+    const flipH = store.getBool(id, CROP_FLIP_HORIZONTAL);
+    const flipV = store.getBool(id, CROP_FLIP_VERTICAL);
+    const sourceRect = visualCropToSource(visualRect, imgW, imgH, rotation, flipH, flipV);
+
+    engine.beginBatch();
+    engine.exec(new SetPropertyCommand(store, id, CROP_X, sourceRect.x));
+    engine.exec(new SetPropertyCommand(store, id, CROP_Y, sourceRect.y));
+    engine.exec(new SetPropertyCommand(store, id, CROP_WIDTH, sourceRect.width));
+    engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, sourceRect.height));
+    engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, true));
+    // Page dimensions = visual crop dimensions (what the user sees)
     if (blockType === 'page') {
-      engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, rect.width));
-      engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, rect.height));
+      engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, visualRect.width));
+      engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, visualRect.height));
     }
     engine.endBatch();
 
-    return rect;
+    return visualRect;
   }
 
   /** Get the block ID currently being cropped, or null. */
   getCropBlockId(): number | null {
     return this.#cropBlockId;
+  }
+
+  /**
+   * Reset the crop for the given block (or the currently-cropped block).
+   * Restores page dimensions to the original image size, clears all crop
+   * properties. Single undo batch.
+   *
+   * Does NOT call fitToScreen — the caller (EditorAPI) handles that.
+   */
+  resetCrop(blockId?: number): void {
+    const id = blockId ?? this.#cropBlockId;
+    if (id === null) return;
+
+    const store = this.#ctx.engine.getBlockStore();
+    const engine = this.#ctx.engine;
+    const origW = store.getFloat(id, IMAGE_ORIGINAL_WIDTH);
+    const origH = store.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
+    if (origW <= 0 || origH <= 0) return;
+
+    engine.beginBatch();
+    engine.exec(new SetPropertyCommand(store, id, CROP_X, 0));
+    engine.exec(new SetPropertyCommand(store, id, CROP_Y, 0));
+    engine.exec(new SetPropertyCommand(store, id, CROP_WIDTH, 0));
+    engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, 0));
+    engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, false));
+    // Restore page dimensions accounting for current rotation
+    const blockType = store.getType(id);
+    if (blockType === 'page') {
+      const rotation = store.getFloat(id, IMAGE_ROTATION);
+      const isSwap = Math.abs(Math.round(normalizeRotation(rotation) / 90)) % 2 === 1;
+      engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, isSwap ? origH : origW));
+      engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, isSwap ? origW : origH));
+    }
+    engine.endBatch();
   }
 
   /**

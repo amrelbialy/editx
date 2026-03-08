@@ -2,6 +2,7 @@ import { Engine } from '../engine';
 import type { EditMode, CursorType, EditModeConfig } from '../editor-types';
 import { EDIT_MODE_DEFAULTS } from '../editor-types';
 import type { BlockAPI } from '../block/block-api';
+import type { CropRect } from '../utils/crop-math';
 import type { EditorContext } from './editor-context';
 import { EditorCrop } from './editor-crop';
 import { EditorCursor } from './editor-cursor';
@@ -95,7 +96,6 @@ export class EditorAPI {
     this.#cursor.setCursorType(this.#editModeConfig.defaultCursor);
     this.#cursor.setCursorRotation(0);
 
-    console.log(`Entered edit mode: ${mode}`, this.#editModeConfig);
     // ── Enter new mode ───────────────────────────────
     this.#enterMode(mode, opts?.blockId);
 
@@ -112,7 +112,6 @@ export class EditorAPI {
   #enterMode(mode: EditMode, blockId?: number): void {
     if (mode === 'Crop') {
       const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
-      console.log('entering Crop mode with target block', targetId);
       if (targetId === null) return;
       this.#crop.setupCropOverlay(targetId);
     }
@@ -190,4 +189,66 @@ export class EditorAPI {
 
   /** @internal */
   _getCrop(): EditorCrop { return this.#crop; }
+
+  // ─── Crop (high-level) ────────────────────────────────
+
+  /**
+   * Commit the current crop to the block's properties and exit crop mode.
+   * Returns the committed rect, or null if no crop was active.
+   */
+  commitCrop(): CropRect | null {
+    if (this.#crop.getCropBlockId() === null) return null;
+    const rect = this.#ctx.renderer?.getCropRect() ?? null;
+    this.setEditMode('Transform');
+    return rect;
+  }
+
+  /**
+   * Reset the crop for the given block (or the currently-cropped block).
+   * Restores page dimensions to the original image size, clears all crop
+   * properties, and re-fits the camera. Single undo batch.
+   */
+  resetCrop(blockId?: number): void {
+    this.#crop.resetCrop(blockId);
+    this.fitToScreen();
+  }
+
+  /** Get the block ID currently being cropped, or null. */
+  getCropBlockId(): number | null {
+    return this.#crop.getCropBlockId();
+  }
+
+  /**
+   * Apply an aspect ratio to the current crop overlay.
+   */
+  applyCropRatio(ratio: number | null): CropRect | null {
+    return this.#crop.applyCropRatio(ratio);
+  }
+
+  // ─── Crop overlay (low-level) ─────────────────────────
+
+  showCropOverlay(
+    blockId: number,
+    imageRect: CropRect,
+    initialCrop?: CropRect,
+    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+  ): void {
+    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
+  }
+
+  hideCropOverlay(): void {
+    this.#ctx.renderer?.hideCropOverlay();
+  }
+
+  setCropRect(rect: CropRect): void {
+    this.#ctx.renderer?.setCropRect(rect);
+  }
+
+  getCropRect(): CropRect | null {
+    return this.#ctx.renderer?.getCropRect() ?? null;
+  }
+
+  setCropRatio(ratio: number | null): void {
+    this.#ctx.renderer?.setCropRatio(ratio);
+  }
 }

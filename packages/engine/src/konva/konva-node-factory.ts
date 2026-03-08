@@ -9,9 +9,12 @@ import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
   PAGE_WIDTH, PAGE_HEIGHT,
+  IMAGE_ROTATION,
+  IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
 } from '../block/property-keys';
 import { colorToHex } from '../utils/color';
 import { loadImage } from '../utils/image-loader';
+import { getSizeAfterRotation } from '../utils/rotation-math';
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -175,13 +178,35 @@ export class KonvaNodeFactory {
     const imgNode = group.children[1] as Konva.Image;
 
     if (src) {
-      // Image mode — hide colour rect, show image
-      bgRect.visible(false);
+      // Image mode — show both bgRect (transparent, for Transformer bounds) + image
+      bgRect.visible(true);
+      bgRect.fill('transparent');
       imgNode.visible(true);
-      imgNode.width(pageW);
-      imgNode.height(pageH);
 
-      // Apply crop
+      const imageRotation = (props[IMAGE_ROTATION] as number) ?? 0;
+
+      // Source (pre-rotation) image dimensions.
+      // For 90°/270° rotations the EditorAPI swaps PAGE_WIDTH/HEIGHT, so
+      // reverse-swap them to get the source dims. For arbitrary angles
+      // PAGE_WIDTH/HEIGHT are not swapped, so they ARE the source dims.
+      const origW = (props[IMAGE_ORIGINAL_WIDTH] as number) ?? 0;
+      const origH = (props[IMAGE_ORIGINAL_HEIGHT] as number) ?? 0;
+
+      let sourceW: number;
+      let sourceH: number;
+      if (origW > 0 && origH > 0) {
+        sourceW = origW;
+        sourceH = origH;
+      } else {
+        const isSwapAngle = Math.abs(Math.round(imageRotation / 90)) % 2 === 1;
+        sourceW = isSwapAngle ? pageH : pageW;
+        sourceH = isSwapAngle ? pageW : pageH;
+      }
+
+      imgNode.width(sourceW);
+      imgNode.height(sourceH);
+
+      // Apply crop (source-space coordinates, independent of display rotation)
       const cropEnabled = (props[CROP_ENABLED] as boolean) ?? false;
       const cropX = (props[CROP_X] as number) ?? 0;
       const cropY = (props[CROP_Y] as number) ?? 0;
@@ -194,13 +219,21 @@ export class KonvaNodeFactory {
         imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
       }
 
-      // Flip
+      // Flip + rotation around page centre
       const flipH = (props[CROP_FLIP_HORIZONTAL] as boolean) ?? false;
       const flipV = (props[CROP_FLIP_VERTICAL] as boolean) ?? false;
+      imgNode.rotation(imageRotation);
       imgNode.scaleX(flipH ? -1 : 1);
       imgNode.scaleY(flipV ? -1 : 1);
-      imgNode.offsetX(flipH ? pageW : 0);
-      imgNode.offsetY(flipV ? pageH : 0);
+      imgNode.offsetX(sourceW / 2);
+      imgNode.offsetY(sourceH / 2);
+      imgNode.x(pageW / 2);
+      imgNode.y(pageH / 2);
+
+      // Size the bgRect to match the page dimensions — this provides
+      // a stable bounding box for the Konva Transformer.
+      bgRect.width(pageW);
+      bgRect.height(pageH);
 
       // Load image
       if (imgNode.getAttr('loadedSrc') !== src) {

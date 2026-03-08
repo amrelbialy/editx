@@ -1,6 +1,6 @@
 import { BlockAPI } from './block/block-api';
 import { Engine } from './engine';
-import { EditorAPI } from './editor';
+import { EditorAPI } from './editor/editor-api';
 import { EventAPI } from './event-api';
 import { SceneAPI } from './scene';
 import { KonvaRendererAdapter } from './konva/konva-renderer-adapter';
