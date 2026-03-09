@@ -3,6 +3,7 @@ import {
   CreativeEngine, evictImage,
   toPrecisedFloat,
   ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS,
+  EFFECT_FILTER_NAME,
   type AdjustmentParam,
 } from '@creative-editor/engine';
 import { useImageEditorStore, type CropPresetId, type ImageEditorTool } from './store/image-editor-store';
@@ -16,6 +17,7 @@ import { ImageEditorToolbar } from './components/toolbar';
 import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel, type AdjustmentValues } from './components/panels/adjust-panel';
+import { FilterPanel } from './components/panels/filter-panel';
 import { CropActionBar } from './components/crop-action-bar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -109,6 +111,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     blacks: 0, whites: 0, temperature: 0, sharpness: 0,
   };
   const [adjustValues, setAdjustValues] = useState<AdjustmentValues>(DEFAULT_ADJUSTMENTS);
+
+  // --- Filter local state: current effect block ID + active filter name ---
+  const filterEffectIdRef = useRef<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('');
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
@@ -490,6 +496,49 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     setAdjustValues(DEFAULT_ADJUSTMENTS);
   }, [editableBlockId]);
 
+  // --- Filter helpers ---
+
+  /** Ensure a filter effect block exists on the editable block. Returns its ID. */
+  const ensureFilterEffect = useCallback((): number | null => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return null;
+
+    const effects = ce.block.getEffects(editableBlockId);
+    for (const eid of effects) {
+      if (ce.block.getKind(eid) === 'filter') {
+        filterEffectIdRef.current = eid;
+        return eid;
+      }
+    }
+
+    const eid = ce.block.createEffect('filter');
+    ce.block.appendEffect(editableBlockId, eid);
+    filterEffectIdRef.current = eid;
+    return eid;
+  }, [editableBlockId]);
+
+  /** Read current filter name from the effect block into local state. */
+  const syncFilterState = useCallback(() => {
+    const ce = engineRef.current;
+    const eid = filterEffectIdRef.current;
+    if (!ce || eid === null) {
+      setActiveFilter('');
+      return;
+    }
+    const name = ce.block.getString(eid, EFFECT_FILTER_NAME);
+    setActiveFilter(name);
+  }, []);
+
+  /** Handle filter selection from the panel. */
+  const handleFilterSelect = useCallback((name: string) => {
+    const ce = engineRef.current;
+    const eid = filterEffectIdRef.current;
+    if (!ce || eid === null) return;
+
+    ce.block.setString(eid, EFFECT_FILTER_NAME, name);
+    setActiveFilter(name);
+  }, []);
+
   /** Handle toolbar tool selection — orchestrates engine mode + store state. */
   const handleToolChange = useCallback((tool: ImageEditorTool) => {
     if (tool === 'crop') {
@@ -515,8 +564,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         ensureAdjustEffect();
         syncAdjustValues();
       }
+
+      // Sync filter state when entering filter mode
+      if (tool === 'filter') {
+        ensureFilterEffect();
+        syncFilterState();
+      }
     }
-  }, [activeTool, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues]);
+  }, [activeTool, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues, ensureFilterEffect, syncFilterState]);
 
   /** Called when user selects a crop preset in the panel. */
   const handleCropPresetChange = useCallback((presetId: CropPresetId) => {
@@ -598,6 +653,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const isCropMode = activeTool === 'crop';
   const isRotateMode = activeTool === 'rotate';
   const isAdjustMode = activeTool === 'adjust';
+  const isFilterMode = activeTool === 'filter';
 
   return (
     <div
@@ -631,6 +687,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
             values={adjustValues}
             onChange={handleAdjustChange}
             onReset={handleAdjustReset}
+          />
+        )}
+        {isFilterMode && (
+          <FilterPanel
+            activeFilter={activeFilter}
+            onSelect={handleFilterSelect}
           />
         )}
         <div className="flex flex-col flex-1 overflow-hidden">

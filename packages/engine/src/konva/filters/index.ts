@@ -8,3 +8,7 @@ export { Blacks } from './blacks';
 export { Whites } from './whites';
 export { buildFilterPipeline } from './build-filter-pipeline';
 export type { AdjustmentValues, FilterPipeline } from './build-filter-pipeline';
+export { BaseFilters } from './base-filters';
+export type { FilterOp } from './base-filters';
+export { FILTER_PRESETS, getFilterPreset } from './presets';
+export type { FilterPresetInfo } from './presets';

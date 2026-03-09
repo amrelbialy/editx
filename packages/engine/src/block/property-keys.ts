@@ -57,6 +57,9 @@ export const PAGE_TITLE_TEMPLATE = 'page/titleTemplate' as const;
 // ── Effects (shared) ─────────────────────────────────
 export const EFFECT_ENABLED = 'effect/enabled' as const;
 
+// ── Effect: Filter ───────────────────────────────────
+export const EFFECT_FILTER_NAME = 'effect/filter/name' as const;
+
 // ── Effect: Adjustments ──────────────────────────────
 export const EFFECT_ADJUSTMENTS_BRIGHTNESS = 'effect/adjustments/brightness' as const;
 export const EFFECT_ADJUSTMENTS_SATURATION = 'effect/adjustments/saturation' as const;

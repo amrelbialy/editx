@@ -1,7 +1,7 @@
 export type BlockType = 'scene' | 'page' | 'graphic' | 'text' | 'image' | 'group' | 'effect';
 
 /** Effect type identifiers — mirrors img.ly EFFECT_TYPES. */
-export type EffectType = 'adjustments';
+export type EffectType = 'adjustments' | 'filter';
 
 export type PageLayoutMode = 'VerticalStack' | 'HorizontalStack' | 'DepthStack' | 'Free';
 

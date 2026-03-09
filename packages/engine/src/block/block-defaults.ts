@@ -9,6 +9,7 @@ import {
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED,
   EFFECT_ENABLED,
+  EFFECT_FILTER_NAME,
   EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
   EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
   EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
@@ -145,9 +146,16 @@ export function getBlockDefaults(type: BlockType): Record<string, PropertyValue>
   return structuredClone(defaults[type]);
 }
 
+/** Default properties for a 'filter' effect block. */
+const FILTER_EFFECT_DEFAULTS: Record<string, PropertyValue> = {
+  [EFFECT_ENABLED]: true,
+  [EFFECT_FILTER_NAME]: '',
+};
+
 /** Effect-kind-specific defaults (merged on top of base effect defaults). */
 const effectKindDefaults: Record<string, Record<string, PropertyValue>> = {
   adjustments: ADJUSTMENTS_EFFECT_DEFAULTS,
+  filter: FILTER_EFFECT_DEFAULTS,
 };
 
 export function getEffectDefaults(kind: string): Record<string, PropertyValue> {

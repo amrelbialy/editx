@@ -17,11 +17,13 @@ import {
   EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
   EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
+  EFFECT_FILTER_NAME,
 } from '../block/property-keys';
 import { colorToHex } from '../utils/color';
 import { loadImage } from '../utils/image-loader';
 import { getSizeAfterRotation } from '../utils/rotation-math';
 import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
+import { getFilterPreset } from './filters/presets';
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -288,8 +290,10 @@ export class KonvaNodeFactory {
     resolveBlock?: (id: number) => BlockData | undefined,
   ): void {
     const values = this.#collectAdjustmentValues(block, resolveBlock);
-    if (!values) {
-      // No adjustments — clear any existing filters
+    const filterPresetFn = this.#collectFilterPreset(block, resolveBlock);
+
+    if (!values && !filterPresetFn) {
+      // No adjustments and no filter — clear any existing filters
       if (imgNode.filters()?.length) {
         imgNode.filters([]);
         imgNode.clearCache();
@@ -297,9 +301,25 @@ export class KonvaNodeFactory {
       return;
     }
 
-    const pipeline = buildFilterPipeline(values);
-    console.log('pipeline', pipeline);
-    if (!pipeline.hasFilters) {
+    const allFilters: Array<(imageData: ImageData) => void> = [];
+
+    // Adjustments first
+    if (values) {
+      const pipeline = buildFilterPipeline(values);
+      if (pipeline.hasFilters) {
+        for (const [key, val] of Object.entries(pipeline.attrs)) {
+          imgNode.setAttr(key, val);
+        }
+        allFilters.push(...(pipeline.filters as Array<(imageData: ImageData) => void>));
+      }
+    }
+
+    // Filter preset on top
+    if (filterPresetFn) {
+      allFilters.push(filterPresetFn);
+    }
+
+    if (allFilters.length === 0) {
       if (imgNode.filters()?.length) {
         imgNode.filters([]);
         imgNode.clearCache();
@@ -307,11 +327,7 @@ export class KonvaNodeFactory {
       return;
     }
 
-    // Set filter attributes on the node
-    for (const [key, val] of Object.entries(pipeline.attrs)) {
-      imgNode.setAttr(key, val);
-    }
-    imgNode.filters(pipeline.filters as any);
+    imgNode.filters(allFilters as any);
 
     // cache() is required for Konva filters to work — only if image is loaded
     if (imgNode.image()) {
@@ -346,6 +362,26 @@ export class KonvaNodeFactory {
         temperature: (p[EFFECT_ADJUSTMENTS_TEMPERATURE] as number) ?? 0,
         sharpness: (p[EFFECT_ADJUSTMENTS_SHARPNESS] as number) ?? 0,
       };
+    }
+
+    return null;
+  }
+
+  /** Collect filter preset function from the first filter-type effect block. */
+  #collectFilterPreset(
+    block: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): ((imageData: ImageData) => void) | null {
+    if (!resolveBlock || block.effectIds.length === 0) return null;
+
+    for (const effectId of block.effectIds) {
+      const effectBlock = resolveBlock(effectId);
+      if (!effectBlock || effectBlock.kind !== 'filter') continue;
+
+      const name = (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? '';
+      if (!name) return null;
+
+      return getFilterPreset(name) ?? null;
     }
 
     return null;

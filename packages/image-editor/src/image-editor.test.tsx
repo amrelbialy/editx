@@ -23,8 +23,14 @@ vi.mock('@creative-editor/engine', () => {
         appendChild: vi.fn(),
         setFloat: vi.fn(),
         getFloat: vi.fn().mockReturnValue(0),
+        getString: vi.fn().mockReturnValue(''),
         setBool: vi.fn(),
         getBool: vi.fn().mockReturnValue(false),
+        getEffects: vi.fn().mockReturnValue([]),
+        getKind: vi.fn().mockReturnValue(''),
+        createEffect: vi.fn().mockReturnValue(100),
+        appendEffect: vi.fn(),
+        removeEffect: vi.fn(),
         // CESDK-style crop methods
         hasCrop: vi.fn().mockReturnValue(true),
         supportsCrop: vi.fn().mockReturnValue(true),
@@ -102,6 +108,28 @@ vi.mock('@creative-editor/engine', () => {
     CROP_ASPECT_RATIO_LOCKED: 'crop/aspectRatioLocked',
     toPrecisedFloat: vi.fn().mockImplementation((n: number) => n),
     evictImage: vi.fn(),
+    EFFECT_FILTER_NAME: 'effect/filter/name',
+    FILTER_PRESETS: new Map(),
+    getFilterPreset: vi.fn().mockReturnValue(undefined),
+    ADJUSTMENT_CONFIG: {
+      brightness: { key: 'effect/adjustments/brightness', min: -1, max: 1, step: 0.01, default: 0 },
+      saturation: { key: 'effect/adjustments/saturation', min: -1, max: 1, step: 0.01, default: 0 },
+      contrast: { key: 'effect/adjustments/contrast', min: -1, max: 1, step: 0.01, default: 0 },
+      gamma: { key: 'effect/adjustments/gamma', min: -1, max: 1, step: 0.01, default: 0 },
+      clarity: { key: 'effect/adjustments/clarity', min: -1, max: 1, step: 0.01, default: 0 },
+      exposure: { key: 'effect/adjustments/exposure', min: -1, max: 1, step: 0.01, default: 0 },
+      shadows: { key: 'effect/adjustments/shadows', min: -1, max: 1, step: 0.01, default: 0 },
+      highlights: { key: 'effect/adjustments/highlights', min: -1, max: 1, step: 0.01, default: 0 },
+      blacks: { key: 'effect/adjustments/blacks', min: -1, max: 1, step: 0.01, default: 0 },
+      whites: { key: 'effect/adjustments/whites', min: -1, max: 1, step: 0.01, default: 0 },
+      temperature: { key: 'effect/adjustments/temperature', min: -1, max: 1, step: 0.01, default: 0 },
+      sharpness: { key: 'effect/adjustments/sharpness', min: 0, max: 1, step: 0.01, default: 0 },
+    },
+    ADJUSTMENT_PARAMS: [
+      'brightness', 'saturation', 'contrast', 'gamma',
+      'clarity', 'exposure', 'shadows', 'highlights',
+      'blacks', 'whites', 'temperature', 'sharpness',
+    ],
   };
 });
 
