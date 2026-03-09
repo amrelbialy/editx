@@ -11,10 +11,17 @@ import {
   PAGE_WIDTH, PAGE_HEIGHT,
   IMAGE_ROTATION,
   IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
+  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
 } from '../block/property-keys';
 import { colorToHex } from '../utils/color';
 import { loadImage } from '../utils/image-loader';
 import { getSizeAfterRotation } from '../utils/rotation-math';
+import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -92,12 +99,16 @@ export class KonvaNodeFactory {
     return node;
   }
 
-  updateNode(node: Konva.Node, block: BlockData): void {
+  updateNode(
+    node: Konva.Node,
+    block: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
     const props = block.properties;
 
     // Page blocks use PAGE_WIDTH/PAGE_HEIGHT and are always at origin
     if (block.type === 'page') {
-      this.#updatePageNode(node as Konva.Group, block);
+      this.#updatePageNode(node as Konva.Group, block, resolveBlock);
       return;
     }
 
@@ -163,7 +174,11 @@ export class KonvaNodeFactory {
     return group;
   }
 
-  #updatePageNode(group: Konva.Group, block: BlockData): void {
+  #updatePageNode(
+    group: Konva.Group,
+    block: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
     const props = block.properties;
     const pageW = (props[PAGE_WIDTH] as number) ?? 1080;
     const pageH = (props[PAGE_HEIGHT] as number) ?? 1080;
@@ -240,9 +255,16 @@ export class KonvaNodeFactory {
         imgNode.setAttr('loadedSrc', src);
         loadImage(src).then((htmlImg) => {
           imgNode.image(htmlImg);
+          // Re-apply cache after image loads if filters are active
+          if (imgNode.filters()?.length) {
+            imgNode.cache();
+          }
           this.#stage?.batchDraw();
         });
       }
+
+      // Apply filters from effect blocks
+      this.#applyFilters(imgNode, block, resolveBlock);
     } else {
       // Colour mode — hide image, show rect
       imgNode.visible(false);
@@ -256,6 +278,77 @@ export class KonvaNodeFactory {
           : '#ffffff',
       );
     }
+  }
+
+  // --- Filter helpers ---
+
+  #applyFilters(
+    imgNode: Konva.Image,
+    block: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
+    const values = this.#collectAdjustmentValues(block, resolveBlock);
+    if (!values) {
+      // No adjustments — clear any existing filters
+      if (imgNode.filters()?.length) {
+        imgNode.filters([]);
+        imgNode.clearCache();
+      }
+      return;
+    }
+
+    const pipeline = buildFilterPipeline(values);
+    console.log('pipeline', pipeline);
+    if (!pipeline.hasFilters) {
+      if (imgNode.filters()?.length) {
+        imgNode.filters([]);
+        imgNode.clearCache();
+      }
+      return;
+    }
+
+    // Set filter attributes on the node
+    for (const [key, val] of Object.entries(pipeline.attrs)) {
+      imgNode.setAttr(key, val);
+    }
+    imgNode.filters(pipeline.filters as any);
+
+    // cache() is required for Konva filters to work — only if image is loaded
+    if (imgNode.image()) {
+      imgNode.cache();
+    }
+  }
+
+  /** Collect adjustment values from all adjustments-type effect blocks. */
+  #collectAdjustmentValues(
+    block: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): AdjustmentValues | null {
+    if (!resolveBlock || block.effectIds.length === 0) return null;
+
+    // Find the first adjustments effect (typically there's only one)
+    for (const effectId of block.effectIds) {
+      const effectBlock = resolveBlock(effectId);
+      if (!effectBlock || effectBlock.kind !== 'adjustments') continue;
+
+      const p = effectBlock.properties;
+      return {
+        brightness: (p[EFFECT_ADJUSTMENTS_BRIGHTNESS] as number) ?? 0,
+        saturation: (p[EFFECT_ADJUSTMENTS_SATURATION] as number) ?? 0,
+        contrast: (p[EFFECT_ADJUSTMENTS_CONTRAST] as number) ?? 0,
+        gamma: (p[EFFECT_ADJUSTMENTS_GAMMA] as number) ?? 0,
+        clarity: (p[EFFECT_ADJUSTMENTS_CLARITY] as number) ?? 0,
+        exposure: (p[EFFECT_ADJUSTMENTS_EXPOSURE] as number) ?? 0,
+        shadows: (p[EFFECT_ADJUSTMENTS_SHADOWS] as number) ?? 0,
+        highlights: (p[EFFECT_ADJUSTMENTS_HIGHLIGHTS] as number) ?? 0,
+        blacks: (p[EFFECT_ADJUSTMENTS_BLACKS] as number) ?? 0,
+        whites: (p[EFFECT_ADJUSTMENTS_WHITES] as number) ?? 0,
+        temperature: (p[EFFECT_ADJUSTMENTS_TEMPERATURE] as number) ?? 0,
+        sharpness: (p[EFFECT_ADJUSTMENTS_SHARPNESS] as number) ?? 0,
+      };
+    }
+
+    return null;
   }
 
   // --- Per-type updaters ---

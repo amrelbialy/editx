@@ -54,6 +54,23 @@ export const PAGE_MARGIN_LEFT = 'page/margin/left' as const;
 export const PAGE_MARGIN_RIGHT = 'page/margin/right' as const;
 export const PAGE_TITLE_TEMPLATE = 'page/titleTemplate' as const;
 
+// ── Effects (shared) ─────────────────────────────────
+export const EFFECT_ENABLED = 'effect/enabled' as const;
+
+// ── Effect: Adjustments ──────────────────────────────
+export const EFFECT_ADJUSTMENTS_BRIGHTNESS = 'effect/adjustments/brightness' as const;
+export const EFFECT_ADJUSTMENTS_SATURATION = 'effect/adjustments/saturation' as const;
+export const EFFECT_ADJUSTMENTS_CONTRAST = 'effect/adjustments/contrast' as const;
+export const EFFECT_ADJUSTMENTS_GAMMA = 'effect/adjustments/gamma' as const;
+export const EFFECT_ADJUSTMENTS_CLARITY = 'effect/adjustments/clarity' as const;
+export const EFFECT_ADJUSTMENTS_EXPOSURE = 'effect/adjustments/exposure' as const;
+export const EFFECT_ADJUSTMENTS_SHADOWS = 'effect/adjustments/shadows' as const;
+export const EFFECT_ADJUSTMENTS_HIGHLIGHTS = 'effect/adjustments/highlights' as const;
+export const EFFECT_ADJUSTMENTS_BLACKS = 'effect/adjustments/blacks' as const;
+export const EFFECT_ADJUSTMENTS_WHITES = 'effect/adjustments/whites' as const;
+export const EFFECT_ADJUSTMENTS_TEMPERATURE = 'effect/adjustments/temperature' as const;
+export const EFFECT_ADJUSTMENTS_SHARPNESS = 'effect/adjustments/sharpness' as const;
+
 // ── Scene ────────────────────────────────────────────
 export const SCENE_WIDTH = 'scene/width' as const;
 export const SCENE_HEIGHT = 'scene/height' as const;

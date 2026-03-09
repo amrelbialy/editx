@@ -10,6 +10,7 @@ function makeBlock(id: number): BlockData {
     name: `block-${id}`,
     parentId: null,
     children: [],
+    effectIds: [],
     properties: {},
   };
 }

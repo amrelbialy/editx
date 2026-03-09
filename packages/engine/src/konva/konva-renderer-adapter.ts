@@ -32,6 +32,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
 
+  /** Resolve a block by ID (set by CreativeEngine to read effect blocks). */
+  resolveBlock?: (id: number) => BlockData | undefined;
+
   async init(root: HTMLElement): Promise<void> {
     this.#rootEl = root;
   }
@@ -104,6 +107,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   syncBlock(id: number, block: BlockData): void {
     if (block.type === 'scene') return;
+    // Effect blocks are not rendered directly; they are resolved by their owner.
+    if (block.type === 'effect') return;
     // Guard: renderer not yet initialised (createScene hasn't run)
     if (!this.#nodeFactory) return;
 
@@ -120,7 +125,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
     }
 
-    this.#nodeFactory.updateNode(node, block);
+    this.#nodeFactory.updateNode(node, block, this.resolveBlock);
     this.#transformer.moveToTop();
   }
 

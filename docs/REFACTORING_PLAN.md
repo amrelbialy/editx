@@ -218,7 +218,7 @@ Extract:
 - `setProperty(id, key, value)`
 - `getProperty(id, key)`
 - `getFloat()`, `getString()`, `getBool()`, `getColor()`
-- `getPropertyKeys(id)`
+- `findAllProperties(id)`
 
 Receives a reference to the blocks Map from `BlockStore`.
 

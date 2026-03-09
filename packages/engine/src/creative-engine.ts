@@ -74,6 +74,9 @@ export class CreativeEngine {
       core.endBatch();
     };
 
+    // Let the renderer resolve effect blocks for filter pipeline
+    adapter.resolveBlock = (id) => core.getBlockStore().get(id);
+
     return new CreativeEngine({ core, block, editor, scene });
   }
 }

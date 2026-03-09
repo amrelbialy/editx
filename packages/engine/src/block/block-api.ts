@@ -6,8 +6,12 @@ import {
   SetKindCommand,
   AppendChildCommand,
   RemoveChildCommand,
+  CreateEffectCommand,
+  AppendEffectCommand,
+  InsertEffectCommand,
+  RemoveEffectCommand,
 } from '../controller/commands';
-import { BlockType, Color, PropertyValue } from './block.types';
+import { BlockType, Color, EffectType, PropertyValue } from './block.types';
 import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
@@ -17,8 +21,48 @@ import {
   PAGE_MARGIN_ENABLED, PAGE_MARGIN_TOP, PAGE_MARGIN_BOTTOM,
   PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
   FILL_COLOR,
+  EFFECT_ENABLED,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
+  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
 } from './property-keys';
 import { normalizeRotation } from '../utils/rotation-math';
+
+/** Identifies one of the 12 adjustment parameters. */
+export type AdjustmentParam =
+  | 'brightness' | 'saturation' | 'contrast' | 'gamma'
+  | 'clarity' | 'exposure' | 'shadows' | 'highlights'
+  | 'blacks' | 'whites' | 'temperature' | 'sharpness';
+
+/** Configuration for a single adjustment parameter: property key + valid range. */
+export interface AdjustmentConfig {
+  key: string;
+  min: number;
+  max: number;
+  step: number;
+}
+
+/** Maps each AdjustmentParam to its effect property key and valid range. */
+export const ADJUSTMENT_CONFIG: Record<AdjustmentParam, AdjustmentConfig> = {
+  brightness:  { key: EFFECT_ADJUSTMENTS_BRIGHTNESS,   min: -1,   max: 1,   step: 0.05 },
+  saturation:  { key: EFFECT_ADJUSTMENTS_SATURATION,   min: -1,   max: 1,   step: 0.05 },
+  contrast:    { key: EFFECT_ADJUSTMENTS_CONTRAST,     min: -1,   max: 1,   step: 0.05 },
+  gamma:       { key: EFFECT_ADJUSTMENTS_GAMMA,        min: -1,   max: 1,   step: 0.05 },
+  clarity:     { key: EFFECT_ADJUSTMENTS_CLARITY,      min: -1,   max: 1,   step: 0.05 },
+  exposure:    { key: EFFECT_ADJUSTMENTS_EXPOSURE,     min: -1,   max: 1,   step: 0.05 },
+  shadows:     { key: EFFECT_ADJUSTMENTS_SHADOWS,      min: -1,   max: 1,   step: 0.05 },
+  highlights:  { key: EFFECT_ADJUSTMENTS_HIGHLIGHTS,   min: -1,   max: 1,   step: 0.05 },
+  blacks:      { key: EFFECT_ADJUSTMENTS_BLACKS,       min: -1,   max: 1,   step: 0.05 },
+  whites:      { key: EFFECT_ADJUSTMENTS_WHITES,       min: -1,   max: 1,   step: 0.05 },
+  temperature: { key: EFFECT_ADJUSTMENTS_TEMPERATURE,  min: -1,   max: 1,   step: 0.05 },
+  sharpness:   { key: EFFECT_ADJUSTMENTS_SHARPNESS,    min: -1,   max: 1,   step: 0.05 },
+};
+
+/** All adjustment param names, useful for iteration. */
+export const ADJUSTMENT_PARAMS: AdjustmentParam[] = Object.keys(ADJUSTMENT_CONFIG) as AdjustmentParam[];
 
 export class BlockAPI {
   #engine: Engine;
@@ -230,8 +274,8 @@ export class BlockAPI {
     return this.#engine.getBlockStore().findByKind(kind);
   }
 
-  getPropertyKeys(id: number): string[] {
-    return this.#engine.getBlockStore().getPropertyKeys(id);
+  findAllProperties(id: number): string[] {
+    return this.#engine.getBlockStore().findAllProperties(id);
   }
 
   // ── Block Crop ───────────────────────────────────────
@@ -570,5 +614,64 @@ export class BlockAPI {
       }
     }
     this.#engine.endBatch();
+  }
+
+  // ── Effects ────────────────────────────────────────
+  // Modeled after CESDK BlockAPI Effects section.
+  // Effects are entity blocks (type='effect') attached to design blocks.
+  // See: https://img.ly/docs/cesdk/js/api/cesdk-js/classes/blockapi/#effects
+
+  /** Creates an effect block of the given type. */
+  createEffect(type: EffectType): number {
+    const store = this.#engine.getBlockStore();
+    const cmd = new CreateEffectCommand(store, type);
+    this.#engine.exec(cmd);
+    return cmd.getCreatedId()!;
+  }
+
+  /** Attaches an effect block to a design block. */
+  appendEffect(blockId: number, effectId: number): void {
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new AppendEffectCommand(store, blockId, effectId));
+  }
+
+  /** Inserts an effect block at a specific position in the effect stack. */
+  insertEffect(blockId: number, effectId: number, index: number): void {
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new InsertEffectCommand(store, blockId, effectId, index));
+  }
+
+  /** Detaches the effect at the given index from a design block. Returns the detached effect ID. */
+  removeEffect(blockId: number, index: number): number | null {
+    const store = this.#engine.getBlockStore();
+    const cmd = new RemoveEffectCommand(store, blockId, index);
+    this.#engine.exec(cmd);
+    return cmd.getRemovedEffectId();
+  }
+
+  /** Returns the ordered list of effect block IDs attached to a design block. */
+  getEffects(blockId: number): number[] {
+    return this.#engine.getBlockStore().getEffects(blockId);
+  }
+
+  /** Checks if a block type supports effects (page, image, graphic). */
+  supportsEffects(blockId: number): boolean {
+    const type = this.getType(blockId);
+    return type === 'page' || type === 'image' || type === 'graphic';
+  }
+
+  /** Returns true if the block has any effects attached. */
+  hasEffects(blockId: number): boolean {
+    return this.#engine.getBlockStore().getEffects(blockId).length > 0;
+  }
+
+  /** Enables or disables an effect block. */
+  setEffectEnabled(effectId: number, enabled: boolean): void {
+    this.setBool(effectId, EFFECT_ENABLED, enabled);
+  }
+
+  /** Returns whether an effect block is enabled. */
+  isEffectEnabled(effectId: number): boolean {
+    return this.getBool(effectId, EFFECT_ENABLED);
   }
 }

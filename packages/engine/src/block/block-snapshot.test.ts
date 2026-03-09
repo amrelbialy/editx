@@ -10,6 +10,7 @@ function makeBlock(id: number): BlockData {
     name: `block-${id}`,
     parentId: null,
     children: [10, 20],
+    effectIds: [],
     properties: {
       x: 100,
       fill: { r: 1, g: 0, b: 0, a: 1 } as Color,
@@ -85,6 +86,7 @@ describe('BlockSnapshot', () => {
         name: 'modified',
         parentId: 5,
         children: [30],
+        effectIds: [],
         properties: { y: 200 },
       };
 
@@ -106,6 +108,7 @@ describe('BlockSnapshot', () => {
         name: 'text-2',
         parentId: null,
         children: [5],
+        effectIds: [],
         properties: { fill: { r: 0, g: 1, b: 0, a: 1 } as Color },
       };
 
@@ -129,6 +132,7 @@ describe('BlockSnapshot', () => {
         name: 'img-42',
         parentId: null,
         children: [],
+        effectIds: [],
         properties: {},
       };
 

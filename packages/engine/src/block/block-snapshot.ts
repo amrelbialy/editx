@@ -18,6 +18,7 @@ export class BlockSnapshot {
     return {
       ...block,
       children: [...block.children],
+      effectIds: [...block.effectIds],
       properties: deepCopyProperties(block.properties),
     };
   }
@@ -26,6 +27,7 @@ export class BlockSnapshot {
     this.#blocks.set(data.id, {
       ...data,
       children: [...data.children],
+      effectIds: [...data.effectIds],
       properties: deepCopyProperties(data.properties),
     });
   }

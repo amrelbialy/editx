@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CreativeEngine, evictImage,
   toPrecisedFloat,
+  ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS,
+  type AdjustmentParam,
 } from '@creative-editor/engine';
 import { useImageEditorStore, type CropPresetId, type ImageEditorTool } from './store/image-editor-store';
 import { loadImage, sourceToUrl, revokeObjectUrl } from './utils/load-image';
@@ -13,6 +15,7 @@ import { extractFilename } from './utils/extract-filename';
 import { ImageEditorToolbar } from './components/toolbar';
 import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
+import { AdjustPanel, type AdjustmentValues } from './components/panels/adjust-panel';
 import { CropActionBar } from './components/crop-action-bar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -97,6 +100,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   // --- Rotate & Flip local state (read from engine, updated on actions) ---
   const [rotationState, setRotationState] = useState({ rotation: 0, flipH: false, flipV: false });
+
+  // --- Adjust local state: current effect block ID + slider values ---
+  const adjustEffectIdRef = useRef<number | null>(null);
+  const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
+    brightness: 0, saturation: 0, contrast: 0, gamma: 0,
+    clarity: 0, exposure: 0, shadows: 0, highlights: 0,
+    blacks: 0, whites: 0, temperature: 0, sharpness: 0,
+  };
+  const [adjustValues, setAdjustValues] = useState<AdjustmentValues>(DEFAULT_ADJUSTMENTS);
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
@@ -408,6 +420,76 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     });
   }, [editableBlockId]);
 
+  // --- Adjust helpers ---
+
+  /** Ensure an adjustments effect block exists on the editable block. Returns its ID. */
+  const ensureAdjustEffect = useCallback((): number | null => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return null;
+
+    // Check if one already exists
+    const effects = ce.block.getEffects(editableBlockId);
+    for (const eid of effects) {
+      if (ce.block.getKind(eid) === 'adjustments') {
+        adjustEffectIdRef.current = eid;
+        return eid;
+      }
+    }
+
+    // Create and attach
+    const eid = ce.block.createEffect('adjustments');
+    ce.block.appendEffect(editableBlockId, eid);
+    adjustEffectIdRef.current = eid;
+    return eid;
+  }, [editableBlockId]);
+
+  /** Read current adjustment values from the effect block into local state. */
+  const syncAdjustValues = useCallback(() => {
+    const ce = engineRef.current;
+    const eid = adjustEffectIdRef.current;
+    if (!ce || eid === null) {
+      setAdjustValues(DEFAULT_ADJUSTMENTS);
+      return;
+    }
+
+    const vals = {} as AdjustmentValues;
+    for (const param of ADJUSTMENT_PARAMS) {
+      vals[param] = ce.block.getFloat(eid, ADJUSTMENT_CONFIG[param].key);
+    }
+    setAdjustValues(vals);
+  }, []);
+
+  /** Handle a single adjustment slider change. */
+  const handleAdjustChange = useCallback((param: AdjustmentParam, value: number) => {
+    const ce = engineRef.current;
+    const eid = adjustEffectIdRef.current;
+    if (!ce || eid === null) return;
+
+    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[param].key, value);
+    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+  }, []);
+
+  /** Reset all adjustments by removing the effect block and recreating it. */
+  const handleAdjustReset = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+
+    // Remove existing effect
+    const effects = ce.block.getEffects(editableBlockId);
+    for (let i = effects.length - 1; i >= 0; i--) {
+      if (ce.block.getKind(effects[i]) === 'adjustments') {
+        ce.block.removeEffect(editableBlockId, i);
+        break;
+      }
+    }
+
+    // Create fresh
+    const eid = ce.block.createEffect('adjustments');
+    ce.block.appendEffect(editableBlockId, eid);
+    adjustEffectIdRef.current = eid;
+    setAdjustValues(DEFAULT_ADJUSTMENTS);
+  }, [editableBlockId]);
+
   /** Handle toolbar tool selection — orchestrates engine mode + store state. */
   const handleToolChange = useCallback((tool: ImageEditorTool) => {
     if (tool === 'crop') {
@@ -427,8 +509,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       if (tool === 'rotate') {
         syncRotationState();
       }
+
+      // Sync adjustment state when entering adjust mode
+      if (tool === 'adjust') {
+        ensureAdjustEffect();
+        syncAdjustValues();
+      }
     }
-  }, [activeTool, enterCropMode, setActiveTool, syncRotationState]);
+  }, [activeTool, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues]);
 
   /** Called when user selects a crop preset in the panel. */
   const handleCropPresetChange = useCallback((presetId: CropPresetId) => {
@@ -509,6 +597,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   const isCropMode = activeTool === 'crop';
   const isRotateMode = activeTool === 'rotate';
+  const isAdjustMode = activeTool === 'adjust';
 
   return (
     <div
@@ -535,6 +624,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
             onFlipHorizontal={handleFlipHorizontal}
             onFlipVertical={handleFlipVertical}
             onReset={handleRotateReset}
+          />
+        )}
+        {isAdjustMode && (
+          <AdjustPanel
+            values={adjustValues}
+            onChange={handleAdjustChange}
+            onReset={handleAdjustReset}
           />
         )}
         <div className="flex flex-col flex-1 overflow-hidden">

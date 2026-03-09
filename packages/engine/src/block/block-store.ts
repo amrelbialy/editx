@@ -1,5 +1,5 @@
-import { BlockData, BlockType, Color, PropertyValue } from './block.types';
-import { getBlockDefaults } from './block-defaults';
+import { BlockData, BlockType, Color, EffectType, PropertyValue } from './block.types';
+import { getBlockDefaults, getEffectDefaults } from './block-defaults';
 import { BlockHierarchy } from './block-hierarchy';
 import { BlockProperties } from './block-properties';
 import { BlockSnapshot } from './block-snapshot';
@@ -33,7 +33,24 @@ export class BlockStore {
       name: `${type}-${id}`,
       parentId: null,
       children: [],
+      effectIds: [],
       properties: getBlockDefaults(type),
+    };
+    this.#blocks.set(id, block);
+    return id;
+  }
+
+  createEffect(effectType: EffectType): number {
+    const id = this.#nextId++;
+    const block: BlockData = {
+      id,
+      type: 'effect',
+      kind: effectType,
+      name: `effect-${effectType}-${id}`,
+      parentId: null,
+      children: [],
+      effectIds: [],
+      properties: getEffectDefaults(effectType),
     };
     this.#blocks.set(id, block);
     return id;
@@ -52,6 +69,22 @@ export class BlockStore {
     if (!block) return;
 
     this.#hierarchy.unparent(id);
+
+    // Remove from any parent's effectIds list
+    if (block.type === 'effect') {
+      for (const [, b] of this.#blocks) {
+        const idx = b.effectIds.indexOf(id);
+        if (idx !== -1) {
+          b.effectIds.splice(idx, 1);
+          break;
+        }
+      }
+    }
+
+    // Recursively destroy attached effects
+    for (const effectId of [...block.effectIds]) {
+      this.destroy(effectId);
+    }
 
     // Recursively destroy children
     for (const childId of [...block.children]) {
@@ -121,6 +154,43 @@ export class BlockStore {
     return this.#hierarchy.getParent(id);
   }
 
+  // --- Effects ---
+
+  appendEffect(blockId: number, effectId: number): void {
+    const block = this.#blocks.get(blockId);
+    if (!block) return;
+    if (!block.effectIds.includes(effectId)) {
+      block.effectIds.push(effectId);
+    }
+  }
+
+  insertEffect(blockId: number, effectId: number, index: number): void {
+    const block = this.#blocks.get(blockId);
+    if (!block) return;
+    if (!block.effectIds.includes(effectId)) {
+      block.effectIds.splice(index, 0, effectId);
+    }
+  }
+
+  removeEffect(blockId: number, index: number): number | null {
+    const block = this.#blocks.get(blockId);
+    if (!block || index < 0 || index >= block.effectIds.length) return null;
+    const [removed] = block.effectIds.splice(index, 1);
+    return removed;
+  }
+
+  getEffects(id: number): number[] {
+    return this.#blocks.get(id)?.effectIds.slice() ?? [];
+  }
+
+  /** Find the design block that owns this effect block. */
+  findEffectOwner(effectId: number): number | null {
+    for (const [id, block] of this.#blocks) {
+      if (block.effectIds.includes(effectId)) return id;
+    }
+    return null;
+  }
+
   // --- Properties (delegated) ---
 
   setProperty(id: number, key: string, value: PropertyValue): void {
@@ -147,8 +217,8 @@ export class BlockStore {
     return this.#properties.getColor(id, key);
   }
 
-  getPropertyKeys(id: number): string[] {
-    return this.#properties.getPropertyKeys(id);
+  findAllProperties(id: number): string[] {
+    return this.#properties.findAllProperties(id);
   }
 
   // --- Snapshots (delegated) ---

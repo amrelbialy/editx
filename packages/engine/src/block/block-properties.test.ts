@@ -10,6 +10,7 @@ function makeBlock(id: number): BlockData {
     name: `block-${id}`,
     parentId: null,
     children: [],
+    effectIds: [],
     properties: {},
   };
 }
@@ -141,21 +142,21 @@ describe('BlockProperties', () => {
     });
   });
 
-  describe('getPropertyKeys', () => {
+  describe('findAllProperties', () => {
     it('returns keys of set properties', () => {
       blocks.set(1, makeBlock(1));
       props.setProperty(1, 'a', 1);
       props.setProperty(1, 'b', 'two');
-      expect(props.getPropertyKeys(1).sort()).toEqual(['a', 'b']);
+      expect(props.findAllProperties(1).sort()).toEqual(['a', 'b']);
     });
 
     it('returns empty array for block with no properties', () => {
       blocks.set(1, makeBlock(1));
-      expect(props.getPropertyKeys(1)).toEqual([]);
+      expect(props.findAllProperties(1)).toEqual([]);
     });
 
     it('returns empty array for non-existent block', () => {
-      expect(props.getPropertyKeys(999)).toEqual([]);
+      expect(props.findAllProperties(999)).toEqual([]);
     });
   });
 });

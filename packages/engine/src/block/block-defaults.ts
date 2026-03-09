@@ -8,6 +8,13 @@ import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED,
+  EFFECT_ENABLED,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
+  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
   PAGE_WIDTH, PAGE_HEIGHT,
   PAGE_MARGIN_ENABLED, PAGE_MARGIN_TOP, PAGE_MARGIN_BOTTOM,
   PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
@@ -28,6 +35,23 @@ const SHARED_TRANSFORM: Record<string, PropertyValue> = {
 const SHARED_APPEARANCE: Record<string, PropertyValue> = {
   [OPACITY]: 1,
   [VISIBLE]: true,
+};
+
+/** Default properties for an 'adjustments' effect block. */
+const ADJUSTMENTS_EFFECT_DEFAULTS: Record<string, PropertyValue> = {
+  [EFFECT_ENABLED]: true,
+  [EFFECT_ADJUSTMENTS_BRIGHTNESS]: 0,
+  [EFFECT_ADJUSTMENTS_SATURATION]: 0,
+  [EFFECT_ADJUSTMENTS_CONTRAST]: 0,
+  [EFFECT_ADJUSTMENTS_GAMMA]: 0,
+  [EFFECT_ADJUSTMENTS_CLARITY]: 0,
+  [EFFECT_ADJUSTMENTS_EXPOSURE]: 0,
+  [EFFECT_ADJUSTMENTS_SHADOWS]: 0,
+  [EFFECT_ADJUSTMENTS_HIGHLIGHTS]: 0,
+  [EFFECT_ADJUSTMENTS_BLACKS]: 0,
+  [EFFECT_ADJUSTMENTS_WHITES]: 0,
+  [EFFECT_ADJUSTMENTS_TEMPERATURE]: 0,
+  [EFFECT_ADJUSTMENTS_SHARPNESS]: 0,
 };
 
 const defaults: Record<BlockType, Record<string, PropertyValue>> = {
@@ -112,8 +136,25 @@ const defaults: Record<BlockType, Record<string, PropertyValue>> = {
     ...SHARED_TRANSFORM,
     ...SHARED_APPEARANCE,
   },
+  effect: {
+    [EFFECT_ENABLED]: true,
+  },
 };
 
 export function getBlockDefaults(type: BlockType): Record<string, PropertyValue> {
   return structuredClone(defaults[type]);
+}
+
+/** Effect-kind-specific defaults (merged on top of base effect defaults). */
+const effectKindDefaults: Record<string, Record<string, PropertyValue>> = {
+  adjustments: ADJUSTMENTS_EFFECT_DEFAULTS,
+};
+
+export function getEffectDefaults(kind: string): Record<string, PropertyValue> {
+  const base = structuredClone(defaults.effect);
+  const kindProps = effectKindDefaults[kind];
+  if (kindProps) {
+    Object.assign(base, structuredClone(kindProps));
+  }
+  return base;
 }

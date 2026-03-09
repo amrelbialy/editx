@@ -167,6 +167,16 @@ export class Engine {
   #flush() {
     if (!this.#renderer) return;
 
+    // When an effect block changes, its owner design block must re-render
+    // so filters are reapplied.
+    for (const id of [...this.#dirty]) {
+      const block = this.#blockStore.get(id);
+      if (block?.type === 'effect') {
+        const ownerId = this.#blockStore.findEffectOwner(id);
+        if (ownerId !== null) this.#dirty.add(ownerId);
+      }
+    }
+
     const dirtyIds = [...this.#dirty];
     this.#dirty.clear();
 

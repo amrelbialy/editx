@@ -42,7 +42,7 @@ export class BlockProperties {
     return { r: 0, g: 0, b: 0, a: 1 };
   }
 
-  getPropertyKeys(id: number): string[] {
+  findAllProperties(id: number): string[] {
     return Object.keys(this.#blocks.get(id)?.properties ?? {});
   }
 }

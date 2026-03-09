@@ -204,9 +204,9 @@ describe('BlockStore', () => {
       expect(color).toEqual({ r: 1, g: 1, b: 1, a: 1 });
     });
 
-    it('getPropertyKeys', () => {
+    it('findAllProperties', () => {
       const id = store.create('graphic');
-      const keys = store.getPropertyKeys(id);
+      const keys = store.findAllProperties(id);
       expect(keys).toContain(POSITION_X);
       expect(keys).toContain(OPACITY);
     });

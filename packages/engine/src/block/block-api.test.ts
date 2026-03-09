@@ -209,9 +209,9 @@ describe('BlockAPI', () => {
       expect(block.findByKind('circle')).toContain(id);
     });
 
-    it('getPropertyKeys returns keys', () => {
+    it('findAllProperties returns keys', () => {
       const id = block.create('graphic');
-      const keys = block.getPropertyKeys(id);
+      const keys = block.findAllProperties(id);
       expect(keys).toContain(POSITION_X);
     });
   });

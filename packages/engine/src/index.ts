@@ -2,8 +2,9 @@ export { CreativeEngine } from './creative-engine';
 export { Engine } from './engine';
 export { EventAPI } from './event-api';
 export type { BlockEvent, BlockEventType } from './event-api';
-export { BlockAPI, BlockStore } from './block';
-export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode } from './block';
+export { BlockAPI, BlockStore, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS } from './block';
+export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType } from './block';
+export type { AdjustmentParam, AdjustmentConfig } from './block';
 export type { EditMode, CursorType, EditModeConfig } from './editor-types';
 export { EDIT_MODE_DEFAULTS } from './editor-types';
 export {
@@ -22,6 +23,13 @@ export {
   SCENE_WIDTH, SCENE_HEIGHT,
   SCENE_PAGE_DIMS_WIDTH, SCENE_PAGE_DIMS_HEIGHT,
   SCENE_ASPECT_RATIO_LOCK, SCENE_LAYOUT,
+  EFFECT_ENABLED,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
+  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
 } from './block';
 export {
   colorToHex,

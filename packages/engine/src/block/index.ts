@@ -1,5 +1,6 @@
 export { BlockStore } from './block-store';
-export { BlockAPI } from './block-api';
-export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode } from './block.types';
-export { getBlockDefaults } from './block-defaults';
+export { BlockAPI, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS } from './block-api';
+export type { AdjustmentParam, AdjustmentConfig } from './block-api';
+export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType } from './block.types';
+export { getBlockDefaults, getEffectDefaults } from './block-defaults';
 export * from './property-keys';

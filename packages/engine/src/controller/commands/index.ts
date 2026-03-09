@@ -1,11 +1,15 @@
 export { default as PatchCommand } from './patch-command';
 export type { Command } from './commands.types';
 export { CreateBlockCommand } from './create-block-command';
+export { CreateEffectCommand } from './create-effect-command';
 export { SetPropertyCommand } from './set-property-command';
 export { SetKindCommand } from './set-kind-command';
 export { DestroyBlockCommand } from './destroy-block-command';
 export { AppendChildCommand } from './append-child-command';
 export { RemoveChildCommand } from './remove-child-command';
+export { AppendEffectCommand } from './append-effect-command';
+export { InsertEffectCommand } from './insert-effect-command';
+export { RemoveEffectCommand } from './remove-effect-command';
 export { SetPageMarginsCommand } from './set-page-margins-command';
 export type { PageMargins } from './set-page-margins-command';
 export { SetPageImageCommand } from './set-page-image-command';
