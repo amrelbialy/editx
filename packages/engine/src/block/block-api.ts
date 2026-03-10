@@ -10,8 +10,12 @@ import {
   AppendEffectCommand,
   InsertEffectCommand,
   RemoveEffectCommand,
+  CreateShapeCommand,
+  CreateFillCommand,
+  SetShapeCommand,
+  SetFillCommand,
 } from '../controller/commands';
-import { BlockType, Color, EffectType, PropertyValue } from './block.types';
+import { BlockType, Color, EffectType, FillType, PropertyValue, ShapeType } from './block.types';
 import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
@@ -20,7 +24,8 @@ import {
   IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT, IMAGE_ROTATION,
   PAGE_MARGIN_ENABLED, PAGE_MARGIN_TOP, PAGE_MARGIN_BOTTOM,
   PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
-  FILL_COLOR,
+  FILL_COLOR, FILL_ENABLED, STROKE_ENABLED, STROKE_COLOR, STROKE_WIDTH,
+  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
   EFFECT_ENABLED,
   EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
   EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
@@ -240,6 +245,13 @@ export class BlockAPI {
     this.#engine.endBatch();
   }
 
+  getPosition(id: number): { x: number; y: number } {
+    return {
+      x: this.getFloat(id, 'transform/position/x'),
+      y: this.getFloat(id, 'transform/position/y'),
+    };
+  }
+
   setSize(id: number, width: number, height: number): void {
     this.#engine.beginBatch();
     const store = this.#engine.getBlockStore();
@@ -248,12 +260,23 @@ export class BlockAPI {
     this.#engine.endBatch();
   }
 
+  getSize(id: number): { width: number; height: number } {
+    return {
+      width: this.getFloat(id, 'transform/size/width'),
+      height: this.getFloat(id, 'transform/size/height'),
+    };
+  }
+
   setRotation(id: number, degrees: number): void {
     this.setFloat(id, 'transform/rotation', degrees);
   }
 
   setOpacity(id: number, opacity: number): void {
     this.setFloat(id, 'appearance/opacity', opacity);
+  }
+
+  getOpacity(id: number): number {
+    return this.getFloat(id, 'appearance/opacity');
   }
 
   setVisible(id: number, visible: boolean): void {
@@ -673,5 +696,206 @@ export class BlockAPI {
   /** Returns whether an effect block is enabled. */
   isEffectEnabled(effectId: number): boolean {
     return this.getBool(effectId, EFFECT_ENABLED);
+  }
+
+  // ── Shape sub-blocks ─────────────────────────────────
+  // Modeled after img.ly CE.SDK shape sub-block architecture.
+  // Shape sub-blocks define geometry; attached to graphic blocks.
+
+  /** Creates a shape sub-block of the given type. */
+  createShape(type: ShapeType): number {
+    const store = this.#engine.getBlockStore();
+    const cmd = new CreateShapeCommand(store, type);
+    this.#engine.exec(cmd);
+    return cmd.getCreatedId()!;
+  }
+
+  /** Attaches a shape sub-block to a graphic block. */
+  setShape(blockId: number, shapeId: number): void {
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new SetShapeCommand(store, blockId, shapeId));
+  }
+
+  /** Returns the shape sub-block ID attached to a block, or null. */
+  getShape(blockId: number): number | null {
+    return this.#engine.getBlockStore().getShape(blockId);
+  }
+
+  /** Checks if a block type supports shape sub-blocks (graphic only). */
+  supportsShape(blockId: number): boolean {
+    return this.#engine.getBlockStore().supportsShape(blockId);
+  }
+
+  /** Returns true if the block has a shape sub-block attached. */
+  hasShape(blockId: number): boolean {
+    return this.getShape(blockId) != null;
+  }
+
+  // ── Fill sub-blocks ──────────────────────────────────
+  // Fill sub-blocks define visual content (color, gradient, image).
+
+  /** Creates a fill sub-block of the given type. */
+  createFill(type: FillType): number {
+    const store = this.#engine.getBlockStore();
+    const cmd = new CreateFillCommand(store, type);
+    this.#engine.exec(cmd);
+    return cmd.getCreatedId()!;
+  }
+
+  /** Attaches a fill sub-block to a graphic block. */
+  setFill(blockId: number, fillId: number): void {
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new SetFillCommand(store, blockId, fillId));
+  }
+
+  /** Returns the fill sub-block ID attached to a block, or null. */
+  getFill(blockId: number): number | null {
+    return this.#engine.getBlockStore().getFill(blockId);
+  }
+
+  /** Checks if a block type supports fill sub-blocks (graphic only). */
+  supportsFill(blockId: number): boolean {
+    return this.#engine.getBlockStore().supportsFill(blockId);
+  }
+
+  /** Returns true if the block has a fill sub-block attached. */
+  hasFill(blockId: number): boolean {
+    return this.getFill(blockId) != null;
+  }
+
+  /** Enables or disables the fill on a graphic block. */
+  setFillEnabled(blockId: number, enabled: boolean): void {
+    this.setBool(blockId, FILL_ENABLED, enabled);
+  }
+
+  /** Returns whether fill is enabled on a graphic block. */
+  isFillEnabled(blockId: number): boolean {
+    return this.getBool(blockId, FILL_ENABLED);
+  }
+
+  // ── Stroke convenience ───────────────────────────────
+
+  /** Enables or disables the stroke on a graphic block. */
+  setStrokeEnabled(blockId: number, enabled: boolean): void {
+    this.setBool(blockId, STROKE_ENABLED, enabled);
+  }
+
+  /** Returns whether stroke is enabled on a graphic block. */
+  isStrokeEnabled(blockId: number): boolean {
+    return this.getBool(blockId, STROKE_ENABLED);
+  }
+
+  /** Sets stroke colour on a graphic block. */
+  setStrokeColor(blockId: number, color: Color): void {
+    this.setColor(blockId, STROKE_COLOR, color);
+  }
+
+  /** Gets stroke colour from a graphic block. */
+  getStrokeColor(blockId: number): Color {
+    return this.getColor(blockId, STROKE_COLOR);
+  }
+
+  /** Sets stroke width on a graphic block. */
+  setStrokeWidth(blockId: number, width: number): void {
+    this.setFloat(blockId, STROKE_WIDTH, width);
+  }
+
+  /** Gets stroke width from a graphic block. */
+  getStrokeWidth(blockId: number): number {
+    return this.getFloat(blockId, STROKE_WIDTH);
+  }
+
+  // ── Shadow convenience ────────────────────────────
+
+  /** Enables or disables the drop shadow on a graphic block. */
+  setShadowEnabled(blockId: number, enabled: boolean): void {
+    this.setBool(blockId, SHADOW_ENABLED, enabled);
+  }
+
+  /** Returns whether shadow is enabled on a graphic block. */
+  isShadowEnabled(blockId: number): boolean {
+    return this.getBool(blockId, SHADOW_ENABLED);
+  }
+
+  /** Sets shadow colour on a graphic block. */
+  setShadowColor(blockId: number, color: Color): void {
+    this.setColor(blockId, SHADOW_COLOR, color);
+  }
+
+  /** Gets shadow colour from a graphic block. */
+  getShadowColor(blockId: number): Color {
+    return this.getColor(blockId, SHADOW_COLOR);
+  }
+
+  /** Sets shadow X offset. */
+  setShadowOffsetX(blockId: number, value: number): void {
+    this.setFloat(blockId, SHADOW_OFFSET_X, value);
+  }
+
+  /** Gets shadow X offset. */
+  getShadowOffsetX(blockId: number): number {
+    return this.getFloat(blockId, SHADOW_OFFSET_X);
+  }
+
+  /** Sets shadow Y offset. */
+  setShadowOffsetY(blockId: number, value: number): void {
+    this.setFloat(blockId, SHADOW_OFFSET_Y, value);
+  }
+
+  /** Gets shadow Y offset. */
+  getShadowOffsetY(blockId: number): number {
+    return this.getFloat(blockId, SHADOW_OFFSET_Y);
+  }
+
+  /** Sets shadow blur radius. */
+  setShadowBlur(blockId: number, value: number): void {
+    this.setFloat(blockId, SHADOW_BLUR, value);
+  }
+
+  /** Gets shadow blur radius. */
+  getShadowBlur(blockId: number): number {
+    return this.getFloat(blockId, SHADOW_BLUR);
+  }
+
+  // ── Shape placement convenience ──────────────────────
+
+  /**
+   * Creates a graphic block with shape + fill sub-blocks, places it at (x, y)
+   * with the given size, and appends it to the parent (typically a page).
+   * Batched as a single undo step. Returns the graphic block ID.
+   */
+  addShape(
+    parentId: number,
+    shapeKind: ShapeType,
+    fillKind: FillType,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): number {
+    this.#engine.beginBatch();
+
+    const graphicId = this.create('graphic');
+    this.setKind(graphicId, shapeKind);
+    this.setPosition(graphicId, x, y);
+    this.setSize(graphicId, width, height);
+
+    const shapeId = this.createShape(shapeKind);
+    this.setShape(graphicId, shapeId);
+
+    const fillId = this.createFill(fillKind);
+    this.setFill(graphicId, fillId);
+
+    // Arrow/line shapes need stroke enabled to render the line body
+    if (shapeKind === 'line') {
+      this.setBool(graphicId, STROKE_ENABLED, true);
+      this.setFloat(graphicId, STROKE_WIDTH, 10);
+      this.setColor(graphicId, STROKE_COLOR, { r: 0.29, g: 0.56, b: 0.89, a: 1 });
+    }
+
+    this.appendChild(parentId, graphicId);
+
+    this.#engine.endBatch();
+    return graphicId;
   }
 }

@@ -81,3 +81,25 @@ export const SCENE_PAGE_DIMS_WIDTH = 'scene/pageDimensions/width' as const;
 export const SCENE_PAGE_DIMS_HEIGHT = 'scene/pageDimensions/height' as const;
 export const SCENE_ASPECT_RATIO_LOCK = 'scene/aspectRatioLock' as const;
 export const SCENE_LAYOUT = 'scene/layout' as const;
+
+// ── Shape (sub-block properties) ─────────────────────
+export const SHAPE_RECT_CORNER_RADIUS = 'shape/rect/cornerRadius' as const;
+export const SHAPE_POLYGON_SIDES = 'shape/polygon/sides' as const;
+export const SHAPE_STAR_POINTS = 'shape/star/points' as const;
+export const SHAPE_STAR_INNER_DIAMETER = 'shape/star/innerDiameter' as const;
+export const SHAPE_LINE_POINTER_LENGTH = 'shape/line/pointerLength' as const;
+export const SHAPE_LINE_POINTER_WIDTH = 'shape/line/pointerWidth' as const;
+
+// ── Fill (sub-block properties) ──────────────────────
+export const FILL_SOLID_COLOR = 'fill/color/value' as const;
+
+// ── Fill & Stroke toggles (on graphic block) ─────────
+export const FILL_ENABLED = 'fill/enabled' as const;
+export const STROKE_ENABLED = 'stroke/enabled' as const;
+
+// ── Shadow (on graphic block) ────────────────────────
+export const SHADOW_ENABLED = 'shadow/enabled' as const;
+export const SHADOW_COLOR = 'shadow/color' as const;
+export const SHADOW_OFFSET_X = 'shadow/offsetX' as const;
+export const SHADOW_OFFSET_Y = 'shadow/offsetY' as const;
+export const SHADOW_BLUR = 'shadow/blur' as const;

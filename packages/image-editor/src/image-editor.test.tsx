@@ -84,6 +84,8 @@ vi.mock('@creative-editor/engine', () => {
         endBatch: vi.fn(),
       },
       dispose: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
     };
     latestMockEngine = eng;
     return eng;

@@ -11,6 +11,8 @@ function makeBlock(id: number): BlockData {
     parentId: null,
     children: [],
     effectIds: [],
+    shapeId: null,
+    fillId: null,
     properties: {},
   };
 }

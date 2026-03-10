@@ -1,7 +1,13 @@
-export type BlockType = 'scene' | 'page' | 'graphic' | 'text' | 'image' | 'group' | 'effect';
+export type BlockType = 'scene' | 'page' | 'graphic' | 'text' | 'image' | 'group' | 'effect' | 'shape' | 'fill';
 
 /** Effect type identifiers — mirrors img.ly EFFECT_TYPES. */
 export type EffectType = 'adjustments' | 'filter';
+
+/** Shape geometry types — sub-block kinds for type='shape'. */
+export type ShapeType = 'rect' | 'ellipse' | 'polygon' | 'star' | 'line';
+
+/** Fill content types — sub-block kinds for type='fill'. */
+export type FillType = 'color';
 
 export type PageLayoutMode = 'VerticalStack' | 'HorizontalStack' | 'DepthStack' | 'Free';
 
@@ -22,5 +28,9 @@ export interface BlockData {
   parentId: number | null;
   children: number[];
   effectIds: number[];
+  /** Shape sub-block reference (graphic blocks only). */
+  shapeId: number | null;
+  /** Fill sub-block reference (graphic blocks only). */
+  fillId: number | null;
   properties: Record<string, PropertyValue>;
 }

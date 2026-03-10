@@ -18,10 +18,14 @@ import {
   EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
   EFFECT_FILTER_NAME,
+  FILL_SOLID_COLOR, FILL_ENABLED, STROKE_ENABLED,
+  SHAPE_RECT_CORNER_RADIUS, SHAPE_POLYGON_SIDES,
+  SHAPE_STAR_POINTS, SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_LINE_POINTER_LENGTH, SHAPE_LINE_POINTER_WIDTH,
+  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
 } from '../block/property-keys';
 import { colorToHex } from '../utils/color';
 import { loadImage } from '../utils/image-loader';
-import { getSizeAfterRotation } from '../utils/rotation-math';
 import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
 import { getFilterPreset } from './filters/presets';
 
@@ -43,13 +47,24 @@ export class KonvaNodeFactory {
     this.#stage = stage;
   }
 
-  createNode(id: number, block: BlockData, callbacks: NodeCallbacks): Konva.Node | null {
+  createNode(
+    id: number,
+    block: BlockData,
+    callbacks: NodeCallbacks,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): Konva.Node | null {
     // --- Page block: wrapped in a non-draggable Group ---
     if (block.type === 'page') {
       return this.#createPageNode(id);
     }
 
-    const kind = block.kind || 'rect';
+    // Resolve the shape sub-block's kind for graphic blocks
+    let shapeKind: string = block.kind || 'rect';
+    if (block.type === 'graphic' && block.shapeId != null && resolveBlock) {
+      const shapeBlock = resolveBlock(block.shapeId);
+      if (shapeBlock) shapeKind = shapeBlock.kind || 'rect';
+    }
+
     let node: Konva.Shape;
 
     if (block.type === 'image') {
@@ -63,12 +78,35 @@ export class KonvaNodeFactory {
         name: `block-${id}`,
         draggable: true,
       });
-    } else if (kind === 'ellipse') {
+    } else if (shapeKind === 'ellipse') {
       node = new Konva.Ellipse({
         name: `block-${id}`,
         draggable: true,
         radiusX: 50,
         radiusY: 50,
+      });
+    } else if (shapeKind === 'polygon') {
+      node = new Konva.RegularPolygon({
+        name: `block-${id}`,
+        draggable: true,
+        sides: 5,
+        radius: 50,
+      });
+    } else if (shapeKind === 'star') {
+      node = new Konva.Star({
+        name: `block-${id}`,
+        draggable: true,
+        numPoints: 5,
+        innerRadius: 25,
+        outerRadius: 50,
+      });
+    } else if (shapeKind === 'line') {
+      node = new Konva.Arrow({
+        name: `block-${id}`,
+        draggable: true,
+        points: [0, 0, 100, 0],
+        pointerLength: 10,
+        pointerWidth: 10,
       });
     } else {
       node = new Konva.Rect({
@@ -87,11 +125,15 @@ export class KonvaNodeFactory {
     node.on('transformend', () => {
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
+      // Arrow nodes store logical block dimensions since Konva computes
+      // width/height from points (which can give 0 height for horizontal arrows).
+      const baseW = node.getAttr('blockWidth') ?? node.width();
+      const baseH = node.getAttr('blockHeight') ?? node.height();
       callbacks.onTransformEnd(id, {
         x: node.x(),
         y: node.y(),
-        width: node.width() * scaleX,
-        height: node.height() * scaleY,
+        width: baseW * scaleX,
+        height: baseH * scaleY,
         rotation: node.rotation(),
       });
       node.scaleX(1);
@@ -135,12 +177,27 @@ export class KonvaNodeFactory {
     }
 
     if (node instanceof Konva.Ellipse) {
-      this.#updateEllipseNode(node, props, width, height);
+      this.#updateEllipseNode(node, props, width, height, block, resolveBlock);
+      return;
+    }
+
+    if (node instanceof Konva.RegularPolygon) {
+      this.#updatePolygonNode(node, props, width, height, block, resolveBlock);
+      return;
+    }
+
+    if (node instanceof Konva.Star) {
+      this.#updateStarNode(node, props, width, height, block, resolveBlock);
+      return;
+    }
+
+    if (node instanceof Konva.Arrow) {
+      this.#updateArrowNode(node, props, width, height, block, resolveBlock);
       return;
     }
 
     if (node instanceof Konva.Rect) {
-      this.#updateRectNode(node, props, width, height);
+      this.#updateRectNode(node, props, width, height, block, resolveBlock);
     }
   }
 
@@ -450,18 +507,12 @@ export class KonvaNodeFactory {
     props: Record<string, unknown>,
     width: number,
     height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
   ): void {
     node.radiusX(width / 2);
     node.radiusY(height / 2);
-    const fillColor = props[FILL_COLOR];
-    if (fillColor && typeof fillColor === 'object') {
-      node.fill(colorToHex(fillColor as Color));
-    }
-    const strokeColor = props[STROKE_COLOR];
-    if (strokeColor && typeof strokeColor === 'object') {
-      node.stroke(colorToHex(strokeColor as Color));
-      node.strokeWidth((props[STROKE_WIDTH] as number) ?? 0);
-    }
+    this.#applyShapeFillStroke(node, props, block, resolveBlock);
   }
 
   #updateRectNode(
@@ -469,17 +520,185 @@ export class KonvaNodeFactory {
     props: Record<string, unknown>,
     width: number,
     height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
   ): void {
     node.width(width);
     node.height(height);
-    const fillColor = props[FILL_COLOR];
-    if (fillColor && typeof fillColor === 'object') {
-      node.fill(colorToHex(fillColor as Color));
+
+    // Corner radius from shape sub-block
+    let cornerRadius = 0;
+    if (block?.shapeId != null && resolveBlock) {
+      const shapeBlock = resolveBlock(block.shapeId);
+      if (shapeBlock) {
+        cornerRadius = (shapeBlock.properties[SHAPE_RECT_CORNER_RADIUS] as number) ?? 0;
+      }
     }
-    const strokeColor = props[STROKE_COLOR];
-    if (strokeColor && typeof strokeColor === 'object') {
-      node.stroke(colorToHex(strokeColor as Color));
-      node.strokeWidth((props[STROKE_WIDTH] as number) ?? 0);
+    node.cornerRadius(cornerRadius);
+
+    this.#applyShapeFillStroke(node, props, block, resolveBlock);
+  }
+
+  #updatePolygonNode(
+    node: Konva.RegularPolygon,
+    props: Record<string, unknown>,
+    width: number,
+    height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
+    const radius = Math.min(width, height) / 2;
+    node.radius(radius);
+
+    let sides = 5;
+    if (block?.shapeId != null && resolveBlock) {
+      const shapeBlock = resolveBlock(block.shapeId);
+      if (shapeBlock) {
+        sides = (shapeBlock.properties[SHAPE_POLYGON_SIDES] as number) ?? 5;
+      }
+    }
+    node.sides(sides);
+
+    // Center the polygon in its bounding box
+    node.offsetX(0);
+    node.offsetY(0);
+
+    this.#applyShapeFillStroke(node, props, block, resolveBlock);
+  }
+
+  #updateStarNode(
+    node: Konva.Star,
+    props: Record<string, unknown>,
+    width: number,
+    height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
+    const outerRadius = Math.min(width, height) / 2;
+    let numPoints = 5;
+    let innerDiameter = 0.5;
+
+    if (block?.shapeId != null && resolveBlock) {
+      const shapeBlock = resolveBlock(block.shapeId);
+      if (shapeBlock) {
+        numPoints = (shapeBlock.properties[SHAPE_STAR_POINTS] as number) ?? 5;
+        innerDiameter = (shapeBlock.properties[SHAPE_STAR_INNER_DIAMETER] as number) ?? 0.5;
+      }
+    }
+
+    node.numPoints(numPoints);
+    node.outerRadius(outerRadius);
+    node.innerRadius(outerRadius * innerDiameter);
+
+    this.#applyShapeFillStroke(node, props, block, resolveBlock);
+  }
+
+  #updateArrowNode(
+    node: Konva.Arrow,
+    props: Record<string, unknown>,
+    width: number,
+    height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
+    // Arrow line from left-center to right-center of the logical bounding box.
+    node.points([0, height / 2, width, height / 2]);
+
+    // Store logical block dimensions so transformend can read them back.
+    // Konva.Arrow computes width/height from points, which gives 0 height
+    // for horizontal arrows — breaking transform calculations.
+    node.setAttr('blockWidth', width);
+    node.setAttr('blockHeight', height);
+
+    // Override getSelfRect so the Transformer shows the full bounding box
+    // instead of the points-derived rect (which has 0 height).
+    node.getSelfRect = () => ({ x: 0, y: 0, width, height });
+
+    let pointerLength = 10;
+    let pointerWidth = 10;
+
+    if (block?.shapeId != null && resolveBlock) {
+      const shapeBlock = resolveBlock(block.shapeId);
+      if (shapeBlock) {
+        pointerLength = (shapeBlock.properties[SHAPE_LINE_POINTER_LENGTH] as number) ?? 10;
+        pointerWidth = (shapeBlock.properties[SHAPE_LINE_POINTER_WIDTH] as number) ?? 10;
+      }
+    }
+
+    node.pointerLength(pointerLength);
+    node.pointerWidth(pointerWidth);
+
+    // Ensure a generous hit area so the thin line is easy to click
+    node.hitStrokeWidth(12);
+
+    this.#applyShapeFillStroke(node, props, block, resolveBlock);
+  }
+
+  /** Resolve fill and stroke from sub-blocks (or fall back to block properties). */
+  #applyShapeFillStroke(
+    node: Konva.Shape,
+    props: Record<string, unknown>,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): void {
+    // Resolve fill from sub-block
+    let fillColor: Color | undefined;
+    let fillEnabled = true;
+    let strokeColor: Color | undefined;
+    let strokeEnabled = false;
+    let strokeW = 0;
+
+    if (block?.fillId != null && resolveBlock) {
+      const fillBlock = resolveBlock(block.fillId);
+      if (fillBlock) {
+        const c = fillBlock.properties[FILL_SOLID_COLOR];
+        if (c && typeof c === 'object') fillColor = c as Color;
+      }
+    }
+
+    // Fill/stroke toggles live on the graphic block
+    fillEnabled = (props[FILL_ENABLED] as boolean) ?? true;
+    strokeEnabled = (props[STROKE_ENABLED] as boolean) ?? false;
+
+    // Stroke props live on the graphic block
+    const sc = props[STROKE_COLOR];
+    if (sc && typeof sc === 'object') strokeColor = sc as Color;
+    strokeW = (props[STROKE_WIDTH] as number) ?? 0;
+
+    // Fall back to legacy FILL_COLOR if no fill sub-block
+    if (!fillColor) {
+      const fc = props[FILL_COLOR];
+      if (fc && typeof fc === 'object') fillColor = fc as Color;
+    }
+
+    // Apply
+    if (fillEnabled && fillColor) {
+      node.fill(colorToHex(fillColor));
+    } else {
+      node.fill('');
+    }
+
+    if (strokeEnabled && strokeColor && strokeW > 0) {
+      node.stroke(colorToHex(strokeColor));
+      node.strokeWidth(strokeW);
+    } else {
+      node.stroke('');
+      node.strokeWidth(0);
+    }
+
+    // Shadow
+    const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
+    if (shadowEnabled) {
+      const sc = props[SHADOW_COLOR];
+      node.shadowColor(sc && typeof sc === 'object' ? colorToHex(sc as Color) : 'rgba(0,0,0,0.5)');
+      node.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
+      node.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
+      node.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
+      node.shadowEnabled(true);
+      // Konva needs shadowForStrokeEnabled for proper rendering on stroked shapes
+      node.shadowForStrokeEnabled(false);
+    } else {
+      node.shadowEnabled(false);
     }
   }
 }

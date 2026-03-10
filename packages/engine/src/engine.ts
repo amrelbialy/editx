@@ -166,13 +166,13 @@ export class Engine {
 
   #flush() {
     if (!this.#renderer) return;
-
-    // When an effect block changes, its owner design block must re-render
-    // so filters are reapplied.
+console.log('blockStore', this.#blockStore)
+    // When a sub-block (fill, shape, or effect) changes, its owner
+    // graphic block must also re-render so the visual update is applied.
     for (const id of [...this.#dirty]) {
       const block = this.#blockStore.get(id);
-      if (block?.type === 'effect') {
-        const ownerId = this.#blockStore.findEffectOwner(id);
+      if (block && (block.type === 'effect' || block.type === 'fill' || block.type === 'shape')) {
+        const ownerId = this.#blockStore.findSubBlockOwner(id);
         if (ownerId !== null) this.#dirty.add(ownerId);
       }
     }

@@ -2,8 +2,8 @@ export { CreativeEngine } from './creative-engine';
 export { Engine } from './engine';
 export { EventAPI } from './event-api';
 export type { BlockEvent, BlockEventType } from './event-api';
-export { BlockAPI, BlockStore, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS } from './block';
-export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType } from './block';
+export { BlockAPI, BlockStore, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS, getShapeDefaults, getFillDefaults } from './block';
+export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType, ShapeType, FillType } from './block';
 export type { AdjustmentParam, AdjustmentConfig } from './block';
 export type { EditMode, CursorType, EditModeConfig } from './editor-types';
 export { EDIT_MODE_DEFAULTS } from './editor-types';
@@ -31,6 +31,11 @@ export {
   EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
   EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
+  SHAPE_RECT_CORNER_RADIUS, SHAPE_POLYGON_SIDES,
+  SHAPE_STAR_POINTS, SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_LINE_POINTER_LENGTH, SHAPE_LINE_POINTER_WIDTH,
+  FILL_SOLID_COLOR, FILL_ENABLED, STROKE_ENABLED,
+  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
 } from './block';
 export { FILTER_PRESETS, getFilterPreset } from './konva/filters/presets';
 export type { FilterPresetInfo } from './konva/filters/presets';

@@ -23,6 +23,13 @@ import {
   SCENE_WIDTH, SCENE_HEIGHT,
   SCENE_PAGE_DIMS_WIDTH, SCENE_PAGE_DIMS_HEIGHT,
   SCENE_ASPECT_RATIO_LOCK, SCENE_LAYOUT,
+  SHAPE_RECT_CORNER_RADIUS,
+  SHAPE_POLYGON_SIDES,
+  SHAPE_STAR_POINTS, SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_LINE_POINTER_LENGTH, SHAPE_LINE_POINTER_WIDTH,
+  FILL_SOLID_COLOR,
+  FILL_ENABLED, STROKE_ENABLED,
+  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
 } from './property-keys';
 
 const SHARED_TRANSFORM: Record<string, PropertyValue> = {
@@ -104,6 +111,13 @@ const defaults: Record<BlockType, Record<string, PropertyValue>> = {
     [FILL_COLOR]: { r: 0.85, g: 0.85, b: 0.85, a: 1 },
     [STROKE_COLOR]: { r: 0, g: 0, b: 0, a: 0 },
     [STROKE_WIDTH]: 0,
+    [FILL_ENABLED]: true,
+    [STROKE_ENABLED]: false,
+    [SHADOW_ENABLED]: false,
+    [SHADOW_COLOR]: { r: 0, g: 0, b: 0, a: 0.5 },
+    [SHADOW_OFFSET_X]: 4,
+    [SHADOW_OFFSET_Y]: 4,
+    [SHADOW_BLUR]: 8,
   },
   text: {
     ...SHARED_TRANSFORM,
@@ -140,6 +154,8 @@ const defaults: Record<BlockType, Record<string, PropertyValue>> = {
   effect: {
     [EFFECT_ENABLED]: true,
   },
+  shape: {},
+  fill: {},
 };
 
 export function getBlockDefaults(type: BlockType): Record<string, PropertyValue> {
@@ -166,3 +182,50 @@ export function getEffectDefaults(kind: string): Record<string, PropertyValue> {
   }
   return base;
 }
+
+// ── Shape sub-block defaults ─────────────────────────
+
+const shapeKindDefaults: Record<string, Record<string, PropertyValue>> = {
+  rect: {
+    [SHAPE_RECT_CORNER_RADIUS]: 0,
+  },
+  ellipse: {},
+  polygon: {
+    [SHAPE_POLYGON_SIDES]: 5,
+  },
+  star: {
+    [SHAPE_STAR_POINTS]: 5,
+    [SHAPE_STAR_INNER_DIAMETER]: 0.5,
+  },
+  line: {
+    [SHAPE_LINE_POINTER_LENGTH]: 15,
+    [SHAPE_LINE_POINTER_WIDTH]: 15,
+  },
+};
+
+export function getShapeDefaults(kind: string): Record<string, PropertyValue> {
+  const base = structuredClone(defaults.shape);
+  const kindProps = shapeKindDefaults[kind];
+  if (kindProps) {
+    Object.assign(base, structuredClone(kindProps));
+  }
+  return base;
+}
+
+// ── Fill sub-block defaults ──────────────────────────
+
+const fillKindDefaults: Record<string, Record<string, PropertyValue>> = {
+  color: {
+    [FILL_SOLID_COLOR]: { r: 0.29, g: 0.56, b: 0.89, a: 1 },
+  },
+};
+
+export function getFillDefaults(kind: string): Record<string, PropertyValue> {
+  const base = structuredClone(defaults.fill);
+  const kindProps = fillKindDefaults[kind];
+  if (kindProps) {
+    Object.assign(base, structuredClone(kindProps));
+  }
+  return base;
+}
+

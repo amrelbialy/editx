@@ -36,6 +36,16 @@ export class CreativeEngine {
     clearImageCache();
   }
 
+  /** Subscribe to an engine event. */
+  on(event: string, cb: (...args: any[]) => void) {
+    return this.core.on(event, cb);
+  }
+
+  /** Unsubscribe from an engine event. */
+  off(event: string, cb: (...args: any[]) => void) {
+    return this.core.off(event, cb);
+  }
+
   static async create(opts: { container: HTMLElement }) {
     const adapter = new KonvaRendererAdapter();
     await adapter.init(opts.container);

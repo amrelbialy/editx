@@ -4,7 +4,9 @@ import {
   toPrecisedFloat,
   ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS,
   EFFECT_FILTER_NAME,
+  SHAPE_POLYGON_SIDES,
   type AdjustmentParam,
+  type ShapeType,
 } from '@creative-editor/engine';
 import { useImageEditorStore, type CropPresetId, type ImageEditorTool } from './store/image-editor-store';
 import { loadImage, sourceToUrl, revokeObjectUrl } from './utils/load-image';
@@ -18,6 +20,8 @@ import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel, type AdjustmentValues } from './components/panels/adjust-panel';
 import { FilterPanel } from './components/panels/filter-panel';
+import { ShapesPanel } from './components/panels/shapes-panel';
+import { ShapePropertiesPanel } from './components/panels/shape-properties-panel';
 import { CropActionBar } from './components/crop-action-bar';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -115,6 +119,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   // --- Filter local state: current effect block ID + active filter name ---
   const filterEffectIdRef = useRef<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('');
+
+  // --- Selected shape block ID (tracked via engine selection event) ---
+  const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null);
 
   // Track current source to allow re-init on change
   const currentSrcRef = useRef<ImageSource>(src);
@@ -287,6 +294,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       loadingSourceIdentityRef.current = null;
       setLoading(false);
       setEngine(ce);
+
+      // Track shape selection
+      ce.on('selection:changed', (ids: number[]) => {
+        if (ids.length === 1 && ce.block.getType(ids[0]) === 'graphic') {
+          setSelectedShapeId(ids[0]);
+          return;
+        }
+        setSelectedShapeId(null);
+      });
     } catch (err) {
       if (signal?.disposed) return;
       loadingSourceIdentityRef.current = null;
@@ -539,6 +555,34 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     setActiveFilter(name);
   }, []);
 
+  /** Add a shape to the centre of the page. */
+  const handleAddShape = useCallback((shapeType: ShapeType, sides?: number) => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+
+    const pageW = ce.block.getFloat(editableBlockId, 'page/width') ?? 1080;
+    const pageH = ce.block.getFloat(editableBlockId, 'page/height') ?? 1080;
+    const size = Math.min(pageW, pageH) * 0.25;
+
+    // Arrows look better wider and flatter than a square
+    const shapeW = shapeType === 'line' ? pageW * 0.5 : size;
+    const shapeH = shapeType === 'line' ? size : size;
+    const x = (pageW - shapeW) / 2;
+    const y = (pageH - shapeH) / 2;
+
+    const graphicId = ce.block.addShape(editableBlockId, shapeType, 'color', x, y, shapeW, shapeH);
+
+    // Override polygon sides when adding named polygons (triangle=3, hexagon=6, etc.)
+    if (sides && shapeType === 'polygon') {
+      const shapeId = ce.block.getShape(graphicId);
+      if (shapeId != null) {
+        ce.block.setFloat(shapeId, SHAPE_POLYGON_SIDES, sides);
+      }
+    }
+
+    ce.block.select(graphicId);
+  }, [editableBlockId]);
+
   /** Handle toolbar tool selection — orchestrates engine mode + store state. */
   const handleToolChange = useCallback((tool: ImageEditorTool) => {
     if (tool === 'crop') {
@@ -654,6 +698,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const isRotateMode = activeTool === 'rotate';
   const isAdjustMode = activeTool === 'adjust';
   const isFilterMode = activeTool === 'filter';
+  const isShapesMode = activeTool === 'shapes';
 
   return (
     <div
@@ -695,12 +740,18 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
             onSelect={handleFilterSelect}
           />
         )}
+        {isShapesMode && (
+          <ShapesPanel onAddShape={handleAddShape} />
+        )}
         <div className="flex flex-col flex-1 overflow-hidden">
           <div ref={containerRef} className="relative flex-1 min-h-0" />
           {isCropMode && (
             <CropActionBar onApply={handleCropApply} onCancel={handleCropCancel} />
           )}
         </div>
+        {engine && selectedShapeId !== null && (
+          <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
+        )}
       </div>
 
       {/* Loading overlay */}

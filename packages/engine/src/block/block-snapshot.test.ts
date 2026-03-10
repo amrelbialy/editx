@@ -11,6 +11,8 @@ function makeBlock(id: number): BlockData {
     parentId: null,
     children: [10, 20],
     effectIds: [],
+    shapeId: null,
+    fillId: null,
     properties: {
       x: 100,
       fill: { r: 1, g: 0, b: 0, a: 1 } as Color,
@@ -87,6 +89,8 @@ describe('BlockSnapshot', () => {
         parentId: 5,
         children: [30],
         effectIds: [],
+        shapeId: null,
+        fillId: null,
         properties: { y: 200 },
       };
 
@@ -109,6 +113,8 @@ describe('BlockSnapshot', () => {
         parentId: null,
         children: [5],
         effectIds: [],
+        shapeId: null,
+        fillId: null,
         properties: { fill: { r: 0, g: 1, b: 0, a: 1 } as Color },
       };
 
@@ -133,6 +139,8 @@ describe('BlockSnapshot', () => {
         parentId: null,
         children: [],
         effectIds: [],
+        shapeId: null,
+        fillId: null,
         properties: {},
       };
 

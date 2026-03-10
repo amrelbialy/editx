@@ -1,5 +1,5 @@
-import { BlockData, BlockType, Color, EffectType, PropertyValue } from './block.types';
-import { getBlockDefaults, getEffectDefaults } from './block-defaults';
+import { BlockData, BlockType, Color, EffectType, FillType, PropertyValue, ShapeType } from './block.types';
+import { getBlockDefaults, getEffectDefaults, getShapeDefaults, getFillDefaults } from './block-defaults';
 import { BlockHierarchy } from './block-hierarchy';
 import { BlockProperties } from './block-properties';
 import { BlockSnapshot } from './block-snapshot';
@@ -34,6 +34,8 @@ export class BlockStore {
       parentId: null,
       children: [],
       effectIds: [],
+      shapeId: null,
+      fillId: null,
       properties: getBlockDefaults(type),
     };
     this.#blocks.set(id, block);
@@ -50,7 +52,45 @@ export class BlockStore {
       parentId: null,
       children: [],
       effectIds: [],
+      shapeId: null,
+      fillId: null,
       properties: getEffectDefaults(effectType),
+    };
+    this.#blocks.set(id, block);
+    return id;
+  }
+
+  createShape(shapeType: ShapeType): number {
+    const id = this.#nextId++;
+    const block: BlockData = {
+      id,
+      type: 'shape',
+      kind: shapeType,
+      name: `shape-${shapeType}-${id}`,
+      parentId: null,
+      children: [],
+      effectIds: [],
+      shapeId: null,
+      fillId: null,
+      properties: getShapeDefaults(shapeType),
+    };
+    this.#blocks.set(id, block);
+    return id;
+  }
+
+  createFill(fillType: FillType): number {
+    const id = this.#nextId++;
+    const block: BlockData = {
+      id,
+      type: 'fill',
+      kind: fillType,
+      name: `fill-${fillType}-${id}`,
+      parentId: null,
+      children: [],
+      effectIds: [],
+      shapeId: null,
+      fillId: null,
+      properties: getFillDefaults(fillType),
     };
     this.#blocks.set(id, block);
     return id;
@@ -81,9 +121,31 @@ export class BlockStore {
       }
     }
 
+    // Remove from any owner's shapeId / fillId reference
+    if (block.type === 'shape') {
+      for (const [, b] of this.#blocks) {
+        if (b.shapeId === id) { b.shapeId = null; break; }
+      }
+    }
+    if (block.type === 'fill') {
+      for (const [, b] of this.#blocks) {
+        if (b.fillId === id) { b.fillId = null; break; }
+      }
+    }
+
     // Recursively destroy attached effects
     for (const effectId of [...block.effectIds]) {
       this.destroy(effectId);
+    }
+
+    // Recursively destroy attached shape sub-block
+    if (block.shapeId != null) {
+      this.destroy(block.shapeId);
+    }
+
+    // Recursively destroy attached fill sub-block
+    if (block.fillId != null) {
+      this.destroy(block.fillId);
     }
 
     // Recursively destroy children
@@ -189,6 +251,46 @@ export class BlockStore {
       if (block.effectIds.includes(effectId)) return id;
     }
     return null;
+  }
+
+  /** Find the owner of any sub-block (fill, shape, or effect). */
+  findSubBlockOwner(subId: number): number | null {
+    for (const [id, block] of this.#blocks) {
+      if (block.fillId === subId || block.shapeId === subId || block.effectIds.includes(subId)) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  // --- Shape sub-block ---
+
+  setShape(blockId: number, shapeId: number): void {
+    const block = this.#blocks.get(blockId);
+    if (block) block.shapeId = shapeId;
+  }
+
+  getShape(blockId: number): number | null {
+    return this.#blocks.get(blockId)?.shapeId ?? null;
+  }
+
+  supportsShape(blockId: number): boolean {
+    return this.#blocks.get(blockId)?.type === 'graphic';
+  }
+
+  // --- Fill sub-block ---
+
+  setFill(blockId: number, fillId: number): void {
+    const block = this.#blocks.get(blockId);
+    if (block) block.fillId = fillId;
+  }
+
+  getFill(blockId: number): number | null {
+    return this.#blocks.get(blockId)?.fillId ?? null;
+  }
+
+  supportsFill(blockId: number): boolean {
+    return this.#blocks.get(blockId)?.type === 'graphic';
   }
 
   // --- Properties (delegated) ---

@@ -39,10 +39,10 @@ We are simulating the img.ly Creative Engine SDK APIs. Use these as reference fo
 | 3   | Rotate and Flip          | **done**                        | flip properties, rotation composition                             | rotate slider, flip buttons                  | `docs/features/03-rotate-flip.md` |
 | 4   | Adjustments (Full Suite) | **done**                        | adjustment properties (12 params), Konva filter pipeline          | adjustment panel with Basic & Refinements    | `docs/features/04-adjustments.md` |
 | 5   | Filters (Presets)        | **in progress**                 | filter effect type, 20 presets, preset registry                   | filter gallery panel                         | `docs/features/05-filters.md`     |
-| 6   | Resize                   | not started                     | scene.resize API                                                  | resize panel                                 | `docs/features/06-resize.md`      |
-| 7   | Shapes (annotations)     | not started                     | polygon/line/arrow kinds, points property                         | shape tools, options                         | `docs/features/07-shapes.md`      |
-| 8   | Text Annotations         | not started                     | expanded text properties, inline edit                             | text tool, styling panel                     | `docs/features/08-text.md`        |
-| 9   | Pen / Freehand Drawing   | not started                     | path block kind, points array                                     | pen tool, brush options                      | `docs/features/09-pen.md`         |
+| 6   | Shapes (annotations)     | not started                     | polygon/line/arrow kinds, points property                         | shape tools, options                         | `docs/features/06-shapes.md`      |
+| 7   | Text Annotations         | not started                     | expanded text properties, inline edit                             | text tool, styling panel                     | `docs/features/07-text.md`        |
+| 8   | Pen / Freehand Drawing   | not started                     | path block kind, points array                                     | pen tool, brush options                      | `docs/features/08-pen.md`         |
+| 9   | Resize                   | not started                     | scene.resize API                                                  | resize panel                                 | `docs/features/09-resize.md`      |
 | 10  | Export                   | not started                     | export API, offscreen render                                      | save button, format options                  | `docs/features/10-export.md`      |
 
 ---

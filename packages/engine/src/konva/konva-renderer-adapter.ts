@@ -109,6 +109,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (block.type === 'scene') return;
     // Effect blocks are not rendered directly; they are resolved by their owner.
     if (block.type === 'effect') return;
+    // Shape and fill sub-blocks are resolved by their owner graphic block.
+    if (block.type === 'shape' || block.type === 'fill') return;
     // Guard: renderer not yet initialised (createScene hasn't run)
     if (!this.#nodeFactory) return;
 
@@ -118,7 +120,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       const created = this.#nodeFactory.createNode(id, block, {
         onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
         onTransformEnd: (blockId, transform) => this.onBlockTransformEnd?.(blockId, transform),
-      });
+      }, this.resolveBlock);
       if (!created) return;
       node = created;
       this.#nodeMap.set(id, node);
