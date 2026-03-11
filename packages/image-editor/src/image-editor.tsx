@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel } from './components/panels/adjust-panel';
 import { FilterPanel } from './components/panels/filter-panel';
 import { ShapesPanel } from './components/panels/shapes-panel';
 import { ShapePropertiesPanel } from './components/panels/shape-properties-panel';
+import { TextPanel } from './components/panels/text-panel';
+import { TextPropertiesPanel } from './components/panels/text-properties-panel';
+import { TextEditorOverlay } from './components/text-editor-overlay';
 import { RotateCw, RotateCcw as RotateCcwIcon, FlipHorizontal, FlipVertical } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
@@ -29,6 +32,7 @@ import { useRotateFlipTool } from './hooks/use-rotate-flip-tool';
 import { useAdjustmentsTool } from './hooks/use-adjustments-tool';
 import { useFilterTool } from './hooks/use-filter-tool';
 import { useShapesTool } from './hooks/use-shapes-tool';
+import { useTextTool } from './hooks/use-text-tool';
 import { useToolManager } from './hooks/use-tool-manager';
 import { useImageEditorStore } from './store/image-editor-store';
 import type { ImageValidationOptions } from './utils/validate-image';
@@ -92,6 +96,28 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const adjustments = useAdjustmentsTool({ engineRef });
   const filter = useFilterTool({ engineRef });
   const shapes = useShapesTool({ engineRef });
+  const textTool = useTextTool({ engineRef });
+
+  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+  const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
+
+  // Subscribe to dblclick on text blocks to enter inline editing
+  useEffect(() => {
+    if (!engine) return;
+    const unsub = engine.on('block:dblclick', (blockId: number) => {
+      if (engine.block.getType(blockId) === 'text') {
+        setEditingTextBlockId(blockId);
+      }
+    });
+    return unsub;
+  }, [engine, setEditingTextBlockId]);
+
+  const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
+
+  const handleCloseTextEditor = useCallback(() => {
+    setEditingTextBlockId(null);
+    setTextSelectionRange(null);
+  }, [setEditingTextBlockId, setTextSelectionRange]);
 
   const {
     activeTool,
@@ -119,6 +145,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const isAdjustMode = activeTool === 'adjust';
   const isFilterMode = activeTool === 'filter';
   const isShapesMode = activeTool === 'shapes';
+  const isTextMode = activeTool === 'text';
 
   const toolPanelTitle = (() => {
     switch (activeTool) {
@@ -127,6 +154,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       case 'adjust': return 'Adjustments';
       case 'filter': return 'Filters';
       case 'shapes': return 'Shapes';
+      case 'text': return 'Text';
       default: {
         const ct = userConfig?.customTools?.find((t) => t.id === activeTool);
         return ct?.label;
@@ -224,6 +252,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                   {isShapesMode && (
                     <span className="text-xs text-muted-foreground">Add and arrange shapes</span>
                   )}
+                  {isTextMode && (
+                    <span className="text-xs text-muted-foreground">Add and edit text</span>
+                  )}
                   {/* Custom tool contextual bar */}
                   {activeCustomTool?.contextualBar && <activeCustomTool.contextualBar />}
                   {/* Slot: extra contextual bar content */}
@@ -284,8 +315,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                         {isShapesMode && (
                           <ShapesPanel onAddShape={shapes.handleAddShape} />
                         )}
-                        {engine && selectedShapeId !== null && (
+                        {isTextMode && (
+                          <TextPanel onAddText={textTool.handleAddText} />
+                        )}
+                        {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'graphic' && (
                           <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
+                        )}
+                        {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'text' && (
+                          <TextPropertiesPanel engine={engine} blockId={selectedShapeId} />
                         )}
                         {/* Custom tool panel */}
                         {activeCustomTool?.panel && <activeCustomTool.panel />}
@@ -293,7 +330,16 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                     </>
                   )}
 
-                  <CanvasArea canvasRef={containerRef} />
+                  <CanvasArea canvasRef={containerRef}>
+                    {engine && editingTextBlockId !== null && (
+                      <TextEditorOverlay
+                        engine={engine}
+                        blockId={editingTextBlockId}
+                        canvasRef={containerRef}
+                        onClose={handleCloseTextEditor}
+                      />
+                    )}
+                  </CanvasArea>
                 </div>
 
                 {/* Mobile: bottom toolbar + sheet */}
@@ -346,8 +392,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                       {isShapesMode && (
                         <ShapesPanel onAddShape={shapes.handleAddShape} />
                       )}
-                      {engine && selectedShapeId !== null && (
+                      {isTextMode && (
+                        <TextPanel onAddText={textTool.handleAddText} />
+                      )}
+                      {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'graphic' && (
                         <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
+                      )}
+                      {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'text' && (
+                        <TextPropertiesPanel engine={engine} blockId={selectedShapeId} />
                       )}
                       {activeCustomTool?.panel && <activeCustomTool.panel />}
                     </ToolSheet>

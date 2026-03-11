@@ -3,7 +3,7 @@ export { Engine } from './engine';
 export { EventAPI } from './event-api';
 export type { BlockEvent, BlockEventType } from './event-api';
 export { BlockAPI, BlockStore, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS, getShapeDefaults, getFillDefaults } from './block';
-export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType, ShapeType, FillType } from './block';
+export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType, ShapeType, FillType, TextRun, TextRunStyle } from './block';
 export type { AdjustmentParam, AdjustmentConfig } from './block';
 export type { EditMode, CursorType, EditModeConfig } from './editor-types';
 export { EDIT_MODE_DEFAULTS } from './editor-types';
@@ -36,6 +36,7 @@ export {
   SHAPE_LINE_POINTER_LENGTH, SHAPE_LINE_POINTER_WIDTH,
   FILL_SOLID_COLOR, FILL_ENABLED, STROKE_ENABLED,
   SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
+  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP,
 } from './block';
 export { FILTER_PRESETS, getFilterPreset } from './konva/filters/presets';
 export type { FilterPresetInfo } from './konva/filters/presets';

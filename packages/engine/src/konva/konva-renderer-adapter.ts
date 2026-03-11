@@ -26,6 +26,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   // Interaction callbacks (set by CreativeEngine after construction)
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockDblClick?: (blockId: number) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
     blockId: number,
@@ -98,6 +99,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       camera: this.#camera,
       callbacks: {
         onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
+        onBlockDblClick: (blockId) => this.onBlockDblClick?.(blockId),
         onStageClick: (worldPos) => this.onStageClick?.(worldPos),
       },
     });

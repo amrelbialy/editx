@@ -67,6 +67,10 @@ export class CreativeEngine {
       }
     };
 
+    adapter.onBlockDblClick = (blockId) => {
+      core.emit('block:dblclick', blockId);
+    };
+
     adapter.onStageClick = (worldPos) => {
       block.deselectAll();
       core.emit('stage:click', worldPos);

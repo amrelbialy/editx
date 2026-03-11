@@ -15,7 +15,7 @@ import {
   SetShapeCommand,
   SetFillCommand,
 } from '../controller/commands';
-import { BlockType, Color, EffectType, FillType, PropertyValue, ShapeType } from './block.types';
+import { BlockType, Color, EffectType, FillType, PropertyValue, ShapeType, TextRun, TextRunStyle } from './block.types';
 import {
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
@@ -34,7 +34,18 @@ import {
   EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
 } from './property-keys';
+import {
+  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP,
+} from './property-keys';
 import { normalizeRotation } from '../utils/rotation-math';
+import {
+  insertText as utilInsertText,
+  removeRange as utilRemoveRange,
+  replaceRange as utilReplaceRange,
+  setStyleOnRange as utilSetStyleOnRange,
+  getPlainText as utilGetPlainText,
+  mergeAdjacentRuns,
+} from './text-run-utils';
 
 /** Identifies one of the 12 adjustment parameters. */
 export type AdjustmentParam =
@@ -191,6 +202,10 @@ export class BlockAPI {
   }
 
   // --- Property getters ---
+
+  getProperty(id: number, key: string): PropertyValue | undefined {
+    return this.#engine.getBlockStore().getProperty(id, key);
+  }
 
   getFloat(id: number, key: string): number {
     return this.#engine.getBlockStore().getFloat(id, key);
@@ -897,5 +912,145 @@ export class BlockAPI {
 
     this.#engine.endBatch();
     return graphicId;
+  }
+
+  // ── Text placement convenience ──────────────────────
+
+  /**
+   * Creates a text block at (x, y) with given size, optional initial text string,
+   * and appends it to the parent. Batched as a single undo step. Returns the text block ID.
+   */
+  addText(
+    parentId: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    initialText?: string,
+  ): number {
+    this.#engine.beginBatch();
+
+    const textId = this.create('text');
+    this.setPosition(textId, x, y);
+    this.setSize(textId, width, height);
+
+    if (initialText !== undefined) {
+      const runs: TextRun[] = [{ text: initialText, style: { fontSize: 24, fontFamily: 'Arial', fill: '#000000' } }];
+      this.setProperty(textId, TEXT_RUNS, runs);
+    }
+
+    this.appendChild(parentId, textId);
+
+    this.#engine.endBatch();
+    return textId;
+  }
+
+  // ── Range-based text editing ──────────────────────────
+
+  /** Get the current TextRun[] for a text block. */
+  getTextRuns(blockId: number): TextRun[] {
+    const val = this.getProperty(blockId, TEXT_RUNS);
+    return Array.isArray(val) ? val as TextRun[] : [];
+  }
+
+  /** Get plain text content from a text block. */
+  getTextContent(blockId: number): string {
+    return utilGetPlainText(this.getTextRuns(blockId));
+  }
+
+  /** Insert text at the given character position, inheriting the style at that position. */
+  insertTextAt(blockId: number, position: number, text: string): void {
+    const runs = this.getTextRuns(blockId);
+    const newRuns = utilInsertText(runs, position, text);
+    this.setProperty(blockId, TEXT_RUNS, newRuns);
+  }
+
+  /** Remove characters in [start, end). */
+  removeText(blockId: number, start: number, end: number): void {
+    const runs = this.getTextRuns(blockId);
+    const newRuns = utilRemoveRange(runs, start, end);
+    this.setProperty(blockId, TEXT_RUNS, newRuns);
+  }
+
+  /** Replace text in [start, end) with new text. */
+  replaceText(blockId: number, start: number, end: number, newText: string): void {
+    const runs = this.getTextRuns(blockId);
+    const newRuns = utilReplaceRange(runs, start, end, newText);
+    this.setProperty(blockId, TEXT_RUNS, newRuns);
+  }
+
+  /** Apply a partial style update to characters in [start, end). */
+  setTextStyle(blockId: number, start: number, end: number, styleUpdate: Partial<TextRunStyle>): void {
+    const runs = this.getTextRuns(blockId);
+    const newRuns = utilSetStyleOnRange(runs, start, end, styleUpdate);
+    this.setProperty(blockId, TEXT_RUNS, newRuns);
+  }
+
+  /** Set text color for characters in [start, end). */
+  setTextColor(blockId: number, start: number, end: number, color: string): void {
+    this.setTextStyle(blockId, start, end, { fill: color });
+  }
+
+  /** Set font size for characters in [start, end). */
+  setTextFontSize(blockId: number, start: number, end: number, fontSize: number): void {
+    this.setTextStyle(blockId, start, end, { fontSize });
+  }
+
+  /** Set font family for characters in [start, end). */
+  setTextFontFamily(blockId: number, start: number, end: number, fontFamily: string): void {
+    this.setTextStyle(blockId, start, end, { fontFamily });
+  }
+
+  /** Set font weight for characters in [start, end). */
+  setTextFontWeight(blockId: number, start: number, end: number, fontWeight: string): void {
+    this.setTextStyle(blockId, start, end, { fontWeight });
+  }
+
+  /** Toggle bold on characters in [start, end). Toggles based on first character's style. */
+  toggleBoldText(blockId: number, start: number, end: number): void {
+    const runs = this.getTextRuns(blockId);
+    // Determine current state from the first character in range
+    let currentWeight = 'normal';
+    let offset = 0;
+    for (const run of runs) {
+      if (offset + run.text.length > start) {
+        currentWeight = run.style.fontWeight ?? 'normal';
+        break;
+      }
+      offset += run.text.length;
+    }
+    const newWeight = currentWeight === 'bold' ? 'normal' : 'bold';
+    this.setTextStyle(blockId, start, end, { fontWeight: newWeight });
+  }
+
+  /** Toggle italic on characters in [start, end). */
+  toggleItalicText(blockId: number, start: number, end: number): void {
+    const runs = this.getTextRuns(blockId);
+    let currentStyle = 'normal';
+    let offset = 0;
+    for (const run of runs) {
+      if (offset + run.text.length > start) {
+        currentStyle = run.style.fontStyle ?? 'normal';
+        break;
+      }
+      offset += run.text.length;
+    }
+    const newStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+    this.setTextStyle(blockId, start, end, { fontStyle: newStyle });
+  }
+
+  /** Set block-level text alignment. */
+  setTextAlign(blockId: number, align: string): void {
+    this.setProperty(blockId, TEXT_ALIGN, align);
+  }
+
+  /** Set block-level line height. */
+  setTextLineHeight(blockId: number, lineHeight: number): void {
+    this.setProperty(blockId, TEXT_LINE_HEIGHT, lineHeight);
+  }
+
+  /** Set block-level vertical alignment. */
+  setTextVerticalAlign(blockId: number, align: string): void {
+    this.setProperty(blockId, TEXT_VERTICAL_ALIGN, align);
   }
 }

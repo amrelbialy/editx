@@ -235,9 +235,12 @@ export function useEngine({ src, validation, keepZoomOnSourceChange = false }: U
       setEngine(ce);
 
       ce.on('selection:changed', (ids: number[]) => {
-        if (ids.length === 1 && ce.block.getType(ids[0]) === 'graphic') {
-          setSelectedShapeId(ids[0]);
-          return;
+        if (ids.length === 1) {
+          const blockType = ce.block.getType(ids[0]);
+          if (blockType === 'graphic' || blockType === 'text') {
+            setSelectedShapeId(ids[0]);
+            return;
+          }
         }
         setSelectedShapeId(null);
       });

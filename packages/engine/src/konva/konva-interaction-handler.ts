@@ -3,6 +3,7 @@ import type { KonvaCamera } from './konva-camera';
 
 export interface InteractionCallbacks {
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockDblClick?: (blockId: number) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
 }
 
@@ -45,6 +46,16 @@ export function setupInteraction(deps: InteractionDeps): void {
     x2 = 0,
     y2 = 0;
   let selecting = false;
+
+  // Double-click on a block → enter edit mode (text inline editing)
+  stage.on('dblclick dbltap', (e) => {
+    if (isBackground(e.target, stage)) return;
+    const clickNode = findBlockNode(e.target as Konva.Node);
+    const blockId = clickNode?.getAttr('blockId') as number | undefined;
+    if (blockId !== undefined && !clickNode?.getAttr('isPage')) {
+      callbacks.onBlockDblClick?.(blockId);
+    }
+  });
 
   // Click on stage background → deselect
   stage.on('click tap', (e) => {

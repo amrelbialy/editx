@@ -33,6 +33,11 @@ interface ImageEditorState {
   /** Current crop preset (only meaningful when activeTool === 'crop'). */
   cropPreset: CropPresetId;
 
+  /** Block ID currently in inline text editing mode (double-clicked). null when not editing. */
+  editingTextBlockId: number | null;
+  /** Current text selection range within the inline editor. null when no selection. */
+  textSelectionRange: { from: number; to: number } | null;
+
   setActiveTool: (tool: ImageEditorTool) => void;
   setOriginalImage: (info: OriginalImageInfo) => void;
   setLoading: (loading: boolean) => void;
@@ -41,6 +46,8 @@ interface ImageEditorState {
   clearError: () => void;
   setShownImageDimensions: (dims: ShownImageDimensions) => void;
   setCropPreset: (preset: CropPresetId) => void;
+  setEditingTextBlockId: (id: number | null) => void;
+  setTextSelectionRange: (range: { from: number; to: number } | null) => void;
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
@@ -52,6 +59,9 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   shownImageDimensions: null,
   cropPreset: 'free',
 
+  editingTextBlockId: null,
+  textSelectionRange: null,
+
   setActiveTool: (tool) => set({ activeTool: tool }),
   setOriginalImage: (info) => set({ originalImage: info }),
   setLoading: (loading) => set({ isLoading: loading }),
@@ -60,4 +70,6 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   clearError: () => set({ error: null }),
   setShownImageDimensions: (dims) => set({ shownImageDimensions: dims }),
   setCropPreset: (preset) => set({ cropPreset: preset }),
+  setEditingTextBlockId: (id) => set({ editingTextBlockId: id }),
+  setTextSelectionRange: (range) => set({ textSelectionRange: range }),
 }));

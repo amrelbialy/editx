@@ -18,7 +18,24 @@ export interface Color {
   a: number;
 }
 
-export type PropertyValue = number | string | boolean | Color;
+/** Style properties that can vary per text run (character-level). */
+export interface TextRunStyle {
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  fill?: string;
+  letterSpacing?: number;
+  textDecoration?: string;
+}
+
+/** A contiguous segment of text with uniform styling. */
+export interface TextRun {
+  text: string;
+  style: TextRunStyle;
+}
+
+export type PropertyValue = number | string | boolean | Color | TextRun[];
 
 export interface BlockData {
   id: number;

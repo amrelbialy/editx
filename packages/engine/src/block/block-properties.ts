@@ -1,4 +1,4 @@
-import type { BlockData, Color, PropertyValue } from './block.types';
+import type { BlockData, Color, PropertyValue, TextRun } from './block.types';
 
 /**
  * Typed property accessors for block data.
@@ -40,6 +40,11 @@ export class BlockProperties {
     const v = this.getProperty(id, key);
     if (v && typeof v === 'object' && 'r' in v) return v as Color;
     return { r: 0, g: 0, b: 0, a: 1 };
+  }
+
+  getTextRuns(id: number, key: string): TextRun[] {
+    const v = this.getProperty(id, key);
+    return Array.isArray(v) ? v as TextRun[] : [];
   }
 
   findAllProperties(id: number): string[] {

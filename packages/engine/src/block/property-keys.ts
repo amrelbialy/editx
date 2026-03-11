@@ -23,6 +23,12 @@ export const STROKE_WIDTH = 'stroke/width' as const;
 export const TEXT_CONTENT = 'text/content' as const;
 export const FONT_SIZE = 'text/fontSize' as const;
 export const FONT_FAMILY = 'text/fontFamily' as const;
+export const TEXT_RUNS = 'text/runs' as const;
+export const TEXT_ALIGN = 'text/align' as const;
+export const TEXT_LINE_HEIGHT = 'text/lineHeight' as const;
+export const TEXT_VERTICAL_ALIGN = 'text/verticalAlign' as const;
+export const TEXT_PADDING = 'text/padding' as const;
+export const TEXT_WRAP = 'text/wrap' as const;
 
 // ── Image ────────────────────────────────────────────
 export const IMAGE_SRC = 'image/src' as const;

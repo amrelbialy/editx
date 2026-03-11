@@ -1,10 +1,11 @@
 import Konva from 'konva';
-import type { BlockData, Color } from '../block/block.types';
+import type { BlockData, Color, TextRun } from '../block/block.types';
 import {
   POSITION_X, POSITION_Y, SIZE_WIDTH, SIZE_HEIGHT, ROTATION,
   OPACITY, VISIBLE,
   FILL_COLOR, STROKE_COLOR, STROKE_WIDTH,
   TEXT_CONTENT, FONT_SIZE, FONT_FAMILY,
+  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP,
   IMAGE_SRC,
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
@@ -28,6 +29,7 @@ import { colorToHex } from '../utils/color';
 import { loadImage } from '../utils/image-loader';
 import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
 import { getFilterPreset } from './filters/presets';
+import { FormattedText } from './formatted-text';
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -74,7 +76,7 @@ export class KonvaNodeFactory {
         image: undefined as unknown as CanvasImageSource,
       });
     } else if (block.type === 'text') {
-      node = new Konva.Text({
+      node = new FormattedText({
         name: `block-${id}`,
         draggable: true,
       });
@@ -172,7 +174,7 @@ export class KonvaNodeFactory {
     }
 
     if (block.type === 'text') {
-      this.#updateTextNode(node as Konva.Text, props, width);
+      this.#updateTextNode(node as FormattedText, props, width, height);
       return;
     }
 
@@ -491,15 +493,30 @@ export class KonvaNodeFactory {
     }
   }
 
-  #updateTextNode(textNode: Konva.Text, props: Record<string, unknown>, width: number): void {
-    textNode.text((props[TEXT_CONTENT] as string) ?? 'Text');
-    textNode.fontSize((props[FONT_SIZE] as number) ?? 24);
-    textNode.fontFamily((props[FONT_FAMILY] as string) ?? 'Arial');
-    textNode.width(width);
-    const fillColor = props[FILL_COLOR];
-    if (fillColor && typeof fillColor === 'object') {
-      textNode.fill(colorToHex(fillColor as Color));
+  #updateTextNode(textNode: FormattedText, props: Record<string, unknown>, width: number, height: number): void {
+    // Prefer TEXT_RUNS; fall back to legacy single-style properties
+    let runs = props[TEXT_RUNS] as TextRun[] | undefined;
+    if (!runs || !Array.isArray(runs) || runs.length === 0) {
+      const text = (props[TEXT_CONTENT] as string) ?? 'Text';
+      const fillColor = props[FILL_COLOR];
+      const fill = fillColor && typeof fillColor === 'object' ? colorToHex(fillColor as Color) : '#000000';
+      runs = [{
+        text,
+        style: {
+          fontSize: (props[FONT_SIZE] as number) ?? 24,
+          fontFamily: (props[FONT_FAMILY] as string) ?? 'Arial',
+          fill,
+        },
+      }];
     }
+    textNode.textRuns(runs);
+    textNode.width(width);
+    textNode.height(height);
+    textNode.align((props[TEXT_ALIGN] as string) ?? 'left');
+    textNode.lineHeight((props[TEXT_LINE_HEIGHT] as number) ?? 1.2);
+    textNode.verticalAlign((props[TEXT_VERTICAL_ALIGN] as string) ?? 'top');
+    textNode.padding((props[TEXT_PADDING] as number) ?? 0);
+    textNode.wrap((props[TEXT_WRAP] as string) ?? 'word');
   }
 
   #updateEllipseNode(

@@ -79,6 +79,7 @@ export interface RendererAdapter {
   // Interaction callbacks (renderer → engine)
   //
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockDblClick?: (blockId: number) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (blockId: number, transform: { x: number; y: number; width: number; height: number; rotation: number }) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
