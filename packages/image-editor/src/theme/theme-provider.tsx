@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import type { ThemeConfig, ThemeColorKey } from '../config/config.types';
+import type { ThemeConfig } from '../config/config.types';
+import type { ThemeColorKey } from './presets';
 import { themePresets, type ThemePresetValues } from './presets';
 
 interface ThemeProviderProps {
@@ -41,11 +42,13 @@ function buildCssVariables(theme: ThemeConfig): Record<string, string> {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, children }) => {
+  const colorsJson = theme.colors ? JSON.stringify(theme.colors) : '';
   const style = useMemo(() => {
     const vars = buildCssVariables(theme);
     const fontFamily = theme.fontFamily ?? 'Inter, system-ui, sans-serif';
     return { ...vars, fontFamily } as React.CSSProperties;
-  }, [theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme.preset, theme.borderRadius, theme.fontFamily, colorsJson]);
 
   return (
     <div style={style} className="ie-theme">

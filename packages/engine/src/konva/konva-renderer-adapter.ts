@@ -21,6 +21,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #camera!: KonvaCamera;
   #nodeFactory!: KonvaNodeFactory;
   #cropOverlay!: KonvaCropOverlay;
+  #resizeObserver?: ResizeObserver;
+  #lastPageSize?: { width: number; height: number };
 
   // Interaction callbacks (set by CreativeEngine after construction)
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
@@ -100,7 +102,21 @@ export class KonvaRendererAdapter implements RendererAdapter {
       },
     });
 
+    this.#lastPageSize = { width: pageW, height: pageH };
     this.#camera.fitToScreen({ width: pageW, height: pageH, padding: 48 });
+
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => {
+      const w = this.#rootEl.clientWidth;
+      const h = this.#rootEl.clientHeight;
+      if (w === 0 || h === 0) return;
+      this.#stage.width(w);
+      this.#stage.height(h);
+      if (this.#lastPageSize) {
+        this.#camera.fitToScreen({ ...this.#lastPageSize, padding: 48 });
+      }
+    });
+    this.#resizeObserver.observe(this.#rootEl);
   }
 
   // --- Block lifecycle ---
@@ -274,6 +290,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Cleanup ---
 
   dispose(): void {
+    this.#resizeObserver?.disconnect();
     this.#cropOverlay?.destroy();
     this.#stage?.destroy();
     this.#nodeMap.clear();

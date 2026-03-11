@@ -1,4 +1,4 @@
-export type { ThemePresetValues } from './types';
+export type { ThemeColorKey, ThemePresetValues } from './types';
 
 export { zincDark, zincLight } from './zinc';
 export { slateDark, slateLight } from './slate';
@@ -28,3 +28,5 @@ export const themePresets = {
   'amethyst-haze-dark': amethystHazeDark,
   'amethyst-haze-light': amethystHazeLight,
 } as const;
+
+export type BuiltInPreset = keyof typeof themePresets;

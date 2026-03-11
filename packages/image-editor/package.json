@@ -9,7 +9,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./presets": {
+      "types": "./dist/theme/presets/index.d.ts",
+      "import": "./dist/theme/presets/index.js"
+    }
   },
   "scripts": {
     "build": "tsc",

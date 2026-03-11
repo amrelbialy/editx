@@ -5,6 +5,7 @@ export type {
   ImageEditorToolId,
   ThemeConfig,
   ThemePreset,
+  ThemeColorKey,
   CropToolConfig,
   AdjustToolConfig,
   FilterToolConfig,
@@ -16,6 +17,8 @@ export type {
   EditorSlots,
   EditorEventCallbacks,
 } from './config/config.types';
+export { themePresets } from './theme/presets';
+export type { ThemePresetValues, BuiltInPreset } from './theme/presets';
 export { useConfig } from './config/config-context';
 export { useImageEditorStore } from './store/image-editor-store';
 export type { ImageEditorTool, OriginalImageInfo, ShownImageDimensions } from './store/image-editor-store';

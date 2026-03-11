@@ -1,3 +1,27 @@
-import type { ThemeColorKey } from '../../config/config.types';
+export type ThemeColorKey =
+  | 'background'
+  | 'foreground'
+  | 'card'
+  | 'card-foreground'
+  | 'popover'
+  | 'popover-foreground'
+  | 'primary'
+  | 'primary-foreground'
+  | 'secondary'
+  | 'secondary-foreground'
+  | 'muted'
+  | 'muted-foreground'
+  | 'accent'
+  | 'accent-foreground'
+  | 'destructive'
+  | 'destructive-foreground'
+  | 'border'
+  | 'input'
+  | 'ring'
+  | 'sidebar'
+  | 'sidebar-foreground'
+  | 'sidebar-border'
+  | 'sidebar-accent'
+  | 'sidebar-accent-foreground';
 
 export type ThemePresetValues = Record<ThemeColorKey, string>;

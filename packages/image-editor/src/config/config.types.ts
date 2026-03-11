@@ -1,4 +1,8 @@
 import type React from 'react';
+import type { BuiltInPreset } from '../theme/presets';
+
+export type { ThemeColorKey } from '../theme/presets';
+import type { ThemeColorKey } from '../theme/presets';
 
 export type ImageEditorToolId =
   | 'crop'
@@ -8,37 +12,7 @@ export type ImageEditorToolId =
   | 'shapes'
   | 'sticker';
 
-export type ThemePreset =
-  | 'zinc-dark' | 'slate-dark' | 'neutral-dark' | 'stone-dark'
-  | 'zinc-light' | 'slate-light' | 'neutral-light' | 'stone-light'
-  | 'amber-minimal-dark' | 'amber-minimal-light'
-  | 'amethyst-haze-dark' | 'amethyst-haze-light'
-  | 'custom';
-
-export type ThemeColorKey =
-  | 'background'
-  | 'foreground'
-  | 'card'
-  | 'card-foreground'
-  | 'popover'
-  | 'popover-foreground'
-  | 'primary'
-  | 'primary-foreground'
-  | 'secondary'
-  | 'secondary-foreground'
-  | 'muted'
-  | 'muted-foreground'
-  | 'accent'
-  | 'accent-foreground'
-  | 'destructive'
-  | 'border'
-  | 'input'
-  | 'ring'
-  | 'sidebar'
-  | 'sidebar-foreground'
-  | 'sidebar-border'
-  | 'sidebar-accent'
-  | 'sidebar-accent-foreground';
+export type ThemePreset = BuiltInPreset | 'custom';
 
 export interface ThemeConfig {
   preset?: ThemePreset;

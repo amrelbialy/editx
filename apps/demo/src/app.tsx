@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ImageEditor, type ThemePreset } from '@creative-editor/image-editor';
 
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200';
@@ -92,11 +92,13 @@ function App() {
     });
   }, []);
 
+  const config = useMemo(() => ({ theme: { preset: themePreset } }), [themePreset]);
+
   if (mode === 'image-editor' && imageSrc) {
     return (
       <ImageEditor
         src={imageSrc}
-        config={{ theme: { preset: themePreset } }}
+        config={config}
         slots={{
           topbarRight: (
             <button
