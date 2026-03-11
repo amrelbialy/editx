@@ -3,6 +3,10 @@ import {
   ADJUSTMENT_CONFIG,
   type AdjustmentParam,
 } from '@creative-editor/engine';
+import { RotateCcw } from 'lucide-react';
+import { Slider } from '../ui/slider';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 
 const BASIC_PARAMS: AdjustmentParam[] = [
   'brightness', 'saturation', 'contrast', 'gamma',
@@ -47,21 +51,19 @@ const AdjustSlider: React.FC<{
 }> = ({ param, value, onChange }) => {
   const cfg = ADJUSTMENT_CONFIG[param];
   return (
-    <div className="px-2 mb-1">
-      <div className="flex justify-between items-center mb-0.5">
-        <span className="text-xs text-gray-400">{LABELS[param]}</span>
-        <span className="text-xs text-gray-500 tabular-nums w-10 text-right">
+    <div className="mb-1">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-xs text-muted-foreground">{LABELS[param]}</span>
+        <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">
           {formatValue(cfg.step, value)}
         </span>
       </div>
-      <input
-        type="range"
+      <Slider
         min={cfg.min}
         max={cfg.max}
         step={cfg.step}
-        value={value}
-        onChange={(e) => onChange(param, Number(e.target.value))}
-        className="w-full accent-blue-500"
+        value={[value]}
+        onValueChange={([v]) => onChange(param, v)}
         data-testid={`adjust-${param}`}
       />
     </div>
@@ -70,8 +72,8 @@ const AdjustSlider: React.FC<{
 
 export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onReset }) => {
   return (
-    <div className="flex flex-col gap-1 p-2 bg-gray-800 border-r border-gray-700 min-w-[200px] overflow-y-auto">
-      <div className="text-xs text-gray-400 font-medium px-2 py-1">Basic</div>
+    <div className="flex flex-col gap-2">
+      <div className="text-xs font-medium text-muted-foreground">Basic</div>
       {BASIC_PARAMS.map((param) => (
         <AdjustSlider
           key={param}
@@ -81,7 +83,9 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onRe
         />
       ))}
 
-      <div className="text-xs text-gray-400 font-medium px-2 py-1 mt-2">Refinements</div>
+      <Separator className="my-1" />
+
+      <div className="text-xs font-medium text-muted-foreground">Refinements</div>
       {REFINEMENT_PARAMS.map((param) => (
         <AdjustSlider
           key={param}
@@ -91,16 +95,18 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onRe
         />
       ))}
 
-      {/* Reset */}
-      <div className="px-2 mt-2">
-        <button
-          onClick={onReset}
-          data-testid="adjust-reset"
-          className="w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-600"
-        >
-          Reset All
-        </button>
-      </div>
+      <Separator className="my-1" />
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full gap-1.5"
+        onClick={onReset}
+        data-testid="adjust-reset"
+      >
+        <RotateCcw className="h-3.5 w-3.5" />
+        Reset All
+      </Button>
     </div>
   );
 };

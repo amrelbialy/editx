@@ -182,6 +182,19 @@ vi.mock('./components/toolbar', () => ({
   ImageEditorToolbar: () => React.createElement('div', { 'data-testid': 'toolbar' }),
 }));
 
+// Helper to find the EditorShell element (has width/height styles)
+function findEditorShell(container: HTMLElement): HTMLElement {
+  // EditorShell is the div with both width and height styles
+  // It's inside ThemeProvider > EditorShell
+  const shell = container.querySelector('[style*="width"][style*="height"]') as HTMLElement;
+  return shell ?? container.firstElementChild as HTMLElement;
+}
+
+// Helper to find the interactive wrapper (the div with tabIndex)
+function findInteractiveWrapper(container: HTMLElement): HTMLElement {
+  return container.querySelector('[tabindex="0"]') as HTMLElement;
+}
+
 describe('ImageEditor', () => {
   beforeEach(() => {
     cleanup();
@@ -203,9 +216,9 @@ describe('ImageEditor', () => {
   });
 
   it('renders without crashing', () => {
-    render(React.createElement(ImageEditor, { src: 'https://example.com/img.png' }));
-    // Component should render the toolbar and container
-    expect(screen.getByTestId('toolbar')).toBeDefined();
+    const { container } = render(React.createElement(ImageEditor, { src: 'https://example.com/img.png' }));
+    // Component should render the editor shell with topbar content
+    expect(container.textContent).toContain('Photo Editor');
   });
 
   it('shows loading overlay initially', () => {
@@ -223,18 +236,18 @@ describe('ImageEditor', () => {
         height: 400,
       })
     );
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.width).toBe('500px');
-    expect(wrapper.style.height).toBe('400px');
+    const shell = findEditorShell(container);
+    expect(shell.style.width).toBe('500px');
+    expect(shell.style.height).toBe('400px');
   });
 
   it('defaults width to 100% and height to 100vh', () => {
     const { container } = render(
       React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
     );
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.width).toBe('100%');
-    expect(wrapper.style.height).toBe('100vh');
+    const shell = findEditorShell(container);
+    expect(shell.style.width).toBe('100%');
+    expect(shell.style.height).toBe('100vh');
   });
 
   it('shows error overlay when image fails to load', async () => {
@@ -258,9 +271,9 @@ describe('ImageEditor', () => {
     );
 
     await waitFor(() => {
-      const retryButton = container.querySelector('button');
+      const buttons = Array.from(container.querySelectorAll('button'));
+      const retryButton = buttons.find(b => b.textContent?.includes('Retry'));
       expect(retryButton).toBeDefined();
-      expect(retryButton?.textContent).toContain('Retry');
     });
   });
 
@@ -279,7 +292,8 @@ describe('ImageEditor', () => {
     });
 
     // Click retry
-    const retryButton = container.querySelector('button')!;
+    const buttons = Array.from(container.querySelectorAll('button'));
+    const retryButton = buttons.find(b => b.textContent?.includes('Retry'))!;
     fireEvent.click(retryButton);
 
     // loadImage should be called again
@@ -308,7 +322,8 @@ describe('ImageEditor', () => {
     const { container } = render(
       React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
     );
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = findInteractiveWrapper(container);
+    expect(wrapper).toBeDefined();
     expect(wrapper.getAttribute('tabindex')).toBe('0');
   });
 
@@ -316,7 +331,7 @@ describe('ImageEditor', () => {
     const { container } = render(
       React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
     );
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = findInteractiveWrapper(container);
 
     // Should not throw
     fireEvent.dragOver(wrapper, {
@@ -333,7 +348,7 @@ describe('ImageEditor', () => {
       expect(mockLoadImage).toHaveBeenCalledTimes(1);
     });
 
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = findInteractiveWrapper(container);
     const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
 
     fireEvent.drop(wrapper, {
@@ -358,7 +373,7 @@ describe('ImageEditor', () => {
       expect(mockLoadImage).toHaveBeenCalledTimes(1);
     });
 
-    const wrapper = container.firstElementChild as HTMLElement;
+    const wrapper = findInteractiveWrapper(container);
     const blob = new File(['data'], 'clipboard.png', { type: 'image/png' });
 
     fireEvent.paste(wrapper, {

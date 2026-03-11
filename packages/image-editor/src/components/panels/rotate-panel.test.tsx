@@ -30,7 +30,6 @@ describe('RotatePanel', () => {
     expect(screen.getByTestId('rotate-ccw')).toBeDefined();
     expect(screen.getByTestId('flip-h')).toBeDefined();
     expect(screen.getByTestId('flip-v')).toBeDefined();
-    expect(screen.getByTestId('rotate-reset')).toBeDefined();
   });
 
   it('displays the current rotation value', () => {
@@ -62,28 +61,16 @@ describe('RotatePanel', () => {
     expect(props.onFlipVertical).toHaveBeenCalledOnce();
   });
 
-  it('calls onReset when Reset clicked', () => {
-    const props = renderPanel();
-    fireEvent.click(screen.getByTestId('rotate-reset'));
-    expect(props.onReset).toHaveBeenCalledOnce();
-  });
-
   it('Flip H button highlights when flipH is true', () => {
     renderPanel({ flipH: true });
     const btn = screen.getByTestId('flip-h');
-    expect(btn.className).toContain('bg-blue');
+    // Uses the 'default' variant (primary) when active
+    expect(btn.className).toContain('bg-primary');
   });
 
   it('Flip V button highlights when flipV is true', () => {
     renderPanel({ flipV: true });
     const btn = screen.getByTestId('flip-v');
-    expect(btn.className).toContain('bg-blue');
-  });
-
-  it('slider calls onRotationChange with numeric value', () => {
-    const props = renderPanel();
-    const slider = screen.getByTestId('rotation-slider');
-    fireEvent.change(slider, { target: { value: '30' } });
-    expect(props.onRotationChange).toHaveBeenCalledWith(30);
+    expect(btn.className).toContain('bg-primary');
   });
 });

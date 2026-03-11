@@ -15,26 +15,50 @@ import { downscaleIfNeeded } from './utils/downscale-image';
 import { correctOrientation } from './utils/correct-orientation';
 import { isSameSource } from './utils/is-same-source';
 import { extractFilename } from './utils/extract-filename';
-import { ImageEditorToolbar } from './components/toolbar';
 import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel, type AdjustmentValues } from './components/panels/adjust-panel';
 import { FilterPanel } from './components/panels/filter-panel';
 import { ShapesPanel } from './components/panels/shapes-panel';
 import { ShapePropertiesPanel } from './components/panels/shape-properties-panel';
-import { CropActionBar } from './components/crop-action-bar';
+import { RotateCw, RotateCcw as RotateCcwIcon, FlipHorizontal, FlipVertical } from 'lucide-react';
+import { Button } from './components/ui/button';
+import { Separator } from './components/ui/separator';
+import { Spinner } from './components/ui/spinner';
+import { TooltipProvider } from './components/ui/tooltip';
+import { ImageEditorProvider } from './config/config-context';
+import { ThemeProvider } from './theme/theme-provider';
+import { I18nProvider } from './i18n/i18n-context';
+import { EditorShell } from './components/shell/editor-shell';
+import { Topbar } from './components/shell/topbar';
+import { ToolSidebar } from './components/shell/tool-sidebar';
+import { ToolPanel } from './components/shell/tool-panel';
+import { CanvasArea } from './components/shell/canvas-area';
+import { ContextualBar } from './components/shell/contextual-bar';
+import { MobileToolbar } from './components/shell/mobile-toolbar';
+import { ToolSheet } from './components/shell/tool-sheet';
+import { useResponsive } from './hooks/use-responsive';
+import { useShortcuts } from './hooks/use-shortcuts';
+import type { ImageEditorConfig, ImageEditorToolId, EditorSlots, EditorEventCallbacks } from './config/config.types';
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
 
 export interface ImageEditorProps {
   src: ImageSource;
   onSave?: (blob: Blob) => void;
+  onClose?: () => void;
   width?: string | number;
   height?: string | number;
   /** Validation options for file type, size, and dimension limits. */
   validation?: ImageValidationOptions;
   /** When true, preserve zoom/pan when src changes instead of resetting to fit-to-screen. */
   keepZoomOnSourceChange?: boolean;
+  /** SDK configuration — tools, theme, per-tool options, UI tweaks. */
+  config?: ImageEditorConfig;
+  /** Named render slots for injecting custom UI into the editor shell. */
+  slots?: EditorSlots;
+  /** Event callbacks for editor lifecycle events. */
+  events?: EditorEventCallbacks;
 }
 
 /**
@@ -75,10 +99,14 @@ function getSourceIdentity(source: ImageSource): string | null {
 export const ImageEditor: React.FC<ImageEditorProps> = ({
   src,
   onSave,
+  onClose,
   width = '100%',
   height = '100vh',
   validation,
   keepZoomOnSourceChange = false,
+  config: userConfig,
+  slots,
+  events,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<CreativeEngine | null>(null);
@@ -103,6 +131,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
+
+  // --- Responsive hook ---
+  const { isMobile } = useResponsive();
 
   // --- Rotate & Flip local state (read from engine, updated on actions) ---
   const [rotationState, setRotationState] = useState({ rotation: 0, flipH: false, flipV: false });
@@ -615,7 +646,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         syncFilterState();
       }
     }
-  }, [activeTool, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues, ensureFilterEffect, syncFilterState]);
+    // Fire event callback
+    events?.onToolChange?.(tool === 'select' ? null : tool);
+  }, [activeTool, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues, ensureFilterEffect, syncFilterState, events]);
 
   /** Called when user selects a crop preset in the panel. */
   const handleCropPresetChange = useCallback((presetId: CropPresetId) => {
@@ -700,80 +733,307 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const isFilterMode = activeTool === 'filter';
   const isShapesMode = activeTool === 'shapes';
 
+  /** Map internal ImageEditorTool to the config's ImageEditorToolId for sidebar */
+  const activeToolId: ImageEditorToolId | null =
+    activeTool === 'select' || activeTool === 'rotate' || activeTool === 'resize' || activeTool === 'pen'
+      ? null
+      : (activeTool as ImageEditorToolId);
+
+  const handleSidebarToolSelect = useCallback((toolId: ImageEditorToolId) => {
+    // If clicking the already-active tool, deselect (close panel)
+    if (activeToolId === toolId) {
+      const ce = engineRef.current;
+      if (activeTool === 'crop' && ce) {
+        ce.editor.setEditMode('Transform');
+        ce.editor.fitToScreen();
+      }
+      setActiveTool('select');
+      return;
+    }
+    handleToolChange(toolId as ImageEditorTool);
+  }, [activeToolId, activeTool, handleToolChange, setActiveTool]);
+
+  const handleDone = useCallback(() => {
+    if (activeTool === 'crop') {
+      handleCropApply();
+    } else {
+      setActiveTool('select');
+    }
+  }, [activeTool, handleCropApply, setActiveTool]);
+
+  const handleContextualReset = useCallback(() => {
+    if (activeTool === 'crop') {
+      handleCropCancel();
+    } else if (activeTool === 'rotate') {
+      handleRotateReset();
+    } else if (activeTool === 'adjust') {
+      handleAdjustReset();
+    }
+  }, [activeTool, handleCropCancel, handleRotateReset, handleAdjustReset]);
+
+  const toolPanelTitle = (() => {
+    switch (activeTool) {
+      case 'crop': return 'Crop';
+      case 'rotate': return 'Rotate & Flip';
+      case 'adjust': return 'Adjustments';
+      case 'filter': return 'Filters';
+      case 'shapes': return 'Shapes';
+      default: {
+        // Check custom tools
+        const ct = userConfig?.customTools?.find((t) => t.id === activeTool);
+        return ct?.label;
+      }
+    }
+  })();
+
+  /** Custom tool panel component (if active tool is a custom tool) */
+  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === activeTool);
+
+  const showContextualBar = activeTool !== 'select';
+
+  // --- Keyboard shortcuts ---
+  useShortcuts({
+    enabled: !isLoading && !error,
+    onToolSelect: handleSidebarToolSelect,
+    onUndo: () => engineRef.current?.editor.undo(),
+    onRedo: () => engineRef.current?.editor.redo(),
+    onZoomIn: () => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 1.25); },
+    onZoomOut: () => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 0.8); },
+    onZoomFit: () => engineRef.current?.editor.fitToScreen(),
+    onEscape: () => {
+      if (activeTool !== 'select') {
+        if (activeTool === 'crop') {
+          handleCropCancel();
+        } else {
+          setActiveTool('select');
+        }
+      }
+    },
+    onDelete: () => {
+      if (selectedShapeId !== null) {
+        engineRef.current?.block.destroy(selectedShapeId);
+        setSelectedShapeId(null);
+      }
+    },
+  });
+
   return (
-    <div
-      style={{ width, height }}
-      className="relative flex flex-col bg-gray-900 overflow-hidden"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onPaste={handlePaste}
-      tabIndex={0}
-    >
-      <ImageEditorToolbar onToolChange={handleToolChange} />
-      <div className="flex flex-1 overflow-hidden">
-        {isCropMode && (
-          <CropPanel onPresetChange={handleCropPresetChange} />
-        )}
-        {isRotateMode && (
-          <RotatePanel
-            rotation={rotationState.rotation}
-            flipH={rotationState.flipH}
-            flipV={rotationState.flipV}
-            onRotationChange={handleRotationChange}
-            onRotateClockwise={handleRotateClockwise}
-            onRotateCounterClockwise={handleRotateCounterClockwise}
-            onFlipHorizontal={handleFlipHorizontal}
-            onFlipVertical={handleFlipVertical}
-            onReset={handleRotateReset}
-          />
-        )}
-        {isAdjustMode && (
-          <AdjustPanel
-            values={adjustValues}
-            onChange={handleAdjustChange}
-            onReset={handleAdjustReset}
-          />
-        )}
-        {isFilterMode && (
-          <FilterPanel
-            activeFilter={activeFilter}
-            onSelect={handleFilterSelect}
-          />
-        )}
-        {isShapesMode && (
-          <ShapesPanel onAddShape={handleAddShape} />
-        )}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div ref={containerRef} className="relative flex-1 min-h-0" />
-          {isCropMode && (
-            <CropActionBar onApply={handleCropApply} onCancel={handleCropCancel} />
-          )}
-        </div>
-        {engine && selectedShapeId !== null && (
-          <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
-        )}
-      </div>
+    <ImageEditorProvider config={userConfig}>
+      <ThemeProvider theme={userConfig?.theme}>
+        <I18nProvider locale={userConfig?.locale} translations={userConfig?.translations}>
+          <TooltipProvider>
+            <EditorShell
+              style={{ width, height }}
+              className="relative"
+            >
+              {/* Drag/drop + paste wrapper */}
+              <div
+                className="flex flex-col h-full w-full"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onPaste={handlePaste}
+                tabIndex={0}
+              >
+                <Topbar
+                  onUndo={() => engineRef.current?.editor.undo()}
+                  onRedo={() => engineRef.current?.editor.redo()}
+                  canUndo={!!engine}
+                  canRedo={!!engine}
+                  onZoomIn={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 1.25); }}
+                  onZoomOut={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 0.8); }}
+                  onZoomFit={() => engineRef.current?.editor.fitToScreen()}
+                  onExport={onSave ? () => { /* TODO: implement export */ } : undefined}
+                  topbarRight={slots?.topbarRight}
+                />
 
-      {/* Loading overlay */}
-      {isLoading && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 z-10">
-          <div className="text-white text-lg">Loading image...</div>
-        </div>
-      )}
+                <ContextualBar
+                  visible={showContextualBar}
+                  onReset={handleContextualReset}
+                  onDone={handleDone}
+                >
+                  {/* Crop & Rotate tools: quick rotate/flip in contextual bar */}
+                  {(isCropMode || isRotateMode) && (
+                    <>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRotateCounterClockwise} title="Rotate 90° left">
+                        <RotateCcwIcon className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRotateClockwise} title="Rotate 90° right">
+                        <RotateCw className="h-3.5 w-3.5" />
+                      </Button>
+                      <Separator orientation="vertical" className="h-4" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFlipHorizontal} title="Flip horizontal">
+                        <FlipHorizontal className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFlipVertical} title="Flip vertical">
+                        <FlipVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
+                  {isAdjustMode && (
+                    <span className="text-xs text-muted-foreground">Adjust image tones and colors</span>
+                  )}
+                  {isFilterMode && (
+                    <span className="text-xs text-muted-foreground">Apply preset looks</span>
+                  )}
+                  {isShapesMode && (
+                    <span className="text-xs text-muted-foreground">Add and arrange shapes</span>
+                  )}
+                  {/* Custom tool contextual bar */}
+                  {activeCustomTool?.contextualBar && <activeCustomTool.contextualBar />}
+                  {/* Slot: extra contextual bar content */}
+                  {slots?.contextualBarExtra}
+                </ContextualBar>
 
-      {/* Error overlay with retry */}
-      {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 z-20 gap-4">
-          <div className="text-red-400 text-lg font-medium">Failed to load image</div>
-          <div className="text-gray-400 text-sm max-w-md text-center">{error}</div>
-          <button
-            onClick={handleRetry}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-    </div>
+                <div className="flex flex-1 overflow-hidden">
+                  {/* Desktop: sidebar + slide-out panel */}
+                  {!isMobile && (
+                    <>
+                      <ToolSidebar
+                        activeTool={activeToolId}
+                        onToolSelect={handleSidebarToolSelect}
+                        customTools={userConfig?.customTools}
+                        sidebarBottom={slots?.sidebarBottom}
+                      />
+
+                      <ToolPanel
+                        open={activeTool !== 'select'}
+                        title={toolPanelTitle}
+                        onClose={() => {
+                          if (activeTool === 'crop') {
+                            handleCropCancel();
+                          } else {
+                            setActiveTool('select');
+                          }
+                        }}
+                      >
+                        {isCropMode && (
+                          <CropPanel onPresetChange={handleCropPresetChange} />
+                        )}
+                        {isRotateMode && (
+                          <RotatePanel
+                            rotation={rotationState.rotation}
+                            flipH={rotationState.flipH}
+                            flipV={rotationState.flipV}
+                            onRotationChange={handleRotationChange}
+                            onRotateClockwise={handleRotateClockwise}
+                            onRotateCounterClockwise={handleRotateCounterClockwise}
+                            onFlipHorizontal={handleFlipHorizontal}
+                            onFlipVertical={handleFlipVertical}
+                            onReset={handleRotateReset}
+                          />
+                        )}
+                        {isAdjustMode && (
+                          <AdjustPanel
+                            values={adjustValues}
+                            onChange={handleAdjustChange}
+                            onReset={handleAdjustReset}
+                          />
+                        )}
+                        {isFilterMode && (
+                          <FilterPanel
+                            activeFilter={activeFilter}
+                            onSelect={handleFilterSelect}
+                          />
+                        )}
+                        {isShapesMode && (
+                          <ShapesPanel onAddShape={handleAddShape} />
+                        )}
+                        {engine && selectedShapeId !== null && (
+                          <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
+                        )}
+                        {/* Custom tool panel */}
+                        {activeCustomTool?.panel && <activeCustomTool.panel />}
+                      </ToolPanel>
+                    </>
+                  )}
+
+                  <CanvasArea canvasRef={containerRef} />
+                </div>
+
+                {/* Mobile: bottom toolbar + sheet */}
+                {isMobile && (
+                  <>
+                    <MobileToolbar
+                      activeTool={activeToolId}
+                      onToolSelect={handleSidebarToolSelect}
+                    />
+                    <ToolSheet
+                      open={activeTool !== 'select'}
+                      title={toolPanelTitle}
+                      onClose={() => {
+                        if (activeTool === 'crop') {
+                          handleCropCancel();
+                        } else {
+                          setActiveTool('select');
+                        }
+                      }}
+                    >
+                      {isCropMode && (
+                        <CropPanel onPresetChange={handleCropPresetChange} />
+                      )}
+                      {isRotateMode && (
+                        <RotatePanel
+                          rotation={rotationState.rotation}
+                          flipH={rotationState.flipH}
+                          flipV={rotationState.flipV}
+                          onRotationChange={handleRotationChange}
+                          onRotateClockwise={handleRotateClockwise}
+                          onRotateCounterClockwise={handleRotateCounterClockwise}
+                          onFlipHorizontal={handleFlipHorizontal}
+                          onFlipVertical={handleFlipVertical}
+                          onReset={handleRotateReset}
+                        />
+                      )}
+                      {isAdjustMode && (
+                        <AdjustPanel
+                          values={adjustValues}
+                          onChange={handleAdjustChange}
+                          onReset={handleAdjustReset}
+                        />
+                      )}
+                      {isFilterMode && (
+                        <FilterPanel
+                          activeFilter={activeFilter}
+                          onSelect={handleFilterSelect}
+                        />
+                      )}
+                      {isShapesMode && (
+                        <ShapesPanel onAddShape={handleAddShape} />
+                      )}
+                      {engine && selectedShapeId !== null && (
+                        <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
+                      )}
+                      {activeCustomTool?.panel && <activeCustomTool.panel />}
+                    </ToolSheet>
+                  </>
+                )}
+              </div>
+
+              {/* Loading overlay */}
+              {isLoading && !error && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-10 gap-3" role="status">
+                  <Spinner size="lg" />
+                  <span className="text-muted-foreground text-sm">Loading image...</span>
+                </div>
+              )}
+
+              {/* Error overlay with retry */}
+              {error && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 z-20 gap-4" role="alert">
+                  <div className="text-destructive text-lg font-medium">Failed to load image</div>
+                  <div className="text-muted-foreground text-sm max-w-md text-center">{error}</div>
+                  <button
+                    onClick={handleRetry}
+                    className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+            </EditorShell>
+          </TooltipProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    </ImageEditorProvider>
   );
 };

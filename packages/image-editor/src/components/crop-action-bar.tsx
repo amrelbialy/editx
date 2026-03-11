@@ -7,18 +7,18 @@ export interface CropActionBarProps {
 
 export const CropActionBar: React.FC<CropActionBarProps> = ({ onApply, onCancel }) => {
   return (
-    <div className="relative z-10 flex-shrink-0 flex items-center justify-center gap-3 px-4 py-2 bg-gray-800 border-t border-gray-700">
+    <div className="relative z-10 flex-shrink-0 flex items-center justify-center gap-3 px-4 py-2 bg-card border-t border-border">
       <button
         onClick={onCancel}
         data-testid="crop-cancel"
-        className="px-5 py-1.5 rounded text-sm text-gray-300 hover:bg-gray-700 transition-colors border border-gray-600"
+        className="px-5 py-1.5 rounded-md text-sm text-foreground hover:bg-accent transition-colors border border-border"
       >
         Cancel
       </button>
       <button
         onClick={onApply}
         data-testid="crop-apply"
-        className="px-5 py-1.5 rounded text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+        className="px-5 py-1.5 rounded-md text-sm text-primary-foreground bg-primary hover:bg-primary/90 transition-colors"
       >
         Apply
       </button>

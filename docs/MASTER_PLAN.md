@@ -32,18 +32,19 @@ We are simulating the img.ly Creative Engine SDK APIs. Use these as reference fo
 
 ## Feature Status Tracker
 
-| #   | Feature                  | Status                          | Engine Changes                                                    | UI Changes                                   | Doc                               |
-| --- | ------------------------ | ------------------------------- | ----------------------------------------------------------------- | -------------------------------------------- | --------------------------------- |
-| 1   | Load Image onto Canvas   | **done** (improvements pending) | image block rendering, image/src property, async loading          | ImageEditor component, src prop              | `docs/features/01-load-image.md`  |
-| 2   | Crop                     | **done**                        | crop properties, clip/mask, tool-mode, page resize, original dims | crop tool UI, presets, overlay, apply/cancel | `docs/features/02-crop.md`        |
-| 3   | Rotate and Flip          | **done**                        | flip properties, rotation composition                             | rotate slider, flip buttons                  | `docs/features/03-rotate-flip.md` |
-| 4   | Adjustments (Full Suite) | **done**                        | adjustment properties (12 params), Konva filter pipeline          | adjustment panel with Basic & Refinements    | `docs/features/04-adjustments.md` |
-| 5   | Filters (Presets)        | **in progress**                 | filter effect type, 20 presets, preset registry                   | filter gallery panel                         | `docs/features/05-filters.md`     |
-| 6   | Shapes (annotations)     | not started                     | polygon/line/arrow kinds, points property                         | shape tools, options                         | `docs/features/06-shapes.md`      |
-| 7   | Text Annotations         | not started                     | expanded text properties, inline edit                             | text tool, styling panel                     | `docs/features/07-text.md`        |
-| 8   | Pen / Freehand Drawing   | not started                     | path block kind, points array                                     | pen tool, brush options                      | `docs/features/08-pen.md`         |
-| 9   | Resize                   | not started                     | scene.resize API                                                  | resize panel                                 | `docs/features/09-resize.md`      |
-| 10  | Export                   | not started                     | export API, offscreen render                                      | save button, format options                  | `docs/features/10-export.md`      |
+| #   | Feature                  | Status                          | Engine Changes                                                    | UI Changes                                   | Doc                                     |
+| --- | ------------------------ | ------------------------------- | ----------------------------------------------------------------- | -------------------------------------------- | --------------------------------------- |
+| 1   | Load Image onto Canvas   | **done** (improvements pending) | image block rendering, image/src property, async loading          | ImageEditor component, src prop              | `docs/features/01-load-image.md`        |
+| 2   | Crop                     | **done**                        | crop properties, clip/mask, tool-mode, page resize, original dims | crop tool UI, presets, overlay, apply/cancel | `docs/features/02-crop.md`              |
+| 3   | Rotate and Flip          | **done**                        | flip properties, rotation composition                             | rotate slider, flip buttons                  | `docs/features/03-rotate-flip.md`       |
+| 4   | Adjustments (Full Suite) | **done**                        | adjustment properties (12 params), Konva filter pipeline          | adjustment panel with Basic & Refinements    | `docs/features/04-adjustments.md`       |
+| 5   | Filters (Presets)        | **in progress**                 | filter effect type, 20 presets, preset registry                   | filter gallery panel                         | `docs/features/05-filters.md`           |
+| 6   | Shapes (annotations)     | not started                     | polygon/line/arrow kinds, points property                         | shape tools, options                         | `docs/features/06-shapes.md`            |
+| 7   | Text Annotations         | not started                     | expanded text properties, inline edit                             | text tool, styling panel                     | `docs/features/07-text.md`              |
+| 8   | Image Annotations        | not started                     | image overlay block, sticker placement, transform                 | image annotation panel, upload/gallery       | `docs/features/08-image-annotations.md` |
+| 9   | Pen / Freehand Drawing   | not started                     | path block kind, points array                                     | pen tool, brush options                      | `docs/features/09-pen.md`               |
+| 10  | Resize                   | not started                     | scene.resize API                                                  | resize panel                                 | `docs/features/10-resize.md`            |
+| 11  | Export                   | not started                     | export API, offscreen render                                      | save button, format options                  | `docs/features/11-export.md`            |
 
 ---
 

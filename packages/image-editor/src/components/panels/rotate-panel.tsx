@@ -1,23 +1,19 @@
 import React from 'react';
+import { RotateCcw, RotateCw, FlipHorizontal, FlipVertical } from 'lucide-react';
+import { Slider } from '../ui/slider';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { cn } from '../../utils/cn';
 
 export interface RotatePanelProps {
-  /** Current image rotation in degrees (-180 to 180). */
   rotation: number;
-  /** Whether the image is flipped horizontally. */
   flipH: boolean;
-  /** Whether the image is flipped vertically. */
   flipV: boolean;
-  /** Called when the slider value changes. */
   onRotationChange: (angle: number) => void;
-  /** Rotate 90° clockwise. */
   onRotateClockwise: () => void;
-  /** Rotate 90° counter-clockwise. */
   onRotateCounterClockwise: () => void;
-  /** Toggle horizontal flip. */
   onFlipHorizontal: () => void;
-  /** Toggle vertical flip. */
   onFlipVertical: () => void;
-  /** Reset rotation and flip to defaults. */
   onReset: () => void;
 }
 
@@ -33,83 +29,83 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
   onReset,
 }) => {
   return (
-    <div className="flex flex-col gap-3 p-2 bg-gray-800 border-r border-gray-700 min-w-[180px]">
-      <div className="text-xs text-gray-400 font-medium px-2 py-1">Rotate &amp; Flip</div>
-
-      {/* Rotation slider */}
-      <div className="px-2">
-        <label className="text-xs text-gray-400 block mb-1">
-          Rotation: {Math.round(rotation)}°
-        </label>
-        <input
-          type="range"
+    <div className="flex flex-col gap-4">
+      {/* Straighten */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-muted-foreground">Straighten</span>
+          <span className="text-xs tabular-nums text-muted-foreground">{Math.round(rotation)}°</span>
+        </div>
+        <Slider
           min={-180}
           max={180}
           step={1}
-          value={rotation}
-          onChange={(e) => onRotationChange(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          value={[rotation]}
+          onValueChange={([v]) => onRotationChange(v)}
           data-testid="rotation-slider"
         />
       </div>
 
+      <Separator />
+
       {/* 90° rotation buttons */}
-      <div className="flex gap-1 px-2">
-        <button
-          onClick={onRotateCounterClockwise}
-          data-testid="rotate-ccw"
-          className="flex-1 px-2 py-1.5 rounded text-sm text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors"
-          title="Rotate 90° counter-clockwise"
-        >
-          ↺ −90°
-        </button>
-        <button
-          onClick={onRotateClockwise}
-          data-testid="rotate-cw"
-          className="flex-1 px-2 py-1.5 rounded text-sm text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors"
-          title="Rotate 90° clockwise"
-        >
-          ↻ +90°
-        </button>
+      <div>
+        <div className="text-xs font-medium text-muted-foreground mb-2">Rotate</div>
+        <div className="flex gap-1.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={onRotateCounterClockwise}
+            data-testid="rotate-ccw"
+            title="Rotate 90° counter-clockwise"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            −90°
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={onRotateClockwise}
+            data-testid="rotate-cw"
+            title="Rotate 90° clockwise"
+          >
+            <RotateCw className="h-3.5 w-3.5" />
+            +90°
+          </Button>
+        </div>
       </div>
+
+      <Separator />
 
       {/* Flip buttons */}
-      <div className="flex gap-1 px-2">
-        <button
-          onClick={onFlipHorizontal}
-          data-testid="flip-h"
-          className={`flex-1 px-2 py-1.5 rounded text-sm transition-colors ${
-            flipH
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-300 bg-gray-700 hover:bg-gray-600'
-          }`}
-          title="Flip horizontally"
-        >
-          ⇔ Flip H
-        </button>
-        <button
-          onClick={onFlipVertical}
-          data-testid="flip-v"
-          className={`flex-1 px-2 py-1.5 rounded text-sm transition-colors ${
-            flipV
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-300 bg-gray-700 hover:bg-gray-600'
-          }`}
-          title="Flip vertically"
-        >
-          ⇕ Flip V
-        </button>
-      </div>
-
-      {/* Reset */}
-      <div className="px-2">
-        <button
-          onClick={onReset}
-          data-testid="rotate-reset"
-          className="w-full px-2 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-600"
-        >
-          Reset
-        </button>
+      <div>
+        <div className="text-xs font-medium text-muted-foreground mb-2">Flip</div>
+        <div className="flex gap-1.5">
+          <Button
+            variant={flipH ? 'default' : 'secondary'}
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={onFlipHorizontal}
+            data-testid="flip-h"
+            title="Flip horizontally"
+          >
+            <FlipHorizontal className="h-3.5 w-3.5" />
+            Horizontal
+          </Button>
+          <Button
+            variant={flipV ? 'default' : 'secondary'}
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={onFlipVertical}
+            data-testid="flip-v"
+            title="Flip vertically"
+          >
+            <FlipVertical className="h-3.5 w-3.5" />
+            Vertical
+          </Button>
+        </div>
       </div>
     </div>
   );

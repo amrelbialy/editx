@@ -1,0 +1,100 @@
+import React from 'react';
+import { Undo2, Redo2, ZoomOut, ZoomIn, Download } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { cn } from '../../utils/cn';
+import { useConfig } from '../../config/config-context';
+
+interface TopbarProps {
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onZoomFit?: () => void;
+  zoomLabel?: string;
+  onExport?: () => void;
+  /** Slot: extra content rendered on the right side before export. */
+  topbarRight?: React.ReactNode;
+}
+
+export const Topbar: React.FC<TopbarProps> = ({
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onZoomIn,
+  onZoomOut,
+  onZoomFit,
+  zoomLabel = 'Auto',
+  onExport,
+  topbarRight,
+}) => {
+  const config = useConfig();
+  const title = config.ui?.title ?? 'Photo Editor';
+  const showTitle = config.ui?.showTitle ?? true;
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between h-12 px-3',
+        'bg-card border-b border-border',
+      )}
+    >
+      {/* Left: Undo / Redo */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onUndo}
+          disabled={!canUndo}
+          title="Undo"
+        >
+          <Undo2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRedo}
+          disabled={!canRedo}
+          title="Redo"
+        >
+          <Redo2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Center: Title */}
+      {showTitle && (
+        <span className="text-sm font-medium text-muted-foreground">
+          {title}
+        </span>
+      )}
+
+      {/* Right: Zoom + Export */}
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out">
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs min-w-[48px]"
+          onClick={onZoomFit}
+          title="Fit to screen"
+        >
+          {zoomLabel}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in">
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        {topbarRight}
+        <Button variant="default" size="sm" onClick={onExport}>
+          <Download className="h-4 w-4" />
+          Export Image
+        </Button>
+      </div>
+    </div>
+  );
+};

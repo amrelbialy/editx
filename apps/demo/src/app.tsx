@@ -1,13 +1,20 @@
 import { useState, useCallback } from 'react';
-import { ImageEditor } from '@creative-editor/image-editor';
+import { ImageEditor, type ThemePreset } from '@creative-editor/image-editor';
 
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200';
+
+const THEME_PRESETS: ThemePreset[] = [
+  'stone-dark', 'zinc-dark', 'slate-dark', 'neutral-dark',
+  'stone-light', 'zinc-light', 'slate-light', 'neutral-light',
+  'amber-minimal-dark', 'amber-minimal-light', 'amethyst-haze-dark', 'amethyst-haze-light',
+];
 
 function App() {
   const [mode, setMode] = useState<'image-editor' | 'pick'>('pick');
   const [imageSrc, setImageSrc] = useState<string | File | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [themePreset, setThemePreset] = useState<ThemePreset>('stone-dark');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,8 +85,30 @@ function App() {
     }
   }, []);
 
+  const cycleTheme = useCallback(() => {
+    setThemePreset((prev) => {
+      const idx = THEME_PRESETS.indexOf(prev);
+      return THEME_PRESETS[(idx + 1) % THEME_PRESETS.length];
+    });
+  }, []);
+
   if (mode === 'image-editor' && imageSrc) {
-    return <ImageEditor src={imageSrc} />;
+    return (
+      <ImageEditor
+        src={imageSrc}
+        config={{ theme: { preset: themePreset } }}
+        slots={{
+          topbarRight: (
+            <button
+              onClick={cycleTheme}
+              className="px-3 py-1.5 text-xs font-medium rounded-md bg-accent text-foreground backdrop-blur hover:bg-white/20 transition-colors"
+            >
+              Theme: {themePreset}
+            </button>
+          ),
+        }}
+      />
+    );
   }
 
   return (

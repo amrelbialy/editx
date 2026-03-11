@@ -30,7 +30,7 @@ describe('CropPanel', () => {
     render(React.createElement(CropPanel, { onPresetChange }));
 
     const activeBtn = screen.getByTestId('crop-preset-1:1');
-    expect(activeBtn.className).toContain('bg-blue');
+    expect(activeBtn.className).toContain('bg-primary');
   });
 
   it('calls onPresetChange and setCropPreset when a preset is clicked', () => {

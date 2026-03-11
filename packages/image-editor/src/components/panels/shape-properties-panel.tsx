@@ -8,6 +8,8 @@ import {
   SHAPE_RECT_CORNER_RADIUS,
   SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
 } from '@creative-editor/engine';
+import { Slider } from '../ui/slider';
+import { Separator } from '../ui/separator';
 
 export interface ShapePropertiesPanelProps {
   engine: CreativeEngine;
@@ -34,7 +36,7 @@ interface ShapeState {
 }
 
 function colorToInputHex(c: Color): string {
-  return colorToHex(c).substring(0, 7); // strip alpha for <input type="color">
+  return colorToHex(c).substring(0, 7);
 }
 
 function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
@@ -42,7 +44,6 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
   const pos = b.getPosition(blockId);
   const size = b.getSize(blockId);
 
-  // Fill color from fill sub-block
   let fillColor = '#4a90e2';
   const fillId = b.getFill(blockId);
   if (fillId != null) {
@@ -50,7 +51,6 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
     if (c) fillColor = colorToInputHex(c);
   }
 
-  // Corner radius from shape sub-block
   let cornerRadius = 0;
   let shapeKind = b.getKind(blockId);
   const shapeId = b.getShape(blockId);
@@ -61,7 +61,6 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
     }
   }
 
-  // Shadow
   const shadowEnabled = b.isShadowEnabled(blockId);
   const sc = b.getShadowColor(blockId);
 
@@ -88,7 +87,6 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
 export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engine, blockId }) => {
   const [state, setState] = useState<ShapeState>(() => readShapeState(engine, blockId));
 
-  // re-read when blockId changes
   useEffect(() => {
     setState(readShapeState(engine, blockId));
   }, [engine, blockId]);
@@ -97,7 +95,6 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     setState(readShapeState(engine, blockId));
   }, [engine, blockId]);
 
-  // --- Color ---
   const handleFillColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const fillId = engine.block.getFill(blockId);
     if (fillId != null) {
@@ -106,13 +103,11 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     update();
   }, [engine, blockId, update]);
 
-  // --- Opacity ---
-  const handleOpacity = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setOpacity(blockId, parseFloat(e.target.value));
+  const handleOpacity = useCallback(([v]: number[]) => {
+    engine.block.setOpacity(blockId, v);
     update();
   }, [engine, blockId, update]);
 
-  // --- Position ---
   const handlePosX = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     if (!isNaN(val)) {
@@ -129,7 +124,6 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     }
   }, [engine, blockId, state.x, update]);
 
-  // --- Size ---
   const handleWidth = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     if (!isNaN(val) && val > 0) {
@@ -146,16 +140,14 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     }
   }, [engine, blockId, state.width, update]);
 
-  // --- Border Radius ---
-  const handleCornerRadius = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCornerRadius = useCallback(([v]: number[]) => {
     const shapeId = engine.block.getShape(blockId);
     if (shapeId != null) {
-      engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, parseFloat(e.target.value));
+      engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, v);
       update();
     }
   }, [engine, blockId, update]);
 
-  // --- Shadow ---
   const handleShadowToggle = useCallback(() => {
     engine.block.setShadowEnabled(blockId, !state.shadowEnabled);
     update();
@@ -176,12 +168,11 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     update();
   }, [engine, blockId, update]);
 
-  const handleShadowBlur = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowBlur(blockId, parseFloat(e.target.value));
+  const handleShadowBlur = useCallback(([v]: number[]) => {
+    engine.block.setShadowBlur(blockId, v);
     update();
   }, [engine, blockId, update]);
 
-  // --- Stroke ---
   const handleStrokeToggle = useCallback(() => {
     engine.block.setStrokeEnabled(blockId, !state.strokeEnabled);
     update();
@@ -192,47 +183,50 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     update();
   }, [engine, blockId, update]);
 
-  const handleStrokeWidth = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setStrokeWidth(blockId, parseFloat(e.target.value));
+  const handleStrokeWidth = useCallback(([v]: number[]) => {
+    engine.block.setStrokeWidth(blockId, v);
     update();
   }, [engine, blockId, update]);
 
   return (
-    <div className="flex flex-col gap-3 p-3 bg-gray-800 border-r border-gray-700 min-w-[220px] max-w-[240px] overflow-y-auto text-sm">
-      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Shape Properties</div>
+    <div className="flex flex-col gap-3">
+      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        Shape Properties
+      </div>
 
-      {/* --- Fill Color --- */}
+      {/* Fill Color */}
       <Section label="Fill Color">
         <div className="flex items-center gap-2">
           <input
             type="color"
             value={state.fillColor}
             onChange={handleFillColor}
-            className="w-8 h-8 rounded border border-gray-600 bg-transparent cursor-pointer"
+            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
           />
-          <span className="text-gray-300 text-xs font-mono">{state.fillColor}</span>
+          <span className="text-xs font-mono text-muted-foreground">{state.fillColor}</span>
         </div>
       </Section>
 
-      {/* --- Opacity --- */}
+      {/* Opacity */}
       <Section label="Opacity">
         <div className="flex items-center gap-2">
-          <input
-            type="range"
+          <Slider
             min={0}
             max={1}
             step={0.01}
-            value={state.opacity}
-            onChange={handleOpacity}
+            value={[state.opacity]}
+            onValueChange={handleOpacity}
             className="flex-1"
           />
-          <span className="text-gray-300 text-xs w-8 text-right">
+          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
             {Math.round(state.opacity * 100)}%
           </span>
         </div>
       </Section>
 
-      {/* --- Position --- */}
+      <Separator />
+
+      {/* Position */}
       <Section label="Position">
         <div className="grid grid-cols-2 gap-2">
           <NumberField label="X" value={state.x} onChange={handlePosX} />
@@ -240,7 +234,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
         </div>
       </Section>
 
-      {/* --- Size --- */}
+      {/* Size */}
       <Section label="Size">
         <div className="grid grid-cols-2 gap-2">
           <NumberField label="W" value={state.width} onChange={handleWidth} />
@@ -248,52 +242,52 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
         </div>
       </Section>
 
-      {/* --- Corner Radius (rect only) --- */}
+      {/* Corner Radius (rect only) */}
       {state.shapeKind === 'rect' && (
         <Section label="Border Radius">
           <div className="flex items-center gap-2">
-            <input
-              type="range"
+            <Slider
               min={0}
               max={Math.min(state.width, state.height) / 2}
               step={1}
-              value={state.cornerRadius}
-              onChange={handleCornerRadius}
+              value={[state.cornerRadius]}
+              onValueChange={handleCornerRadius}
               className="flex-1"
             />
-            <span className="text-gray-300 text-xs w-8 text-right">
+            <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
               {Math.round(state.cornerRadius)}
             </span>
           </div>
         </Section>
       )}
 
-      {/* --- Stroke --- */}
+      <Separator />
+
+      {/* Stroke */}
       <Section label="Stroke">
         <ToggleRow checked={state.strokeEnabled} onToggle={handleStrokeToggle} label="Enabled" />
         {state.strokeEnabled && (
-          <div className="flex flex-col gap-2 mt-1">
+          <div className="flex flex-col gap-2 mt-1.5">
             <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={state.strokeColor}
                 onChange={handleStrokeColor}
-                className="w-8 h-8 rounded border border-gray-600 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
               />
-              <span className="text-gray-300 text-xs font-mono">{state.strokeColor}</span>
+              <span className="text-xs font-mono text-muted-foreground">{state.strokeColor}</span>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-gray-400 text-xs w-10">Width</label>
-              <input
-                type="range"
+              <span className="text-xs text-muted-foreground w-10">Width</span>
+              <Slider
                 min={0}
                 max={20}
                 step={0.5}
-                value={state.strokeWidth}
-                onChange={handleStrokeWidth}
+                value={[state.strokeWidth]}
+                onValueChange={handleStrokeWidth}
                 className="flex-1"
               />
-              <span className="text-gray-300 text-xs w-8 text-right">
+              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
                 {state.strokeWidth.toFixed(1)}
               </span>
             </div>
@@ -301,36 +295,37 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
         )}
       </Section>
 
-      {/* --- Shadow --- */}
+      <Separator />
+
+      {/* Shadow */}
       <Section label="Shadow">
         <ToggleRow checked={state.shadowEnabled} onToggle={handleShadowToggle} label="Enabled" />
         {state.shadowEnabled && (
-          <div className="flex flex-col gap-2 mt-1">
+          <div className="flex flex-col gap-2 mt-1.5">
             <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={state.shadowColor}
                 onChange={handleShadowColor}
-                className="w-8 h-8 rounded border border-gray-600 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
               />
-              <span className="text-gray-300 text-xs font-mono">{state.shadowColor}</span>
+              <span className="text-xs font-mono text-muted-foreground">{state.shadowColor}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <NumberField label="X" value={state.shadowOffsetX} onChange={handleShadowOffsetX} />
               <NumberField label="Y" value={state.shadowOffsetY} onChange={handleShadowOffsetY} />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-gray-400 text-xs w-10">Blur</label>
-              <input
-                type="range"
+              <span className="text-xs text-muted-foreground w-10">Blur</span>
+              <Slider
                 min={0}
                 max={50}
                 step={1}
-                value={state.shadowBlur}
-                onChange={handleShadowBlur}
+                value={[state.shadowBlur]}
+                onValueChange={handleShadowBlur}
                 className="flex-1"
               />
-              <span className="text-gray-300 text-xs w-8 text-right">
+              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
                 {Math.round(state.shadowBlur)}
               </span>
             </div>
@@ -344,8 +339,8 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
 // --- Reusable sub-components ---
 
 const Section: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div className="flex flex-col gap-1">
-    <div className="text-xs text-gray-500 font-medium">{label}</div>
+  <div className="flex flex-col gap-1.5">
+    <div className="text-xs font-medium text-muted-foreground">{label}</div>
     {children}
   </div>
 );
@@ -360,9 +355,9 @@ const ToggleRow: React.FC<{ checked: boolean; onToggle: () => void; label: strin
       type="checkbox"
       checked={checked}
       onChange={onToggle}
-      className="w-4 h-4 rounded border-gray-600"
+      className="w-4 h-4 rounded border-border accent-primary"
     />
-    <span className="text-gray-300 text-xs">{label}</span>
+    <span className="text-xs text-foreground">{label}</span>
   </label>
 );
 
@@ -372,12 +367,12 @@ const NumberField: React.FC<{
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }> = ({ label, value, onChange }) => (
   <div className="flex items-center gap-1">
-    <label className="text-gray-400 text-xs w-4">{label}</label>
+    <span className="text-xs text-muted-foreground w-4">{label}</span>
     <input
       type="number"
       value={Math.round(value)}
       onChange={onChange}
-      className="w-full px-1 py-0.5 bg-gray-700 border border-gray-600 rounded text-gray-300 text-xs"
+      className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
     />
   </div>
 );

@@ -1,0 +1,69 @@
+/*
+ * Image Editor – Tailwind v4 CSS theme
+ *
+ * Registers our CSS-variable-based design tokens so Tailwind utilities like
+ * `bg-background`, `text-foreground`, `border-border`, `rounded-md`, etc.
+ * resolve correctly at runtime.  The actual color values (including hsl/oklch
+ * wrappers) are injected by <ThemeProvider> at mount time via inline styles;
+ * here we just declare the mapping from Tailwind token → CSS variable.
+ *
+ * This file is meant to be @import'd by the consuming app's CSS
+ * (after `@import 'tailwindcss'`).
+ */
+
+@theme inline {
+  /* Border radius scale (used by rounded-sm / rounded-md / rounded-lg / rounded-xl) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Semantic colors – Tailwind will generate bg-*, text-*, border-* utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+}
+
+/*
+ * Baseline layer – resets that apply inside the editor shell.
+ * Using .ie-theme so they don't leak into the host page.
+ */
+@layer base {
+  .ie-theme {
+    color: var(--foreground);
+    background: var(--background);
+  }
+
+  .ie-theme * {
+    border-color: var(--border);
+  }
+}
