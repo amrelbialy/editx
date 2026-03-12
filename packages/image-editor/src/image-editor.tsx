@@ -4,13 +4,15 @@ import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel } from './components/panels/adjust-panel';
 import { FilterPanel } from './components/panels/filter-panel';
 import { ShapesPanel } from './components/panels/shapes-panel';
-import { ShapePropertiesPanel } from './components/panels/shape-properties-panel';
 import { TextPanel } from './components/panels/text-panel';
-import { TextPropertiesPanel } from './components/panels/text-properties-panel';
+import { ColorPropertyPanel } from './components/panels/color-property-panel';
+import { BackgroundPropertyPanel } from './components/panels/background-property-panel';
+import { ShadowPropertyPanel } from './components/panels/shadow-property-panel';
+import { StrokePropertyPanel } from './components/panels/stroke-property-panel';
+import { PositionPropertyPanel } from './components/panels/position-property-panel';
+import { BlockPropertiesBar } from './components/shell/block-properties-bar';
+import { ToolPropertiesBar } from './components/shell/tool-properties-bar';
 import { TextEditorOverlay } from './components/text-editor-overlay';
-import { RotateCw, RotateCcw as RotateCcwIcon, FlipHorizontal, FlipVertical } from 'lucide-react';
-import { Button } from './components/ui/button';
-import { Separator } from './components/ui/separator';
 import { Spinner } from './components/ui/spinner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { ImageEditorProvider } from './config/config-context';
@@ -21,7 +23,7 @@ import { Topbar } from './components/shell/topbar';
 import { ToolSidebar } from './components/shell/tool-sidebar';
 import { ToolPanel } from './components/shell/tool-panel';
 import { CanvasArea } from './components/shell/canvas-area';
-import { ContextualBar } from './components/shell/contextual-bar';
+
 import { MobileToolbar } from './components/shell/mobile-toolbar';
 import { ToolSheet } from './components/shell/tool-sheet';
 import { useResponsive } from './hooks/use-responsive';
@@ -140,6 +142,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     events,
   });
 
+  const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
+  const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
+
   const isCropMode = activeTool === 'crop';
   const isRotateMode = activeTool === 'rotate';
   const isAdjustMode = activeTool === 'adjust';
@@ -163,7 +168,35 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   })();
 
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === activeTool);
-  const showContextualBar = activeTool !== 'select';
+
+  // Determine if a block is selected and its type
+  const selectedBlockType = engine && selectedShapeId !== null
+    ? engine.block.getType(selectedShapeId) as 'text' | 'graphic' | string
+    : null;
+  const hasSelectedBlock = selectedBlockType === 'text' || selectedBlockType === 'graphic';
+
+  // Property side panel title mapping
+  const propertySidePanelTitle = (() => {
+    switch (propertySidePanel) {
+      case 'color': return 'Color';
+      case 'background': return 'Background';
+      case 'shadow': return 'Shadow';
+      case 'position': return 'Position';
+      case 'stroke': return 'Stroke';
+      default: return undefined;
+    }
+  })();
+
+  // Whether the tool panel should be open
+  const toolPanelOpen = activeTool !== 'select' || propertySidePanel !== null;
+  const effectivePanelTitle = propertySidePanel ? propertySidePanelTitle : toolPanelTitle;
+
+  // Reset property side panel when block is deselected
+  useEffect(() => {
+    if (!hasSelectedBlock && propertySidePanel !== null) {
+      setPropertySidePanel(null);
+    }
+  }, [hasSelectedBlock, propertySidePanel, setPropertySidePanel]);
 
   // --- Keyboard shortcuts ---
   useShortcuts({
@@ -220,47 +253,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                   topbarRight={slots?.topbarRight}
                 />
 
-                <ContextualBar
-                  visible={showContextualBar}
-                  onReset={handleContextualReset}
-                  onDone={handleDone}
-                >
-                  {/* Crop & Rotate tools: quick rotate/flip in contextual bar */}
-                  {(isCropMode || isRotateMode) && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={rotateFlip.handleRotateCounterClockwise} title="Rotate 90° left">
-                        <RotateCcwIcon className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={rotateFlip.handleRotateClockwise} title="Rotate 90° right">
-                        <RotateCw className="h-3.5 w-3.5" />
-                      </Button>
-                      <Separator orientation="vertical" className="h-4" />
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={rotateFlip.handleFlipHorizontal} title="Flip horizontal">
-                        <FlipHorizontal className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={rotateFlip.handleFlipVertical} title="Flip vertical">
-                        <FlipVertical className="h-3.5 w-3.5" />
-                      </Button>
-                    </>
-                  )}
-                  {isAdjustMode && (
-                    <span className="text-xs text-muted-foreground">Adjust image tones and colors</span>
-                  )}
-                  {isFilterMode && (
-                    <span className="text-xs text-muted-foreground">Apply preset looks</span>
-                  )}
-                  {isShapesMode && (
-                    <span className="text-xs text-muted-foreground">Add and arrange shapes</span>
-                  )}
-                  {isTextMode && (
-                    <span className="text-xs text-muted-foreground">Add and edit text</span>
-                  )}
-                  {/* Custom tool contextual bar */}
-                  {activeCustomTool?.contextualBar && <activeCustomTool.contextualBar />}
-                  {/* Slot: extra contextual bar content */}
-                  {slots?.contextualBarExtra}
-                </ContextualBar>
-
                 <div className="flex flex-1 overflow-hidden">
                   {/* Desktop: sidebar + slide-out panel */}
                   {!isMobile && (
@@ -273,64 +265,113 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                       />
 
                       <ToolPanel
-                        open={activeTool !== 'select'}
-                        title={toolPanelTitle}
+                        open={toolPanelOpen}
+                        title={effectivePanelTitle}
                         onClose={() => {
-                          if (activeTool === 'crop') {
+                          if (propertySidePanel) {
+                            setPropertySidePanel(null);
+                          } else if (activeTool === 'crop') {
                             crop.handleCropCancel();
                           } else {
                             setActiveTool('select');
                           }
                         }}
                       >
-                        {isCropMode && (
-                          <CropPanel onPresetChange={crop.handleCropPresetChange} />
+                        {/* Property sub-panels (override tool content) */}
+                        {propertySidePanel && engine && selectedShapeId !== null ? (
+                          <>
+                            {propertySidePanel === 'color' && (
+                              <ColorPropertyPanel
+                                engine={engine}
+                                blockId={selectedShapeId}
+                                blockType={selectedBlockType as 'text' | 'graphic'}
+                              />
+                            )}
+                            {propertySidePanel === 'background' && (
+                              <BackgroundPropertyPanel engine={engine} blockId={selectedShapeId} />
+                            )}
+                            {propertySidePanel === 'shadow' && (
+                              <ShadowPropertyPanel engine={engine} blockId={selectedShapeId} />
+                            )}
+                            {propertySidePanel === 'stroke' && (
+                              <StrokePropertyPanel engine={engine} blockId={selectedShapeId} />
+                            )}
+                            {propertySidePanel === 'position' && (
+                              <PositionPropertyPanel engine={engine} blockId={selectedShapeId} />
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {isCropMode && (
+                              <CropPanel onPresetChange={crop.handleCropPresetChange} />
+                            )}
+                            {isRotateMode && (
+                              <RotatePanel
+                                rotation={rotateFlip.rotationState.rotation}
+                                flipH={rotateFlip.rotationState.flipH}
+                                flipV={rotateFlip.rotationState.flipV}
+                                onRotationChange={rotateFlip.handleRotationChange}
+                                onRotateClockwise={rotateFlip.handleRotateClockwise}
+                                onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
+                                onFlipHorizontal={rotateFlip.handleFlipHorizontal}
+                                onFlipVertical={rotateFlip.handleFlipVertical}
+                                onReset={rotateFlip.handleRotateReset}
+                              />
+                            )}
+                            {isAdjustMode && (
+                              <AdjustPanel
+                                values={adjustments.adjustValues}
+                                onChange={adjustments.handleAdjustChange}
+                                onReset={adjustments.handleAdjustReset}
+                              />
+                            )}
+                            {isFilterMode && (
+                              <FilterPanel
+                                activeFilter={filter.activeFilter}
+                                onSelect={filter.handleFilterSelect}
+                              />
+                            )}
+                            {isShapesMode && (
+                              <ShapesPanel onAddShape={shapes.handleAddShape} />
+                            )}
+                            {isTextMode && (
+                              <TextPanel onAddText={textTool.handleAddText} />
+                            )}
+                            {/* Custom tool panel */}
+                            {activeCustomTool?.panel && <activeCustomTool.panel />}
+                          </>
                         )}
-                        {isRotateMode && (
-                          <RotatePanel
-                            rotation={rotateFlip.rotationState.rotation}
-                            flipH={rotateFlip.rotationState.flipH}
-                            flipV={rotateFlip.rotationState.flipV}
-                            onRotationChange={rotateFlip.handleRotationChange}
-                            onRotateClockwise={rotateFlip.handleRotateClockwise}
-                            onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
-                            onFlipHorizontal={rotateFlip.handleFlipHorizontal}
-                            onFlipVertical={rotateFlip.handleFlipVertical}
-                            onReset={rotateFlip.handleRotateReset}
-                          />
-                        )}
-                        {isAdjustMode && (
-                          <AdjustPanel
-                            values={adjustments.adjustValues}
-                            onChange={adjustments.handleAdjustChange}
-                            onReset={adjustments.handleAdjustReset}
-                          />
-                        )}
-                        {isFilterMode && (
-                          <FilterPanel
-                            activeFilter={filter.activeFilter}
-                            onSelect={filter.handleFilterSelect}
-                          />
-                        )}
-                        {isShapesMode && (
-                          <ShapesPanel onAddShape={shapes.handleAddShape} />
-                        )}
-                        {isTextMode && (
-                          <TextPanel onAddText={textTool.handleAddText} />
-                        )}
-                        {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'graphic' && (
-                          <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
-                        )}
-                        {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'text' && (
-                          <TextPropertiesPanel engine={engine} blockId={selectedShapeId} />
-                        )}
-                        {/* Custom tool panel */}
-                        {activeCustomTool?.panel && <activeCustomTool.panel />}
                       </ToolPanel>
                     </>
                   )}
 
-                  <CanvasArea canvasRef={containerRef}>
+                  <CanvasArea
+                    canvasRef={containerRef}
+                    header={
+                      engine && selectedShapeId !== null && hasSelectedBlock ? (
+                        <BlockPropertiesBar
+                          engine={engine}
+                          blockId={selectedShapeId}
+                          blockType={selectedBlockType as 'text' | 'graphic'}
+                        />
+                      ) : activeTool !== 'select' ? (
+                        <ToolPropertiesBar
+                          activeTool={activeTool}
+                          onReset={handleContextualReset}
+                          onDone={handleDone}
+                          onRotateClockwise={rotateFlip.handleRotateClockwise}
+                          onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
+                          onFlipHorizontal={rotateFlip.handleFlipHorizontal}
+                          onFlipVertical={rotateFlip.handleFlipVertical}
+                          customContent={
+                            activeCustomTool?.contextualBar
+                              ? React.createElement(activeCustomTool.contextualBar)
+                              : slots?.contextualBarExtra
+                          }
+                        />
+                      ) : undefined
+                    }
+                  >
                     {engine && editingTextBlockId !== null && (
                       <TextEditorOverlay
                         engine={engine}
@@ -394,12 +435,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                       )}
                       {isTextMode && (
                         <TextPanel onAddText={textTool.handleAddText} />
-                      )}
-                      {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'graphic' && (
-                        <ShapePropertiesPanel engine={engine} blockId={selectedShapeId} />
-                      )}
-                      {engine && selectedShapeId !== null && engine.block.getType(selectedShapeId) === 'text' && (
-                        <TextPropertiesPanel engine={engine} blockId={selectedShapeId} />
                       )}
                       {activeCustomTool?.panel && <activeCustomTool.panel />}
                     </ToolSheet>

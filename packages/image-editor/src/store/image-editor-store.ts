@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 export type ImageEditorTool = 'select' | 'crop' | 'rotate' | 'adjust' | 'filter' | 'resize' | 'shapes' | 'text' | 'pen';
 
+export type PropertySidePanel = 'color' | 'background' | 'shadow' | 'position' | 'stroke' | null;
+
 export type CropPresetId = 'free' | 'original' | '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
 
 export interface OriginalImageInfo {
@@ -38,6 +40,9 @@ interface ImageEditorState {
   /** Current text selection range within the inline editor. null when no selection. */
   textSelectionRange: { from: number; to: number } | null;
 
+  /** Which property sub-panel is shown in the side panel (overrides tool panel content). */
+  propertySidePanel: PropertySidePanel;
+
   setActiveTool: (tool: ImageEditorTool) => void;
   setOriginalImage: (info: OriginalImageInfo) => void;
   setLoading: (loading: boolean) => void;
@@ -48,6 +53,7 @@ interface ImageEditorState {
   setCropPreset: (preset: CropPresetId) => void;
   setEditingTextBlockId: (id: number | null) => void;
   setTextSelectionRange: (range: { from: number; to: number } | null) => void;
+  setPropertySidePanel: (panel: PropertySidePanel) => void;
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
@@ -61,8 +67,9 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
 
   editingTextBlockId: null,
   textSelectionRange: null,
+  propertySidePanel: null,
 
-  setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveTool: (tool) => set({ activeTool: tool, propertySidePanel: null }),
   setOriginalImage: (info) => set({ originalImage: info }),
   setLoading: (loading) => set({ isLoading: loading }),
   setEditableBlockId: (id) => set({ editableBlockId: id }),
@@ -72,4 +79,5 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   setCropPreset: (preset) => set({ cropPreset: preset }),
   setEditingTextBlockId: (id) => set({ editingTextBlockId: id }),
   setTextSelectionRange: (range) => set({ textSelectionRange: range }),
+  setPropertySidePanel: (panel) => set({ propertySidePanel: panel }),
 }));

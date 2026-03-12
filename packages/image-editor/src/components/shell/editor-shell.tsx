@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { cn } from '../../utils/cn';
+import { PopoverContainerProvider } from '../ui/popover-container-context';
 
 interface EditorShellProps {
   children: React.ReactNode;
@@ -8,8 +9,14 @@ interface EditorShellProps {
 }
 
 export const EditorShell: React.FC<EditorShellProps> = ({ children, className, style }) => {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const shellRef = useCallback((node: HTMLDivElement | null) => {
+    setContainer(node);
+  }, []);
+
   return (
     <div
+      ref={shellRef}
       role="application"
       aria-label="Image editor"
       style={style}
@@ -19,7 +26,9 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
         className,
       )}
     >
-      {children}
+      <PopoverContainerProvider value={container ?? undefined}>
+        {children}
+      </PopoverContainerProvider>
     </div>
   );
 };
