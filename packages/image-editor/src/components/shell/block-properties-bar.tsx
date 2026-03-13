@@ -18,6 +18,10 @@ import {
   Move,
   MoreHorizontal,
   ChevronDown,
+  Sparkles,
+  SlidersHorizontal,
+  Palette,
+  ImageIcon,
 } from 'lucide-react';
 import { Slider } from '../ui/slider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '../ui/dropdown-menu';
@@ -30,7 +34,7 @@ import { cn } from '../../utils/cn';
 interface BlockPropertiesBarProps {
   engine: CreativeEngine;
   blockId: number;
-  blockType: 'text' | 'graphic';
+  blockType: 'text' | 'graphic' | 'image';
 }
 
 const FONT_FAMILIES = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana'];
@@ -82,13 +86,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
   const isText = blockType === 'text';
+  const isImage = blockType === 'image';
 
   // State
   const [textState, setTextState] = useState(() =>
     isText ? readTextState(engine, blockId, textSelectionRange?.from) : null,
   );
   const [fillColor, setFillColor] = useState(() =>
-    !isText ? readBlockColor(engine, blockId) : '#000000',
+    !isText && !isImage ? readBlockColor(engine, blockId) : '#000000',
   );
   const [opacity, setOpacity] = useState(() => engine.block.getOpacity(blockId));
 
@@ -96,20 +101,20 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
   useEffect(() => {
     if (isText) {
       setTextState(readTextState(engine, blockId, textSelectionRange?.from));
-    } else {
+    } else if (!isImage) {
       setFillColor(readBlockColor(engine, blockId));
     }
     setOpacity(engine.block.getOpacity(blockId));
-  }, [engine, blockId, isText, textSelectionRange]);
+  }, [engine, blockId, isText, isImage, textSelectionRange]);
 
   const refresh = useCallback(() => {
     if (isText) {
       setTextState(readTextState(engine, blockId, textSelectionRange?.from));
-    } else {
+    } else if (!isImage) {
       setFillColor(readBlockColor(engine, blockId));
     }
     setOpacity(engine.block.getOpacity(blockId));
-  }, [engine, blockId, isText, textSelectionRange]);
+  }, [engine, blockId, isText, isImage, textSelectionRange]);
 
   // ── Selection-aware style range ──
   const hasCharSelection = editingTextBlockId === blockId && textSelectionRange !== null
@@ -301,20 +306,22 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
 
       {/* ── Shared property buttons ── */}
 
-      {/* Color */}
-      <PanelButton
-        panel="color"
-        icon={
-          <div
-            className="w-4 h-4 rounded-full border border-border"
-            style={{ backgroundColor: colorSwatch }}
-          />
-        }
-        label="Color"
-      />
+      {/* Color (text + graphic only) */}
+      {!isImage && (
+        <PanelButton
+          panel="color"
+          icon={
+            <div
+              className="w-4 h-4 rounded-full border border-border"
+              style={{ backgroundColor: colorSwatch }}
+            />
+          }
+          label="Color"
+        />
+      )}
 
-      {/* No-fill toggle (shape only) */}
-      {!isText && (
+      {/* No-fill toggle (graphic only) */}
+      {!isText && !isImage && (
         <button
           onClick={() => {
             const enabled = engine.block.isFillEnabled(blockId);
@@ -342,13 +349,68 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
         />
       )}
 
-      {/* Stroke (shape only) */}
-      {!isText && (
+      {/* Stroke (graphic only) */}
+      {!isText && !isImage && (
         <PanelButton
           panel="stroke"
           icon={<Paintbrush className="h-3.5 w-3.5" />}
           label="Stroke"
         />
+      )}
+
+      {/* Image fill panel button (image only) */}
+      {isImage && (
+        <PanelButton
+          panel="imageFill"
+          icon={<ImageIcon className="h-3.5 w-3.5" />}
+          label="Image"
+        />
+      )}
+
+      {/* Style dropdown (image only — Adjustments / Filters) */}
+      {isImage && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap',
+                propertySidePanel === 'adjust' || propertySidePanel === 'filter'
+                  ? 'bg-primary/20 text-primary ring-1 ring-primary/30'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Style
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-auto p-1" align="center">
+            <button
+              onClick={() => togglePanel('adjust')}
+              className={cn(
+                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
+                propertySidePanel === 'adjust'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Adjustments
+            </button>
+            <button
+              onClick={() => togglePanel('filter')}
+              className={cn(
+                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
+                propertySidePanel === 'filter'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <Palette className="h-4 w-4" />
+              Filters
+            </button>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
 
       {/* Shadow */}

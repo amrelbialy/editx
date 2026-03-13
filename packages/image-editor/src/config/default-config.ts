@@ -4,7 +4,7 @@ export const defaultConfig: Required<
   Pick<ImageEditorConfig, 'tools' | 'defaultTool' | 'theme' | 'ui' | 'export'>
 > &
   ImageEditorConfig = {
-  tools: ['crop', 'adjust', 'filter', 'text', 'shapes', 'sticker'],
+  tools: ['crop', 'adjust', 'filter', 'text', 'shapes', 'image'],
   defaultTool: null,
 
   theme: {
@@ -67,8 +67,9 @@ export const defaultConfig: Required<
     defaultColor: '#3b82f6',
   },
 
-  sticker: {
-    packs: [],
+  image: {
+    maxFileSize: 5 * 1024 * 1024,
+    maxDimension: 2048,
   },
 
   export: {

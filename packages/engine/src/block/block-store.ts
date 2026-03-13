@@ -208,6 +208,10 @@ export class BlockStore {
     this.#hierarchy.removeChild(parentId, childId);
   }
 
+  moveChildToIndex(parentId: number, childId: number, newIndex: number): void {
+    this.#hierarchy.moveChildToIndex(parentId, childId, newIndex);
+  }
+
   getChildren(id: number): number[] {
     return this.#hierarchy.getChildren(id);
   }

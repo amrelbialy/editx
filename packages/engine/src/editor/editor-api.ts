@@ -184,6 +184,11 @@ export class EditorAPI {
   screenToWorld(pt: { x: number; y: number }) { return this.#viewport.screenToWorld(pt); }
   worldToScreen(pt: { x: number; y: number }) { return this.#viewport.worldToScreen(pt); }
 
+  /** Returns the screen-pixel bounding rect of the current transformer selection, relative to the canvas root. */
+  getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
+    return this.#ctx.renderer?.getSelectedBlockScreenRect() ?? null;
+  }
+
   // ─── Internal: crop sub-module access ──────────────────
   // Used by BlockAPI to route applyCropRatio through the active overlay.
 

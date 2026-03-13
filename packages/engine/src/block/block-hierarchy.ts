@@ -49,6 +49,19 @@ export class BlockHierarchy {
     return this.#blocks.get(id)?.parentId ?? null;
   }
 
+  /** Move a child to a specific index within its parent's children array. */
+  moveChildToIndex(parentId: number, childId: number, newIndex: number): void {
+    const parent = this.#blocks.get(parentId);
+    if (!parent) return;
+
+    const currentIndex = parent.children.indexOf(childId);
+    if (currentIndex === -1) return;
+
+    parent.children.splice(currentIndex, 1);
+    const clampedIndex = Math.max(0, Math.min(newIndex, parent.children.length));
+    parent.children.splice(clampedIndex, 0, childId);
+  }
+
   /** Unparent a block from its parent (used by destroy). */
   unparent(id: number): void {
     const block = this.#blocks.get(id);

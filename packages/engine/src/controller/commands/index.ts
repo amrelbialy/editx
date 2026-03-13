@@ -17,3 +17,4 @@ export { SetFillCommand } from './set-fill-command';
 export { SetPageMarginsCommand } from './set-page-margins-command';
 export type { PageMargins } from './set-page-margins-command';
 export { SetPageImageCommand } from './set-page-image-command';
+export { MoveChildCommand } from './move-child-command';

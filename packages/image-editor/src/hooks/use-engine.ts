@@ -237,7 +237,7 @@ export function useEngine({ src, validation, keepZoomOnSourceChange = false }: U
       ce.on('selection:changed', (ids: number[]) => {
         if (ids.length === 1) {
           const blockType = ce.block.getType(ids[0]);
-          if (blockType === 'graphic' || blockType === 'text') {
+          if (blockType === 'graphic' || blockType === 'text' || blockType === 'image') {
             setSelectedShapeId(ids[0]);
             return;
           }

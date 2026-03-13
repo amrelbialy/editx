@@ -24,6 +24,8 @@ export interface RendererAdapter {
   //
   showTransformer(blockIds: number[]): void;
   hideTransformer(): void;
+  /** Returns the screen-pixel bounding rect of the current transformer selection, or null. */
+  getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null;
 
   //
   // Camera / viewport

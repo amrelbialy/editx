@@ -6,10 +6,12 @@ interface CanvasAreaProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   /** Content rendered above the canvas (e.g. block properties bar) */
   header?: React.ReactNode;
+  /** Absolutely-positioned overlay rendered inside the canvas region (e.g. floating action bar) */
+  overlay?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, children }) => {
+export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, overlay, children }) => {
   return (
     <div className={cn('relative flex flex-col flex-1 min-w-0 overflow-hidden')} role="region" aria-label="Image canvas">
       {header && (
@@ -18,6 +20,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, child
         </div>
       )}
       <div ref={canvasRef} className="relative flex-1 min-h-0" />
+      {overlay}
       {children}
     </div>
   );

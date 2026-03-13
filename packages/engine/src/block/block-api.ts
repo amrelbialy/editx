@@ -14,6 +14,7 @@ import {
   CreateFillCommand,
   SetShapeCommand,
   SetFillCommand,
+  MoveChildCommand,
 } from '../controller/commands';
 import { BlockType, Color, EffectType, FillType, PropertyValue, ShapeType, TextRun, TextRunStyle } from './block.types';
 import {
@@ -943,6 +944,202 @@ export class BlockAPI {
 
     this.#engine.endBatch();
     return textId;
+  }
+
+  // ── Image placement convenience ──────────────────────
+
+  /**
+   * Creates an image block at (x, y) with given size, sets the image source
+   * and original dimensions, and appends it to the parent.
+   * Batched as a single undo step. Returns the image block ID.
+   */
+  addImage(
+    parentId: number,
+    src: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    originalWidth: number,
+    originalHeight: number,
+  ): number {
+    this.#engine.beginBatch();
+
+    const imageId = this.create('image');
+    this.setPosition(imageId, x, y);
+    this.setSize(imageId, width, height);
+    this.setString(imageId, IMAGE_SRC, src);
+    this.setFloat(imageId, IMAGE_ORIGINAL_WIDTH, originalWidth);
+    this.setFloat(imageId, IMAGE_ORIGINAL_HEIGHT, originalHeight);
+
+    this.appendChild(parentId, imageId);
+
+    this.#engine.endBatch();
+    return imageId;
+  }
+
+  // ── Z-order (layer ordering) ─────────────────────────
+
+  /** Move block one step forward (higher) in its parent's children order. */
+  bringForward(blockId: number): void {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) return;
+    const children = this.getChildren(parentId);
+    const idx = children.indexOf(blockId);
+    if (idx === -1 || idx >= children.length - 1) return;
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new MoveChildCommand(store, parentId, blockId, idx + 1));
+  }
+
+  /** Move block one step backward (lower) in its parent's children order. */
+  sendBackward(blockId: number): void {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) return;
+    const children = this.getChildren(parentId);
+    const idx = children.indexOf(blockId);
+    if (idx <= 0) return;
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new MoveChildCommand(store, parentId, blockId, idx - 1));
+  }
+
+  /** Move block to the front (top) of its parent's children. */
+  bringToFront(blockId: number): void {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) return;
+    const children = this.getChildren(parentId);
+    const idx = children.indexOf(blockId);
+    if (idx === -1 || idx >= children.length - 1) return;
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new MoveChildCommand(store, parentId, blockId, children.length - 1));
+  }
+
+  /** Move block to the back (bottom) of its parent's children. */
+  sendToBack(blockId: number): void {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) return;
+    const children = this.getChildren(parentId);
+    const idx = children.indexOf(blockId);
+    if (idx <= 0) return;
+    const store = this.#engine.getBlockStore();
+    this.#engine.exec(new MoveChildCommand(store, parentId, blockId, 0));
+  }
+
+  // ── Page alignment ───────────────────────────────────
+
+  /** Align a block relative to its parent page. */
+  alignToPage(
+    blockId: number,
+    alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom',
+  ): void {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) return;
+
+    const pageW = this.getFloat(parentId, PAGE_WIDTH) || this.getFloat(parentId, 'transform/size/width');
+    const pageH = this.getFloat(parentId, PAGE_HEIGHT) || this.getFloat(parentId, 'transform/size/height');
+    const { width: blockW, height: blockH } = this.getSize(blockId);
+
+    switch (alignment) {
+      case 'left':
+        this.setFloat(blockId, 'transform/position/x', 0);
+        break;
+      case 'center':
+        this.setFloat(blockId, 'transform/position/x', (pageW - blockW) / 2);
+        break;
+      case 'right':
+        this.setFloat(blockId, 'transform/position/x', pageW - blockW);
+        break;
+      case 'top':
+        this.setFloat(blockId, 'transform/position/y', 0);
+        break;
+      case 'middle':
+        this.setFloat(blockId, 'transform/position/y', (pageH - blockH) / 2);
+        break;
+      case 'bottom':
+        this.setFloat(blockId, 'transform/position/y', pageH - blockH);
+        break;
+    }
+  }
+
+  // ── Duplicate ────────────────────────────────────────
+
+  /**
+   * Deep-clones a block and all its sub-blocks (shape, fill, effects),
+   * offsets the copy slightly, appends to the same parent, and selects it.
+   * Batched as a single undo step. Returns the new block ID.
+   */
+  duplicate(blockId: number): number {
+    const parentId = this.getParent(blockId);
+    if (parentId === null) throw new Error(`Block ${blockId} has no parent`);
+
+    const store = this.#engine.getBlockStore();
+    const sourceBlock = store.get(blockId);
+    if (!sourceBlock) throw new Error(`Block ${blockId} not found`);
+
+    this.#engine.beginBatch();
+
+    const newId = this.create(sourceBlock.type);
+    this.setKind(newId, sourceBlock.kind);
+
+    // Copy all properties
+    const allKeys = store.findAllProperties(blockId);
+    for (const key of allKeys) {
+      const val = this.getProperty(blockId, key);
+      if (val !== undefined) {
+        this.setProperty(newId, key, val);
+      }
+    }
+
+    // Offset the duplicate
+    const pos = this.getPosition(blockId);
+    this.setPosition(newId, pos.x + 20, pos.y + 20);
+
+    // Clone shape sub-block
+    if (sourceBlock.shapeId != null) {
+      const srcShape = store.get(sourceBlock.shapeId);
+      if (srcShape) {
+        const newShapeId = this.createShape(srcShape.kind as ShapeType);
+        const shapeKeys = store.findAllProperties(sourceBlock.shapeId);
+        for (const key of shapeKeys) {
+          const val = this.getProperty(sourceBlock.shapeId, key);
+          if (val !== undefined) this.setProperty(newShapeId, key, val);
+        }
+        this.setShape(newId, newShapeId);
+      }
+    }
+
+    // Clone fill sub-block
+    if (sourceBlock.fillId != null) {
+      const srcFill = store.get(sourceBlock.fillId);
+      if (srcFill) {
+        const newFillId = this.createFill(srcFill.kind as FillType);
+        const fillKeys = store.findAllProperties(sourceBlock.fillId);
+        for (const key of fillKeys) {
+          const val = this.getProperty(sourceBlock.fillId, key);
+          if (val !== undefined) this.setProperty(newFillId, key, val);
+        }
+        this.setFill(newId, newFillId);
+      }
+    }
+
+    // Clone effect sub-blocks
+    for (const effectId of sourceBlock.effectIds) {
+      const srcEffect = store.get(effectId);
+      if (srcEffect) {
+        const newEffectId = this.createEffect(srcEffect.kind as EffectType);
+        const effectKeys = store.findAllProperties(effectId);
+        for (const key of effectKeys) {
+          const val = this.getProperty(effectId, key);
+          if (val !== undefined) this.setProperty(newEffectId, key, val);
+        }
+        this.appendEffect(newId, newEffectId);
+      }
+    }
+
+    this.appendChild(parentId, newId);
+    this.select(newId);
+
+    this.#engine.endBatch();
+    return newId;
   }
 
   // ── Range-based text editing ──────────────────────────

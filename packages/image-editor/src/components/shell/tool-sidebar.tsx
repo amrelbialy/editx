@@ -5,7 +5,7 @@ import {
   Blend,
   Type,
   Hexagon,
-  SmilePlus,
+  ImagePlus,
   LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
@@ -28,7 +28,7 @@ const allTools: ToolDef[] = [
   { id: 'filter', label: 'Filters', icon: Blend, group: 'editing' },
   { id: 'text', label: 'Text', icon: Type, group: 'annotation' },
   { id: 'shapes', label: 'Shapes', icon: Hexagon, group: 'annotation' },
-  { id: 'sticker', label: 'Sticker', icon: SmilePlus, group: 'annotation' },
+  { id: 'image', label: 'Image', icon: ImagePlus, group: 'annotation' },
 ];
 
 interface ToolSidebarProps {

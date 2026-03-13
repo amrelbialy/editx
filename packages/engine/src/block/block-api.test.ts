@@ -577,4 +577,170 @@ describe('BlockAPI', () => {
       expect(renderer.hideTransformer).toHaveBeenCalled();
     });
   });
+
+  // ── addImage ─────────────────────────────────────────
+
+  describe('addImage', () => {
+    it('creates an image block with correct properties', () => {
+      const page = block.create('page');
+      const imgId = block.addImage(page, 'data:image/png;base64,abc', 10, 20, 100, 80, 200, 160);
+
+      expect(block.getType(imgId)).toBe('image');
+      expect(block.getPosition(imgId)).toEqual({ x: 10, y: 20 });
+      expect(block.getSize(imgId)).toEqual({ width: 100, height: 80 });
+      expect(block.getString(imgId, 'image/src')).toBe('data:image/png;base64,abc');
+      expect(block.getFloat(imgId, 'image/originalWidth')).toBe(200);
+      expect(block.getFloat(imgId, 'image/originalHeight')).toBe(160);
+      expect(block.getChildren(page)).toContain(imgId);
+    });
+
+    it('addImage is undoable as a single step', () => {
+      const page = block.create('page');
+      block.addImage(page, 'data:image/png;base64,abc', 0, 0, 50, 50, 100, 100);
+      expect(block.getChildren(page).length).toBe(1);
+
+      engine.undo();
+      expect(block.getChildren(page).length).toBe(0);
+
+      engine.redo();
+      expect(block.getChildren(page).length).toBe(1);
+    });
+  });
+
+  // ── Z-order ──────────────────────────────────────────
+
+  describe('z-order', () => {
+    let page: number;
+    let a: number;
+    let b: number;
+    let c: number;
+
+    beforeEach(() => {
+      page = block.create('page');
+      a = block.create('graphic');
+      b = block.create('graphic');
+      c = block.create('graphic');
+      block.appendChild(page, a);
+      block.appendChild(page, b);
+      block.appendChild(page, c);
+    });
+
+    it('bringForward moves block one step up', () => {
+      block.bringForward(a); // a was at index 0, now at 1
+      expect(block.getChildren(page)).toEqual([b, a, c]);
+    });
+
+    it('sendBackward moves block one step down', () => {
+      block.sendBackward(c); // c was at index 2, now at 1
+      expect(block.getChildren(page)).toEqual([a, c, b]);
+    });
+
+    it('bringToFront moves block to last position', () => {
+      block.bringToFront(a);
+      expect(block.getChildren(page)).toEqual([b, c, a]);
+    });
+
+    it('sendToBack moves block to first position', () => {
+      block.sendToBack(c);
+      expect(block.getChildren(page)).toEqual([c, a, b]);
+    });
+
+    it('bringForward at top is a no-op', () => {
+      block.bringForward(c); // already at end
+      expect(block.getChildren(page)).toEqual([a, b, c]);
+    });
+
+    it('sendBackward at bottom is a no-op', () => {
+      block.sendBackward(a); // already at start
+      expect(block.getChildren(page)).toEqual([a, b, c]);
+    });
+
+    it('z-order operations are undoable', () => {
+      block.bringToFront(a);
+      expect(block.getChildren(page)).toEqual([b, c, a]);
+
+      engine.undo();
+      expect(block.getChildren(page)).toEqual([a, b, c]);
+    });
+  });
+
+  // ── Alignment ────────────────────────────────────────
+
+  describe('alignToPage', () => {
+    let page: number;
+    let child: number;
+
+    beforeEach(() => {
+      page = block.create('page');
+      block.setFloat(page, 'page/width', 1000);
+      block.setFloat(page, 'page/height', 800);
+      child = block.create('graphic');
+      block.setSize(child, 200, 100);
+      block.setPosition(child, 50, 50);
+      block.appendChild(page, child);
+    });
+
+    it('aligns left', () => {
+      block.alignToPage(child, 'left');
+      expect(block.getPosition(child).x).toBe(0);
+    });
+
+    it('aligns center', () => {
+      block.alignToPage(child, 'center');
+      expect(block.getPosition(child).x).toBe(400); // (1000 - 200) / 2
+    });
+
+    it('aligns right', () => {
+      block.alignToPage(child, 'right');
+      expect(block.getPosition(child).x).toBe(800); // 1000 - 200
+    });
+
+    it('aligns top', () => {
+      block.alignToPage(child, 'top');
+      expect(block.getPosition(child).y).toBe(0);
+    });
+
+    it('aligns middle', () => {
+      block.alignToPage(child, 'middle');
+      expect(block.getPosition(child).y).toBe(350); // (800 - 100) / 2
+    });
+
+    it('aligns bottom', () => {
+      block.alignToPage(child, 'bottom');
+      expect(block.getPosition(child).y).toBe(700); // 800 - 100
+    });
+  });
+
+  // ── Duplicate ────────────────────────────────────────
+
+  describe('duplicate', () => {
+    it('creates a copy with offset position', () => {
+      const page = block.create('page');
+      const orig = block.create('graphic');
+      block.setPosition(orig, 100, 100);
+      block.setSize(orig, 50, 50);
+      block.appendChild(page, orig);
+
+      const copy = block.duplicate(orig);
+      expect(copy).not.toBe(orig);
+      expect(block.getType(copy)).toBe('graphic');
+      expect(block.getChildren(page)).toContain(copy);
+
+      // Copy should be offset by 20px
+      const pos = block.getPosition(copy);
+      expect(pos.x).toBe(120);
+      expect(pos.y).toBe(120);
+    });
+
+    it('duplicate is undoable', () => {
+      const page = block.create('page');
+      const orig = block.create('graphic');
+      block.appendChild(page, orig);
+      block.duplicate(orig);
+      expect(block.getChildren(page).length).toBe(2);
+
+      engine.undo();
+      expect(block.getChildren(page).length).toBe(1);
+    });
+  });
 });

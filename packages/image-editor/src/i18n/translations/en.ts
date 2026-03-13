@@ -14,8 +14,29 @@ export const en: Record<string, string> = {
   'tools.filter': 'Filters',
   'tools.text': 'Text',
   'tools.shapes': 'Shapes',
-  'tools.sticker': 'Sticker',
+  'tools.image': 'Image',
   'tools.apps': 'Apps',
+
+  // Block actions
+  'action.replace': 'Replace',
+  'action.bringForward': 'Bring Forward',
+  'action.sendBackward': 'Send Backward',
+  'action.bringToFront': 'Bring to Front',
+  'action.sendToBack': 'Send to Back',
+  'action.duplicate': 'Duplicate',
+  'action.delete': 'Delete',
+  'action.alignLeft': 'Align Left',
+  'action.alignCenter': 'Align Center',
+  'action.alignRight': 'Align Right',
+  'action.alignTop': 'Align Top',
+  'action.alignMiddle': 'Align Middle',
+  'action.alignBottom': 'Align Bottom',
+
+  // Image panel
+  'image.addImage': 'Add Image',
+  'image.dropHint': 'Drop image here or click to upload',
+  'image.sizeHint': 'PNG, JPG, WebP — max 5 MB',
+  'image.uploadButton': 'Upload Image',
 
   // Contextual bar
   'bar.reset': 'Reset',
@@ -35,6 +56,7 @@ export const en: Record<string, string> = {
   'panel.adjustments': 'Adjustments',
   'panel.filters': 'Filters',
   'panel.shapes': 'Shapes',
+  'panel.image': 'Image',
 
   // Loading & errors
   'loading.image': 'Loading image...',

@@ -10,6 +10,11 @@ export interface ShortcutActions {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomFit?: () => void;
+  onDuplicate?: () => void;
+  onBringForward?: () => void;
+  onSendBackward?: () => void;
+  onBringToFront?: () => void;
+  onSendToBack?: () => void;
   enabled?: boolean;
 }
 
@@ -19,7 +24,7 @@ const TOOL_KEYS: Record<string, ImageEditorToolId> = {
   f: 'filter',
   t: 'text',
   s: 'shapes',
-  k: 'sticker',
+  i: 'image',
 };
 
 export function useShortcuts(actions: ShortcutActions) {
@@ -49,6 +54,35 @@ export function useShortcuts(actions: ShortcutActions) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
         actions.onRedo?.();
+        return;
+      }
+
+      // Ctrl/Cmd + D = Duplicate
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        actions.onDuplicate?.();
+        return;
+      }
+
+      // Ctrl/Cmd + ] = Bring Forward, Ctrl/Cmd + Shift + ] = Bring to Front
+      if ((e.ctrlKey || e.metaKey) && e.key === ']') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          actions.onBringToFront?.();
+        } else {
+          actions.onBringForward?.();
+        }
+        return;
+      }
+
+      // Ctrl/Cmd + [ = Send Backward, Ctrl/Cmd + Shift + [ = Send to Back
+      if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          actions.onSendToBack?.();
+        } else {
+          actions.onSendBackward?.();
+        }
         return;
       }
 

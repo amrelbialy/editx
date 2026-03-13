@@ -13,6 +13,7 @@ export function createMockRenderer(): RendererAdapter {
     removeBlock: vi.fn(),
     showTransformer: vi.fn(),
     hideTransformer: vi.fn(),
+    getSelectedBlockScreenRect: vi.fn().mockReturnValue(null),
     setZoom: vi.fn(),
     getZoom: vi.fn().mockReturnValue(1),
     panTo: vi.fn(),

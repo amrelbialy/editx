@@ -1,11 +1,30 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { CreativeEngine } from '@creative-editor/engine';
 import { SHAPE_RECT_CORNER_RADIUS } from '@creative-editor/engine';
+import {
+  ChevronUp,
+  ChevronDown,
+  ChevronsUp,
+  ChevronsDown,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  AlignStartHorizontal,
+  AlignCenterHorizontal,
+  AlignEndHorizontal,
+} from 'lucide-react';
 import { Slider } from '../ui/slider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { cn } from '../../utils/cn';
 
 interface PositionPropertyPanelProps {
   engine: CreativeEngine;
   blockId: number;
+  onBringForward?: () => void;
+  onSendBackward?: () => void;
+  onBringToFront?: () => void;
+  onSendToBack?: () => void;
+  onAlign?: (direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
 }
 
 interface PosState {
@@ -34,7 +53,15 @@ function readPos(engine: CreativeEngine, blockId: number): PosState {
   return { x: pos.x, y: pos.y, width: size.width, height: size.height, cornerRadius, shapeKind };
 }
 
-export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({ engine, blockId }) => {
+export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
+  engine,
+  blockId,
+  onBringForward,
+  onSendBackward,
+  onBringToFront,
+  onSendToBack,
+  onAlign,
+}) => {
   const [state, setState] = useState(() => readPos(engine, blockId));
 
   useEffect(() => {
@@ -110,6 +137,34 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({ en
           </div>
         </div>
       )}
+
+      {/* Move (z-order) */}
+      {(onBringForward || onSendBackward || onBringToFront || onSendToBack) && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Move</span>
+          <div className="flex gap-1">
+            <ZOrderButton icon={<ChevronsUp className="h-4 w-4" />} label="Bring to Front" onClick={onBringToFront} />
+            <ZOrderButton icon={<ChevronUp className="h-4 w-4" />} label="Bring Forward" onClick={onBringForward} />
+            <ZOrderButton icon={<ChevronDown className="h-4 w-4" />} label="Send Backward" onClick={onSendBackward} />
+            <ZOrderButton icon={<ChevronsDown className="h-4 w-4" />} label="Send to Back" onClick={onSendToBack} />
+          </div>
+        </div>
+      )}
+
+      {/* Align to Page */}
+      {onAlign && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Align to Page</span>
+          <div className="grid grid-cols-3 gap-1">
+            <ZOrderButton icon={<AlignStartVertical className="h-4 w-4" />} label="Align Left" onClick={() => onAlign('left')} />
+            <ZOrderButton icon={<AlignCenterVertical className="h-4 w-4" />} label="Align Center" onClick={() => onAlign('center')} />
+            <ZOrderButton icon={<AlignEndVertical className="h-4 w-4" />} label="Align Right" onClick={() => onAlign('right')} />
+            <ZOrderButton icon={<AlignStartHorizontal className="h-4 w-4" />} label="Align Top" onClick={() => onAlign('top')} />
+            <ZOrderButton icon={<AlignCenterHorizontal className="h-4 w-4" />} label="Align Middle" onClick={() => onAlign('middle')} />
+            <ZOrderButton icon={<AlignEndHorizontal className="h-4 w-4" />} label="Align Bottom" onClick={() => onAlign('bottom')} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -128,4 +183,28 @@ const NumberField: React.FC<{
       className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
     />
   </div>
+);
+
+const ZOrderButton: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}> = ({ icon, label, onClick }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <button
+        onClick={onClick}
+        disabled={!onClick}
+        className={cn(
+          'flex items-center justify-center h-8 w-8 rounded-md transition-colors',
+          onClick
+            ? 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            : 'text-muted-foreground/40 cursor-not-allowed',
+        )}
+      >
+        {icon}
+      </button>
+    </TooltipTrigger>
+    <TooltipContent side="bottom">{label}</TooltipContent>
+  </Tooltip>
 );

@@ -72,7 +72,7 @@ export class KonvaNodeFactory {
     if (block.type === 'image') {
       node = new Konva.Image({
         name: `block-${id}`,
-        draggable: false,
+        draggable: true,
         image: undefined as unknown as CanvasImageSource,
       });
     } else if (block.type === 'text') {
@@ -169,7 +169,7 @@ export class KonvaNodeFactory {
     node.setAttrs({ x, y, rotation, opacity, visible });
 
     if (block.type === 'image') {
-      this.#updateImageNode(node as Konva.Image, props, width, height);
+      this.#updateImageNode(node as Konva.Image, props, width, height, block, resolveBlock);
       return;
     }
 
@@ -453,6 +453,8 @@ export class KonvaNodeFactory {
     props: Record<string, unknown>,
     width: number,
     height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
   ): void {
     const cropEnabled = (props[CROP_ENABLED] as boolean) ?? false;
     const cropX = (props[CROP_X] as number) ?? 0;
@@ -488,8 +490,17 @@ export class KonvaNodeFactory {
       imgNode.setAttr('loadedSrc', src);
       loadImage(src).then((htmlImg) => {
         imgNode.image(htmlImg);
+        // Re-apply cache after image loads if filters are active
+        if (imgNode.filters()?.length) {
+          imgNode.cache();
+        }
         this.#stage?.batchDraw();
       });
+    }
+
+    // Apply filters from effect blocks
+    if (block) {
+      this.#applyFilters(imgNode, block, resolveBlock);
     }
   }
 

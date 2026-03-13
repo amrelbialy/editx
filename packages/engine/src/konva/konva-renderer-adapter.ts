@@ -176,6 +176,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#uiLayer.batchDraw();
   }
 
+  getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
+    if (!this.#transformer || this.#transformer.nodes().length === 0) return null;
+    const rect = this.#transformer.getClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }
+
   // --- Camera (delegated) ---
 
   setZoom(zoom: number): void {

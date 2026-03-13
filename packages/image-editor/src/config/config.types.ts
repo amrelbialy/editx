@@ -10,7 +10,7 @@ export type ImageEditorToolId =
   | 'filter'
   | 'text'
   | 'shapes'
-  | 'sticker';
+  | 'image';
 
 export type ThemePreset = BuiltInPreset | 'custom';
 
@@ -62,8 +62,11 @@ export interface ShapesToolConfig {
   defaultColor?: string;
 }
 
-export interface StickerToolConfig {
-  packs?: string[];
+export interface ImageToolConfig {
+  /** Maximum file size in bytes (default: 5MB). */
+  maxFileSize?: number;
+  /** Maximum dimension in px — larger images are downscaled (default: 2048). */
+  maxDimension?: number;
 }
 
 export interface ExportConfig {
@@ -114,7 +117,7 @@ export interface ImageEditorConfig {
   filter?: FilterToolConfig;
   text?: TextToolConfig;
   shapes?: ShapesToolConfig;
-  sticker?: StickerToolConfig;
+  image?: ImageToolConfig;
   ui?: UIConfig;
   locale?: string;
   translations?: Record<string, string>;

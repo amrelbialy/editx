@@ -5,7 +5,7 @@ import {
   Blend,
   Type,
   Hexagon,
-  SmilePlus,
+  ImagePlus,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -24,7 +24,7 @@ const allTools: ToolDef[] = [
   { id: 'filter', label: 'Filters', icon: Blend },
   { id: 'text', label: 'Text', icon: Type },
   { id: 'shapes', label: 'Shapes', icon: Hexagon },
-  { id: 'sticker', label: 'Sticker', icon: SmilePlus },
+  { id: 'image', label: 'Image', icon: ImagePlus },
 ];
 
 interface MobileToolbarProps {
