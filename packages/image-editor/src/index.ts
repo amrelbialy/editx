@@ -28,6 +28,16 @@ export { correctOrientation } from './utils/correct-orientation';
 export { downscaleIfNeeded } from './utils/downscale-image';
 export type { DownscaleResult } from './utils/downscale-image';
 export { isSameSource } from './utils/is-same-source';
+export {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator,
+} from './components/ui/select';
 export { extractFilename } from './utils/extract-filename';
 
 // Phase 5+6: hooks, i18n, mobile components

@@ -1,5 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
-import { ImageEditor, type ThemePreset } from '@creative-editor/image-editor';
+import {
+  ImageEditor,
+  type ThemePreset,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@creative-editor/image-editor';
 
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200';
 
@@ -85,11 +93,8 @@ function App() {
     }
   }, []);
 
-  const cycleTheme = useCallback(() => {
-    setThemePreset((prev) => {
-      const idx = THEME_PRESETS.indexOf(prev);
-      return THEME_PRESETS[(idx + 1) % THEME_PRESETS.length];
-    });
+  const handleThemeChange = useCallback((value: string) => {
+    setThemePreset(value as ThemePreset);
   }, []);
 
   const config = useMemo(() => ({ theme: { preset: themePreset } }), [themePreset]);
@@ -113,12 +118,16 @@ function App() {
         config={config}
         slots={{
           topbarRight: (
-            <button
-              onClick={cycleTheme}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-accent text-foreground backdrop-blur hover:bg-white/20 transition-colors"
-            >
-              Theme: {themePreset}
-            </button>
+            <Select value={themePreset} onValueChange={handleThemeChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {THEME_PRESETS.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ),
         }}
       />
