@@ -1,6 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   ImageEditor,
+  ThemeProvider,
+  Button,
+  Separator,
   type ThemePreset,
   Select,
   SelectTrigger,
@@ -8,6 +11,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@creative-editor/image-editor';
+import { Upload, ImageIcon, Link, GripVertical } from 'lucide-react';
 
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200';
 
@@ -135,77 +139,108 @@ function App() {
   }
 
   return (
-    <div
-      className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white gap-8 p-8"
-      onPaste={handlePaste}
-      tabIndex={0}
-    >
-      <h1 className="text-3xl font-bold">Creative Image Editor</h1>
-      <p className="text-gray-400">Choose an image to get started</p>
-
-      {/* File upload + sample */}
-      <div className="flex gap-4">
-        <label className="px-6 py-3 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
-          Upload Image
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-        <button
-          onClick={handleUseSample}
-          className="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-        >
-          Use Sample Image
-        </button>
-      </div>
-
-      {/* URL input */}
-      <div className="flex gap-2 w-full max-w-lg">
-        <input
-          type="text"
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          onKeyDown={handleUrlKeyDown}
-          placeholder="Paste an image URL..."
-          className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-        />
-        <button
-          onClick={handleLoadUrl}
-          disabled={!urlInput.trim()}
-          className="px-5 py-2.5 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Load
-        </button>
-      </div>
-
-      {/* Drag-and-drop zone */}
+    <ThemeProvider theme={{ preset: themePreset }}>
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-          w-full max-w-lg h-40 flex flex-col items-center justify-center
-          border-2 border-dashed rounded-xl transition-colors cursor-pointer
-          ${isDragging
-            ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-            : 'border-gray-600 text-gray-500 hover:border-gray-500 hover:text-gray-400'
-          }
-        `}
+        className="flex flex-col items-center justify-center h-screen p-8"
+        onPaste={handlePaste}
+        tabIndex={0}
       >
-        <span className="text-2xl mb-2">📁</span>
-        <span className="text-sm">
-          {isDragging ? 'Drop image here...' : 'Drag & drop an image here'}
-        </span>
-      </div>
+        {/* Card */}
+        <div className="w-full max-w-md bg-card text-card-foreground border border-border rounded-xl shadow-lg p-8 flex flex-col items-center gap-6">
+          <div className="text-center space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">Creative Image Editor</h1>
+            <p className="text-sm text-muted-foreground">Choose an image to get started</p>
+          </div>
 
-      {/* Paste hint */}
-      <p className="text-gray-500 text-xs">
-        You can also paste an image from your clipboard with <kbd className="px-1.5 py-0.5 bg-gray-700 rounded text-gray-300 text-xs">Ctrl+V</kbd>
-      </p>
-    </div>
+          <Separator />
+
+          {/* File upload + sample */}
+          <div className="flex gap-3 w-full">
+            <label className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 cursor-pointer">
+              <Upload className="size-4" />
+              Upload Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+            <Button variant="secondary" size="lg" className="flex-1" onClick={handleUseSample}>
+              <ImageIcon className="size-4" />
+              Sample
+            </Button>
+          </div>
+
+          {/* URL input */}
+          <div className="flex gap-2 w-full">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={handleUrlKeyDown}
+              placeholder="Paste an image URL..."
+              className="flex-1 h-9 px-3 bg-transparent border border-input rounded-md text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <Button
+              onClick={handleLoadUrl}
+              disabled={!urlInput.trim()}
+              variant="outline"
+              size="default"
+            >
+              <Link className="size-4 mr-1.5" />
+              Load
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-3 w-full text-xs text-muted-foreground">
+            <Separator className="flex-1" />
+            <span>or</span>
+            <Separator className="flex-1" />
+          </div>
+
+          {/* Drag-and-drop zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`
+              w-full h-32 flex flex-col items-center justify-center gap-2
+              border-2 border-dashed rounded-lg transition-colors cursor-pointer
+              ${isDragging
+                ? 'border-ring bg-accent/20 text-accent-foreground'
+                : 'border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground'
+              }
+            `}
+          >
+            <GripVertical className="size-5" />
+            <span className="text-sm">
+              {isDragging ? 'Drop image here...' : 'Drag & drop an image here'}
+            </span>
+          </div>
+
+          {/* Paste hint */}
+          <p className="text-muted-foreground text-xs">
+            Or paste from clipboard with{' '}
+            <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[11px] font-mono text-foreground">Ctrl+V</kbd>
+          </p>
+        </div>
+
+        {/* Theme switcher outside card */}
+        <div className="mt-4">
+          <Select value={themePreset} onValueChange={handleThemeChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {THEME_PRESETS.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </ThemeProvider>
   );
 }
 

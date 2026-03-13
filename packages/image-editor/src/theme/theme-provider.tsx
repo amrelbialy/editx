@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import type { ThemeConfig } from '../config/config.types';
 import type { ThemeColorKey } from './presets';
 import { themePresets, type ThemePresetValues } from './presets';
+import { PopoverContainerProvider } from '../components/ui/popover-container-context';
 
 interface ThemeProviderProps {
   theme?: ThemeConfig;
@@ -43,6 +44,10 @@ function buildCssVariables(theme: ThemeConfig): Record<string, string> {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, children }) => {
   const colorsJson = theme.colors ? JSON.stringify(theme.colors) : '';
+  const [container, setContainer] = useState<HTMLElement | undefined>(undefined);
+  const refCallback = useCallback((node: HTMLDivElement | null) => {
+    setContainer(node ?? undefined);
+  }, []);
   const style = useMemo(() => {
     const vars = buildCssVariables(theme);
     const fontFamily = theme.fontFamily ?? 'Inter, system-ui, sans-serif';
@@ -51,8 +56,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, childr
   }, [theme.preset, theme.borderRadius, theme.fontFamily, colorsJson]);
 
   return (
-    <div style={style} className="ie-theme">
-      {children}
+    <div ref={refCallback} style={style} className="ie-theme">
+      <PopoverContainerProvider value={container}>
+        {children}
+      </PopoverContainerProvider>
     </div>
   );
 };

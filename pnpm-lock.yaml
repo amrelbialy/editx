@@ -45,6 +45,9 @@ importers:
       '@creative-editor/react-editor':
         specifier: workspace:*
         version: link:../../packages/react-editor
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@19.2.0)
       react:
         specifier: ^19.2.0
         version: 19.2.0

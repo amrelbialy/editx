@@ -19,6 +19,7 @@ export type {
 } from './config/config.types';
 export { themePresets } from './theme/presets';
 export type { ThemePresetValues, BuiltInPreset } from './theme/presets';
+export { ThemeProvider } from './theme/theme-provider';
 export { useConfig } from './config/config-context';
 export { useImageEditorStore } from './store/image-editor-store';
 export type { ImageEditorTool, OriginalImageInfo, ShownImageDimensions } from './store/image-editor-store';
@@ -39,6 +40,9 @@ export {
   SelectSeparator,
 } from './components/ui/select';
 export { extractFilename } from './utils/extract-filename';
+export { Button } from './components/ui/button';
+export type { ButtonProps } from './components/ui/button';
+export { Separator } from './components/ui/separator';
 
 // Phase 5+6: hooks, i18n, mobile components
 export { useResponsive } from './hooks/use-responsive';
