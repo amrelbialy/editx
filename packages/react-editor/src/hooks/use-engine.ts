@@ -39,7 +39,7 @@ export function useSelection(engine: CreativeEngine | null): number[] {
 
   const getSnapshot = useCallback(() => {
     if (!engine) return EMPTY_SELECTION;
-    const next = engine.core.getSelection();
+    const next = engine.block.findAllSelected();
     if (arraysEqual(cached.current, next)) return cached.current;
     cached.current = next;
     return next;

@@ -64,7 +64,7 @@ export const CreativeEditor: React.FC = () => {
 
         engine.block.setPosition(blockId, worldPos.x, worldPos.y);
         engine.block.appendChild(pageId, blockId);
-        engine.editor.setSelection([blockId]);
+        engine.block.select(blockId);
 
         useEditorStore.getState().setActiveTool("select");
       });

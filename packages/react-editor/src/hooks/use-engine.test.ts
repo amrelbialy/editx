@@ -37,7 +37,6 @@ function createMockEngine(overrides: Partial<{
           if (idx >= 0) selectionHandlers.splice(idx, 1);
         }
       }),
-      getSelection: vi.fn(() => overrides.selection ?? []),
     },
     event: {
       subscribe: vi.fn((blocks: number[], cb: () => void) => {
@@ -50,6 +49,7 @@ function createMockEngine(overrides: Partial<{
       }),
     },
     block: {
+      findAllSelected: vi.fn(() => overrides.selection ?? []),
       getFloat: vi.fn((_id: number, key: string) => overrides.blockFloats?.[key] ?? 0),
       getString: vi.fn((_id: number, key: string) => overrides.blockStrings?.[key] ?? ''),
       getBool: vi.fn((_id: number, key: string) => overrides.blockBools?.[key] ?? false),

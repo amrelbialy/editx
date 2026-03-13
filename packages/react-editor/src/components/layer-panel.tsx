@@ -29,7 +29,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
             return (
               <div
                 key={id}
-                onClick={() => engine.editor.setSelection([id])}
+                onClick={() => engine.block.select(id)}
                 className={`px-3 py-2 rounded cursor-pointer transition-colors text-sm ${
                   isSelected
                     ? "bg-blue-50 border border-blue-300 text-blue-700"
