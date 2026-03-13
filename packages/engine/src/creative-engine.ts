@@ -56,6 +56,8 @@ export class CreativeEngine {
     editor._setBlockAPI(block);
     // Wire up crop overlay routing: block.applyCropRatio → editor crop module
     block._setApplyCropRatioHandler((ratio) => editor._getCrop().applyCropRatio(ratio));
+    block._setApplyCropDimensionsHandler((w, h) => editor._getCrop().applyCropDimensions(w, h));
+    block._setGetCropVisualDimensionsHandler(() => editor._getCrop().getCropVisualDimensions());
     const scene = new SceneAPI(core, block);
 
     adapter.onBlockClick = (blockId, event) => {

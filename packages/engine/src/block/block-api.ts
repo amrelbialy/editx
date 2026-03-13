@@ -87,6 +87,10 @@ export class BlockAPI {
 
   /** @internal — callback wired by CreativeEngine to route applyCropRatio through the active overlay. */
   #applyCropRatioHandler: ((ratio: number | null) => any) | null = null;
+  /** @internal — callback for applyCropDimensions routing. */
+  #applyCropDimensionsHandler: ((w: number, h: number) => any) | null = null;
+  /** @internal — callback for getCropVisualDimensions routing. */
+  #getCropVisualDimensionsHandler: (() => { width: number; height: number } | null) | null = null;
 
   constructor(engine: Engine) {
     this.#engine = engine;
@@ -95,6 +99,16 @@ export class BlockAPI {
   /** @internal — called by CreativeEngine after construction to wire up crop overlay routing. */
   _setApplyCropRatioHandler(handler: (ratio: number | null) => any): void {
     this.#applyCropRatioHandler = handler;
+  }
+
+  /** @internal */
+  _setApplyCropDimensionsHandler(handler: (w: number, h: number) => any): void {
+    this.#applyCropDimensionsHandler = handler;
+  }
+
+  /** @internal */
+  _setGetCropVisualDimensionsHandler(handler: () => { width: number; height: number } | null): void {
+    this.#getCropVisualDimensionsHandler = handler;
   }
 
   // ── Block Selection & Visibility ─────────────────────
@@ -438,6 +452,24 @@ export class BlockAPI {
    */
   applyCropRatio(_id: number, ratio: number | null): void {
     this.#applyCropRatioHandler?.(ratio);
+  }
+
+  /**
+   * Apply exact pixel dimensions to the active crop overlay.
+   *
+   * Computes the largest crop rect of the given size that fits within the
+   * image bounds, centered on the current crop center.
+   */
+  applyCropDimensions(_id: number, width: number, height: number): void {
+    this.#applyCropDimensionsHandler?.(width, height);
+  }
+
+  /**
+   * Returns the current crop overlay dimensions in visual pixels.
+   * Returns null when no crop overlay is active.
+   */
+  getCropVisualDimensions(_id: number): { width: number; height: number } | null {
+    return this.#getCropVisualDimensionsHandler?.() ?? null;
   }
 
   /**

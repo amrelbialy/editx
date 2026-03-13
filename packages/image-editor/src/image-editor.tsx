@@ -362,7 +362,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                         ) : (
                           <>
                             {isCropMode && (
-                              <CropPanel onPresetChange={crop.handleCropPresetChange} />
+                              <CropPanel
+                                onPresetChange={crop.handleCropPresetChange}
+                                onResizeDimensions={crop.handleResizeDimensions}
+                                cropDimensions={crop.cropDimensions}
+                              />
                             )}
                             {isRotateMode && (
                               <RotatePanel
@@ -494,7 +498,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                       }}
                     >
                       {isCropMode && (
-                        <CropPanel onPresetChange={crop.handleCropPresetChange} />
+                        <CropPanel
+                          onPresetChange={crop.handleCropPresetChange}
+                          onResizeDimensions={crop.handleResizeDimensions}
+                          cropDimensions={crop.cropDimensions}
+                        />
                       )}
                       {isRotateMode && (
                         <RotatePanel

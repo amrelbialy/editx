@@ -283,4 +283,76 @@ export class EditorCrop {
 
     return newCrop;
   }
+
+  /**
+   * Apply exact pixel dimensions to the current crop overlay.
+   *
+   * Computes the largest crop rect with those exact dimensions that fits
+   * within the image, centered on the current crop center.  If the requested
+   * dimensions exceed the image bounds they are clamped while preserving
+   * the requested aspect ratio.
+   */
+  applyCropDimensions(width: number, height: number): CropRect | null {
+    const renderer = this.#ctx.renderer;
+    if (!renderer) return null;
+
+    const imageRect = renderer.getCropImageRect();
+    if (!imageRect) return null;
+
+    // Clamp to image bounds while preserving the requested ratio
+    let w = Math.max(1, Math.round(width));
+    let h = Math.max(1, Math.round(height));
+
+    if (w > imageRect.width || h > imageRect.height) {
+      const ratio = w / h;
+      if (imageRect.width / imageRect.height > ratio) {
+        // Image is wider than requested ratio → height-limited
+        h = Math.round(Math.min(h, imageRect.height));
+        w = Math.round(h * ratio);
+      } else {
+        // Image is taller than requested ratio → width-limited
+        w = Math.round(Math.min(w, imageRect.width));
+        h = Math.round(w / ratio);
+      }
+    }
+
+    // Lock overlay ratio to the requested dimensions
+    renderer.setCropRatio(w / h);
+
+    const currentCrop = renderer.getCropRect();
+    if (!currentCrop) return null;
+
+    // Center on current crop center
+    const cx = currentCrop.x + currentCrop.width / 2;
+    const cy = currentCrop.y + currentCrop.height / 2;
+    let newX = cx - w / 2;
+    let newY = cy - h / 2;
+
+    // Clamp to image bounds
+    if (newX < imageRect.x) newX = imageRect.x;
+    if (newY < imageRect.y) newY = imageRect.y;
+    if (newX + w > imageRect.x + imageRect.width) {
+      newX = imageRect.x + imageRect.width - w;
+    }
+    if (newY + h > imageRect.y + imageRect.height) {
+      newY = imageRect.y + imageRect.height - h;
+    }
+
+    const newCrop: CropRect = { x: newX, y: newY, width: w, height: h };
+    renderer.setCropRect(newCrop);
+    renderer.fitToRect(newCrop, 24);
+    return newCrop;
+  }
+
+  /**
+   * Returns the current crop overlay dimensions in visual (post-rotation)
+   * pixels, rounded to integers.  Returns null when no overlay is active.
+   */
+  getCropVisualDimensions(): { width: number; height: number } | null {
+    const renderer = this.#ctx.renderer;
+    if (!renderer) return null;
+    const rect = renderer.getCropRect();
+    if (!rect) return null;
+    return { width: Math.round(rect.width), height: Math.round(rect.height) };
+  }
 }

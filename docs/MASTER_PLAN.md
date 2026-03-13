@@ -43,7 +43,7 @@ We are simulating the img.ly Creative Engine SDK APIs. Use these as reference fo
 | 7   | Text Annotations         | **done**                        | expanded text properties, inline edit                             | text tool, styling panel                     | `docs/features/07-text.md`              |
 | 8   | Image Annotations        | not started                     | image overlay block, sticker placement, transform                 | image annotation panel, upload/gallery       | `docs/features/08-image-annotations.md` |
 | 9   | Pen / Freehand Drawing   | not started                     | path block kind, points array                                     | pen tool, brush options                      | `docs/features/09-pen.md`               |
-| 10  | Resize                   | not started                     | scene.resize API                                                  | resize panel                                 | `docs/features/10-resize.md`            |
+| 10  | Resize                   | **done**                        | applyCropDimensions, getCropVisualDimensions                      | crop panel resize tab, platform presets      | `docs/features/10-resize.md`            |
 | 11  | Export                   | not started                     | export API, offscreen render                                      | save button, format options                  | `docs/features/11-export.md`            |
 
 ---

@@ -746,3 +746,126 @@ describe('BlockAPI — Image Rotation & Flip', () => {
     expect(engine.getBlockStore().getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(true);
   });
 });
+
+// ── applyCropDimensions / getCropVisualDimensions ────────────────
+
+describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
+  let engine: Engine;
+  let editor: EditorAPI;
+  let block: BlockAPI;
+  let renderer: RendererAdapter;
+
+  function createPageWithImage(w: number, h: number) {
+    const store = engine.getBlockStore();
+    const cmd = new CreateBlockCommand(store, 'page');
+    engine.exec(cmd);
+    const id = cmd.getCreatedId()!;
+    store.setProperty(id, PAGE_WIDTH, w);
+    store.setProperty(id, PAGE_HEIGHT, h);
+    store.setProperty(id, IMAGE_SRC, 'test.png');
+    store.setProperty(id, IMAGE_ORIGINAL_WIDTH, w);
+    store.setProperty(id, IMAGE_ORIGINAL_HEIGHT, h);
+    return id;
+  }
+
+  beforeEach(() => {
+    renderer = createMockRenderer();
+    engine = new Engine({ renderer });
+    block = new BlockAPI(engine);
+    editor = new EditorAPI(engine);
+    editor._setBlockAPI(block);
+    block._setApplyCropRatioHandler((ratio) => editor._getCrop().applyCropRatio(ratio));
+    block._setApplyCropDimensionsHandler((w, h) => editor._getCrop().applyCropDimensions(w, h));
+    block._setGetCropVisualDimensionsHandler(() => editor._getCrop().getCropVisualDimensions());
+  });
+
+  it('applyCropDimensions sets crop overlay to exact pixel size', () => {
+    const pageId = createPageWithImage(1920, 1080);
+    block.select(pageId);
+    editor.setEditMode('Crop');
+
+    // Mock: image rect = full image, current crop = full image
+    vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+
+    block.applyCropDimensions(pageId, 1080, 1080);
+
+    // Should lock the ratio to 1:1
+    expect(renderer.setCropRatio).toHaveBeenCalledWith(1);
+    // Should set the crop rect to 1080×1080 centered on the old center
+    expect(renderer.setCropRect).toHaveBeenCalledWith(
+      expect.objectContaining({ width: 1080, height: 1080 }),
+    );
+    expect(renderer.fitToRect).toHaveBeenCalled();
+  });
+
+  it('applyCropDimensions clamps to image bounds when requested dims exceed', () => {
+    const pageId = createPageWithImage(800, 600);
+    block.select(pageId);
+    editor.setEditMode('Crop');
+
+    vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
+
+    // Request 1920×1080, which exceeds 800×600. Should clamp while keeping 16:9 ratio.
+    block.applyCropDimensions(pageId, 1920, 1080);
+
+    const call = vi.mocked(renderer.setCropRect).mock.calls[0][0];
+    // Width-limited: w = 800, h = 800 / (1920/1080) = 450
+    expect(call.width).toBe(800);
+    expect(call.height).toBe(450);
+  });
+
+  it('applyCropDimensions centers on current crop center', () => {
+    const pageId = createPageWithImage(1920, 1080);
+    block.select(pageId);
+    editor.setEditMode('Crop');
+
+    vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+    // Current crop is offset — center at (500, 300)
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 200, y: 100, width: 600, height: 400 });
+
+    block.applyCropDimensions(pageId, 400, 400);
+
+    const call = vi.mocked(renderer.setCropRect).mock.calls[0][0];
+    // Center = (500, 300), new size = 400×400 → x = 300, y = 100
+    expect(call.x).toBe(300);
+    expect(call.y).toBe(100);
+    expect(call.width).toBe(400);
+    expect(call.height).toBe(400);
+  });
+
+  it('getCropVisualDimensions returns rounded dimensions from overlay', () => {
+    const pageId = createPageWithImage(1920, 1080);
+    block.select(pageId);
+    editor.setEditMode('Crop');
+
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 10, y: 20, width: 960.7, height: 540.3 });
+
+    const dims = block.getCropVisualDimensions(pageId);
+    expect(dims).toEqual({ width: 961, height: 540 });
+  });
+
+  it('getCropVisualDimensions returns null when no overlay is active', () => {
+    const pageId = createPageWithImage(1920, 1080);
+    vi.mocked(renderer.getCropRect).mockReturnValue(null);
+
+    const dims = block.getCropVisualDimensions(pageId);
+    expect(dims).toBeNull();
+  });
+
+  it('applyCropDimensions enforces minimum of 1px', () => {
+    const pageId = createPageWithImage(1920, 1080);
+    block.select(pageId);
+    editor.setEditMode('Crop');
+
+    vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+
+    block.applyCropDimensions(pageId, 0, -5);
+
+    const call = vi.mocked(renderer.setCropRect).mock.calls[0][0];
+    expect(call.width).toBeGreaterThanOrEqual(1);
+    expect(call.height).toBeGreaterThanOrEqual(1);
+  });
+});

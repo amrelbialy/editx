@@ -40,6 +40,19 @@ export interface CropToolConfig {
   allowCustomRatio?: boolean;
   showStraighten?: boolean;
   showRotateFlip?: boolean;
+  /** Size presets for the Resize tab (grouped by platform). */
+  resizePresets?: ResizePresetGroup[];
+}
+
+export interface ResizePreset {
+  label: string;
+  width: number;
+  height: number;
+}
+
+export interface ResizePresetGroup {
+  label: string;
+  presets: ResizePreset[];
 }
 
 export interface AdjustToolConfig {
