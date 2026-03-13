@@ -1,3 +1,14 @@
+// ── Export ──
+
+export interface ExportOptions {
+  /** Image format. Default: 'png'. */
+  format?: 'png' | 'jpeg' | 'webp';
+  /** Quality 0–1 for jpeg/webp. Ignored for png. Default: 0.92. */
+  quality?: number;
+  /** Device pixel ratio multiplier for high-res export. Default: 1. */
+  pixelRatio?: number;
+}
+
 /**
  * Built-in edit modes for the editor.
  *

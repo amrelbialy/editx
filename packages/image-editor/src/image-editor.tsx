@@ -43,6 +43,7 @@ import { useBlockActions } from './hooks/use-block-actions';
 import { useBlockScreenRect } from './hooks/use-block-screen-rect';
 import { useBlockEffects } from './hooks/use-block-effects';
 import { useToolManager } from './hooks/use-tool-manager';
+import { useExport } from './hooks/use-export';
 import { useImageEditorStore } from './store/image-editor-store';
 import type { ImageValidationOptions } from './utils/validate-image';
 import type { ImageEditorConfig, ImageEditorToolId, EditorSlots, EditorEventCallbacks } from './config/config.types';
@@ -166,6 +167,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     events,
   });
 
+  // --- Export hook ---
+  const { handleExport, isExporting } = useExport({
+    engineRef,
+    exportConfig: userConfig?.export,
+    onSave,
+    events,
+  });
+
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
 
@@ -280,7 +289,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                   onZoomIn={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 1.25); }}
                   onZoomOut={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 0.8); }}
                   onZoomFit={() => engineRef.current?.editor.fitToScreen()}
-                  onExport={onSave ? () => { /* TODO: implement export */ } : undefined}
+                  onExport={handleExport}
+                  isExporting={isExporting}
                   topbarRight={slots?.topbarRight}
                 />
 

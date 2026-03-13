@@ -1,5 +1,5 @@
 import { BlockData } from './block/block.types';
-import type { CursorType } from './editor-types';
+import type { CursorType, ExportOptions } from './editor-types';
 import type { CropRect } from './utils/crop-math';
 
 export interface RendererAdapter {
@@ -50,6 +50,12 @@ export interface RendererAdapter {
   // Render
   //
   renderFrame(): void;
+
+  //
+  // Export
+  //
+  /** Render the current page to an offscreen canvas and return the result as a Blob. */
+  exportScene(options: ExportOptions): Promise<Blob>;
 
   //
   // Cleanup

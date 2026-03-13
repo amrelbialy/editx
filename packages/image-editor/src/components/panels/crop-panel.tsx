@@ -44,7 +44,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
 
   // Track whether the user is typing (to avoid overwriting with overlay dim updates)
   const userEditingRef = useRef(false);
-  const userEditingTimer = useRef<ReturnType<typeof setTimeout>>();
+  const userEditingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Sync from overlay dimensions to inputs (when not actively typing)
   useEffect(() => {

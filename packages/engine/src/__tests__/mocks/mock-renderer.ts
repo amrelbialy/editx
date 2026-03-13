@@ -24,6 +24,7 @@ export function createMockRenderer(): RendererAdapter {
     screenToWorld: vi.fn().mockImplementation((pt) => pt),
     worldToScreen: vi.fn().mockImplementation((pt) => pt),
     renderFrame: vi.fn(),
+    exportScene: vi.fn().mockResolvedValue(new Blob()),
     dispose: vi.fn(),
     setCursor: vi.fn(),
     showCropOverlay: vi.fn(),

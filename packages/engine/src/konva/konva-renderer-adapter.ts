@@ -2,6 +2,7 @@ import Konva from 'konva';
 import type { RendererAdapter } from '../render-adapter';
 import type { BlockData } from '../block/block.types';
 import type { CropRect } from '../utils/crop-math';
+import type { ExportOptions } from '../editor-types';
 import { PAGE_WIDTH, PAGE_HEIGHT } from '../block/property-keys';
 import { clearImageCache } from '../utils/image-loader';
 import { KonvaCamera } from './konva-camera';
@@ -295,6 +296,59 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#stage?.batchDraw();
   }
 
+  // --- Export ---
+
+  async exportScene(options: ExportOptions): Promise<Blob> {
+    if (!this.#stage || !this.#lastPageSize) {
+      throw new Error('Cannot export: scene not initialised');
+    }
+
+    const format = options.format ?? 'png';
+    const quality = options.quality ?? 0.92;
+    const pixelRatio = options.pixelRatio ?? 1;
+    const { width: pageW, height: pageH } = this.#lastPageSize;
+    const mimeType = `image/${format}`;
+
+    // Save current content layer transform (camera pan/zoom)
+    const savedScaleX = this.#contentLayer.scaleX();
+    const savedScaleY = this.#contentLayer.scaleY();
+    const savedX = this.#contentLayer.x();
+    const savedY = this.#contentLayer.y();
+
+    // Reset to identity so the page fills the export canvas exactly
+    this.#contentLayer.scaleX(1);
+    this.#contentLayer.scaleY(1);
+    this.#contentLayer.x(0);
+    this.#contentLayer.y(0);
+
+    // Hide UI layer (transformer, crop overlay, selection rect)
+    const uiWasVisible = this.#uiLayer.visible();
+    this.#uiLayer.visible(false);
+
+    try {
+      const dataUrl = this.#stage.toDataURL({
+        x: 0,
+        y: 0,
+        width: pageW,
+        height: pageH,
+        pixelRatio,
+        mimeType,
+        quality: format === 'png' ? undefined : quality,
+      });
+
+      return await dataUrlToBlob(dataUrl, mimeType);
+    } finally {
+      // Restore content layer transform
+      this.#contentLayer.scaleX(savedScaleX);
+      this.#contentLayer.scaleY(savedScaleY);
+      this.#contentLayer.x(savedX);
+      this.#contentLayer.y(savedY);
+
+      // Restore UI layer
+      this.#uiLayer.visible(uiWasVisible);
+    }
+  }
+
   // --- Cleanup ---
 
   dispose(): void {
@@ -304,4 +358,21 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#nodeMap.clear();
     clearImageCache();
   }
+}
+
+/** Convert a data URL string to a Blob without using fetch(). */
+function dataUrlToBlob(dataUrl: string, mimeType: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      resolve(new Blob([bytes], { type: mimeType }));
+    } catch (err) {
+      reject(err);
+    }
+  });
 }

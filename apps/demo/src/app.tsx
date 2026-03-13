@@ -94,10 +94,22 @@ function App() {
 
   const config = useMemo(() => ({ theme: { preset: themePreset } }), [themePreset]);
 
+  const handleSave = useCallback((blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edited-image.${blob.type.split('/')[1] || 'png'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
   if (mode === 'image-editor' && imageSrc) {
     return (
       <ImageEditor
         src={imageSrc}
+        onSave={handleSave}
         config={config}
         slots={{
           topbarRight: (

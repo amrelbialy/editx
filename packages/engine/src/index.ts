@@ -5,7 +5,7 @@ export type { BlockEvent, BlockEventType } from './event-api';
 export { BlockAPI, BlockStore, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS, getShapeDefaults, getFillDefaults } from './block';
 export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType, ShapeType, FillType, TextRun, TextRunStyle } from './block';
 export type { AdjustmentParam, AdjustmentConfig } from './block';
-export type { EditMode, CursorType, EditModeConfig } from './editor-types';
+export type { EditMode, CursorType, EditModeConfig, ExportOptions } from './editor-types';
 export { EDIT_MODE_DEFAULTS } from './editor-types';
 export {
   POSITION_X, POSITION_Y, SIZE_WIDTH, SIZE_HEIGHT, ROTATION,

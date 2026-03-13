@@ -1,6 +1,7 @@
 import { BlockAPI } from './block/block-api';
 import { Engine } from './engine';
 import { EditorAPI } from './editor/editor-api';
+import type { ExportOptions } from './editor-types';
 import { EventAPI } from './event-api';
 import { SceneAPI } from './scene';
 import { KonvaRendererAdapter } from './konva/konva-renderer-adapter';
@@ -44,6 +45,20 @@ export class CreativeEngine {
   /** Unsubscribe from an engine event. */
   off(event: string, cb: (...args: any[]) => void) {
     return this.core.off(event, cb);
+  }
+
+  /**
+   * Render the current page (with all edits) to an offscreen canvas and
+   * return the result as a Blob.
+   */
+  async exportScene(options?: ExportOptions): Promise<Blob> {
+    const renderer = this.core.getRenderer();
+    if (!renderer) throw new Error('Cannot export: no renderer attached');
+    return renderer.exportScene({
+      format: options?.format ?? 'png',
+      quality: options?.quality ?? 0.92,
+      pixelRatio: options?.pixelRatio ?? 1,
+    });
   }
 
   static async create(opts: { container: HTMLElement }) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Undo2, Redo2, ZoomOut, ZoomIn, Download } from 'lucide-react';
+import { Undo2, Redo2, ZoomOut, ZoomIn, Download, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { cn } from '../../utils/cn';
@@ -15,6 +15,8 @@ interface TopbarProps {
   onZoomFit?: () => void;
   zoomLabel?: string;
   onExport?: () => void;
+  /** Whether an export is currently in progress. */
+  isExporting?: boolean;
   /** Slot: extra content rendered on the right side before export. */
   topbarRight?: React.ReactNode;
 }
@@ -29,6 +31,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onZoomFit,
   zoomLabel = 'Auto',
   onExport,
+  isExporting = false,
   topbarRight,
 }) => {
   const config = useConfig();
@@ -90,9 +93,13 @@ export const Topbar: React.FC<TopbarProps> = ({
         </Button>
         <Separator orientation="vertical" className="mx-1 h-6" />
         {topbarRight}
-        <Button variant="default" size="sm" onClick={onExport}>
-          <Download className="h-4 w-4" />
-          Export Image
+        <Button variant="default" size="sm" onClick={onExport} disabled={isExporting}>
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {isExporting ? 'Exporting…' : 'Export Image'}
         </Button>
       </div>
     </div>
