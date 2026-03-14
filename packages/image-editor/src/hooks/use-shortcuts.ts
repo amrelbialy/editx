@@ -10,6 +10,7 @@ export interface ShortcutActions {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomFit?: () => void;
+  onZoom100?: () => void;
   onDuplicate?: () => void;
   onBringForward?: () => void;
   onSendBackward?: () => void;
@@ -98,6 +99,12 @@ export function useShortcuts(actions: ShortcutActions) {
       // Delete/Backspace
       if (e.key === 'Delete' || e.key === 'Backspace') {
         actions.onDelete?.();
+        return;
+      }
+
+      // Shift+2 = 100% zoom (actual pixel size)
+      if (e.shiftKey && e.key === '@') {
+        actions.onZoom100?.();
         return;
       }
 

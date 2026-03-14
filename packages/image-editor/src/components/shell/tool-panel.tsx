@@ -31,8 +31,12 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
     >
       {/* Panel header */}
       {title && (
-        <div className="flex items-center justify-between h-10 px-4 border-b border-border">
+        <div className="flex items-center justify-between h-10 pl-3 pr-1 border-b border-border">
           <span className="text-sm font-medium">{title}</span>
+          <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5">
+            <X className="h-4 w-4" />
+          </Button>
+
         </div>
       )}
 
@@ -42,14 +46,6 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
           {children}
         </div>
       </ScrollArea>
-
-      {/* Close button at bottom */}
-      <div className="flex items-center justify-center py-2 border-t border-border">
-        <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5">
-          <X className="h-4 w-4" />
-          Close
-        </Button>
-      </div>
     </aside>
   );
 };

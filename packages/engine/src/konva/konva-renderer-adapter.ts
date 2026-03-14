@@ -185,8 +185,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   // --- Camera (delegated) ---
 
-  setZoom(zoom: number): void {
-    this.#camera.setZoom(zoom);
+  setZoom(zoom: number, animate = false): void {
+    this.#camera.setZoom(zoom, animate);
   }
   getZoom(): number {
     return this.#camera.getZoom();
@@ -197,17 +197,17 @@ export class KonvaRendererAdapter implements RendererAdapter {
   getPan(): { x: number; y: number } {
     return this.#camera.getPan();
   }
-  fitToScreen(opts: { width: number; height: number; padding: number }): void {
+  fitToScreen(opts: { width: number; height: number; padding: number }, animate = false): void {
     if (!this.#stage) return;
-    this.#camera.fitToScreen(opts);
+    this.#camera.fitToScreen(opts, animate);
   }
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }): void {
+  centerOnRect(rect: { x: number; y: number; width: number; height: number }, animate = false): void {
     if (!this.#stage) return;
-    this.#camera.centerOnRect(rect);
+    this.#camera.centerOnRect(rect, animate);
   }
-  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24): void {
+  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24, animate = false): void {
     if (!this.#stage) return;
-    this.#camera.fitToRect(rect, padding);
+    this.#camera.fitToRect(rect, padding, animate);
   }
   screenToWorld(pt: { x: number; y: number }): { x: number; y: number } {
     return this.#camera.screenToWorld(pt);

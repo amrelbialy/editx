@@ -332,7 +332,7 @@ describe('EditorAPI — existing API still works', () => {
 
   it('zoom delegates work', () => {
     editor.setZoom(2);
-    expect(renderer.setZoom).toHaveBeenCalledWith(2);
+    expect(renderer.setZoom).toHaveBeenCalledWith(2, false);
   });
 
   it('pan delegates work', () => {

@@ -1,0 +1,89 @@
+import React from 'react';
+import { ChevronUp, ZoomIn, ZoomOut } from 'lucide-react';
+import { Button } from '../ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+
+export interface ZoomMenuProps {
+  zoomLabel: string;
+  onAutoFitPage?: () => void;
+  onFitPage?: () => void;
+  onFitSelection?: () => void;
+  canFitSelection?: boolean;
+  onZoomPreset?: (factor: number) => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+}
+
+export const ZoomMenu: React.FC<ZoomMenuProps> = ({
+  zoomLabel,
+  onAutoFitPage,
+  onFitPage,
+  onFitSelection,
+  canFitSelection = false,
+  onZoomPreset,
+  onZoomIn,
+  onZoomOut,
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs min-w-[48px] gap-0.5"
+          title="Zoom options"
+        >
+          {zoomLabel}
+          <ChevronUp className="h-3 w-3 opacity-60" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-48">
+        {/* Fit modes */}
+        <DropdownMenuItem onClick={onAutoFitPage}>
+          Auto-Fit Page
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onFitPage}>
+          Fit Page
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onFitSelection} disabled={!canFitSelection}>
+          Fit Selection
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Zoom presets */}
+        <DropdownMenuItem onClick={() => onZoomPreset?.(2)}>
+          200% Zoom
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onZoomPreset?.(1)}>
+          <span className="flex-1">100% Zoom</span>
+          <kbd className="ml-auto text-[10px] text-muted-foreground">⇧2</kbd>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onZoomPreset?.(0.5)}>
+          50% Zoom
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Zoom in/out */}
+        <DropdownMenuItem onClick={onZoomIn}>
+          <ZoomIn className="h-4 w-4 mr-2" />
+          <span className="flex-1">Zoom In</span>
+          <kbd className="ml-auto text-[10px] text-muted-foreground">+</kbd>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onZoomOut}>
+          <ZoomOut className="h-4 w-4 mr-2" />
+          <span className="flex-1">Zoom Out</span>
+          <kbd className="ml-auto text-[10px] text-muted-foreground">-</kbd>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};

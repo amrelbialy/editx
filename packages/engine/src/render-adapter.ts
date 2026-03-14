@@ -30,15 +30,15 @@ export interface RendererAdapter {
   //
   // Camera / viewport
   //
-  setZoom(zoom: number): void;
+  setZoom(zoom: number, animate?: boolean): void;
   getZoom(): number;
 
   panTo(x: number, y: number): void;
   getPan(): { x: number; y: number };
 
-  fitToScreen(opts: { width: number; height: number; padding: number }): void;
-  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding?: number): void;
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }): void;
+  fitToScreen(opts: { width: number; height: number; padding: number }, animate?: boolean): void;
+  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding?: number, animate?: boolean): void;
+  centerOnRect(rect: { x: number; y: number; width: number; height: number }, animate?: boolean): void;
 
   //
   // Coordinate transforms

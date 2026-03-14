@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CropPanel } from './components/panels/crop-panel';
 import { RotatePanel } from './components/panels/rotate-panel';
 import { AdjustPanel } from './components/panels/adjust-panel';
@@ -99,6 +99,64 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   // --- Responsive hook ---
   const { isMobile } = useResponsive();
+
+  // --- Zoom state & helpers ---
+  const [zoomPercent, setZoomPercent] = useState<number | null>(null);
+
+  const updateZoomLabel = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    setZoomPercent(Math.round(ce.editor.getZoom() * 100));
+  }, [engineRef]);
+
+  const handleZoomIn = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    const target = ce.editor.getZoom() * 1.25;
+    ce.editor.setZoom(target, true);
+    setZoomPercent(Math.round(target * 100));
+  }, [engineRef]);
+
+  const handleZoomOut = useCallback(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    const target = ce.editor.getZoom() * 0.8;
+    ce.editor.setZoom(target, true);
+    setZoomPercent(Math.round(target * 100));
+  }, [engineRef]);
+
+  const handleAutoFitPage = useCallback(() => {
+    engineRef.current?.editor.fitToScreen(24, true);
+    updateZoomLabel();
+  }, [engineRef, updateZoomLabel]);
+
+  const handleFitPage = useCallback(() => {
+    engineRef.current?.editor.fitToScreen(0, true);
+    updateZoomLabel();
+  }, [engineRef, updateZoomLabel]);
+
+  const handleFitSelection = useCallback(() => {
+    engineRef.current?.editor.fitToSelection(24, true);
+    updateZoomLabel();
+  }, [engineRef, updateZoomLabel]);
+
+  const handleZoomPreset = useCallback((factor: number) => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    ce.editor.setZoom(factor, true);
+    setZoomPercent(Math.round(factor * 100));
+  }, [engineRef]);
+
+  const handleZoom100 = useCallback(() => {
+    handleZoomPreset(1);
+  }, [handleZoomPreset]);
+
+  // Initialize zoom label when engine becomes available
+  useEffect(() => {
+    if (engine) updateZoomLabel();
+  }, [engine, updateZoomLabel]);
+
+  const zoomLabel = zoomPercent !== null ? `${zoomPercent}%` : 'Auto';
 
   // --- Tool hooks ---
   const crop = useCropTool({ engineRef });
@@ -239,9 +297,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     onToolSelect: handleSidebarToolSelect,
     onUndo: () => engineRef.current?.editor.undo(),
     onRedo: () => engineRef.current?.editor.redo(),
-    onZoomIn: () => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 1.25); },
-    onZoomOut: () => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 0.8); },
-    onZoomFit: () => engineRef.current?.editor.fitToScreen(),
+    onZoomIn: handleZoomIn,
+    onZoomOut: handleZoomOut,
+    onZoomFit: handleAutoFitPage,
+    onZoom100: handleZoom100,
     onDuplicate: blockActions.duplicate,
     onBringForward: blockActions.bringForward,
     onSendBackward: blockActions.sendBackward,
@@ -286,9 +345,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                   onRedo={() => engineRef.current?.editor.redo()}
                   canUndo={!!engine}
                   canRedo={!!engine}
-                  onZoomIn={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 1.25); }}
-                  onZoomOut={() => { const ce = engineRef.current; if (ce) ce.editor.setZoom(ce.editor.getZoom() * 0.8); }}
-                  onZoomFit={() => engineRef.current?.editor.fitToScreen()}
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onAutoFitPage={handleAutoFitPage}
+                  onFitPage={handleFitPage}
+                  onFitSelection={handleFitSelection}
+                  canFitSelection={selectedShapeId !== null}
+                  onZoomPreset={handleZoomPreset}
+                  zoomLabel={zoomLabel}
                   onExport={handleExport}
                   isExporting={isExporting}
                   topbarRight={slots?.topbarRight}

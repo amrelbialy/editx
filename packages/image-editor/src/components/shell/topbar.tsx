@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { cn } from '../../utils/cn';
 import { useConfig } from '../../config/config-context';
+import { ZoomMenu } from './zoom-menu';
 
 interface TopbarProps {
   onUndo?: () => void;
@@ -12,7 +13,11 @@ interface TopbarProps {
   canRedo?: boolean;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
-  onZoomFit?: () => void;
+  onAutoFitPage?: () => void;
+  onFitPage?: () => void;
+  onFitSelection?: () => void;
+  canFitSelection?: boolean;
+  onZoomPreset?: (factor: number) => void;
   zoomLabel?: string;
   onExport?: () => void;
   /** Whether an export is currently in progress. */
@@ -28,7 +33,11 @@ export const Topbar: React.FC<TopbarProps> = ({
   canRedo = false,
   onZoomIn,
   onZoomOut,
-  onZoomFit,
+  onAutoFitPage,
+  onFitPage,
+  onFitSelection,
+  canFitSelection = false,
+  onZoomPreset,
   zoomLabel = 'Auto',
   onExport,
   isExporting = false,
@@ -79,15 +88,16 @@ export const Topbar: React.FC<TopbarProps> = ({
         <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out">
           <ZoomOut className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs min-w-[48px]"
-          onClick={onZoomFit}
-          title="Fit to screen"
-        >
-          {zoomLabel}
-        </Button>
+        <ZoomMenu
+          zoomLabel={zoomLabel}
+          onAutoFitPage={onAutoFitPage}
+          onFitPage={onFitPage}
+          onFitSelection={onFitSelection}
+          canFitSelection={canFitSelection}
+          onZoomPreset={onZoomPreset}
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+        />
         <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in">
           <ZoomIn className="h-4 w-4" />
         </Button>

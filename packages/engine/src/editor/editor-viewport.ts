@@ -14,8 +14,8 @@ export class EditorViewport {
 
   // ─── Zoom ─────────────────────────────────────────────
 
-  setZoom(zoom: number): void {
-    this.#ctx.renderer?.setZoom(zoom);
+  setZoom(zoom: number, animate = false): void {
+    this.#ctx.renderer?.setZoom(zoom, animate);
   }
 
   getZoom(): number {
@@ -54,7 +54,7 @@ export class EditorViewport {
   /**
    * Fit the camera to show the active page, with optional padding.
    */
-  fitToScreen(padding = 24): void {
+  fitToScreen(padding = 24, animate = false): void {
     const store = this.#ctx.engine.getBlockStore();
     const pageId = this.#ctx.engine.getActivePage();
     if (pageId === null) return;
@@ -66,7 +66,36 @@ export class EditorViewport {
       width: (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080,
       height: (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080,
       padding,
-    });
+    }, animate);
+  }
+
+  /**
+   * Fit the camera to show the currently selected blocks, with optional padding.
+   * No-op if nothing is selected.
+   */
+  fitToSelection(padding = 24, animate = false): void {
+    const block = this.#ctx.block;
+    if (!block) return;
+
+    const ids = block.findAllSelected();
+    if (ids.length === 0) return;
+
+    // Compute union bounding box of all selected blocks
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const id of ids) {
+      const pos = block.getPosition(id);
+      const size = block.getSize(id);
+      minX = Math.min(minX, pos.x);
+      minY = Math.min(minY, pos.y);
+      maxX = Math.max(maxX, pos.x + size.width);
+      maxY = Math.max(maxY, pos.y + size.height);
+    }
+
+    this.#ctx.renderer?.fitToRect(
+      { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
+      padding,
+      animate,
+    );
   }
 
   // ─── Coordinate Transforms ────────────────────────────

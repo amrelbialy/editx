@@ -169,7 +169,7 @@ export class EditorAPI {
 
   // ─── Viewport / Camera (delegated) ────────────────────
 
-  setZoom(zoom: number): void { this.#viewport.setZoom(zoom); }
+  setZoom(zoom: number, animate = false): void { this.#viewport.setZoom(zoom, animate); }
   getZoom(): number { return this.#viewport.getZoom(); }
   zoomIn(step = 0.1): void { this.#viewport.zoomIn(step); }
   zoomOut(step = 0.1): void { this.#viewport.zoomOut(step); }
@@ -179,7 +179,8 @@ export class EditorAPI {
   panBy(dx: number, dy: number): void { this.#viewport.panBy(dx, dy); }
   getPan(): { x: number; y: number } { return this.#viewport.getPan(); }
 
-  fitToScreen(padding = 24): void { this.#viewport.fitToScreen(padding); }
+  fitToScreen(padding = 24, animate = false): void { this.#viewport.fitToScreen(padding, animate); }
+  fitToSelection(padding = 24, animate = false): void { this.#viewport.fitToSelection(padding, animate); }
 
   screenToWorld(pt: { x: number; y: number }) { return this.#viewport.screenToWorld(pt); }
   worldToScreen(pt: { x: number; y: number }) { return this.#viewport.worldToScreen(pt); }
