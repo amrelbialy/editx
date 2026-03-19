@@ -34,6 +34,17 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
     setState(readShadow(engine, blockId));
   }, [engine, blockId]);
 
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const handler = () => setState(readShadow(engine, blockId));
+    engine.on('history:undo', handler);
+    engine.on('history:redo', handler);
+    return () => {
+      engine.off('history:undo', handler);
+      engine.off('history:redo', handler);
+    };
+  }, [engine, blockId]);
+
   const update = useCallback(() => setState(readShadow(engine, blockId)), [engine, blockId]);
 
   const handleToggle = useCallback(() => {

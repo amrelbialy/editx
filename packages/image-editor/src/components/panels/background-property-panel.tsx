@@ -37,6 +37,17 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
     setState(readFillState(engine, blockId));
   }, [engine, blockId]);
 
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const handler = () => setState(readFillState(engine, blockId));
+    engine.on('history:undo', handler);
+    engine.on('history:redo', handler);
+    return () => {
+      engine.off('history:undo', handler);
+      engine.off('history:redo', handler);
+    };
+  }, [engine, blockId]);
+
   const refresh = useCallback(() => setState(readFillState(engine, blockId)), [engine, blockId]);
 
   const handleToggle = useCallback(() => {

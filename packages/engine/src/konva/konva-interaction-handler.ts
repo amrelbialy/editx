@@ -5,6 +5,7 @@ export interface InteractionCallbacks {
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
   onBlockDblClick?: (blockId: number) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export interface InteractionDeps {
@@ -151,4 +152,52 @@ export function setupInteraction(deps: InteractionDeps): void {
       uiLayer.batchDraw();
     });
   });
+
+  // ─── Wheel zoom ─────────────────────────────────────
+  const container = stage.container();
+  container.addEventListener('wheel', (e: WheelEvent) => {
+    e.preventDefault();
+
+    const oldZoom = camera.getZoom();
+
+    // Normalize deltaY: trackpads send small fractional values while
+    // discrete mouse wheels send large jumps (typically ±100–120).
+    // We cap the magnitude so one wheel tick ≈ 2-3 % change.
+    const delta = -Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 50);
+    const sensitivity = 0.0015;
+    const newZoom = oldZoom * (1 + delta * sensitivity);
+
+    // Clamp zoom between 0.05 (5%) and 20 (2000%)
+    const clamped = Math.min(Math.max(newZoom, 0.05), 20);
+
+    const pointer = stage.getPointerPosition();
+    if (pointer) {
+      // If the pointer is outside the page/image, zoom toward the page center instead
+      const worldPt = camera.screenToWorld(pointer);
+      let zoomAnchor = pointer;
+
+      // Find the page node and use its background rect for world-space bounds
+      for (const [, node] of nodeMap) {
+        if (node.getAttr('isPage')) {
+          const group = node as Konva.Group;
+          const bgRect = group.children?.[0] as Konva.Rect | undefined;
+          if (bgRect) {
+            const pw = bgRect.width();
+            const ph = bgRect.height();
+            const px = group.x();
+            const py = group.y();
+
+            if (worldPt.x < px || worldPt.x > px + pw || worldPt.y < py || worldPt.y > py + ph) {
+              zoomAnchor = camera.worldToScreen({ x: px + pw / 2, y: py + ph / 2 });
+            }
+          }
+          break;
+        }
+      }
+
+      camera.zoomAtPoint(clamped, zoomAnchor);
+    }
+
+    callbacks.onZoomChange?.(clamped);
+  }, { passive: false });
 }

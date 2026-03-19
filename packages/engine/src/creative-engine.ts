@@ -75,6 +75,9 @@ export class CreativeEngine {
     block._setGetCropVisualDimensionsHandler(() => editor._getCrop().getCropVisualDimensions());
     const scene = new SceneAPI(core, block);
 
+    // Wire up selection cleanup so undo/redo removes stale selections
+    core._setSelectionCleanup((destroyedIds) => block._removeFromSelection(destroyedIds));
+
     adapter.onBlockClick = (blockId, event) => {
       if (event.shiftKey) {
         const selected = block.isSelected(blockId);
@@ -91,6 +94,10 @@ export class CreativeEngine {
     adapter.onStageClick = (worldPos) => {
       block.deselectAll();
       core.emit('stage:click', worldPos);
+    };
+
+    adapter.onZoomChange = (zoom: number) => {
+      core.emit('zoom:changed', zoom);
     };
 
     adapter.onBlockDragEnd = (blockId, x, y) => {

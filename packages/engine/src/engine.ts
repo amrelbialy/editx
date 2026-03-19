@@ -17,7 +17,7 @@ export class Engine {
   #activeSceneId: number | null = null;
   #activePageId: number | null = null;
 
-  #batching = false;
+  #batchDepth = 0;
   #batchPatches: Patch[] = [];
 
   constructor(opts: { renderer?: RendererAdapter; blockStore?: BlockStore }) {
@@ -59,18 +59,23 @@ export class Engine {
   // --- Batch ---
 
   beginBatch() {
-    this.#batching = true;
-    this.#batchPatches = [];
+    if (this.#batchDepth === 0) {
+      this.#batchPatches = [];
+    }
+    this.#batchDepth++;
   }
 
   endBatch() {
-    this.#batching = false;
-    if (this.#batchPatches.length > 0) {
-      this.#history.push(this.#batchPatches);
-      this.#enqueueBlockEvents(this.#batchPatches);
+    if (this.#batchDepth <= 0) return;
+    this.#batchDepth--;
+    if (this.#batchDepth === 0) {
+      if (this.#batchPatches.length > 0) {
+        this.#history.push(this.#batchPatches);
+        this.#enqueueBlockEvents(this.#batchPatches);
+      }
+      this.#batchPatches = [];
+      this.#flush();
     }
-    this.#batchPatches = [];
-    this.#flush();
   }
 
   // --- Command execution ---
@@ -81,7 +86,7 @@ export class Engine {
     if (patches && patches.length > 0) {
       this.#markDirty(patches);
 
-      if (this.#batching) {
+      if (this.#batchDepth > 0) {
         this.#batchPatches.push(...patches);
       } else {
         this.#history.push(patches);
@@ -89,7 +94,7 @@ export class Engine {
       }
     }
 
-    if (!this.#batching) {
+    if (this.#batchDepth === 0) {
       this.#flush();
     }
   }
@@ -115,11 +120,20 @@ export class Engine {
 
   // --- Undo / Redo ---
 
+  /** @internal — called after undo/redo to remove destroyed blocks from selection. */
+  #onSelectionCleanup: ((destroyedIds: number[]) => void) | null = null;
+
+  /** @internal — register a callback to clean stale selections after undo/redo. */
+  _setSelectionCleanup(cb: (destroyedIds: number[]) => void): void {
+    this.#onSelectionCleanup = cb;
+  }
+
   undo() {
     const patches = this.#history.undo();
     if (!patches) return;
 
     this.#applyPatches(patches);
+    this.#cleanupSelections(patches);
     this.#events.emit('history:undo');
     this.#flush();
   }
@@ -129,8 +143,19 @@ export class Engine {
     if (!patches) return;
 
     this.#applyPatches(patches);
+    this.#cleanupSelections(patches);
     this.#events.emit('history:redo');
     this.#flush();
+  }
+
+  #cleanupSelections(patches: Patch[]) {
+    if (!this.#onSelectionCleanup) return;
+    const destroyed = patches
+      .filter((p) => p.after === null)
+      .map((p) => Number(p.id));
+    if (destroyed.length > 0) {
+      this.#onSelectionCleanup(destroyed);
+    }
   }
 
   canUndo() {
@@ -144,6 +169,11 @@ export class Engine {
   clearHistory() {
     this.#history.clear();
     this.#events.emit('history:clear');
+  }
+
+  /** Render all dirty blocks now. Useful during a batch for live visual preview. */
+  renderDirty() {
+    this.#flush();
   }
 
   // --- Patch application (undo/redo) ---
@@ -166,7 +196,7 @@ export class Engine {
 
   #flush() {
     if (!this.#renderer) return;
-console.log('blockStore', this.#blockStore)
+
     // When a sub-block (fill, shape, or effect) changes, its owner
     // graphic block must also re-render so the visual update is applied.
     for (const id of [...this.#dirty]) {

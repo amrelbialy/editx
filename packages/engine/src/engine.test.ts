@@ -294,4 +294,136 @@ describe('Engine', () => {
       expect(store.exists(id)).toBe(false);
     });
   });
+
+  describe('nested batch', () => {
+    it('nested beginBatch/endBatch produces exactly one undo step', () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const id = store.create('graphic');
+      engine.clearHistory();
+
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/x', 10));
+
+      // Nested batch (like setPosition/setSize do internally)
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/y', 20));
+      engine.exec(new SetPropertyCommand(store, id, 'transform/size/width', 300));
+      engine.endBatch(); // inner endBatch — should NOT commit
+
+      engine.exec(new SetPropertyCommand(store, id, 'transform/size/height', 400));
+      engine.endBatch(); // outer endBatch — commits all
+
+      expect(store.getFloat(id, 'transform/position/x')).toBe(10);
+      expect(store.getFloat(id, 'transform/position/y')).toBe(20);
+      expect(store.getFloat(id, 'transform/size/width')).toBe(300);
+      expect(store.getFloat(id, 'transform/size/height')).toBe(400);
+
+      // Single undo should revert all 4 properties at once (defaults: pos=0, size=100)
+      engine.undo();
+      expect(store.getFloat(id, 'transform/position/x')).toBe(0);
+      expect(store.getFloat(id, 'transform/position/y')).toBe(0);
+      expect(store.getFloat(id, 'transform/size/width')).toBe(100);
+      expect(store.getFloat(id, 'transform/size/height')).toBe(100);
+
+      // Only one undo step was created
+      expect(engine.canUndo()).toBe(false);
+    });
+
+    it('inner endBatch does not flush the renderer', () => {
+      const renderer = createMockRenderer();
+      const engine = new Engine({ renderer });
+      const store = engine.getBlockStore();
+      const id = store.create('graphic');
+      engine.clearHistory();
+
+      vi.mocked(renderer.renderFrame).mockClear();
+
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/x', 10));
+
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/y', 20));
+      engine.endBatch(); // inner — no flush
+      expect(renderer.renderFrame).not.toHaveBeenCalled();
+
+      engine.endBatch(); // outer — flush
+      expect(renderer.renderFrame).toHaveBeenCalled();
+    });
+
+    it('triple-nested batch still produces one undo step', () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const id = store.create('graphic');
+      engine.clearHistory();
+
+      engine.beginBatch();
+      engine.beginBatch();
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/x', 42));
+      engine.endBatch();
+      engine.endBatch();
+      engine.endBatch();
+
+      engine.undo();
+      expect(store.getFloat(id, 'transform/position/x')).toBe(0);
+      expect(engine.canUndo()).toBe(false);
+    });
+  });
+
+  describe('destroy with sub-blocks', () => {
+    it('undo of destroy restores sub-blocks (shape, fill)', () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+
+      const graphicId = store.create('graphic');
+      const shapeId = store.createShape('rect');
+      store.setShape(graphicId, shapeId);
+      const fillId = store.createFill('color');
+      store.setFill(graphicId, fillId);
+      engine.clearHistory();
+
+      engine.exec(new DestroyBlockCommand(store, graphicId));
+      expect(store.exists(graphicId)).toBe(false);
+      expect(store.exists(shapeId)).toBe(false);
+      expect(store.exists(fillId)).toBe(false);
+
+      engine.undo();
+      expect(store.exists(graphicId)).toBe(true);
+      expect(store.exists(shapeId)).toBe(true);
+      expect(store.exists(fillId)).toBe(true);
+      expect(store.getShape(graphicId)).toBe(shapeId);
+      expect(store.getFill(graphicId)).toBe(fillId);
+    });
+  });
+
+  describe('selection cleanup on undo', () => {
+    it('calls selection cleanup callback when undo destroys a block', () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const cleanup = vi.fn();
+      engine._setSelectionCleanup(cleanup);
+
+      const cmd = new CreateBlockCommand(store, 'graphic');
+      engine.exec(cmd);
+      const id = cmd.getCreatedId()!;
+
+      engine.undo(); // undo create → destroy
+      expect(cleanup).toHaveBeenCalledWith([id]);
+    });
+
+    it('does not call cleanup when undo only updates blocks', () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const cleanup = vi.fn();
+      engine._setSelectionCleanup(cleanup);
+
+      const id = store.create('graphic');
+      engine.clearHistory();
+      engine.exec(new SetPropertyCommand(store, id, 'transform/position/x', 50));
+
+      engine.undo(); // undo property change — no destroy
+      expect(cleanup).not.toHaveBeenCalled();
+    });
+  });
 });

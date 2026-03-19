@@ -27,6 +27,7 @@ import {
   PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
   FILL_COLOR, FILL_ENABLED, STROKE_ENABLED, STROKE_COLOR, STROKE_WIDTH,
   SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
+  SHAPE_POLYGON_SIDES,
   EFFECT_ENABLED,
   EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
   EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
@@ -154,6 +155,15 @@ export class BlockAPI {
   deselectAll(): void {
     this.#selection.clear();
     this.#syncTransformer();
+  }
+
+  /** @internal — remove destroyed block IDs from selection (used by undo/redo). */
+  _removeFromSelection(ids: number[]): void {
+    let changed = false;
+    for (const id of ids) {
+      if (this.#selection.delete(id)) changed = true;
+    }
+    if (changed) this.#syncTransformer();
   }
 
   #syncTransformer(): void {
@@ -920,6 +930,7 @@ export class BlockAPI {
     y: number,
     width: number,
     height: number,
+    opts?: { sides?: number },
   ): number {
     this.#engine.beginBatch();
 
@@ -930,6 +941,11 @@ export class BlockAPI {
 
     const shapeId = this.createShape(shapeKind);
     this.setShape(graphicId, shapeId);
+
+    // Set polygon sides inside the batch so it's part of one undo step
+    if (opts?.sides != null && shapeKind === 'polygon') {
+      this.setFloat(shapeId, SHAPE_POLYGON_SIDES, opts.sides);
+    }
 
     const fillId = this.createFill(fillKind);
     this.setFill(graphicId, fillId);
@@ -960,6 +976,7 @@ export class BlockAPI {
     width: number,
     height: number,
     initialText?: string,
+    opts?: { style?: Partial<TextRunStyle> },
   ): number {
     this.#engine.beginBatch();
 
@@ -968,7 +985,9 @@ export class BlockAPI {
     this.setSize(textId, width, height);
 
     if (initialText !== undefined) {
-      const runs: TextRun[] = [{ text: initialText, style: { fontSize: 24, fontFamily: 'Arial', fill: '#000000' } }];
+      const baseStyle: TextRunStyle = { fontSize: 24, fontFamily: 'Arial', fill: '#000000' };
+      const mergedStyle: TextRunStyle = opts?.style ? { ...baseStyle, ...opts.style } : baseStyle;
+      const runs: TextRun[] = [{ text: initialText, style: mergedStyle }];
       this.setProperty(textId, TEXT_RUNS, runs);
     }
 

@@ -30,15 +30,13 @@ export function useTextTool({ engineRef }: UseTextToolOptions) {
     const x = (pageW - width) / 2;
     const y = (pageH - height) / 2;
 
-    const textId = ce.block.addText(editableBlockId, x, y, width, height, config.text);
-
-    // Apply preset style to the initial run
-    const totalLen = config.text.length;
-    ce.block.setTextStyle(textId, 0, totalLen, {
-      fontSize: config.fontSize,
-      fontWeight: config.fontWeight,
-      fontFamily: 'Arial',
-      fill: '#000000',
+    const textId = ce.block.addText(editableBlockId, x, y, width, height, config.text, {
+      style: {
+        fontSize: config.fontSize,
+        fontWeight: config.fontWeight,
+        fontFamily: 'Arial',
+        fill: '#000000',
+      },
     });
 
     ce.block.select(textId);

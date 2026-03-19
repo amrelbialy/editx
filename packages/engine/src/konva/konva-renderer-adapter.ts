@@ -35,6 +35,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   ) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
+  onZoomChange?: (zoom: number) => void;
 
   /** Resolve a block by ID (set by CreativeEngine to read effect blocks). */
   resolveBlock?: (id: number) => BlockData | undefined;
@@ -102,10 +103,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
         onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
         onBlockDblClick: (blockId) => this.onBlockDblClick?.(blockId),
         onStageClick: (worldPos) => this.onStageClick?.(worldPos),
+        onZoomChange: (zoom) => this.onZoomChange?.(zoom),
       },
     });
 
     this.#lastPageSize = { width: pageW, height: pageH };
+    this.#camera.setPageSize(pageW, pageH);
     this.#camera.fitToScreen({ width: pageW, height: pageH, padding: 48 });
 
     this.#resizeObserver?.disconnect();
@@ -148,6 +151,14 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
     this.#nodeFactory.updateNode(node, block, this.resolveBlock);
     this.#transformer.moveToTop();
+
+    // Keep camera page size in sync for pan clamping
+    if (block.type === 'page') {
+      const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
+      const ph = (block.properties[PAGE_HEIGHT] as number) ?? 1080;
+      this.#camera.setPageSize(pw, ph);
+      this.#lastPageSize = { width: pw, height: ph };
+    }
   }
 
   removeBlock(id: number): void {

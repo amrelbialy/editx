@@ -10,6 +10,9 @@ export class KonvaCamera {
   #zoom = 1;
   #pan = { x: 0, y: 0 };
 
+  /** World-space page size used for pan clamping. */
+  #pageSize: { width: number; height: number } | null = null;
+
   /** Active animation frame ID — non-null while an animated transition is in flight. */
   #animFrameId: number | null = null;
 
@@ -17,6 +20,11 @@ export class KonvaCamera {
     this.#stage = stage;
     this.#contentLayer = contentLayer;
     this.#uiLayer = uiLayer;
+  }
+
+  /** Store the page dimensions so pan clamping can keep the image in view. */
+  setPageSize(width: number, height: number): void {
+    this.#pageSize = { width, height };
   }
 
   setZoom(zoom: number, animate = false): void {
@@ -42,6 +50,21 @@ export class KonvaCamera {
       this.#pan = targetPan;
       this.#applyCamera();
     }
+  }
+
+  /** Zoom centered on a specific screen point (e.g. mouse cursor position). */
+  zoomAtPoint(zoom: number, screenPt: { x: number; y: number }): void {
+    // World point under the cursor before zoom
+    const worldX = (screenPt.x - this.#pan.x) / this.#zoom;
+    const worldY = (screenPt.y - this.#pan.y) / this.#zoom;
+
+    this.#zoom = zoom;
+    this.#pan = {
+      x: screenPt.x - worldX * zoom,
+      y: screenPt.y - worldY * zoom,
+    };
+    this.#clampPan();
+    this.#applyCamera();
   }
 
   getZoom(): number {
@@ -131,6 +154,37 @@ export class KonvaCamera {
       x: pt.x * this.#zoom + this.#pan.x,
       y: pt.y * this.#zoom + this.#pan.y,
     };
+  }
+
+  /**
+   * Clamp pan so the page stays centered when it fits in the viewport,
+   * or can't be panned past its edges when zoomed in.
+   */
+  #clampPan(): void {
+    if (!this.#pageSize) return;
+
+    const stageW = this.#stage.width();
+    const stageH = this.#stage.height();
+    const pageScreenW = this.#pageSize.width * this.#zoom;
+    const pageScreenH = this.#pageSize.height * this.#zoom;
+
+    // Horizontal: if page narrower than viewport, center it; otherwise clamp edges
+    if (pageScreenW <= stageW) {
+      this.#pan.x = (stageW - pageScreenW) / 2;
+    } else {
+      const minX = stageW - pageScreenW;
+      const maxX = 0;
+      this.#pan.x = Math.min(maxX, Math.max(minX, this.#pan.x));
+    }
+
+    // Vertical: same logic
+    if (pageScreenH <= stageH) {
+      this.#pan.y = (stageH - pageScreenH) / 2;
+    } else {
+      const minY = stageH - pageScreenH;
+      const maxY = 0;
+      this.#pan.y = Math.min(maxY, Math.max(minY, this.#pan.y));
+    }
   }
 
   #applyCamera(): void {

@@ -91,6 +91,17 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     setState(readShapeState(engine, blockId));
   }, [engine, blockId]);
 
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const handler = () => setState(readShapeState(engine, blockId));
+    engine.on('history:undo', handler);
+    engine.on('history:redo', handler);
+    return () => {
+      engine.off('history:undo', handler);
+      engine.off('history:redo', handler);
+    };
+  }, [engine, blockId]);
+
   const update = useCallback(() => {
     setState(readShapeState(engine, blockId));
   }, [engine, blockId]);

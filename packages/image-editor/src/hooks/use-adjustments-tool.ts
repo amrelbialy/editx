@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ADJUSTMENT_CONFIG,
   ADJUSTMENT_PARAMS,
@@ -22,6 +22,12 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
   const adjustEffectIdRef = useRef<number | null>(null);
   const [adjustValues, setAdjustValues] = useState<AdjustmentValues>(DEFAULT_ADJUSTMENTS);
+
+  // Render-throttle refs
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef<{ param: AdjustmentParam; value: number } | null>(null);
+  const inBatchRef = useRef(false);
+  const RENDER_INTERVAL = 150; // ms between canvas re-renders during drag
 
   const ensureAdjustEffect = useCallback((): number | null => {
     const ce = engineRef.current;
@@ -56,14 +62,60 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     setAdjustValues(vals);
   }, [engineRef]);
 
+  const flushPending = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const pending = pendingRef.current;
+    if (!pending) return;
+    pendingRef.current = null;
+    const ce = engineRef.current;
+    const eid = adjustEffectIdRef.current;
+    if (!ce || eid === null) return;
+    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[pending.param].key, pending.value);
+    ce.core.renderDirty();
+  }, [engineRef]);
+
   const handleAdjustChange = useCallback((param: AdjustmentParam, value: number) => {
+    // Update React state immediately for responsive slider UI
+    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+
     const ce = engineRef.current;
     const eid = adjustEffectIdRef.current;
     if (!ce || eid === null) return;
 
-    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[param].key, value);
-    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+    // Start a batch on first change of this drag (groups into one undo entry)
+    if (!inBatchRef.current) {
+      ce.core.beginBatch();
+      inBatchRef.current = true;
+    }
+
+    // Store the pending write; throlexpensive canvas renders
+    pendingRef.current = { param, value };
+    if (timerRef.current === null) {
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        const p = pendingRef.current;
+        if (!p) return;
+        pendingRef.current = null;
+        const engine = engineRef.current;
+        const effectId = adjustEffectIdRef.current;
+        if (!engine || effectId === null) return;
+        engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
+        engine.core.renderDirty();
+      }, RENDER_INTERVAL);
+    }
   }, [engineRef]);
+
+  const handleAdjustCommit = useCallback(() => {
+    // Flush any pending RAF to ensure the final value is written
+    flushPending();
+    if (inBatchRef.current) {
+      engineRef.current?.core.endBatch();
+      inBatchRef.current = false;
+    }
+  }, [engineRef, flushPending]);
 
   const handleAdjustReset = useCallback(() => {
     const ce = engineRef.current;
@@ -83,11 +135,56 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     setAdjustValues(DEFAULT_ADJUSTMENTS);
   }, [engineRef, editableBlockId]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Re-sync local state when undo/redo changes the engine state
+  useEffect(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    const handler = () => {
+      const eid = adjustEffectIdRef.current;
+      if (eid === null || !ce.core.getBlockStore().exists(eid)) {
+        // Effect was destroyed by undo — re-discover it
+        if (editableBlockId !== null) {
+          const effects = ce.block.getEffects(editableBlockId);
+          const found = effects.find((id) => ce.block.getKind(id) === 'adjustments');
+          adjustEffectIdRef.current = found ?? null;
+        } else {
+          adjustEffectIdRef.current = null;
+        }
+      }
+      const eid2 = adjustEffectIdRef.current;
+      if (!eid2 || !ce.core.getBlockStore().exists(eid2)) {
+        setAdjustValues(DEFAULT_ADJUSTMENTS);
+      } else {
+        const vals = {} as AdjustmentValues;
+        for (const param of ADJUSTMENT_PARAMS) {
+          vals[param] = ce.block.getFloat(eid2, ADJUSTMENT_CONFIG[param].key);
+        }
+        setAdjustValues(vals);
+      }
+    };
+    ce.on('history:undo', handler);
+    ce.on('history:redo', handler);
+    return () => {
+      ce.off('history:undo', handler);
+      ce.off('history:redo', handler);
+    };
+  }, [engineRef, editableBlockId]);
+
   return {
     adjustValues,
     ensureAdjustEffect,
     syncAdjustValues,
     handleAdjustChange,
+    handleAdjustCommit,
     handleAdjustReset,
   };
 }

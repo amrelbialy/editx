@@ -5,6 +5,7 @@ export interface EventMap {
   'history:redo': () => void;
   'history:clear': () => void;
   'stage:click': (worldPos: { x: number; y: number }) => void;
+  'zoom:changed': (zoom: number) => void;
 }
 
 type EventName = keyof EventMap;

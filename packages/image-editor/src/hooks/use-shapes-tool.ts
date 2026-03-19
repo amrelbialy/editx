@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { SHAPE_POLYGON_SIDES, type CreativeEngine, type ShapeType } from '@creative-editor/engine';
+import { type CreativeEngine, type ShapeType } from '@creative-editor/engine';
 import { useImageEditorStore } from '../store/image-editor-store';
 
 export interface UseShapesToolOptions {
@@ -22,14 +22,7 @@ export function useShapesTool({ engineRef }: UseShapesToolOptions) {
     const x = (pageW - shapeW) / 2;
     const y = (pageH - shapeH) / 2;
 
-    const graphicId = ce.block.addShape(editableBlockId, shapeType, 'color', x, y, shapeW, shapeH);
-
-    if (sides && shapeType === 'polygon') {
-      const shapeId = ce.block.getShape(graphicId);
-      if (shapeId != null) {
-        ce.block.setFloat(shapeId, SHAPE_POLYGON_SIDES, sides);
-      }
-    }
+    const graphicId = ce.block.addShape(editableBlockId, shapeType, 'color', x, y, shapeW, shapeH, { sides });
 
     ce.block.select(graphicId);
   }, [engineRef, editableBlockId]);

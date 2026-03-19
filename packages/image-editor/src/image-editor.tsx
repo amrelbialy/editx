@@ -156,6 +156,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     if (engine) updateZoomLabel();
   }, [engine, updateZoomLabel]);
 
+  // Update zoom label when wheel-zoom changes it from the canvas
+  useEffect(() => {
+    if (!engine) return;
+    const handler = () => updateZoomLabel();
+    engine.on('zoom:changed', handler);
+    return () => engine.off('zoom:changed', handler);
+  }, [engine, updateZoomLabel]);
+
   const zoomLabel = zoomPercent !== null ? `${zoomPercent}%` : 'Auto';
 
   // --- Tool hooks ---
@@ -416,6 +424,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                               <AdjustPanel
                                 values={blockEffects.adjustValues}
                                 onChange={blockEffects.handleAdjustChange}
+                                onCommit={blockEffects.handleAdjustCommit}
                                 onReset={blockEffects.handleAdjustReset}
                               />
                             )}
@@ -459,6 +468,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                               <AdjustPanel
                                 values={adjustments.adjustValues}
                                 onChange={adjustments.handleAdjustChange}
+                                onCommit={adjustments.handleAdjustCommit}
                                 onReset={adjustments.handleAdjustReset}
                               />
                             )}
@@ -595,6 +605,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                         <AdjustPanel
                           values={adjustments.adjustValues}
                           onChange={adjustments.handleAdjustChange}
+                          onCommit={adjustments.handleAdjustCommit}
                           onReset={adjustments.handleAdjustReset}
                         />
                       )}

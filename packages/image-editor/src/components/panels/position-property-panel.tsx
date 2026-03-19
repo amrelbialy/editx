@@ -68,6 +68,17 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
     setState(readPos(engine, blockId));
   }, [engine, blockId]);
 
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const handler = () => setState(readPos(engine, blockId));
+    engine.on('history:undo', handler);
+    engine.on('history:redo', handler);
+    return () => {
+      engine.off('history:undo', handler);
+      engine.off('history:redo', handler);
+    };
+  }, [engine, blockId]);
+
   const update = useCallback(() => setState(readPos(engine, blockId)), [engine, blockId]);
 
   const handlePosX = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

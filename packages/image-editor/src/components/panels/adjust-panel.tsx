@@ -36,6 +36,7 @@ export type AdjustmentValues = Record<AdjustmentParam, number>;
 export interface AdjustPanelProps {
   values: AdjustmentValues;
   onChange: (key: AdjustmentParam, value: number) => void;
+  onCommit?: (key: AdjustmentParam, value: number) => void;
   onReset: () => void;
 }
 
@@ -48,7 +49,8 @@ const AdjustSlider: React.FC<{
   param: AdjustmentParam;
   value: number;
   onChange: (key: AdjustmentParam, value: number) => void;
-}> = ({ param, value, onChange }) => {
+  onCommit?: (key: AdjustmentParam, value: number) => void;
+}> = ({ param, value, onChange, onCommit }) => {
   const cfg = ADJUSTMENT_CONFIG[param];
   return (
     <div className="mb-1">
@@ -64,13 +66,14 @@ const AdjustSlider: React.FC<{
         step={cfg.step}
         value={[value]}
         onValueChange={([v]) => onChange(param, v)}
+        onValueCommit={onCommit ? ([v]) => onCommit(param, v) : undefined}
         data-testid={`adjust-${param}`}
       />
     </div>
   );
 };
 
-export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onReset }) => {
+export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onCommit, onReset }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-xs font-medium text-muted-foreground">Basic</div>
@@ -80,6 +83,7 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onRe
           param={param}
           value={values[param]}
           onChange={onChange}
+          onCommit={onCommit}
         />
       ))}
 
@@ -92,6 +96,7 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onRe
           param={param}
           value={values[param]}
           onChange={onChange}
+          onCommit={onCommit}
         />
       ))}
 

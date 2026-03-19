@@ -66,6 +66,20 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
     setOpacity(engine.block.getOpacity(blockId));
   }, [readColor, engine, blockId]);
 
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const handler = () => {
+      setColor(readColor());
+      setOpacity(engine.block.getOpacity(blockId));
+    };
+    engine.on('history:undo', handler);
+    engine.on('history:redo', handler);
+    return () => {
+      engine.off('history:undo', handler);
+      engine.off('history:redo', handler);
+    };
+  }, [readColor, engine, blockId]);
+
   const getStyleRange = useCallback((): { start: number; end: number } => {
     if (hasCharSelection && textSelectionRange) {
       return { start: textSelectionRange.from, end: textSelectionRange.to };

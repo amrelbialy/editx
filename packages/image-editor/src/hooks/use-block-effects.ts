@@ -29,6 +29,12 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   const [adjustValues, setAdjustValues] = useState<AdjustmentValues>(DEFAULT_ADJUSTMENTS);
   const [activeFilter, setActiveFilter] = useState('');
 
+  // Render-throttle refs
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef<{ param: AdjustmentParam; value: number } | null>(null);
+  const inBatchRef = useRef(false);
+  const RENDER_INTERVAL = 150; // ms between canvas re-renders during drag
+
   // Sync state when blockId changes
   useEffect(() => {
     const ce = engineRef.current;
@@ -83,7 +89,25 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     return eid;
   }, [engineRef, blockId]);
 
+  const flushPending = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const pending = pendingRef.current;
+    if (!pending) return;
+    pendingRef.current = null;
+    const ce = engineRef.current;
+    const eid = adjustEffectIdRef.current;
+    if (!ce || eid === null) return;
+    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[pending.param].key, pending.value);
+    ce.core.renderDirty();
+  }, [engineRef]);
+
   const handleAdjustChange = useCallback((param: AdjustmentParam, value: number) => {
+    // Update React state immediately for responsive slider UI
+    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+
     const ce = engineRef.current;
     let eid = adjustEffectIdRef.current;
     if (!ce) return;
@@ -91,9 +115,37 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
       eid = ensureAdjustEffect();
       if (eid === null) return;
     }
-    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[param].key, value);
-    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+
+    // Start a batch on first change of this drag
+    if (!inBatchRef.current) {
+      ce.core.beginBatch();
+      inBatchRef.current = true;
+    }
+
+    // Store the pending write; throttle expensive canvas renders
+    pendingRef.current = { param, value };
+    if (timerRef.current === null) {
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        const p = pendingRef.current;
+        if (!p) return;
+        pendingRef.current = null;
+        const engine = engineRef.current;
+        const effectId = adjustEffectIdRef.current;
+        if (!engine || effectId === null) return;
+        engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
+        engine.core.renderDirty();
+      }, RENDER_INTERVAL);
+    }
   }, [engineRef, ensureAdjustEffect]);
+
+  const handleAdjustCommit = useCallback(() => {
+    flushPending();
+    if (inBatchRef.current) {
+      engineRef.current?.core.endBatch();
+      inBatchRef.current = false;
+    }
+  }, [engineRef, flushPending]);
 
   const handleAdjustReset = useCallback(() => {
     const ce = engineRef.current;
@@ -135,10 +187,55 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     setActiveFilter(name);
   }, [engineRef, ensureFilterEffect]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Re-sync when undo/redo changes engine state
+  useEffect(() => {
+    const ce = engineRef.current;
+    if (!ce || blockId === null) return;
+    const handler = () => {
+      const effects = ce.block.getEffects(blockId);
+      let foundAdjust = false;
+      let foundFilter = false;
+      for (const eid of effects) {
+        const kind = ce.block.getKind(eid);
+        if (kind === 'adjustments') {
+          adjustEffectIdRef.current = eid;
+          const vals = {} as AdjustmentValues;
+          for (const param of ADJUSTMENT_PARAMS) {
+            vals[param] = ce.block.getFloat(eid, ADJUSTMENT_CONFIG[param].key);
+          }
+          setAdjustValues(vals);
+          foundAdjust = true;
+        } else if (kind === 'filter') {
+          filterEffectIdRef.current = eid;
+          setActiveFilter(ce.block.getString(eid, EFFECT_FILTER_NAME));
+          foundFilter = true;
+        }
+      }
+      if (!foundAdjust) { adjustEffectIdRef.current = null; setAdjustValues(DEFAULT_ADJUSTMENTS); }
+      if (!foundFilter) { filterEffectIdRef.current = null; setActiveFilter(''); }
+    };
+    ce.on('history:undo', handler);
+    ce.on('history:redo', handler);
+    return () => {
+      ce.off('history:undo', handler);
+      ce.off('history:redo', handler);
+    };
+  }, [engineRef, blockId]);
+
   return {
     adjustValues,
     activeFilter,
     handleAdjustChange,
+    handleAdjustCommit,
     handleAdjustReset,
     handleFilterSelect,
   };

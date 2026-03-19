@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CreativeEngine } from '@creative-editor/engine';
 import { useImageEditorStore } from '../store/image-editor-store';
 
@@ -70,6 +70,25 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
     ce.block.resetRotationAndFlip(editableBlockId);
     ce.editor.fitToScreen();
     setRotationState({ rotation: 0, flipH: false, flipV: false });
+  }, [engineRef, editableBlockId]);
+
+  // Re-sync local state when undo/redo changes the engine state
+  useEffect(() => {
+    const ce = engineRef.current;
+    if (!ce || editableBlockId === null) return;
+    const handler = () => {
+      setRotationState({
+        rotation: ce.block.getImageRotation(editableBlockId),
+        flipH: ce.block.isCropFlippedHorizontal(editableBlockId),
+        flipV: ce.block.isCropFlippedVertical(editableBlockId),
+      });
+    };
+    ce.on('history:undo', handler);
+    ce.on('history:redo', handler);
+    return () => {
+      ce.off('history:undo', handler);
+      ce.off('history:redo', handler);
+    };
   }, [engineRef, editableBlockId]);
 
   return {
