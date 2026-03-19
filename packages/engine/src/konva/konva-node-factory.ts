@@ -30,6 +30,7 @@ import { loadImage } from '../utils/image-loader';
 import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
 import { getFilterPreset } from './filters/presets';
 import { FormattedText } from './formatted-text';
+import type { WebGLFilterRenderer, FilterParams } from './webgl-filter-renderer';
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -44,9 +45,11 @@ export interface NodeCallbacks {
  */
 export class KonvaNodeFactory {
   #stage: Konva.Stage;
+  #webgl: WebGLFilterRenderer | null;
 
-  constructor(stage: Konva.Stage) {
+  constructor(stage: Konva.Stage, webgl?: WebGLFilterRenderer | null) {
     this.#stage = stage;
+    this.#webgl = webgl ?? null;
   }
 
   createNode(
@@ -315,6 +318,7 @@ export class KonvaNodeFactory {
       if (imgNode.getAttr('loadedSrc') !== src) {
         imgNode.setAttr('loadedSrc', src);
         loadImage(src).then((htmlImg) => {
+          imgNode.setAttr('_sourceImage', htmlImg);
           imgNode.image(htmlImg);
           // Re-apply cache after image loads if filters are active
           if (imgNode.filters()?.length) {
@@ -349,16 +353,82 @@ export class KonvaNodeFactory {
     resolveBlock?: (id: number) => BlockData | undefined,
   ): void {
     const values = this.#collectAdjustmentValues(block, resolveBlock);
-    const filterPresetFn = this.#collectFilterPreset(block, resolveBlock);
+    const presetName = this.#collectFilterPresetName(block, resolveBlock);
+    const hasAdjustments = values != null;
+    const hasPreset = presetName !== '';
 
-    if (!values && !filterPresetFn) {
-      // No adjustments and no filter — clear any existing filters
+    const _perf = typeof window !== 'undefined' && (window as any).__CE_PERF;
+
+    if (!hasAdjustments && !hasPreset) {
+      if (_perf) console.log('[perf:applyFilters] no adjustments/preset, skipping');
+      // No adjustments and no filter — clear any existing filters/image override
       if (imgNode.filters()?.length) {
         imgNode.filters([]);
         imgNode.clearCache();
       }
+      // Restore original image if we previously set a WebGL-rendered canvas
+      const orig = imgNode.getAttr('_sourceImage') as HTMLImageElement | undefined;
+      if (orig && imgNode.image() !== orig) {
+        imgNode.image(orig);
+      }
       return;
     }
+
+    // ── WebGL path ──
+    if (this.#webgl) {
+      // Recover _sourceImage if not set (e.g. image loaded before WebGL code deployed)
+      let sourceImg = imgNode.getAttr('_sourceImage') as HTMLImageElement | undefined;
+      if (!sourceImg) {
+        const currentImg = imgNode.image();
+        if (_perf) console.log('[perf:applyFilters] _sourceImage missing, imgNode.image() is:', currentImg?.constructor?.name, 'value:', currentImg);
+        if (currentImg instanceof HTMLImageElement) {
+          sourceImg = currentImg;
+          imgNode.setAttr('_sourceImage', sourceImg);
+        }
+      }
+      if (sourceImg) {
+        const t0 = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
+        // Upload source image (only uploads if size changed or first time)
+        this.#webgl.uploadImage(sourceImg, sourceImg.naturalWidth, sourceImg.naturalHeight);
+
+        const params: FilterParams = {
+          brightness: values?.brightness ?? 0,
+          contrast: values?.contrast ?? 0,
+          saturation: values?.saturation ?? 0,
+          gamma: values?.gamma ?? 0,
+          exposure: values?.exposure ?? 0,
+          temperature: values?.temperature ?? 0,
+          shadows: values?.shadows ?? 0,
+          highlights: values?.highlights ?? 0,
+          blacks: values?.blacks ?? 0,
+          whites: values?.whites ?? 0,
+          clarity: values?.clarity ?? 0,
+          sharpness: values?.sharpness ?? 0,
+          preset: presetName,
+        };
+
+        const filteredCanvas = this.#webgl.render(params);
+
+        // Clear any CPU filters and set the GPU-rendered canvas as the image source
+        if (imgNode.filters()?.length) {
+          imgNode.filters([]);
+          imgNode.clearCache();
+        }
+        imgNode.image(filteredCanvas);
+        if (typeof window !== 'undefined' && (window as any).__CE_PERF) {
+          console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
+        }
+        return;
+      }
+      if (_perf) console.log('[perf:applyFilters] WebGL path: sourceImg is null, falling through to CPU');
+    } else {
+      if (_perf) console.log('[perf:applyFilters] #webgl is null, using CPU fallback');
+    }
+
+    // ── CPU fallback path ──
+    if (_perf) console.log('[perf:applyFilters] CPU fallback running');
+    const t1 = _perf ? performance.now() : 0;
+    const filterPresetFn = presetName ? getFilterPreset(presetName) ?? null : null;
 
     const allFilters: Array<(imageData: ImageData) => void> = [];
 
@@ -392,6 +462,7 @@ export class KonvaNodeFactory {
     if (imgNode.image()) {
       imgNode.cache();
     }
+    if (_perf) console.log(`[perf:applyFilters] CPU fallback total: ${(performance.now() - t1).toFixed(2)}ms (${allFilters.length} filters)`);
   }
 
   /** Collect adjustment values from all adjustments-type effect blocks. */
@@ -426,24 +497,21 @@ export class KonvaNodeFactory {
     return null;
   }
 
-  /** Collect filter preset function from the first filter-type effect block. */
-  #collectFilterPreset(
+  /** Collect filter preset name from the first filter-type effect block. */
+  #collectFilterPresetName(
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): ((imageData: ImageData) => void) | null {
-    if (!resolveBlock || block.effectIds.length === 0) return null;
+  ): string {
+    if (!resolveBlock || block.effectIds.length === 0) return '';
 
     for (const effectId of block.effectIds) {
       const effectBlock = resolveBlock(effectId);
       if (!effectBlock || effectBlock.kind !== 'filter') continue;
 
-      const name = (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? '';
-      if (!name) return null;
-
-      return getFilterPreset(name) ?? null;
+      return (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? '';
     }
 
-    return null;
+    return '';
   }
 
   // --- Per-type updaters ---
@@ -489,6 +557,7 @@ export class KonvaNodeFactory {
     if (src && imgNode.getAttr('loadedSrc') !== src) {
       imgNode.setAttr('loadedSrc', src);
       loadImage(src).then((htmlImg) => {
+        imgNode.setAttr('_sourceImage', htmlImg);
         imgNode.image(htmlImg);
         // Re-apply cache after image loads if filters are active
         if (imgNode.filters()?.length) {

@@ -30,10 +30,9 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   const [activeFilter, setActiveFilter] = useState('');
 
   // Render-throttle refs
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
   const pendingRef = useRef<{ param: AdjustmentParam; value: number } | null>(null);
   const inBatchRef = useRef(false);
-  const RENDER_INTERVAL = 150; // ms between canvas re-renders during drag
 
   // Sync state when blockId changes
   useEffect(() => {
@@ -90,9 +89,9 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   }, [engineRef, blockId]);
 
   const flushPending = useCallback(() => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     const pending = pendingRef.current;
     if (!pending) return;
@@ -122,11 +121,11 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
       inBatchRef.current = true;
     }
 
-    // Store the pending write; throttle expensive canvas renders
+    // Store the pending write; throttle to rAF (GPU render is fast)
     pendingRef.current = { param, value };
-    if (timerRef.current === null) {
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
         const p = pendingRef.current;
         if (!p) return;
         pendingRef.current = null;
@@ -135,7 +134,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
         if (!engine || effectId === null) return;
         engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
         engine.core.renderDirty();
-      }, RENDER_INTERVAL);
+      });
     }
   }, [engineRef, ensureAdjustEffect]);
 
@@ -187,11 +186,11 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     setActiveFilter(name);
   }, [engineRef, ensureFilterEffect]);
 
-  // Clean up timer on unmount
+  // Clean up rAF on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
       }
     };
   }, []);

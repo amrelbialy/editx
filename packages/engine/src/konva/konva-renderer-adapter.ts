@@ -9,6 +9,7 @@ import { KonvaCamera } from './konva-camera';
 import { KonvaNodeFactory } from './konva-node-factory';
 import { KonvaCropOverlay } from './konva-crop-overlay';
 import { setupInteraction } from './konva-interaction-handler';
+import { WebGLFilterRenderer } from './webgl-filter-renderer';
 
 export class KonvaRendererAdapter implements RendererAdapter {
   #stage!: Konva.Stage;
@@ -24,6 +25,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #cropOverlay!: KonvaCropOverlay;
   #resizeObserver?: ResizeObserver;
   #lastPageSize?: { width: number; height: number };
+  #webgl: WebGLFilterRenderer | null = null;
 
   // Interaction callbacks (set by CreativeEngine after construction)
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
@@ -86,7 +88,15 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#uiLayer.add(this.#selectionRect);
 
     this.#camera = new KonvaCamera(this.#stage, this.#contentLayer, this.#uiLayer);
-    this.#nodeFactory = new KonvaNodeFactory(this.#stage);
+    // Initialise WebGL filter renderer (falls back to CPU if not supported)
+    try {
+      if (WebGLFilterRenderer.isSupported()) {
+        this.#webgl = new WebGLFilterRenderer();
+      }
+    } catch {
+      this.#webgl = null;
+    }
+    this.#nodeFactory = new KonvaNodeFactory(this.#stage, this.#webgl);
     this.#cropOverlay = new KonvaCropOverlay(
       this.#uiLayer,
       (rect) => { this.onCropChange?.(rect); },
@@ -304,7 +314,10 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Render ---
 
   renderFrame(): void {
-    this.#stage?.batchDraw();
+    // Synchronous draw — avoids the extra rAF delay from batchDraw(),
+    // which matters during slider drag where we're already in a rAF callback.
+    this.#contentLayer?.draw();
+    this.#uiLayer?.draw();
   }
 
   // --- Export ---
@@ -365,6 +378,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   dispose(): void {
     this.#resizeObserver?.disconnect();
     this.#cropOverlay?.destroy();
+    this.#webgl?.dispose();
+    this.#webgl = null;
     this.#stage?.destroy();
     this.#nodeMap.clear();
     clearImageCache();

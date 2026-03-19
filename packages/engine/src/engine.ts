@@ -210,6 +210,7 @@ export class Engine {
     const dirtyIds = [...this.#dirty];
     this.#dirty.clear();
 
+    const t0 = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
       if (block) {
@@ -218,8 +219,13 @@ export class Engine {
         this.#renderer.removeBlock(id);
       }
     }
+    const tSync = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
 
     this.#renderer.renderFrame();
+    if (typeof window !== 'undefined' && (window as any).__CE_PERF) {
+      const tEnd = performance.now();
+      console.log(`[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`);
+    }
 
     // Deliver bundled events AFTER render — end of update cycle
     this.#eventApi._flush();
