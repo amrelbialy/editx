@@ -38,7 +38,11 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
     const ce = engineRef.current;
     if (!ce || editableBlockId === null) return;
     ce.block.rotateClockwise(editableBlockId);
-    ce.editor.fitToScreen();
+    if (ce.editor.getCropBlockId() !== null) {
+      ce.editor.refreshCropOverlay();
+    } else {
+      ce.editor.fitToScreen();
+    }
     syncRotationState();
   }, [engineRef, editableBlockId, syncRotationState]);
 
@@ -46,7 +50,11 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
     const ce = engineRef.current;
     if (!ce || editableBlockId === null) return;
     ce.block.rotateCounterClockwise(editableBlockId);
-    ce.editor.fitToScreen();
+    if (ce.editor.getCropBlockId() !== null) {
+      ce.editor.refreshCropOverlay();
+    } else {
+      ce.editor.fitToScreen();
+    }
     syncRotationState();
   }, [engineRef, editableBlockId, syncRotationState]);
 

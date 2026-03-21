@@ -31,6 +31,9 @@ export class EditorCrop {
   /** Block currently being cropped (set when entering Crop mode). */
   #cropBlockId: number | null = null;
 
+  /** Rotation/flip/source-dims snapshot taken when the overlay was last (re-)shown. */
+  #cropTransform: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number } | null = null;
+
   constructor(ctx: EditorContext) {
     this.#ctx = ctx;
   }
@@ -97,9 +100,10 @@ export class EditorCrop {
       );
     }
 
-    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, {
-      rotation, flipH, flipV, sourceWidth: imgW, sourceHeight: imgH,
-    });
+    const transform = { rotation, flipH, flipV, sourceWidth: imgW, sourceHeight: imgH };
+    this.#cropTransform = transform;
+
+    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
 
     // Fit the camera to the crop area (or the full image when no crop exists)
     const fitRect = initialCrop ?? imageRect;
@@ -131,6 +135,7 @@ export class EditorCrop {
       }
     }
     this.#cropBlockId = null;
+    this.#cropTransform = null;
   }
 
   // ─── Internal Commit ──────────────────────────────────
@@ -190,6 +195,55 @@ export class EditorCrop {
   }
 
   /**
+   * Refresh the crop overlay after a rotation or flip change during crop mode.
+   *
+   * Converts the current visual crop rect from the old visual space (pre-change)
+   * to source space, then re-maps it to the new visual space using the updated
+   * rotation/flip from the block store. The overlay is re-shown with new visual
+   * bounds and the camera fits to the updated crop.
+   */
+  refreshCropOverlay(): void {
+    const blockId = this.#cropBlockId;
+    if (blockId === null || !this.#cropTransform) return;
+
+    const renderer = this.#ctx.renderer;
+    if (!renderer) return;
+
+    // Current overlay crop in OLD visual space
+    const oldVisualCrop = renderer.getCropRect();
+    if (!oldVisualCrop) return;
+
+    const { rotation: oldRot, flipH: oldFlipH, flipV: oldFlipV, sourceWidth: imgW, sourceHeight: imgH } = this.#cropTransform;
+
+    const store = this.#ctx.engine.getBlockStore();
+
+    // Convert old visual crop → source (pre-rotation) space using OLD transform
+    const sourceCrop = visualCropToSource(oldVisualCrop, imgW, imgH, oldRot, oldFlipH, oldFlipV);
+
+    // Read NEW rotation/flip from block store
+    const newRot = store.getFloat(blockId, IMAGE_ROTATION);
+    const newFlipH = store.getBool(blockId, CROP_FLIP_HORIZONTAL);
+    const newFlipV = store.getBool(blockId, CROP_FLIP_VERTICAL);
+
+    // Compute new visual bounds
+    const { width: visualW, height: visualH } = getSizeAfterRotation(imgW, imgH, newRot);
+    const newImageRect: CropRect = { x: 0, y: 0, width: visualW, height: visualH };
+
+    // Convert source crop → new visual space
+    const newVisualCrop = sourceCropToVisual(sourceCrop, imgW, imgH, newRot, newFlipH, newFlipV);
+
+    // Update stored transform
+    const newTransform = { rotation: newRot, flipH: newFlipH, flipV: newFlipV, sourceWidth: imgW, sourceHeight: imgH };
+    this.#cropTransform = newTransform;
+
+    // Re-show overlay with new visual bounds and crop
+    renderer.showCropOverlay(blockId, newImageRect, newVisualCrop, newTransform);
+
+    // Fit camera to the new crop area
+    renderer.fitToRect(newVisualCrop, 24);
+  }
+
+  /**
    * Reset the crop for the given block (or the currently-cropped block).
    * Restores page dimensions to the original image size, clears all crop
    * properties. Single undo batch.
@@ -246,14 +300,17 @@ export class EditorCrop {
     const currentCrop = renderer.getCropRect();
     if (!currentCrop) return null;
 
-    // Compute the largest rect with this ratio that fits within the image
+    // Compute the largest rect with this ratio that fits within the image.
+    // Always uses the full image bounds so switching presets doesn't shrink.
     let newWidth: number;
     let newHeight: number;
 
     if (imageRect.width / imageRect.height > ratio) {
+      // Image is wider than target ratio → height-limited
       newHeight = imageRect.height;
       newWidth = newHeight * ratio;
     } else {
+      // Image is taller than target ratio → width-limited
       newWidth = imageRect.width;
       newHeight = newWidth / ratio;
     }
@@ -278,7 +335,7 @@ export class EditorCrop {
     const newCrop: CropRect = { x: newX, y: newY, width: newWidth, height: newHeight };
     renderer.setCropRect(newCrop);
 
-    // Re-fit the camera to the crop area so it fills the viewport (img.ly-style).
+    // Zoom camera to the crop area so it fills the viewport.
     renderer.fitToRect(newCrop, 24);
 
     return newCrop;

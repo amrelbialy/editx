@@ -231,6 +231,14 @@ export class EditorAPI {
     return this.#crop.applyCropRatio(ratio);
   }
 
+  /**
+   * Refresh the crop overlay after a rotation/flip change during crop mode.
+   * Re-maps the current visual crop to the updated visual space.
+   */
+  refreshCropOverlay(): void {
+    this.#crop.refreshCropOverlay();
+  }
+
   // ─── Crop overlay (low-level) ─────────────────────────
 
   showCropOverlay(

@@ -103,6 +103,34 @@ export class KonvaCropOverlay {
           return oldBox;
         }
 
+        // Ratio-locked: clamp proportionally so both dimensions scale together
+        if (this.#ratio !== null) {
+          let { x, y, width, height } = newBox;
+
+          if (x < imgX) {
+            width -= imgX - x;
+            x = imgX;
+            height = width / this.#ratio;
+          }
+          if (y < imgY) {
+            height -= imgY -y ;
+            y = imgY;
+            width = height * this.#ratio;
+          }
+          if (x + width > imgRight) {
+            width = imgRight - x;
+            height = width / this.#ratio;
+          }
+          if (y + height > imgBottom) {
+            height = imgBottom - y;
+            width = height * this.#ratio;
+          }
+
+          if (width < minSize || height < minSize) return oldBox;
+          return { ...newBox, x, y, width, height };
+        }
+
+        // Free mode: clamp independently
         if (newBox.x < imgX) {
           newBox.width -= imgX - newBox.x;
           newBox.x = imgX;
@@ -371,14 +399,24 @@ export class KonvaCropOverlay {
       this.#imageRect.y,
       Math.min(newY, this.#imageRect.y + this.#imageRect.height - newHeight),
     );
-    const clampedW = Math.min(
+    let clampedW = Math.min(
       newWidth,
       this.#imageRect.x + this.#imageRect.width - clampedX,
     );
-    const clampedH = Math.min(
+    let clampedH = Math.min(
       newHeight,
       this.#imageRect.y + this.#imageRect.height - clampedY,
     );
+
+    // Enforce aspect ratio after clamping (safety net for floating-point drift)
+    if (this.#ratio !== null) {
+      const currentRatio = clampedW / clampedH;
+      if (currentRatio > this.#ratio) {
+        clampedW = clampedH * this.#ratio;
+      } else if (currentRatio < this.#ratio) {
+        clampedH = clampedW / this.#ratio;
+      }
+    }
 
     this.#cutout.setAttrs({
       x: clampedX,

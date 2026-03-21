@@ -282,9 +282,6 @@ export class KonvaNodeFactory {
         sourceH = isSwapAngle ? pageW : pageH;
       }
 
-      imgNode.width(sourceW);
-      imgNode.height(sourceH);
-
       // Apply crop (source-space coordinates, independent of display rotation)
       const cropEnabled = (props[CROP_ENABLED] as boolean) ?? false;
       const cropX = (props[CROP_X] as number) ?? 0;
@@ -292,27 +289,49 @@ export class KonvaNodeFactory {
       const cropW = (props[CROP_WIDTH] as number) ?? 0;
       const cropH = (props[CROP_HEIGHT] as number) ?? 0;
 
-      if (cropEnabled && cropW > 0 && cropH > 0) {
-        imgNode.crop({ x: cropX, y: cropY, width: cropW, height: cropH });
-      } else {
-        imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
-      }
+      // When the crop overlay is active (user is in crop mode), showCropOverlay
+      // has already expanded the page node to full image bounds. Only update
+      // rotation/flip here — don't touch dimensions, crop, offset, or position.
+      const cropOverlayActive = group.getAttr('_cropOverlayActive') === true;
 
-      // Flip + rotation around page centre
       const flipH = (props[CROP_FLIP_HORIZONTAL] as boolean) ?? false;
       const flipV = (props[CROP_FLIP_VERTICAL] as boolean) ?? false;
-      imgNode.rotation(imageRotation);
-      imgNode.scaleX(flipH ? -1 : 1);
-      imgNode.scaleY(flipV ? -1 : 1);
-      imgNode.offsetX(sourceW / 2);
-      imgNode.offsetY(sourceH / 2);
-      imgNode.x(pageW / 2);
-      imgNode.y(pageH / 2);
 
-      // Size the bgRect to match the page dimensions — this provides
-      // a stable bounding box for the Konva Transformer.
-      bgRect.width(pageW);
-      bgRect.height(pageH);
+      if (cropOverlayActive) {
+        imgNode.rotation(imageRotation);
+        imgNode.scaleX(flipH ? -1 : 1);
+        imgNode.scaleY(flipV ? -1 : 1);
+      } else {
+        if (cropEnabled && cropW > 0 && cropH > 0) {
+          imgNode.crop({ x: cropX, y: cropY, width: cropW, height: cropH });
+          // Size imgNode to the crop dimensions so Konva draws the sampled
+          // region at 1:1 without stretching it to the full source size.
+          imgNode.width(cropW);
+          imgNode.height(cropH);
+        } else {
+          imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
+          imgNode.width(sourceW);
+          imgNode.height(sourceH);
+        }
+
+        // Dimensions used for centering: crop dims when cropped, source dims otherwise
+        const renderW = (cropEnabled && cropW > 0) ? cropW : sourceW;
+        const renderH = (cropEnabled && cropH > 0) ? cropH : sourceH;
+
+        // Flip + rotation around the rendered image centre
+        imgNode.rotation(imageRotation);
+        imgNode.scaleX(flipH ? -1 : 1);
+        imgNode.scaleY(flipV ? -1 : 1);
+        imgNode.offsetX(renderW / 2);
+        imgNode.offsetY(renderH / 2);
+        imgNode.x(pageW / 2);
+        imgNode.y(pageH / 2);
+
+        // Size the bgRect to match the page dimensions — this provides
+        // a stable bounding box for the Konva Transformer.
+        bgRect.width(pageW);
+        bgRect.height(pageH);
+      }
 
       // Load image
       if (imgNode.getAttr('loadedSrc') !== src) {

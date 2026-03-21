@@ -286,6 +286,11 @@ export class KonvaRendererAdapter implements RendererAdapter {
       bgRect.height(imageRect.height);
     }
 
+    // Mark the page node as being in crop-overlay mode so that any re-sync
+    // (e.g. triggered by a flip during crop mode) doesn't shrink the image
+    // back to crop dimensions.
+    if (pageNode) pageNode.setAttr('_cropOverlayActive', true);
+
     this.#cropOverlay.show(imageRect, initialCrop);
     // Redraw both content and UI layers
     this.#stage.batchDraw();
@@ -293,6 +298,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   hideCropOverlay(): void {
     this.#cropOverlay.hide();
+    // Clear the crop-overlay flag on all page nodes
+    this.#nodeMap.forEach((node) => {
+      if (node.getAttr('_cropOverlayActive')) {
+        node.setAttr('_cropOverlayActive', false);
+      }
+    });
   }
 
   setCropRect(rect: CropRect): void {
