@@ -19,6 +19,9 @@ export interface RendererAdapter {
   syncBlock(id: number, block: BlockData): void;
   removeBlock(id: number): void;
 
+  /** Reorder child Konva nodes to match the given child ID order (bottom→top). */
+  syncChildOrder?(childIds: number[]): void;
+
   //
   // Transformer
   //

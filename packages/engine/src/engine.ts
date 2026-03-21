@@ -219,6 +219,14 @@ export class Engine {
         this.#renderer.removeBlock(id);
       }
     }
+
+    // Sync child z-order AFTER all blocks are synced (so all Konva nodes exist)
+    for (const id of dirtyIds) {
+      const block = this.#blockStore.get(id);
+      if (block?.type === 'page' && block.children.length > 0) {
+        this.#renderer.syncChildOrder?.(block.children);
+      }
+    }
     const tSync = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
 
     this.#renderer.renderFrame();

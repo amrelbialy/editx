@@ -171,6 +171,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
+  syncChildOrder(childIds: number[]): void {
+    for (const childId of childIds) {
+      const childNode = this.#nodeMap.get(childId);
+      if (childNode) {
+        childNode.moveToTop();
+      }
+    }
+    this.#transformer.moveToTop();
+  }
+
   removeBlock(id: number): void {
     const node = this.#nodeMap.get(id);
     if (node) {
