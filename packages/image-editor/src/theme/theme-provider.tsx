@@ -10,11 +10,11 @@ interface ThemeProviderProps {
 }
 
 function buildCssVariables(theme: ThemeConfig): Record<string, string> {
-  const preset = theme.preset ?? 'zinc-dark';
+  const preset = theme.preset ?? 'dark';
   const base: ThemePresetValues =
     preset === 'custom'
-      ? themePresets['zinc-dark'] // Fallback to a default preset if 'custom' is selected without colors
-      : themePresets[preset] ?? themePresets['zinc-dark'];
+      ? themePresets['dark']
+      : themePresets[preset as keyof typeof themePresets] ?? themePresets['dark'];
 
   const vars: Record<string, string> = {};
 

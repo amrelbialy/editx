@@ -55,7 +55,7 @@ export const defaultConfig: Required<
   defaultTool: null,
 
   theme: {
-    preset: 'zinc-dark',
+    preset: 'dark',
     borderRadius: '0.5rem',
     fontFamily: 'Inter, system-ui, sans-serif',
   },

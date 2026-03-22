@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from './types';
+import type { ThemePresetValues } from '@creative-editor/image-editor';
 
 export const zincDark: ThemePresetValues = {
   background: 'hsl(240 10% 3.9%)',

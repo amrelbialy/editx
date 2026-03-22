@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from './types';
+import type { ThemePresetValues } from '@creative-editor/image-editor';
 
 export const amethystHazeLight: ThemePresetValues = {
   background: 'hsl(260 23.0769% 97.4510%)',

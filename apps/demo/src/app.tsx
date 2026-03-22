@@ -4,7 +4,7 @@ import {
   ThemeProvider,
   Button,
   Separator,
-  type ThemePreset,
+  type ThemeConfig,
   Select,
   SelectTrigger,
   SelectValue,
@@ -12,21 +12,20 @@ import {
   SelectItem,
 } from '@creative-editor/image-editor';
 import { Upload, ImageIcon, Link, GripVertical } from 'lucide-react';
+import { demoPresets } from './theme/presets';
 
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200';
 
-const THEME_PRESETS: ThemePreset[] = [
-  'stone-dark', 'zinc-dark', 'slate-dark', 'neutral-dark',
-  'stone-light', 'zinc-light', 'slate-light', 'neutral-light',
-  'amber-minimal-dark', 'amber-minimal-light', 'amethyst-haze-dark', 'amethyst-haze-light',
-];
+/** Built-in presets (shipped with the package) + demo-only showcase presets. */
+const ALL_PRESETS = ['dark', 'light', ...Object.keys(demoPresets)] as const;
+type PresetName = (typeof ALL_PRESETS)[number];
 
 function App() {
   const [mode, setMode] = useState<'image-editor' | 'pick'>('pick');
   const [imageSrc, setImageSrc] = useState<string | File | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
-  const [themePreset, setThemePreset] = useState<ThemePreset>('stone-dark');
+  const [themePreset, setThemePreset] = useState<PresetName>('dark');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,10 +97,21 @@ function App() {
   }, []);
 
   const handleThemeChange = useCallback((value: string) => {
-    setThemePreset(value as ThemePreset);
+    setThemePreset(value as PresetName);
   }, []);
 
-  const config = useMemo(() => ({ theme: { preset: themePreset } }), [themePreset]);
+  /** Resolve preset name to a ThemeConfig object. */
+  const themeConfig = useMemo((): ThemeConfig => {
+    // Built-in presets (dark / light) — pass by name
+    if (themePreset === 'dark' || themePreset === 'light') {
+      return { preset: themePreset };
+    }
+    // Demo presets — pass colors directly
+    const colors = demoPresets[themePreset];
+    return colors ? { preset: 'custom', colors } : { preset: 'dark' };
+  }, [themePreset]);
+
+  const config = useMemo(() => ({ theme: themeConfig }), [themeConfig]);
 
   const handleSave = useCallback((blob: Blob) => {
     const url = URL.createObjectURL(blob);
@@ -127,7 +137,7 @@ function App() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {THEME_PRESETS.map((t) => (
+                {ALL_PRESETS.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
@@ -139,7 +149,7 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={{ preset: themePreset }}>
+    <ThemeProvider theme={themeConfig}>
       <div
         className="flex flex-col items-center justify-center h-screen p-8"
         onPaste={handlePaste}
@@ -233,7 +243,7 @@ function App() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {THEME_PRESETS.map((t) => (
+              {ALL_PRESETS.map((t) => (
                 <SelectItem key={t} value={t}>{t}</SelectItem>
               ))}
             </SelectContent>

@@ -18,10 +18,18 @@ export type ThemeColorKey =
   | 'border'
   | 'input'
   | 'ring'
+  | 'chart-1'
+  | 'chart-2'
+  | 'chart-3'
+  | 'chart-4'
+  | 'chart-5'
   | 'sidebar'
   | 'sidebar-foreground'
-  | 'sidebar-border'
+  | 'sidebar-primary'
+  | 'sidebar-primary-foreground'
   | 'sidebar-accent'
-  | 'sidebar-accent-foreground';
+  | 'sidebar-accent-foreground'
+  | 'sidebar-border'
+  | 'sidebar-ring';
 
-export type ThemePresetValues = Record<ThemeColorKey, string>;
+export type ThemePresetValues = Partial<Record<ThemeColorKey, string>>;

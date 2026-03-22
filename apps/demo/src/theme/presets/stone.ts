@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from './types';
+import type { ThemePresetValues } from '@creative-editor/image-editor';
 
 export const stoneDark: ThemePresetValues = {
   background: 'hsl(20 14.3% 4.1%)',

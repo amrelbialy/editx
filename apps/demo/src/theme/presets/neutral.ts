@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from './types';
+import type { ThemePresetValues } from '@creative-editor/image-editor';
 
 export const neutralDark: ThemePresetValues = {
   background: 'hsl(0 0% 3.9%)',
