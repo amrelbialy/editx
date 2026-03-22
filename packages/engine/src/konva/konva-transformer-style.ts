@@ -186,6 +186,40 @@ export function createStyledTransformer(uiLayer: Konva.Layer): Konva.Transformer
         setHovered(id, false);
         child.getLayer()?.batchDraw();
       });
+
+      // Expand pill hit areas to cover the border edge minus corner zones (set once, not in anchorStyleFunc).
+      // Inset by CORNER_SIZE on each end so corners keep their own resize behavior.
+      if (VERTICAL_PILL_ANCHORS.has(id)) {
+        child.hitFunc((ctx: any, shape: any) => {
+          const back = transformer.findOne('.back') as Konva.Shape | undefined;
+          const edgeH = back ? back.height() : PILL_LONG;
+          const insetH = Math.max(edgeH - CORNER_SIZE * 2, PILL_LONG);
+          ctx.beginPath();
+          ctx.rect(
+            (PILL_SHORT - EDGE_HIT_WIDTH) / 2,
+            (PILL_LONG - insetH) / 2,
+            EDGE_HIT_WIDTH,
+            insetH,
+          );
+          ctx.closePath();
+          ctx.fillStrokeShape(shape);
+        });
+      } else if (HORIZONTAL_PILL_ANCHORS.has(id)) {
+        child.hitFunc((ctx: any, shape: any) => {
+          const back = transformer.findOne('.back') as Konva.Shape | undefined;
+          const edgeW = back ? back.width() : PILL_LONG;
+          const insetW = Math.max(edgeW - CORNER_SIZE * 2, PILL_LONG);
+          ctx.beginPath();
+          ctx.rect(
+            (PILL_LONG - insetW) / 2,
+            (PILL_SHORT - EDGE_HIT_WIDTH) / 2,
+            insetW,
+            EDGE_HIT_WIDTH,
+          );
+          ctx.closePath();
+          ctx.fillStrokeShape(shape);
+        });
+      }
     }
 
     // Make the border edges show hover feedback (pill highlights + cursor)

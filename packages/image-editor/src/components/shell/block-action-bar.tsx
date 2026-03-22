@@ -55,14 +55,7 @@ const ActionButton: React.FC<{
   </Tooltip>
 );
 
-const ALIGN_OPTIONS: Array<{ dir: AlignDirection; icon: React.ReactNode; label: string }> = [
-  { dir: 'left',   icon: <AlignStartVertical className="h-4 w-4" />,   label: 'Align Left' },
-  { dir: 'center', icon: <AlignCenterVertical className="h-4 w-4" />,  label: 'Align Center' },
-  { dir: 'right',  icon: <AlignEndVertical className="h-4 w-4" />,     label: 'Align Right' },
-  { dir: 'top',    icon: <AlignStartHorizontal className="h-4 w-4" />, label: 'Align Top' },
-  { dir: 'middle', icon: <AlignCenterHorizontal className="h-4 w-4" />,label: 'Align Middle' },
-  { dir: 'bottom', icon: <AlignEndHorizontal className="h-4 w-4" />,   label: 'Align Bottom' },
-];
+
 
 export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   blockType,
@@ -119,7 +112,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       />
 
       <Separator orientation="vertical" className="h-4 mx-0.5" />
-      
+
       {/* Duplicate */}
       <ActionButton
         icon={<Copy className="h-3.5 w-3.5" />}
