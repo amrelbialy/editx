@@ -10,6 +10,7 @@ import { KonvaNodeFactory } from './konva-node-factory';
 import { KonvaCropOverlay } from './konva-crop-overlay';
 import { setupInteraction } from './konva-interaction-handler';
 import { WebGLFilterRenderer } from './webgl-filter-renderer';
+import { createStyledTransformer } from './konva-transformer-style';
 
 export class KonvaRendererAdapter implements RendererAdapter {
   #stage!: Konva.Stage;
@@ -64,19 +65,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#uiLayer = new Konva.Layer();
     this.#stage.add(this.#uiLayer);
 
-    this.#transformer = new Konva.Transformer({
-      rotateEnabled: true,
-      enabledAnchors: [
-        'top-left',
-        'top-right',
-        'bottom-left',
-        'bottom-right',
-        'middle-left',
-        'middle-right',
-        'top-center',
-        'bottom-center',
-      ],
-    });
+    this.#transformer = createStyledTransformer(this.#uiLayer);
     this.#uiLayer.add(this.#transformer);
 
     this.#selectionRect = new Konva.Rect({
@@ -200,6 +189,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
       .map((id) => this.#nodeMap.get(id))
       .filter((n): n is Konva.Node => !!n);
     this.#transformer.nodes(nodes);
+    // Bind hover events on anchors (deferred until Konva creates them)
+    (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
   }
 

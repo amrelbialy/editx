@@ -16,11 +16,6 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Separator } from '../ui/separator';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-} from '../ui/dropdown-menu';
 import { cn } from '../../utils/cn';
 import type { AlignDirection } from '../../hooks/use-block-actions';
 
@@ -74,11 +69,8 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   onReplace,
   onBringForward,
   onSendBackward,
-  onBringToFront,
-  onSendToBack,
   onDuplicate,
   onDelete,
-  onAlign,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isImage = blockType === 'image';
@@ -126,63 +118,8 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
         onClick={onSendBackward}
       />
 
-      {/* More z-order + alignment in dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="h-7 px-1.5 rounded-md flex items-center gap-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <ChevronsUp className="h-3 w-3" />
-                <ChevronsDown className="h-3 w-3" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Move &amp; Align</TooltipContent>
-          </Tooltip>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-auto p-2" align="center">
-          <div className="flex flex-col gap-2">
-            {/* Move section */}
-            <div className="text-xs font-medium text-muted-foreground px-1">Move</div>
-            <div className="flex gap-0.5">
-              <ActionButton
-                icon={<ChevronsUp className="h-4 w-4" />}
-                label="Bring to Front"
-                onClick={onBringToFront}
-              />
-              <ActionButton
-                icon={<ChevronUp className="h-4 w-4" />}
-                label="Bring Forward"
-                onClick={onBringForward}
-              />
-              <ActionButton
-                icon={<ChevronDown className="h-4 w-4" />}
-                label="Send Backward"
-                onClick={onSendBackward}
-              />
-              <ActionButton
-                icon={<ChevronsDown className="h-4 w-4" />}
-                label="Send to Back"
-                onClick={onSendToBack}
-              />
-            </div>
-
-            <Separator className="my-1" />
-
-            {/* Align section */}
-            <div className="text-xs font-medium text-muted-foreground px-1">Align to Page</div>
-            <div className="grid grid-cols-3 gap-0.5">
-              {ALIGN_OPTIONS.map(({ dir, icon, label }) => (
-                <ActionButton key={dir} icon={icon} label={label} onClick={() => onAlign(dir)} />
-              ))}
-            </div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
       <Separator orientation="vertical" className="h-4 mx-0.5" />
-
+      
       {/* Duplicate */}
       <ActionButton
         icon={<Copy className="h-3.5 w-3.5" />}
