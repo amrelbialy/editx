@@ -8,8 +8,11 @@ import {
 } from "@creative-editor/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { InputGroup } from "../ui/input-group";
+import { Section } from "../ui/section";
 import { Separator } from "../ui/separator";
-import { Slider } from "../ui/slider";
+import { SliderField } from "../ui/slider-field";
+import { SwitchField } from "../ui/switch-field";
 
 export interface ShapePropertiesPanelProps {
   engine: CreativeEngine;
@@ -239,7 +242,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         Shape Properties
       </div>
@@ -258,171 +261,108 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
       </Section>
 
       {/* Opacity */}
-      <Section label="Opacity">
-        <div className="flex items-center gap-2">
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={[state.opacity]}
-            onValueChange={handleOpacity}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-            {Math.round(state.opacity * 100)}%
-          </span>
-        </div>
-      </Section>
+      <SliderField
+        label="Opacity"
+        value={state.opacity}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(v) => handleOpacity([v])}
+        formatValue={(v) => `${Math.round(v * 100)}%`}
+      />
 
       <Separator />
 
       {/* Position */}
       <Section label="Position">
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="X" value={state.x} onChange={handlePosX} />
-          <NumberField label="Y" value={state.y} onChange={handlePosY} />
+          <InputGroup label="X" value={state.x} onChange={handlePosX} />
+          <InputGroup label="Y" value={state.y} onChange={handlePosY} />
         </div>
       </Section>
 
       {/* Size */}
       <Section label="Size">
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="W" value={state.width} onChange={handleWidth} />
-          <NumberField label="H" value={state.height} onChange={handleHeight} />
+          <InputGroup label="W" value={state.width} onChange={handleWidth} />
+          <InputGroup label="H" value={state.height} onChange={handleHeight} />
         </div>
       </Section>
 
       {/* Corner Radius (rect only) */}
       {state.shapeKind === "rect" && (
-        <Section label="Border Radius">
-          <div className="flex items-center gap-2">
-            <Slider
-              min={0}
-              max={Math.min(state.width, state.height) / 2}
-              step={1}
-              value={[state.cornerRadius]}
-              onValueChange={handleCornerRadius}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-              {Math.round(state.cornerRadius)}
-            </span>
-          </div>
-        </Section>
+        <SliderField
+          label="Border Radius"
+          value={state.cornerRadius}
+          min={0}
+          max={Math.min(state.width, state.height) / 2}
+          step={1}
+          onChange={(v) => handleCornerRadius([v])}
+        />
       )}
 
       <Separator />
 
       {/* Stroke */}
-      <Section label="Stroke">
-        <ToggleRow checked={state.strokeEnabled} onToggle={handleStrokeToggle} label="Enabled" />
-        {state.strokeEnabled && (
-          <div className="flex flex-col gap-2 mt-1.5">
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={state.strokeColor}
-                onChange={handleStrokeColor}
-                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-              />
-              <span className="text-xs font-mono text-muted-foreground">{state.strokeColor}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-10">Width</span>
-              <Slider
-                min={0}
-                max={20}
-                step={0.5}
-                value={[state.strokeWidth]}
-                onValueChange={handleStrokeWidth}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-                {state.strokeWidth.toFixed(1)}
-              </span>
-            </div>
+      <SwitchField
+        label="Enable Stroke"
+        checked={state.strokeEnabled}
+        onChange={handleStrokeToggle}
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={state.strokeColor}
+              onChange={handleStrokeColor}
+              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+            />
+            <span className="text-xs font-mono text-muted-foreground">{state.strokeColor}</span>
           </div>
-        )}
-      </Section>
+          <SliderField
+            label="Width"
+            value={state.strokeWidth}
+            min={0}
+            max={20}
+            step={0.5}
+            onChange={(v) => handleStrokeWidth([v])}
+            formatValue={(v) => v.toFixed(1)}
+          />
+        </div>
+      </SwitchField>
 
       <Separator />
 
       {/* Shadow */}
-      <Section label="Shadow">
-        <ToggleRow checked={state.shadowEnabled} onToggle={handleShadowToggle} label="Enabled" />
-        {state.shadowEnabled && (
-          <div className="flex flex-col gap-2 mt-1.5">
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={state.shadowColor}
-                onChange={handleShadowColor}
-                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-              />
-              <span className="text-xs font-mono text-muted-foreground">{state.shadowColor}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <NumberField label="X" value={state.shadowOffsetX} onChange={handleShadowOffsetX} />
-              <NumberField label="Y" value={state.shadowOffsetY} onChange={handleShadowOffsetY} />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-10">Blur</span>
-              <Slider
-                min={0}
-                max={50}
-                step={1}
-                value={[state.shadowBlur]}
-                onValueChange={handleShadowBlur}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-                {Math.round(state.shadowBlur)}
-              </span>
-            </div>
+      <SwitchField
+        label="Enable Shadow"
+        checked={state.shadowEnabled}
+        onChange={handleShadowToggle}
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={state.shadowColor}
+              onChange={handleShadowColor}
+              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+            />
+            <span className="text-xs font-mono text-muted-foreground">{state.shadowColor}</span>
           </div>
-        )}
-      </Section>
+          <div className="grid grid-cols-2 gap-2">
+            <InputGroup label="X" value={state.shadowOffsetX} onChange={handleShadowOffsetX} />
+            <InputGroup label="Y" value={state.shadowOffsetY} onChange={handleShadowOffsetY} />
+          </div>
+          <SliderField
+            label="Blur"
+            value={state.shadowBlur}
+            min={0}
+            max={50}
+            step={1}
+            onChange={(v) => handleShadowBlur([v])}
+          />
+        </div>
+      </SwitchField>
     </div>
   );
 };
-
-// --- Reusable sub-components ---
-
-const Section: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div className="flex flex-col gap-1.5">
-    <div className="text-xs font-medium text-muted-foreground">{label}</div>
-    {children}
-  </div>
-);
-
-const ToggleRow: React.FC<{ checked: boolean; onToggle: () => void; label: string }> = ({
-  checked,
-  onToggle,
-  label,
-}) => (
-  <label className="flex items-center gap-2 cursor-pointer">
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onToggle}
-      className="w-4 h-4 rounded border-border accent-primary"
-    />
-    <span className="text-xs text-foreground">{label}</span>
-  </label>
-);
-
-const NumberField: React.FC<{
-  label: string;
-  value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}> = ({ label, value, onChange }) => (
-  <div className="flex items-center gap-1">
-    <span className="text-xs text-muted-foreground w-4">{label}</span>
-    <input
-      type="number"
-      value={Math.round(value)}
-      onChange={onChange}
-      className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
-    />
-  </div>
-);

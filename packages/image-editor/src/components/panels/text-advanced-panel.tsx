@@ -9,8 +9,9 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
+import { Section } from "../ui/section";
 import { Separator } from "../ui/separator";
-import { Slider } from "../ui/slider";
+import { SliderField } from "../ui/slider-field";
 
 interface TextAdvancedPanelProps {
   engine: CreativeEngine;
@@ -210,12 +211,14 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             step={0.1}
             className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
           />
-          <Slider
+          <SliderField
+            label=""
+            value={state.lineHeight}
             min={0.5}
             max={3}
             step={0.1}
-            value={[state.lineHeight]}
-            onValueChange={handleLineHeight}
+            onChange={(v) => handleLineHeight([v])}
+            formatValue={() => ""}
             className="flex-1"
           />
         </div>
@@ -258,12 +261,14 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             step={0.5}
             className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
           />
-          <Slider
+          <SliderField
+            label=""
+            value={state.letterSpacing}
             min={-5}
             max={20}
             step={0.5}
-            value={[state.letterSpacing]}
-            onValueChange={handleLetterSpacing}
+            onChange={(v) => handleLetterSpacing([v])}
+            formatValue={() => ""}
             className="flex-1"
           />
         </div>
@@ -284,31 +289,17 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             />
             <span className="text-xs font-mono text-muted-foreground">{state.textStrokeColor}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground w-12">Width</span>
-            <Slider
-              min={0}
-              max={5}
-              step={0.5}
-              value={[state.textStrokeWidth]}
-              onValueChange={handleStrokeWidth}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-              {state.textStrokeWidth.toFixed(1)}
-            </span>
-          </div>
+          <SliderField
+            label="Width"
+            value={state.textStrokeWidth}
+            min={0}
+            max={5}
+            step={0.5}
+            onChange={(v) => handleStrokeWidth([v])}
+            formatValue={(v) => v.toFixed(1)}
+          />
         </div>
       </Section>
     </div>
   );
 };
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-muted-foreground">{label}</label>
-      {children}
-    </div>
-  );
-}

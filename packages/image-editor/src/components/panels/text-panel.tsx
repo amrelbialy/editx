@@ -1,35 +1,35 @@
 import { AlignLeft, Heading, Heading1, Type } from "lucide-react";
 import type React from "react";
 import type { TextPreset } from "../../hooks/use-text-tool";
+import { Section } from "../ui/section";
+import type { SelectionGridItem } from "../ui/selection-grid";
+import { SelectionGrid } from "../ui/selection-grid";
 
 export interface TextPanelProps {
   onAddText: (preset: TextPreset) => void;
 }
 
-const TEXT_PRESETS: Array<{ preset: TextPreset; label: string; icon: React.ReactNode }> = [
-  { preset: "title", label: "Title", icon: <Heading1 className="h-5 w-5" /> },
-  { preset: "heading", label: "Heading", icon: <Heading className="h-5 w-5" /> },
-  { preset: "subheading", label: "Subheading", icon: <Type className="h-5 w-5" /> },
-  { preset: "body", label: "Body Text", icon: <AlignLeft className="h-5 w-5" /> },
+const TEXT_PRESETS: Array<SelectionGridItem & { preset: TextPreset }> = [
+  { id: "title", preset: "title", label: "Title", icon: <Heading1 className="h-5 w-5" /> },
+  { id: "heading", preset: "heading", label: "Heading", icon: <Heading className="h-5 w-5" /> },
+  {
+    id: "subheading",
+    preset: "subheading",
+    label: "Subheading",
+    icon: <Type className="h-5 w-5" />,
+  },
+  { id: "body", preset: "body", label: "Body Text", icon: <AlignLeft className="h-5 w-5" /> },
 ];
 
 export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
+  const handleSelect = (id: string) => {
+    const item = TEXT_PRESETS.find((p) => p.id === id);
+    if (item) onAddText(item.preset);
+  };
+
   return (
-    <div className="flex flex-col gap-1">
-      <div className="text-xs font-medium text-muted-foreground mb-1">Add Text</div>
-      <div className="grid grid-cols-2 gap-1.5">
-        {TEXT_PRESETS.map((item) => (
-          <button
-            key={item.preset}
-            onClick={() => onAddText(item.preset)}
-            data-testid={`text-${item.preset}`}
-            className="flex flex-col items-center gap-1 rounded-md px-2 py-3 text-xs text-muted-foreground bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
-      </div>
-    </div>
+    <Section label="Add Text">
+      <SelectionGrid items={TEXT_PRESETS} onSelect={handleSelect} columns={2} />
+    </Section>
   );
 };

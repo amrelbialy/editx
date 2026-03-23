@@ -1,7 +1,7 @@
 import type { AdjustmentParam, ShapeType } from "@creative-editor/engine";
 import type React from "react";
-import type { ImageEditorTool } from "../../store/image-editor-store";
-import type { CropPresetId } from "../../store/image-editor-store";
+import type { TextPreset } from "../../hooks/use-text-tool";
+import type { CropPresetId, ImageEditorTool } from "../../store/image-editor-store";
 import type { AdjustmentValues } from "../panels/adjust-panel";
 import { AdjustPanel } from "../panels/adjust-panel";
 import { CropPanel } from "../panels/crop-panel";
@@ -10,7 +10,6 @@ import { ImagePanel } from "../panels/image-panel";
 import { RotatePanel } from "../panels/rotate-panel";
 import { ShapesPanel } from "../panels/shapes-panel";
 import { TextPanel } from "../panels/text-panel";
-import type { TextPreset } from "../../hooks/use-text-tool";
 
 interface ActiveToolContentProps {
   activeTool: ImageEditorTool;

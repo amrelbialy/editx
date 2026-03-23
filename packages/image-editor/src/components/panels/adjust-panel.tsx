@@ -2,8 +2,8 @@ import { ADJUSTMENT_CONFIG, type AdjustmentParam } from "@creative-editor/engine
 import { RotateCcw } from "lucide-react";
 import type React from "react";
 import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
-import { Slider } from "../ui/slider";
+import { Section } from "../ui/section";
+import { SliderField } from "../ui/slider-field";
 
 const BASIC_PARAMS: AdjustmentParam[] = ["brightness", "saturation", "contrast", "gamma"];
 
@@ -47,34 +47,6 @@ function formatValue(step: number, v: number): string {
   return v.toFixed(2);
 }
 
-const AdjustSlider: React.FC<{
-  param: AdjustmentParam;
-  value: number;
-  onChange: (key: AdjustmentParam, value: number) => void;
-  onCommit?: (key: AdjustmentParam, value: number) => void;
-}> = ({ param, value, onChange, onCommit }) => {
-  const cfg = ADJUSTMENT_CONFIG[param];
-  return (
-    <div className="mb-1">
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-xs text-muted-foreground">{LABELS[param]}</span>
-        <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">
-          {formatValue(cfg.step, value)}
-        </span>
-      </div>
-      <Slider
-        min={cfg.min}
-        max={cfg.max}
-        step={cfg.step}
-        value={[value]}
-        onValueChange={([v]) => onChange(param, v)}
-        onValueCommit={onCommit ? ([v]) => onCommit(param, v) : undefined}
-        data-testid={`adjust-${param}`}
-      />
-    </div>
-  );
-};
-
 export const AdjustPanel: React.FC<AdjustPanelProps> = ({
   values,
   onChange,
@@ -82,32 +54,50 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({
   onReset,
 }) => {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs font-medium text-muted-foreground">Basic</div>
-      {BASIC_PARAMS.map((param) => (
-        <AdjustSlider
-          key={param}
-          param={param}
-          value={values[param]}
-          onChange={onChange}
-          onCommit={onCommit}
-        />
-      ))}
+    <div className="flex flex-col gap-4">
+      <Section label="Basic">
+        <div className="flex flex-col gap-2">
+          {BASIC_PARAMS.map((param) => {
+            const cfg = ADJUSTMENT_CONFIG[param];
+            return (
+              <SliderField
+                key={param}
+                label={LABELS[param]}
+                value={values[param]}
+                min={cfg.min}
+                max={cfg.max}
+                step={cfg.step}
+                onChange={(v) => onChange(param, v)}
+                onCommit={onCommit ? (v) => onCommit(param, v) : undefined}
+                formatValue={(v) => formatValue(cfg.step, v)}
+                data-testid={`adjust-${param}`}
+              />
+            );
+          })}
+        </div>
+      </Section>
 
-      <Separator className="my-1" />
-
-      <div className="text-xs font-medium text-muted-foreground">Refinements</div>
-      {REFINEMENT_PARAMS.map((param) => (
-        <AdjustSlider
-          key={param}
-          param={param}
-          value={values[param]}
-          onChange={onChange}
-          onCommit={onCommit}
-        />
-      ))}
-
-      <Separator className="my-1" />
+      <Section label="Refinements" separator>
+        <div className="flex flex-col gap-2">
+          {REFINEMENT_PARAMS.map((param) => {
+            const cfg = ADJUSTMENT_CONFIG[param];
+            return (
+              <SliderField
+                key={param}
+                label={LABELS[param]}
+                value={values[param]}
+                min={cfg.min}
+                max={cfg.max}
+                step={cfg.step}
+                onChange={(v) => onChange(param, v)}
+                onCommit={onCommit ? (v) => onCommit(param, v) : undefined}
+                formatValue={(v) => formatValue(cfg.step, v)}
+                data-testid={`adjust-${param}`}
+              />
+            );
+          })}
+        </div>
+      </Section>
 
       <Button
         variant="outline"

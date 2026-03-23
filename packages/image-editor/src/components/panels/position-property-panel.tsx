@@ -15,7 +15,9 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "../../utils/cn";
-import { Slider } from "../ui/slider";
+import { InputGroup } from "../ui/input-group";
+import { Section } from "../ui/section";
+import { SliderField } from "../ui/slider-field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface PositionPropertyPanelProps {
@@ -140,41 +142,31 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
   return (
     <div className="flex flex-col gap-4">
       {/* Position */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Position</span>
+      <Section label="Position">
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="X" value={state.x} onChange={handlePosX} />
-          <NumberField label="Y" value={state.y} onChange={handlePosY} />
+          <InputGroup label="X" value={state.x} onChange={handlePosX} />
+          <InputGroup label="Y" value={state.y} onChange={handlePosY} />
         </div>
-      </div>
+      </Section>
 
       {/* Size */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Size</span>
+      <Section label="Size">
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="W" value={state.width} onChange={handleWidth} />
-          <NumberField label="H" value={state.height} onChange={handleHeight} />
+          <InputGroup label="W" value={state.width} onChange={handleWidth} />
+          <InputGroup label="H" value={state.height} onChange={handleHeight} />
         </div>
-      </div>
+      </Section>
 
       {/* Corner Radius (rect only) */}
       {state.shapeKind === "rect" && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">Border Radius</span>
-          <div className="flex items-center gap-2">
-            <Slider
-              min={0}
-              max={Math.min(state.width, state.height) / 2}
-              step={1}
-              value={[state.cornerRadius]}
-              onValueChange={handleCornerRadius}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-              {Math.round(state.cornerRadius)}
-            </span>
-          </div>
-        </div>
+        <SliderField
+          label="Border Radius"
+          value={state.cornerRadius}
+          min={0}
+          max={Math.min(state.width, state.height) / 2}
+          step={1}
+          onChange={(v) => handleCornerRadius([v])}
+        />
       )}
 
       {/* Move (z-order) */}
@@ -247,22 +239,6 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
     </div>
   );
 };
-
-const NumberField: React.FC<{
-  label: string;
-  value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}> = ({ label, value, onChange }) => (
-  <div className="flex items-center gap-1">
-    <span className="text-xs text-muted-foreground w-4">{label}</span>
-    <input
-      type="number"
-      value={Math.round(value)}
-      onChange={onChange}
-      className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
-    />
-  </div>
-);
 
 const ZOrderButton: React.FC<{
   icon: React.ReactNode;

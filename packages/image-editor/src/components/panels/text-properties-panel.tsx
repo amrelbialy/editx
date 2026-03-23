@@ -2,8 +2,9 @@ import { type CreativeEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@creative-edi
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
+import { Section } from "../ui/section";
 import { Separator } from "../ui/separator";
-import { Slider } from "../ui/slider";
+import { SliderField } from "../ui/slider-field";
 
 export interface TextPropertiesPanelProps {
   engine: CreativeEngine;
@@ -271,68 +272,39 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
       </Section>
 
       {/* Letter Spacing */}
-      <Section label="Letter Spacing">
-        <div className="flex items-center gap-2">
-          <Slider
-            min={-5}
-            max={20}
-            step={0.5}
-            value={[state.letterSpacing]}
-            onValueChange={handleLetterSpacing}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-            {state.letterSpacing.toFixed(1)}
-          </span>
-        </div>
-      </Section>
+      <SliderField
+        label="Letter Spacing"
+        value={state.letterSpacing}
+        min={-5}
+        max={20}
+        step={0.5}
+        onChange={(v) => handleLetterSpacing([v])}
+        formatValue={(v) => v.toFixed(1)}
+      />
 
       {/* Line Height */}
-      <Section label="Line Height">
-        <div className="flex items-center gap-2">
-          <Slider
-            min={0.5}
-            max={3}
-            step={0.1}
-            value={[state.lineHeight]}
-            onValueChange={handleLineHeight}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-            {state.lineHeight.toFixed(1)}
-          </span>
-        </div>
-      </Section>
+      <SliderField
+        label="Line Height"
+        value={state.lineHeight}
+        min={0.5}
+        max={3}
+        step={0.1}
+        onChange={(v) => handleLineHeight([v])}
+        formatValue={(v) => v.toFixed(1)}
+      />
 
       <Separator />
 
       {/* Opacity */}
-      <Section label="Opacity">
-        <div className="flex items-center gap-2">
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={[state.opacity]}
-            onValueChange={handleOpacity}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-            {Math.round(state.opacity * 100)}%
-          </span>
-        </div>
-      </Section>
+      <SliderField
+        label="Opacity"
+        value={state.opacity}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(v) => handleOpacity([v])}
+        formatValue={(v) => `${Math.round(v * 100)}%`}
+      />
     </div>
   );
 };
-
-// ── Helper ──
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-muted-foreground">{label}</label>
-      {children}
-    </div>
-  );
-}

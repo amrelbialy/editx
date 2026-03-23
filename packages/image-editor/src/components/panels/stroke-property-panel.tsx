@@ -2,7 +2,8 @@ import type { CreativeEngine } from "@creative-editor/engine";
 import { colorToHex, hexToColor } from "@creative-editor/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Slider } from "../ui/slider";
+import { SliderField } from "../ui/slider-field";
+import { SwitchField } from "../ui/switch-field";
 
 interface StrokePropertyPanelProps {
   engine: CreativeEngine;
@@ -65,53 +66,31 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Enable toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={state.enabled}
-          onChange={handleToggle}
-          className="w-4 h-4 rounded border-border accent-primary"
-        />
-        <span className="text-sm text-foreground">Enable Stroke</span>
-      </label>
+    <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
+      {/* Color */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs text-muted-foreground">Color</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={state.color}
+            onChange={handleColor}
+            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+          />
+          <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
+        </div>
+      </div>
 
-      {state.enabled && (
-        <>
-          {/* Color */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground">Color</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={state.color}
-                onChange={handleColor}
-                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-              />
-              <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
-            </div>
-          </div>
-
-          {/* Width */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground">Width</span>
-            <div className="flex items-center gap-2">
-              <Slider
-                min={0}
-                max={20}
-                step={0.5}
-                value={[state.width]}
-                onValueChange={handleWidth}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-                {state.width.toFixed(1)}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+      {/* Width */}
+      <SliderField
+        label="Width"
+        value={state.width}
+        min={0}
+        max={20}
+        step={0.5}
+        onChange={(v) => handleWidth([v])}
+        formatValue={(v) => v.toFixed(1)}
+      />
+    </SwitchField>
   );
 };

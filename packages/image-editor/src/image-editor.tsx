@@ -132,7 +132,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     events,
   });
 
-  
   // --- Keyboard shortcuts ---
   useShortcuts({
     enabled: !isLoading && !error,
@@ -164,7 +163,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
       }
     },
   });
-
 
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);

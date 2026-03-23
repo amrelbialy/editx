@@ -2,31 +2,13 @@ import type { CreativeEngine } from "@creative-editor/engine";
 import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@creative-editor/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "../../utils/cn";
+import { ColorPicker } from "../ui/color-picker";
+import { SwitchField } from "../ui/switch-field";
 
 interface BackgroundPropertyPanelProps {
   engine: CreativeEngine;
   blockId: number;
 }
-
-const DEFAULT_COLORS = [
-  "#FFFFFF",
-  "#000000",
-  "#3B82F6",
-  "#6366F1",
-  "#10B981",
-  "#059669",
-  "#EF4444",
-  "#DC2626",
-  "#F59E0B",
-  "#D97706",
-  "#8B5CF6",
-  "#EC4899",
-  "#14B8A6",
-  "#06B6D4",
-  "#F97316",
-  "#84CC16",
-];
 
 function readFillState(engine: CreativeEngine, blockId: number) {
   const fillEnabled = engine.block.isFillEnabled(blockId);
@@ -89,49 +71,8 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Enable toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={state.enabled}
-          onChange={handleToggle}
-          className="w-4 h-4 rounded border-border accent-primary"
-        />
-        <span className="text-sm text-foreground">Enable Background</span>
-      </label>
-
-      {state.enabled && (
-        <>
-          {/* Color picker */}
-          <input
-            type="color"
-            value={state.color}
-            onChange={(e) => handleColorChange(e.target.value)}
-            className="w-full h-40 rounded-lg border border-border bg-transparent cursor-pointer"
-          />
-
-          {/* Default Colors */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Default Colors</span>
-            <div className="grid grid-cols-8 gap-1.5">
-              {DEFAULT_COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => handleColorChange(c)}
-                  className={cn(
-                    "w-7 h-7 rounded-md border transition-transform hover:scale-110",
-                    state.color === c
-                      ? "ring-2 ring-primary ring-offset-1 ring-offset-card"
-                      : "border-border",
-                  )}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+    <SwitchField label="Enable Background" checked={state.enabled} onChange={handleToggle}>
+      <ColorPicker color={state.color} onChange={handleColorChange} showHexInput={false} />
+    </SwitchField>
   );
 };

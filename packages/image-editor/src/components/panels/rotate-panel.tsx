@@ -2,7 +2,7 @@ import { FlipHorizontal, FlipVertical, RotateCcw, RotateCw } from "lucide-react"
 import type React from "react";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { Slider } from "../ui/slider";
+import { SliderField } from "../ui/slider-field";
 
 export interface RotatePanelProps {
   rotation: number;
@@ -30,22 +30,16 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
   return (
     <div className="flex flex-col gap-4">
       {/* Straighten */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-muted-foreground">Straighten</span>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {Math.round(rotation)}°
-          </span>
-        </div>
-        <Slider
-          min={-180}
-          max={180}
-          step={1}
-          value={[rotation]}
-          onValueChange={([v]) => onRotationChange(v)}
-          data-testid="rotation-slider"
-        />
-      </div>
+      <SliderField
+        label="Straighten"
+        value={rotation}
+        min={-180}
+        max={180}
+        step={1}
+        onChange={onRotationChange}
+        formatValue={(v) => `${Math.round(v)}°`}
+        data-testid="rotation-slider"
+      />
 
       <Separator />
 

@@ -45,6 +45,18 @@
       "enabled": false
     }
   },
+  "overrides": [
+    {
+      "includes": ["packages/image-editor/src/components/ui/slider/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noArrayIndexKey": "off"
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "includes": [
       "packages/*/src/**",

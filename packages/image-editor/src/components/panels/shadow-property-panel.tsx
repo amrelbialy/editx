@@ -2,7 +2,9 @@ import type { CreativeEngine } from "@creative-editor/engine";
 import { colorToHex, hexToColor } from "@creative-editor/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Slider } from "../ui/slider";
+import { InputGroup } from "../ui/input-group";
+import { SliderField } from "../ui/slider-field";
+import { SwitchField } from "../ui/switch-field";
 
 interface ShadowPropertyPanelProps {
   engine: CreativeEngine;
@@ -86,78 +88,39 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Enable toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={state.enabled}
-          onChange={handleToggle}
-          className="w-4 h-4 rounded border-border accent-primary"
-        />
-        <span className="text-sm text-foreground">Enable Shadow</span>
-      </label>
+    <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
+      {/* Color */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs text-muted-foreground">Color</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={state.color}
+            onChange={handleColor}
+            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+          />
+          <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
+        </div>
+      </div>
 
-      {state.enabled && (
-        <>
-          {/* Color */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground">Color</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={state.color}
-                onChange={handleColor}
-                className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-              />
-              <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
-            </div>
-          </div>
+      {/* Offset */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs text-muted-foreground">Offset</span>
+        <div className="grid grid-cols-2 gap-2">
+          <InputGroup label="X" value={Math.round(state.offsetX)} onChange={handleOffsetX} />
+          <InputGroup label="Y" value={Math.round(state.offsetY)} onChange={handleOffsetY} />
+        </div>
+      </div>
 
-          {/* Offset */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground">Offset</span>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground w-4">X</span>
-                <input
-                  type="number"
-                  value={Math.round(state.offsetX)}
-                  onChange={handleOffsetX}
-                  className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground w-4">Y</span>
-                <input
-                  type="number"
-                  value={Math.round(state.offsetY)}
-                  onChange={handleOffsetY}
-                  className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-xs"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Blur */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground">Blur</span>
-            <div className="flex items-center gap-2">
-              <Slider
-                min={0}
-                max={50}
-                step={1}
-                value={[state.blur]}
-                onValueChange={handleBlur}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
-                {Math.round(state.blur)}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+      {/* Blur */}
+      <SliderField
+        label="Blur"
+        value={state.blur}
+        min={0}
+        max={50}
+        step={1}
+        onChange={(v) => handleBlur([v])}
+      />
+    </SwitchField>
   );
 };

@@ -1,5 +1,9 @@
 export type { ButtonProps } from "./components/ui/button";
 export { Button } from "./components/ui/button";
+export { ColorPalette } from "./components/ui/color-palette";
+export { ColorPicker, DEFAULT_COLORS } from "./components/ui/color-picker";
+export { InputGroup } from "./components/ui/input-group";
+export { Section } from "./components/ui/section";
 export {
   Select,
   SelectContent,
@@ -10,7 +14,10 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select";
+export { SelectionGrid } from "./components/ui/selection-grid";
 export { Separator } from "./components/ui/separator";
+export { SliderField } from "./components/ui/slider-field";
+export { SwitchField } from "./components/ui/switch-field";
 export type {
   AdjustToolConfig,
   CropToolConfig,
