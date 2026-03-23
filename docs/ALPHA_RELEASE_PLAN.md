@@ -293,7 +293,7 @@ Migrate existing components to this structure first:
 
 ---
 
-## Phase 4: Engine Code Review & Structure
+## Phase 4: Engine Code Review & Structure ✅ DONE
 
 24. **Split `block-api.ts` (~1200 lines)** — currently a god object handling: property get/set, selection, shapes, fills, effects, strokes, shadows, z-order, duplication, text editing, alignment. Split into focused sub-API modules:
     - `block-api.ts` — thin facade that delegates to sub-APIs (keeps the public `engine.block.*` surface)
