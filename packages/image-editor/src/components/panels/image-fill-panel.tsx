@@ -1,8 +1,9 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT } from '@creative-editor/engine';
-import { ImagePlus, Replace } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@creative-editor/engine";
+import { Replace } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "../../utils/cn";
 
 interface ImageFillPanelProps {
   engine: CreativeEngine;
@@ -10,13 +11,9 @@ interface ImageFillPanelProps {
   onReplace: (file: File) => void;
 }
 
-export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
-  engine,
-  blockId,
-  onReplace,
-}) => {
+export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId, onReplace }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageSrc, setImageSrc] = useState('');
+  const [imageSrc, setImageSrc] = useState("");
   const [originalWidth, setOriginalWidth] = useState(0);
   const [originalHeight, setOriginalHeight] = useState(0);
   const [blockWidth, setBlockWidth] = useState(0);
@@ -41,11 +38,11 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
       setBlockWidth(Math.round(w));
       setBlockHeight(Math.round(h));
     };
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, blockId]);
 
@@ -65,7 +62,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
         }, 100);
       }
       // Reset so re-selecting same file triggers change
-      e.target.value = '';
+      e.target.value = "";
     },
     [engine, blockId, onReplace],
   );
@@ -75,11 +72,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
       {/* Preview thumbnail */}
       {imageSrc && (
         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden border border-border">
-          <img
-            src={imageSrc}
-            alt="Image preview"
-            className="w-full h-full object-contain"
-          />
+          <img src={imageSrc} alt="Image preview" className="w-full h-full object-contain" />
         </div>
       )}
 
@@ -87,8 +80,8 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
       <button
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          'flex items-center justify-center gap-2 w-full h-9 rounded-md text-sm font-medium transition-colors',
-          'bg-accent hover:bg-accent/80 text-accent-foreground',
+          "flex items-center justify-center gap-2 w-full h-9 rounded-md text-sm font-medium transition-colors",
+          "bg-accent hover:bg-accent/80 text-accent-foreground",
         )}
       >
         <Replace className="h-4 w-4" />
@@ -111,11 +104,15 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-muted-foreground">Display</span>
-            <span className="tabular-nums">{blockWidth} × {blockHeight}</span>
+            <span className="tabular-nums">
+              {blockWidth} × {blockHeight}
+            </span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-muted-foreground">Original</span>
-            <span className="tabular-nums">{Math.round(originalWidth)} × {Math.round(originalHeight)}</span>
+            <span className="tabular-nums">
+              {Math.round(originalWidth)} × {Math.round(originalHeight)}
+            </span>
           </div>
         </div>
       </div>

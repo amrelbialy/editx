@@ -1,11 +1,15 @@
 /**
  * @vitest-environment happy-dom
  */
-import { describe, it, expect, vi } from 'vitest';
-import { downscaleIfNeeded } from './downscale-image';
+import { describe, expect, it, vi } from "vitest";
+import { downscaleIfNeeded } from "./downscale-image";
 
 /** Create a mock HTMLImageElement with the given natural dimensions. */
-function mockImage(naturalWidth: number, naturalHeight: number, src = 'https://example.com/img.png'): HTMLImageElement {
+function mockImage(
+  naturalWidth: number,
+  naturalHeight: number,
+  src = "https://example.com/img.png",
+): HTMLImageElement {
   const img = {
     naturalWidth,
     naturalHeight,
@@ -14,8 +18,8 @@ function mockImage(naturalWidth: number, naturalHeight: number, src = 'https://e
   return img;
 }
 
-describe('downscaleIfNeeded', () => {
-  it('returns original data for images under the megapixel budget', () => {
+describe("downscaleIfNeeded", () => {
+  it("returns original data for images under the megapixel budget", () => {
     const img = mockImage(1920, 1080); // ~2 MP
     const result = downscaleIfNeeded(img);
 
@@ -27,7 +31,7 @@ describe('downscaleIfNeeded', () => {
     expect(result.dataUrl).toBe(img.src);
   });
 
-  it('returns original data for images exactly at the budget', () => {
+  it("returns original data for images exactly at the budget", () => {
     // 5000 × 5000 = 25 MP (exactly at default budget)
     const img = mockImage(5000, 5000);
     const result = downscaleIfNeeded(img);
@@ -37,7 +41,7 @@ describe('downscaleIfNeeded', () => {
     expect(result.workingHeight).toBe(5000);
   });
 
-  it('downscales images exceeding the megapixel budget', () => {
+  it("downscales images exceeding the megapixel budget", () => {
     // 8000 × 6000 = 48 MP, well above 25 MP
     const img = mockImage(8000, 6000);
 
@@ -47,9 +51,9 @@ describe('downscaleIfNeeded', () => {
       width: 0,
       height: 0,
       getContext: vi.fn().mockReturnValue(mockCtx),
-      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,downscaled'),
+      toDataURL: vi.fn().mockReturnValue("data:image/png;base64,downscaled"),
     };
-    vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as any);
+    vi.spyOn(document, "createElement").mockReturnValue(mockCanvas as any);
 
     const result = downscaleIfNeeded(img);
 
@@ -63,10 +67,10 @@ describe('downscaleIfNeeded', () => {
     const originalRatio = 8000 / 6000;
     const workingRatio = result.workingWidth / result.workingHeight;
     expect(Math.abs(originalRatio - workingRatio)).toBeLessThan(0.01);
-    expect(result.dataUrl).toBe('data:image/png;base64,downscaled');
+    expect(result.dataUrl).toBe("data:image/png;base64,downscaled");
   });
 
-  it('uses custom maxMegapixels parameter', () => {
+  it("uses custom maxMegapixels parameter", () => {
     // 2000 × 2000 = 4 MP
     const img = mockImage(2000, 2000);
 
@@ -75,9 +79,9 @@ describe('downscaleIfNeeded', () => {
       width: 0,
       height: 0,
       getContext: vi.fn().mockReturnValue(mockCtx),
-      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,small'),
+      toDataURL: vi.fn().mockReturnValue("data:image/png;base64,small"),
     };
-    vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as any);
+    vi.spyOn(document, "createElement").mockReturnValue(mockCanvas as any);
 
     const result = downscaleIfNeeded(img, 2); // 2 MP budget
 
@@ -86,7 +90,7 @@ describe('downscaleIfNeeded', () => {
     expect(result.workingHeight).toBeLessThan(2000);
   });
 
-  it('preserves original dimensions in the result when downscaling', () => {
+  it("preserves original dimensions in the result when downscaling", () => {
     const img = mockImage(10000, 8000);
 
     const mockCtx = { drawImage: vi.fn() };
@@ -94,9 +98,9 @@ describe('downscaleIfNeeded', () => {
       width: 0,
       height: 0,
       getContext: vi.fn().mockReturnValue(mockCtx),
-      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,x'),
+      toDataURL: vi.fn().mockReturnValue("data:image/png;base64,x"),
     };
-    vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as any);
+    vi.spyOn(document, "createElement").mockReturnValue(mockCanvas as any);
 
     const result = downscaleIfNeeded(img);
 
@@ -105,7 +109,7 @@ describe('downscaleIfNeeded', () => {
     expect(result.workingWidth).not.toBe(10000);
   });
 
-  it('logs a warning when downscaling', () => {
+  it("logs a warning when downscaling", () => {
     const img = mockImage(8000, 6000);
 
     const mockCtx = { drawImage: vi.fn() };
@@ -113,16 +117,14 @@ describe('downscaleIfNeeded', () => {
       width: 0,
       height: 0,
       getContext: vi.fn().mockReturnValue(mockCtx),
-      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,x'),
+      toDataURL: vi.fn().mockReturnValue("data:image/png;base64,x"),
     };
-    vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as any);
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(document, "createElement").mockReturnValue(mockCanvas as any);
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     downscaleIfNeeded(img);
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Downscaling')
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Downscaling"));
     warnSpy.mockRestore();
   });
 });

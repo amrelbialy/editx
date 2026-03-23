@@ -1,6 +1,6 @@
-import React from 'react';
-import { FILTER_PRESETS, type FilterPresetInfo } from '@creative-editor/engine';
-import { cn } from '../../utils/cn';
+import { FILTER_PRESETS } from "@creative-editor/engine";
+import type React from "react";
+import { cn } from "../../utils/cn";
 
 export interface FilterPanelProps {
   activeFilter: string;
@@ -16,13 +16,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
 
       {/* Original (no filter) */}
       <button
-        onClick={() => onSelect('')}
+        onClick={() => onSelect("")}
         data-testid="filter-original"
         className={cn(
-          'w-full text-left px-3 py-2 rounded-md text-sm transition-colors',
-          activeFilter === ''
-            ? 'bg-primary text-primary-foreground'
-            : 'text-foreground hover:bg-accent',
+          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+          activeFilter === ""
+            ? "bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-accent",
         )}
       >
         Original
@@ -35,10 +35,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
           onClick={() => onSelect(name)}
           data-testid={`filter-${name}`}
           className={cn(
-            'w-full text-left px-3 py-2 rounded-md text-sm transition-colors',
+            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
             activeFilter === name
-            ? 'bg-primary text-primary-foreground'
-            : 'text-foreground hover:bg-accent',
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-accent",
           )}
         >
           {info.label}

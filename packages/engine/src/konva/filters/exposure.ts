@@ -5,11 +5,11 @@
  * Positive values brighten (like opening the aperture), negative values darken.
  */
 export function Exposure(this: any, imageData: ImageData): void {
-  const exposure = this.getAttr('exposure') ?? 0;
+  const exposure = this.getAttr("exposure") ?? 0;
   if (exposure === 0) return;
 
   // exposure → multiplier: 2^exposure gives photographic stops
-  const multiplier = Math.pow(2, exposure);
+  const multiplier = 2 ** exposure;
   const pixels = imageData.data;
   const len = pixels.length;
 

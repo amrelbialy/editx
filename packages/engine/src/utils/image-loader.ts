@@ -14,7 +14,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       imageCache.set(src, img);
       resolve(img);
@@ -25,7 +25,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
       fallback.onload = () => {
         console.warn(
           `[creative-editor] Image loaded without CORS headers. ` +
-          `The canvas will be tainted and export may be blocked: ${src}`
+            `The canvas will be tainted and export may be blocked: ${src}`,
         );
         imageCache.set(src, fallback);
         resolve(fallback);
@@ -51,13 +51,13 @@ export function clearImageCache(): void {
 
 /** Convert a string URL, File, or Blob to a usable URL string. */
 export function sourceToUrl(source: string | File | Blob): string {
-  if (typeof source === 'string') return source;
+  if (typeof source === "string") return source;
   return URL.createObjectURL(source);
 }
 
 /** Revoke a blob URL if it was created by `sourceToUrl`. */
 export function revokeObjectUrl(url: string): void {
-  if (url.startsWith('blob:')) {
+  if (url.startsWith("blob:")) {
     URL.revokeObjectURL(url);
   }
 }

@@ -1,4 +1,4 @@
-import Konva from 'konva';
+import type Konva from "konva";
 
 /**
  * Manages viewport state: zoom, pan, fit-to-screen, and coordinate transforms.
@@ -101,7 +101,10 @@ export class KonvaCamera {
     }
   }
 
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }, animate = false): void {
+  centerOnRect(
+    rect: { x: number; y: number; width: number; height: number },
+    animate = false,
+  ): void {
     const stageW = this.#stage.width();
     const stageH = this.#stage.height();
     const targetPan = {
@@ -121,7 +124,11 @@ export class KonvaCamera {
    * Zoom and pan so that the given world-space rectangle fills the viewport
    * with the specified padding.
    */
-  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24, animate = false): void {
+  fitToRect(
+    rect: { x: number; y: number; width: number; height: number },
+    padding = 24,
+    animate = false,
+  ): void {
     const stageW = this.#stage.width();
     const stageH = this.#stage.height();
     const scaleX = (stageW - padding * 2) / rect.width;
@@ -219,7 +226,7 @@ export class KonvaCamera {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       // Ease-out cubic: 1 - (1 - t)^3
-      const t = 1 - Math.pow(1 - progress, 3);
+      const t = 1 - (1 - progress) ** 3;
 
       this.#zoom = startZoom + (targetZoom - startZoom) * t;
       this.#pan = {

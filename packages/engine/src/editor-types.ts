@@ -2,7 +2,7 @@
 
 export interface ExportOptions {
   /** Image format. Default: 'png'. */
-  format?: 'png' | 'jpeg' | 'webp';
+  format?: "png" | "jpeg" | "webp";
   /** Quality 0–1 for jpeg/webp. Ignored for png. Default: 0.92. */
   quality?: number;
   /** Device pixel ratio multiplier for high-res export. Default: 1. */
@@ -20,27 +20,27 @@ export interface ExportOptions {
  *
  * Custom string values are also accepted by `setEditMode()`.
  */
-export type EditMode = 'Transform' | 'Crop' | 'Text' | 'Playback' | 'Trim' | (string & {});
+export type EditMode = "Transform" | "Crop" | "Text" | "Playback" | "Trim" | (string & {});
 
 /**
  * Cursor types the renderer may display based on edit mode and hover target.
  */
 export type CursorType =
-  | 'default'
-  | 'pointer'
-  | 'crosshair'
-  | 'move'
-  | 'grab'
-  | 'grabbing'
-  | 'text'
-  | 'not-allowed'
-  | 'nwse-resize'
-  | 'nesw-resize'
-  | 'ns-resize'
-  | 'ew-resize'
-  | 'col-resize'
-  | 'row-resize'
-  | 'none';
+  | "default"
+  | "pointer"
+  | "crosshair"
+  | "move"
+  | "grab"
+  | "grabbing"
+  | "text"
+  | "not-allowed"
+  | "nwse-resize"
+  | "nesw-resize"
+  | "ns-resize"
+  | "ew-resize"
+  | "col-resize"
+  | "row-resize"
+  | "none";
 
 /**
  * Configuration for each edit mode — defines behavior inherited by the mode.
@@ -59,31 +59,31 @@ export interface EditModeConfig {
 /** Default configuration per built-in edit mode. */
 export const EDIT_MODE_DEFAULTS: Record<string, EditModeConfig> = {
   Transform: {
-    defaultCursor: 'default',
+    defaultCursor: "default",
     showTransformer: true,
     blocksSelectable: true,
     blocksDraggable: true,
   },
   Crop: {
-    defaultCursor: 'crosshair',
+    defaultCursor: "crosshair",
     showTransformer: false,
     blocksSelectable: false,
     blocksDraggable: false,
   },
   Text: {
-    defaultCursor: 'text',
+    defaultCursor: "text",
     showTransformer: false,
     blocksSelectable: false,
     blocksDraggable: false,
   },
   Playback: {
-    defaultCursor: 'default',
+    defaultCursor: "default",
     showTransformer: false,
     blocksSelectable: false,
     blocksDraggable: false,
   },
   Trim: {
-    defaultCursor: 'col-resize',
+    defaultCursor: "col-resize",
     showTransformer: false,
     blocksSelectable: false,
     blocksDraggable: false,

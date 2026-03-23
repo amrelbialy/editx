@@ -1,19 +1,29 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Engine } from './engine';
-import { EditorAPI } from './editor/editor-api';
-import { BlockAPI } from './block/block-api';
-import { CreateBlockCommand, SetPropertyCommand } from './controller/commands';
-import { createMockRenderer } from './__tests__/mocks/mock-renderer';
-import type { RendererAdapter } from './render-adapter';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockRenderer } from "./__tests__/mocks/mock-renderer";
+import { BlockAPI } from "./block/block-api";
 import {
-  SIZE_WIDTH, SIZE_HEIGHT,
-  PAGE_WIDTH, PAGE_HEIGHT,
-  IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
-  CROP_ENABLED, CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT,
-  IMAGE_ROTATION, CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
-} from './block/property-keys';
+  CROP_ENABLED,
+  CROP_FLIP_HORIZONTAL,
+  CROP_FLIP_VERTICAL,
+  CROP_HEIGHT,
+  CROP_WIDTH,
+  CROP_X,
+  CROP_Y,
+  IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_ORIGINAL_WIDTH,
+  IMAGE_ROTATION,
+  IMAGE_SRC,
+  PAGE_HEIGHT,
+  PAGE_WIDTH,
+  SIZE_HEIGHT,
+  SIZE_WIDTH,
+} from "./block/property-keys";
+import { CreateBlockCommand } from "./controller/commands";
+import { EditorAPI } from "./editor/editor-api";
+import { Engine } from "./engine";
+import type { RendererAdapter } from "./render-adapter";
 
-describe('EditorAPI — Edit Mode Management', () => {
+describe("EditorAPI — Edit Mode Management", () => {
   let engine: Engine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -29,145 +39,145 @@ describe('EditorAPI — Edit Mode Management', () => {
 
   // ── setEditMode / getEditMode ────────────────────────
 
-  describe('setEditMode / getEditMode', () => {
-    it('defaults to Transform mode', () => {
-      expect(editor.getEditMode()).toBe('Transform');
+  describe("setEditMode / getEditMode", () => {
+    it("defaults to Transform mode", () => {
+      expect(editor.getEditMode()).toBe("Transform");
     });
 
-    it('sets and gets a built-in mode', () => {
-      editor.setEditMode('Crop');
-      expect(editor.getEditMode()).toBe('Crop');
+    it("sets and gets a built-in mode", () => {
+      editor.setEditMode("Crop");
+      expect(editor.getEditMode()).toBe("Crop");
     });
 
-    it('sets and gets Text mode', () => {
-      editor.setEditMode('Text');
-      expect(editor.getEditMode()).toBe('Text');
+    it("sets and gets Text mode", () => {
+      editor.setEditMode("Text");
+      expect(editor.getEditMode()).toBe("Text");
     });
 
-    it('sets and gets Playback mode', () => {
-      editor.setEditMode('Playback');
-      expect(editor.getEditMode()).toBe('Playback');
+    it("sets and gets Playback mode", () => {
+      editor.setEditMode("Playback");
+      expect(editor.getEditMode()).toBe("Playback");
     });
 
-    it('sets and gets Trim mode', () => {
-      editor.setEditMode('Trim');
-      expect(editor.getEditMode()).toBe('Trim');
+    it("sets and gets Trim mode", () => {
+      editor.setEditMode("Trim");
+      expect(editor.getEditMode()).toBe("Trim");
     });
 
-    it('accepts custom mode strings', () => {
-      editor.setEditMode('MyCustomMode');
-      expect(editor.getEditMode()).toBe('MyCustomMode');
+    it("accepts custom mode strings", () => {
+      editor.setEditMode("MyCustomMode");
+      expect(editor.getEditMode()).toBe("MyCustomMode");
     });
 
-    it('custom mode with base inherits config from base', () => {
-      editor.setEditMode('CustomCrop', { baseMode: 'Crop' });
-      expect(editor.getEditMode()).toBe('CustomCrop');
+    it("custom mode with base inherits config from base", () => {
+      editor.setEditMode("CustomCrop", { baseMode: "Crop" });
+      expect(editor.getEditMode()).toBe("CustomCrop");
 
       const config = editor.getEditModeConfig();
-      expect(config.defaultCursor).toBe('crosshair');
+      expect(config.defaultCursor).toBe("crosshair");
       expect(config.showTransformer).toBe(false);
     });
 
-    it('custom mode without base falls back to Transform config', () => {
-      editor.setEditMode('UnknownMode');
+    it("custom mode without base falls back to Transform config", () => {
+      editor.setEditMode("UnknownMode");
       const config = editor.getEditModeConfig();
-      expect(config.defaultCursor).toBe('default');
+      expect(config.defaultCursor).toBe("default");
       expect(config.showTransformer).toBe(true);
     });
 
-    it('switching modes back and forth works', () => {
-      editor.setEditMode('Crop');
-      editor.setEditMode('Transform');
-      expect(editor.getEditMode()).toBe('Transform');
+    it("switching modes back and forth works", () => {
+      editor.setEditMode("Crop");
+      editor.setEditMode("Transform");
+      expect(editor.getEditMode()).toBe("Transform");
 
-      editor.setEditMode('Text');
-      editor.setEditMode('Crop');
-      expect(editor.getEditMode()).toBe('Crop');
+      editor.setEditMode("Text");
+      editor.setEditMode("Crop");
+      expect(editor.getEditMode()).toBe("Crop");
     });
   });
 
   // ── Mode config ──────────────────────────────────────
 
-  describe('getEditModeConfig', () => {
-    it('Transform config enables transformer and selection', () => {
-      editor.setEditMode('Transform');
+  describe("getEditModeConfig", () => {
+    it("Transform config enables transformer and selection", () => {
+      editor.setEditMode("Transform");
       const config = editor.getEditModeConfig();
       expect(config).toEqual({
-        defaultCursor: 'default',
+        defaultCursor: "default",
         showTransformer: true,
         blocksSelectable: true,
         blocksDraggable: true,
       });
     });
 
-    it('Crop config disables transformer and selection', () => {
-      editor.setEditMode('Crop');
+    it("Crop config disables transformer and selection", () => {
+      editor.setEditMode("Crop");
       const config = editor.getEditModeConfig();
       expect(config).toEqual({
-        defaultCursor: 'crosshair',
+        defaultCursor: "crosshair",
         showTransformer: false,
         blocksSelectable: false,
         blocksDraggable: false,
       });
     });
 
-    it('Text config uses text cursor', () => {
-      editor.setEditMode('Text');
+    it("Text config uses text cursor", () => {
+      editor.setEditMode("Text");
       const config = editor.getEditModeConfig();
-      expect(config.defaultCursor).toBe('text');
+      expect(config.defaultCursor).toBe("text");
     });
 
-    it('Trim config uses col-resize cursor', () => {
-      editor.setEditMode('Trim');
+    it("Trim config uses col-resize cursor", () => {
+      editor.setEditMode("Trim");
       const config = editor.getEditModeConfig();
-      expect(config.defaultCursor).toBe('col-resize');
+      expect(config.defaultCursor).toBe("col-resize");
     });
   });
 
   // ── Cursor ───────────────────────────────────────────
 
-  describe('getCursorType', () => {
+  describe("getCursorType", () => {
     it('defaults to "default" in Transform mode', () => {
-      expect(editor.getCursorType()).toBe('default');
+      expect(editor.getCursorType()).toBe("default");
     });
 
-    it('changes to mode default cursor on setEditMode', () => {
-      editor.setEditMode('Crop');
-      expect(editor.getCursorType()).toBe('crosshair');
+    it("changes to mode default cursor on setEditMode", () => {
+      editor.setEditMode("Crop");
+      expect(editor.getCursorType()).toBe("crosshair");
 
-      editor.setEditMode('Text');
-      expect(editor.getCursorType()).toBe('text');
+      editor.setEditMode("Text");
+      expect(editor.getCursorType()).toBe("text");
     });
 
-    it('updates renderer cursor when mode changes', () => {
-      editor.setEditMode('Crop');
-      expect(renderer.setCursor).toHaveBeenCalledWith('crosshair');
+    it("updates renderer cursor when mode changes", () => {
+      editor.setEditMode("Crop");
+      expect(renderer.setCursor).toHaveBeenCalledWith("crosshair");
     });
   });
 
-  describe('getCursorRotation', () => {
-    it('defaults to 0', () => {
+  describe("getCursorRotation", () => {
+    it("defaults to 0", () => {
       expect(editor.getCursorRotation()).toBe(0);
     });
 
-    it('resets to 0 when mode changes', () => {
+    it("resets to 0 when mode changes", () => {
       editor.setCursorRotation(45);
       expect(editor.getCursorRotation()).toBe(45);
 
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
       expect(editor.getCursorRotation()).toBe(0);
     });
   });
 
   // ── Text cursor position ─────────────────────────────
 
-  describe('text cursor screen position', () => {
-    it('defaults to (0, 0)', () => {
+  describe("text cursor screen position", () => {
+    it("defaults to (0, 0)", () => {
       expect(editor.getTextCursorPositionInScreenSpaceX()).toBe(0);
       expect(editor.getTextCursorPositionInScreenSpaceY()).toBe(0);
     });
 
-    it('returns values set on the editor', () => {
+    it("returns values set on the editor", () => {
       editor.setTextCursorPositionInScreenSpace(120, 340);
       expect(editor.getTextCursorPositionInScreenSpaceX()).toBe(120);
       expect(editor.getTextCursorPositionInScreenSpaceY()).toBe(340);
@@ -176,39 +186,39 @@ describe('EditorAPI — Edit Mode Management', () => {
 
   // ── Events ───────────────────────────────────────────
 
-  describe('editMode:changed event', () => {
-    it('fires when mode changes', () => {
+  describe("editMode:changed event", () => {
+    it("fires when mode changes", () => {
       const handler = vi.fn();
-      engine.on('editMode:changed', handler);
+      engine.on("editMode:changed", handler);
 
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
 
       expect(handler).toHaveBeenCalledWith({
-        mode: 'Crop',
-        previousMode: 'Transform',
+        mode: "Crop",
+        previousMode: "Transform",
       });
     });
 
-    it('fires with correct previous mode on successive changes', () => {
+    it("fires with correct previous mode on successive changes", () => {
       const handler = vi.fn();
-      engine.on('editMode:changed', handler);
+      engine.on("editMode:changed", handler);
 
-      editor.setEditMode('Crop');
-      editor.setEditMode('Text');
+      editor.setEditMode("Crop");
+      editor.setEditMode("Text");
 
       expect(handler).toHaveBeenCalledTimes(2);
       expect(handler.mock.calls[1][0]).toEqual({
-        mode: 'Text',
-        previousMode: 'Crop',
+        mode: "Text",
+        previousMode: "Crop",
       });
     });
 
-    it('fires even when setting the same mode again', () => {
+    it("fires even when setting the same mode again", () => {
       const handler = vi.fn();
-      engine.on('editMode:changed', handler);
+      engine.on("editMode:changed", handler);
 
-      editor.setEditMode('Crop');
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
+      editor.setEditMode("Crop");
 
       expect(handler).toHaveBeenCalledTimes(2);
     });
@@ -216,17 +226,17 @@ describe('EditorAPI — Edit Mode Management', () => {
 
   // ── Crop mode integration ────────────────────────────
 
-  describe('Crop mode via setEditMode', () => {
-    it('shows crop overlay when entering Crop with selected block', () => {
+  describe("Crop mode via setEditMode", () => {
+    it("shows crop overlay when entering Crop with selected block", () => {
       const store = engine.getBlockStore();
-      const cmd = new CreateBlockCommand(store, 'image');
+      const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
       store.setProperty(blockId, SIZE_WIDTH, 200);
       store.setProperty(blockId, SIZE_HEIGHT, 100);
 
       block.select(blockId);
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
 
       expect(renderer.showCropOverlay).toHaveBeenCalledWith(
         blockId,
@@ -236,72 +246,72 @@ describe('EditorAPI — Edit Mode Management', () => {
       );
     });
 
-    it('uses first selected block when blockId not provided', () => {
+    it("uses first selected block when blockId not provided", () => {
       const store = engine.getBlockStore();
-      const cmd = new CreateBlockCommand(store, 'image');
+      const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
       store.setProperty(blockId, SIZE_WIDTH, 300);
       store.setProperty(blockId, SIZE_HEIGHT, 150);
 
       block.select(blockId);
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
 
       expect(renderer.showCropOverlay).toHaveBeenCalled();
     });
 
-    it('hides crop overlay when leaving Crop mode', () => {
+    it("hides crop overlay when leaving Crop mode", () => {
       const store = engine.getBlockStore();
-      const cmd = new CreateBlockCommand(store, 'image');
+      const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
 
       block.select(blockId);
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
       vi.mocked(renderer.hideCropOverlay).mockClear();
 
-      editor.setEditMode('Transform');
+      editor.setEditMode("Transform");
 
       expect(renderer.hideCropOverlay).toHaveBeenCalled();
     });
 
-    it('auto-commits crop properties when exiting Crop mode', () => {
+    it("auto-commits crop properties when exiting Crop mode", () => {
       const store = engine.getBlockStore();
-      const cmd = new CreateBlockCommand(store, 'image');
+      const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
 
       block.select(blockId);
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
 
       const cropRect = { x: 10, y: 20, width: 80, height: 60 };
       vi.mocked(renderer.getCropRect).mockReturnValue(cropRect);
 
       // Exit crop mode — should auto-commit
-      editor.setEditMode('Transform');
+      editor.setEditMode("Transform");
 
       expect(store.getBool(blockId, CROP_ENABLED)).toBe(true);
       expect(store.getFloat(blockId, CROP_X)).toBe(10);
       expect(store.getFloat(blockId, CROP_Y)).toBe(20);
       expect(store.getFloat(blockId, CROP_WIDTH)).toBe(80);
       expect(store.getFloat(blockId, CROP_HEIGHT)).toBe(60);
-      expect(editor.getEditMode()).toBe('Transform');
+      expect(editor.getEditMode()).toBe("Transform");
     });
 
-    it('cancel = exit + undo discards the auto-committed crop', () => {
+    it("cancel = exit + undo discards the auto-committed crop", () => {
       const store = engine.getBlockStore();
-      const cmd = new CreateBlockCommand(store, 'image');
+      const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
 
       block.select(blockId);
-      editor.setEditMode('Crop');
+      editor.setEditMode("Crop");
 
       const cropRect = { x: 10, y: 20, width: 80, height: 60 };
       vi.mocked(renderer.getCropRect).mockReturnValue(cropRect);
 
       // Exit crop mode (auto-commits), then undo
-      editor.setEditMode('Transform');
+      editor.setEditMode("Transform");
       editor.undo();
 
       // Properties should be back to defaults
@@ -312,7 +322,7 @@ describe('EditorAPI — Edit Mode Management', () => {
   });
 });
 
-describe('EditorAPI — existing API still works', () => {
+describe("EditorAPI — existing API still works", () => {
   let engine: Engine;
   let editor: EditorAPI;
   let renderer: RendererAdapter;
@@ -323,19 +333,19 @@ describe('EditorAPI — existing API still works', () => {
     editor = new EditorAPI(engine);
   });
 
-  it('undo/redo delegates work', () => {
+  it("undo/redo delegates work", () => {
     expect(editor.canUndo()).toBe(false);
     expect(editor.canRedo()).toBe(false);
   });
 
   // Selection tests now live in block-api.test.ts (selection owned by BlockAPI)
 
-  it('zoom delegates work', () => {
+  it("zoom delegates work", () => {
     editor.setZoom(2);
     expect(renderer.setZoom).toHaveBeenCalledWith(2, false);
   });
 
-  it('pan delegates work', () => {
+  it("pan delegates work", () => {
     editor.panTo(10, 20);
     expect(renderer.panTo).toHaveBeenCalledWith(10, 20);
   });
@@ -343,7 +353,7 @@ describe('EditorAPI — existing API still works', () => {
 
 // ── Crop improvement: img.ly-style crop ─────────────────────
 
-describe('EditorAPI — img.ly-style crop (page resize)', () => {
+describe("EditorAPI — img.ly-style crop (page resize)", () => {
   let engine: Engine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -352,12 +362,12 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
   /** Helper: create a page block with an image and original dimensions. */
   function createPageWithImage(w: number, h: number) {
     const store = engine.getBlockStore();
-    const cmd = new CreateBlockCommand(store, 'page');
+    const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
     store.setProperty(id, PAGE_WIDTH, w);
     store.setProperty(id, PAGE_HEIGHT, h);
-    store.setProperty(id, IMAGE_SRC, 'test.png');
+    store.setProperty(id, IMAGE_SRC, "test.png");
     store.setProperty(id, IMAGE_ORIGINAL_WIDTH, w);
     store.setProperty(id, IMAGE_ORIGINAL_HEIGHT, h);
     return id;
@@ -373,16 +383,16 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     block._setApplyCropRatioHandler((ratio) => editor._getCrop().applyCropRatio(ratio));
   });
 
-  it('auto-commit on exit mode resizes page to crop dimensions', () => {
+  it("auto-commit on exit mode resizes page to crop dimensions", () => {
     const pageId = createPageWithImage(1920, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     const cropRect = { x: 100, y: 50, width: 960, height: 540 };
     vi.mocked(renderer.getCropRect).mockReturnValue(cropRect);
 
     // Exit crop mode — auto-commits
-    editor.setEditMode('Transform');
+    editor.setEditMode("Transform");
 
     const store = engine.getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(960);
@@ -394,32 +404,32 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
   });
 
-  it('auto-commit does NOT resize non-page blocks', () => {
+  it("auto-commit does NOT resize non-page blocks", () => {
     const store = engine.getBlockStore();
-    const cmd = new CreateBlockCommand(store, 'image');
+    const cmd = new CreateBlockCommand(store, "image");
     engine.exec(cmd);
     const imgId = cmd.getCreatedId()!;
     store.setProperty(imgId, SIZE_WIDTH, 800);
     store.setProperty(imgId, SIZE_HEIGHT, 600);
 
     block.select(imgId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 10, y: 10, width: 400, height: 300 });
-    editor.setEditMode('Transform');
+    editor.setEditMode("Transform");
 
     // image block keeps its original dimensions
     expect(store.getFloat(imgId, SIZE_WIDTH)).toBe(800);
     expect(store.getFloat(imgId, SIZE_HEIGHT)).toBe(600);
   });
 
-  it('undo after exit-mode auto-commit restores page dimensions and crop props', () => {
+  it("undo after exit-mode auto-commit restores page dimensions and crop props", () => {
     const pageId = createPageWithImage(1080, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 100, y: 100, width: 800, height: 600 });
-    editor.setEditMode('Transform');
+    editor.setEditMode("Transform");
 
     const store = engine.getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(800);
@@ -434,7 +444,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     expect(store.getFloat(pageId, CROP_WIDTH)).toBe(0);
   });
 
-  it('setupCropOverlay uses original image dims when available', () => {
+  it("setupCropOverlay uses original image dims when available", () => {
     const pageId = createPageWithImage(1920, 1080);
     const store = engine.getBlockStore();
 
@@ -448,7 +458,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     store.setProperty(pageId, CROP_HEIGHT, 540);
 
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     // Should show overlay with ORIGINAL dims (1920×1080), not current page dims (960×540)
     expect(renderer.showCropOverlay).toHaveBeenCalledWith(
@@ -459,9 +469,9 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     );
   });
 
-  it('setupCropOverlay falls back to page dims when originals are 0', () => {
+  it("setupCropOverlay falls back to page dims when originals are 0", () => {
     const store = engine.getBlockStore();
-    const cmd = new CreateBlockCommand(store, 'page');
+    const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const pageId = cmd.getCreatedId()!;
     store.setProperty(pageId, PAGE_WIDTH, 500);
@@ -469,7 +479,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     // IMAGE_ORIGINAL_WIDTH/HEIGHT default to 0
 
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     expect(renderer.showCropOverlay).toHaveBeenCalledWith(
       pageId,
@@ -479,7 +489,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     );
   });
 
-  it('setupCropOverlay swaps imageRect dims after 90° rotation', () => {
+  it("setupCropOverlay swaps imageRect dims after 90° rotation", () => {
     const store = engine.getBlockStore();
     // Create a portrait page with original dims 640×960
     const pageId = createPageWithImage(640, 960);
@@ -494,7 +504,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     // Enter crop mode
     block.select(pageId);
     vi.mocked(renderer.showCropOverlay).mockClear();
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     // Should show overlay with VISUAL (rotated) dims 960×640, NOT source 640×960
     expect(renderer.showCropOverlay).toHaveBeenCalledWith(
@@ -505,7 +515,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     );
   });
 
-  it('setupCropOverlay transforms existing crop to visual space after rotation', () => {
+  it("setupCropOverlay transforms existing crop to visual space after rotation", () => {
     const store = engine.getBlockStore();
     const pageId = createPageWithImage(640, 960);
 
@@ -522,17 +532,23 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
 
     block.select(pageId);
     vi.mocked(renderer.showCropOverlay).mockClear();
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     // Verify the overlay was called with visual-space imageRect (960×640)
     const call = vi.mocked(renderer.showCropOverlay).mock.calls[0];
     expect(call[1]).toEqual({ x: 0, y: 0, width: 960, height: 640 });
     // Initial crop should be transformed to visual space (non-undefined)
     expect(call[2]).toBeDefined();
-    expect(call[3]).toEqual({ rotation: 90, flipH: false, flipV: false, sourceWidth: 640, sourceHeight: 960 });
+    expect(call[3]).toEqual({
+      rotation: 90,
+      flipH: false,
+      flipV: false,
+      sourceWidth: 640,
+      sourceHeight: 960,
+    });
   });
 
-  it('block.resetCrop restores page to original dimensions', () => {
+  it("block.resetCrop restores page to original dimensions", () => {
     const pageId = createPageWithImage(1920, 1080);
     const store = engine.getBlockStore();
 
@@ -556,7 +572,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     expect(store.getFloat(pageId, CROP_HEIGHT)).toBe(0);
   });
 
-  it('block.resetCrop is a single undo operation', () => {
+  it("block.resetCrop is a single undo operation", () => {
     const pageId = createPageWithImage(1920, 1080);
     const store = engine.getBlockStore();
 
@@ -581,13 +597,13 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
   });
 
-  it('exit-mode auto-commit + undo + redo round-trips correctly', () => {
+  it("exit-mode auto-commit + undo + redo round-trips correctly", () => {
     const pageId = createPageWithImage(1080, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1080, height: 607 });
-    editor.setEditMode('Transform');
+    editor.setEditMode("Transform");
 
     const store = engine.getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
@@ -605,7 +621,7 @@ describe('EditorAPI — img.ly-style crop (page resize)', () => {
   });
 });
 
-describe('BlockAPI — Image Rotation & Flip', () => {
+describe("BlockAPI — Image Rotation & Flip", () => {
   let engine: Engine;
   let block: BlockAPI;
   let editor: EditorAPI;
@@ -621,28 +637,28 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
     // Create a page (1920 × 1080 landscape image)
     const store = engine.getBlockStore();
-    const cmd = new CreateBlockCommand(store, 'page');
+    const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     pageId = cmd.getCreatedId()!;
     store.setProperty(pageId, PAGE_WIDTH, 1920);
     store.setProperty(pageId, PAGE_HEIGHT, 1080);
-    store.setProperty(pageId, IMAGE_SRC, 'test.jpg');
+    store.setProperty(pageId, IMAGE_SRC, "test.jpg");
     store.setProperty(pageId, IMAGE_ORIGINAL_WIDTH, 1920);
     store.setProperty(pageId, IMAGE_ORIGINAL_HEIGHT, 1080);
   });
 
   // --- setImageRotation / getImageRotation ---
 
-  it('default image rotation is 0', () => {
+  it("default image rotation is 0", () => {
     expect(block.getImageRotation(pageId)).toBe(0);
   });
 
-  it('sets and gets arbitrary rotation', () => {
+  it("sets and gets arbitrary rotation", () => {
     block.setImageRotation(pageId, 45);
     expect(block.getImageRotation(pageId)).toBe(45);
   });
 
-  it('clamps rotation to [-180, 180]', () => {
+  it("clamps rotation to [-180, 180]", () => {
     block.setImageRotation(pageId, 200);
     expect(block.getImageRotation(pageId)).toBe(180);
 
@@ -652,7 +668,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
   // --- rotateClockwise ---
 
-  it('rotateClockwise rotates by +90° and swaps page dims', () => {
+  it("rotateClockwise rotates by +90° and swaps page dims", () => {
     block.rotateClockwise(pageId);
     const store = engine.getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(90);
@@ -660,7 +676,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
   });
 
-  it('rotateClockwise wraps from 90→180 without dim swap', () => {
+  it("rotateClockwise wraps from 90→180 without dim swap", () => {
     block.rotateClockwise(pageId);
     block.rotateClockwise(pageId);
     const store = engine.getBlockStore();
@@ -672,7 +688,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
   });
 
-  it('rotateClockwise is undoable as a single batch', () => {
+  it("rotateClockwise is undoable as a single batch", () => {
     block.rotateClockwise(pageId);
     expect(block.getImageRotation(pageId)).toBe(90);
 
@@ -685,7 +701,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
   // --- rotateCounterClockwise ---
 
-  it('rotateCounterClockwise rotates by -90° and swaps page dims', () => {
+  it("rotateCounterClockwise rotates by -90° and swaps page dims", () => {
     block.rotateCounterClockwise(pageId);
     const store = engine.getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(-90);
@@ -695,7 +711,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
   // --- flipCropHorizontal / flipCropVertical ---
 
-  it('flipCropHorizontal toggles the flip flag', () => {
+  it("flipCropHorizontal toggles the flip flag", () => {
     const store = engine.getBlockStore();
     expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
 
@@ -706,7 +722,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
     expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
   });
 
-  it('flipCropVertical toggles the flip flag', () => {
+  it("flipCropVertical toggles the flip flag", () => {
     const store = engine.getBlockStore();
     expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
 
@@ -719,7 +735,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
   // --- resetRotationAndFlip ---
 
-  it('resetRotationAndFlip restores everything to defaults', () => {
+  it("resetRotationAndFlip restores everything to defaults", () => {
     block.rotateClockwise(pageId);
     block.flipCropHorizontal(pageId);
     block.flipCropVertical(pageId);
@@ -734,7 +750,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
   });
 
-  it('resetRotationAndFlip is undoable as a single batch', () => {
+  it("resetRotationAndFlip is undoable as a single batch", () => {
     block.rotateClockwise(pageId);
     block.flipCropHorizontal(pageId);
 
@@ -749,7 +765,7 @@ describe('BlockAPI — Image Rotation & Flip', () => {
 
 // ── applyCropDimensions / getCropVisualDimensions ────────────────
 
-describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
+describe("EditorCrop — applyCropDimensions & getCropVisualDimensions", () => {
   let engine: Engine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -757,12 +773,12 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
 
   function createPageWithImage(w: number, h: number) {
     const store = engine.getBlockStore();
-    const cmd = new CreateBlockCommand(store, 'page');
+    const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
     store.setProperty(id, PAGE_WIDTH, w);
     store.setProperty(id, PAGE_HEIGHT, h);
-    store.setProperty(id, IMAGE_SRC, 'test.png');
+    store.setProperty(id, IMAGE_SRC, "test.png");
     store.setProperty(id, IMAGE_ORIGINAL_WIDTH, w);
     store.setProperty(id, IMAGE_ORIGINAL_HEIGHT, h);
     return id;
@@ -779,10 +795,10 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     block._setGetCropVisualDimensionsHandler(() => editor._getCrop().getCropVisualDimensions());
   });
 
-  it('applyCropDimensions sets crop overlay to exact pixel size', () => {
+  it("applyCropDimensions sets crop overlay to exact pixel size", () => {
     const pageId = createPageWithImage(1920, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     // Mock: image rect = full image, current crop = full image
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
@@ -799,10 +815,10 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     expect(renderer.fitToRect).toHaveBeenCalled();
   });
 
-  it('applyCropDimensions clamps to image bounds when requested dims exceed', () => {
+  it("applyCropDimensions clamps to image bounds when requested dims exceed", () => {
     const pageId = createPageWithImage(800, 600);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
@@ -816,10 +832,10 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     expect(call.height).toBe(450);
   });
 
-  it('applyCropDimensions centers on current crop center', () => {
+  it("applyCropDimensions centers on current crop center", () => {
     const pageId = createPageWithImage(1920, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
     // Current crop is offset — center at (500, 300)
@@ -835,10 +851,10 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     expect(call.height).toBe(400);
   });
 
-  it('getCropVisualDimensions returns rounded dimensions from overlay', () => {
+  it("getCropVisualDimensions returns rounded dimensions from overlay", () => {
     const pageId = createPageWithImage(1920, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 10, y: 20, width: 960.7, height: 540.3 });
 
@@ -846,7 +862,7 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     expect(dims).toEqual({ width: 961, height: 540 });
   });
 
-  it('getCropVisualDimensions returns null when no overlay is active', () => {
+  it("getCropVisualDimensions returns null when no overlay is active", () => {
     const pageId = createPageWithImage(1920, 1080);
     vi.mocked(renderer.getCropRect).mockReturnValue(null);
 
@@ -854,10 +870,10 @@ describe('EditorCrop — applyCropDimensions & getCropVisualDimensions', () => {
     expect(dims).toBeNull();
   });
 
-  it('applyCropDimensions enforces minimum of 1px', () => {
+  it("applyCropDimensions enforces minimum of 1px", () => {
     const pageId = createPageWithImage(1920, 1080);
     block.select(pageId);
-    editor.setEditMode('Crop');
+    editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });

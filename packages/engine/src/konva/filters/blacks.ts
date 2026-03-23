@@ -6,7 +6,7 @@
  * Negative values crush blacks (deepen shadows).
  */
 export function Blacks(this: any, imageData: ImageData): void {
-  const blacks = this.getAttr('blacks') ?? 0;
+  const blacks = this.getAttr("blacks") ?? 0;
   if (blacks === 0) return;
 
   const pixels = imageData.data;

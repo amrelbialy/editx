@@ -1,4 +1,4 @@
-import type { EditorContext } from './editor-context';
+import type { EditorContext } from "./editor-context";
 
 /**
  * Delegates undo/redo operations to the Engine's history manager.

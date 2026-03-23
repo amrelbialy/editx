@@ -1,22 +1,22 @@
-import Konva from 'konva';
-import type { TextRun, TextRunStyle } from '../block/block.types';
+import Konva from "konva";
+import type { TextRun, TextRunStyle } from "../block/block.types";
 
 /** Default style values used when a run's style property is undefined. */
 const DEFAULT_STYLE: Required<TextRunStyle> = {
   fontSize: 16,
-  fontFamily: 'Arial',
-  fontWeight: 'normal',
-  fontStyle: 'normal',
-  fill: '#000000',
+  fontFamily: "Arial",
+  fontWeight: "normal",
+  fontStyle: "normal",
+  fill: "#000000",
   letterSpacing: 0,
-  textDecoration: '',
-  backgroundColor: '',
-  textTransform: 'none',
-  textShadowColor: '',
+  textDecoration: "",
+  backgroundColor: "",
+  textTransform: "none",
+  textShadowColor: "",
   textShadowBlur: 0,
   textShadowOffsetX: 0,
   textShadowOffsetY: 0,
-  textStrokeColor: '',
+  textStrokeColor: "",
   textStrokeWidth: 0,
 };
 
@@ -35,23 +35,23 @@ interface LinePart {
 let _dummyCtx: CanvasRenderingContext2D | null = null;
 function getDummyContext(): CanvasRenderingContext2D {
   if (!_dummyCtx) {
-    const c = document.createElement('canvas');
-    _dummyCtx = c.getContext('2d')!;
+    const c = document.createElement("canvas");
+    _dummyCtx = c.getContext("2d")!;
   }
   return _dummyCtx;
 }
 
 function normalizeFontFamily(fontFamily: string): string {
   return fontFamily
-    .split(',')
+    .split(",")
     .map((f) => {
       f = f.trim();
-      if (f.includes(' ') && !f.includes('"') && !f.includes("'")) {
+      if (f.includes(" ") && !f.includes('"') && !f.includes("'")) {
         f = `"${f}"`;
       }
       return f;
     })
-    .join(', ');
+    .join(", ");
 }
 
 function formatFont(style: Required<TextRunStyle>): string {
@@ -61,10 +61,14 @@ function formatFont(style: Required<TextRunStyle>): string {
 /** Apply text-transform to a string. Original text is preserved in the data model. */
 function applyTextTransform(text: string, transform: string): string {
   switch (transform) {
-    case 'uppercase': return text.toUpperCase();
-    case 'lowercase': return text.toLowerCase();
-    case 'capitalize': return text.replace(/\b\w/g, (c) => c.toUpperCase());
-    default: return text;
+    case "uppercase":
+      return text.toUpperCase();
+    case "lowercase":
+      return text.toLowerCase();
+    case "capitalize":
+      return text.replace(/\b\w/g, (c) => c.toUpperCase());
+    default:
+      return text;
   }
 }
 
@@ -117,7 +121,16 @@ export class FormattedText extends Konva.Shape {
   constructor(config?: FormattedTextConfig) {
     super(config);
 
-    const watchAttrs = ['textRuns', 'align', 'verticalAlign', 'lineHeight', 'padding', 'wrap', 'width', 'height'];
+    const watchAttrs = [
+      "textRuns",
+      "align",
+      "verticalAlign",
+      "lineHeight",
+      "padding",
+      "wrap",
+      "width",
+      "height",
+    ];
     watchAttrs.forEach((attr) => {
       this.on(`${attr}Change.konva`, () => {
         this._textLines = [];
@@ -131,48 +144,48 @@ export class FormattedText extends Konva.Shape {
   textRuns(): TextRun[];
   textRuns(val: TextRun[]): this;
   textRuns(val?: TextRun[]): TextRun[] | this {
-    if (val === undefined) return this.getAttr('textRuns') ?? [];
-    this.setAttr('textRuns', val);
+    if (val === undefined) return this.getAttr("textRuns") ?? [];
+    this.setAttr("textRuns", val);
     return this;
   }
 
   align(): string;
   align(val: string): this;
   align(val?: string): string | this {
-    if (val === undefined) return this.getAttr('align') ?? 'left';
-    this.setAttr('align', val);
+    if (val === undefined) return this.getAttr("align") ?? "left";
+    this.setAttr("align", val);
     return this;
   }
 
   verticalAlign(): string;
   verticalAlign(val: string): this;
   verticalAlign(val?: string): string | this {
-    if (val === undefined) return this.getAttr('verticalAlign') ?? 'top';
-    this.setAttr('verticalAlign', val);
+    if (val === undefined) return this.getAttr("verticalAlign") ?? "top";
+    this.setAttr("verticalAlign", val);
     return this;
   }
 
   lineHeight(): number;
   lineHeight(val: number): this;
   lineHeight(val?: number): number | this {
-    if (val === undefined) return this.getAttr('lineHeight') ?? 1.2;
-    this.setAttr('lineHeight', val);
+    if (val === undefined) return this.getAttr("lineHeight") ?? 1.2;
+    this.setAttr("lineHeight", val);
     return this;
   }
 
   padding(): number;
   padding(val: number): this;
   padding(val?: number): number | this {
-    if (val === undefined) return this.getAttr('padding') ?? 0;
-    this.setAttr('padding', val);
+    if (val === undefined) return this.getAttr("padding") ?? 0;
+    this.setAttr("padding", val);
     return this;
   }
 
   wrap(): string;
   wrap(val: string): this;
   wrap(val?: string): string | this {
-    if (val === undefined) return this.getAttr('wrap') ?? 'word';
-    this.setAttr('wrap', val);
+    if (val === undefined) return this.getAttr("wrap") ?? "word";
+    this.setAttr("wrap", val);
     return this;
   }
 
@@ -180,7 +193,9 @@ export class FormattedText extends Konva.Shape {
 
   getPlainText(): string {
     if (this._plainTextCache === null) {
-      this._plainTextCache = this.textRuns().map((r) => r.text).join('');
+      this._plainTextCache = this.textRuns()
+        .map((r) => r.text)
+        .join("");
     }
     return this._plainTextCache;
   }
@@ -201,7 +216,12 @@ export class FormattedText extends Konva.Shape {
 
   // ── Text layout computation ────────────────────────
 
-  private _measureText(ctx: CanvasRenderingContext2D, text: string, style: Required<TextRunStyle>, trailingSpacing = false): number {
+  private _measureText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    style: Required<TextRunStyle>,
+    trailingSpacing = false,
+  ): number {
     ctx.font = formatFont(style);
     const displayText = applyTextTransform(text, style.textTransform);
     if (style.letterSpacing !== 0 && displayText.length > 0) {
@@ -232,12 +252,12 @@ export class FormattedText extends Konva.Shape {
     const pad = this.padding();
     const maxWidth = (this.width() || 99999) - pad * 2;
     const wrapMode = this.wrap();
-    const shouldWrap = wrapMode !== 'none';
-    const wrapAtWord = wrapMode !== 'char';
+    const shouldWrap = wrapMode !== "none";
+    const wrapAtWord = wrapMode !== "char";
 
     // Flatten runs into a single text + style mapping per character
     const fullText = this.getPlainText();
-    const lines = fullText.split('\n');
+    const lines = fullText.split("\n");
 
     const resolvedStyles: Required<TextRunStyle>[] = [];
     for (const run of runs) {
@@ -253,9 +273,10 @@ export class FormattedText extends Konva.Shape {
     for (const rawLine of lines) {
       if (rawLine.length === 0) {
         // Empty line — still takes up height based on surrounding style
-        const s = resolvedStyles[globalCharIdx] ?? resolvedStyles[globalCharIdx - 1] ?? resolveStyle({});
+        const s =
+          resolvedStyles[globalCharIdx] ?? resolvedStyles[globalCharIdx - 1] ?? resolveStyle({});
         result.push({
-          parts: [{ text: '', style: s, width: 0 }],
+          parts: [{ text: "", style: s, width: 0 }],
           width: 0,
           height: s.fontSize * this.lineHeight(),
         });
@@ -318,11 +339,11 @@ export class FormattedText extends Konva.Shape {
         if (wrapAtWord && bestLen < remaining.length) {
           const candidate = remaining.slice(0, bestLen);
           const nextChar = remaining[bestLen];
-          const nextIsBreak = nextChar === ' ' || nextChar === '-';
+          const nextIsBreak = nextChar === " " || nextChar === "-";
           let wrapIdx = bestLen;
           if (!nextIsBreak) {
-            const lastSpace = candidate.lastIndexOf(' ');
-            const lastDash = candidate.lastIndexOf('-');
+            const lastSpace = candidate.lastIndexOf(" ");
+            const lastDash = candidate.lastIndexOf("-");
             const breakAt = Math.max(lastSpace, lastDash);
             if (breakAt > 0) {
               wrapIdx = breakAt + 1;
@@ -341,7 +362,7 @@ export class FormattedText extends Konva.Shape {
         globalCharIdx += bestLen;
 
         // Skip a space at the break point (don't start next line with a space)
-        if (cursor < rawLine.length && rawLine[cursor] === ' ') {
+        if (cursor < rawLine.length && rawLine[cursor] === " ") {
           cursor++;
           globalCharIdx++;
         }
@@ -378,7 +399,7 @@ export class FormattedText extends Konva.Shape {
 
     // Walk through characters, grouping by style — maintain run pointer (O(N) total)
     let currentStyle = resolveStyle(runs[runIdx]?.style ?? {});
-    let currentText = '';
+    let currentText = "";
     let charGlobal = globalStartIdx;
     let runEnd = runCharStart + (runs[runIdx]?.text.length ?? 0);
 
@@ -412,7 +433,7 @@ export class FormattedText extends Konva.Shape {
         // Not the last part — add trailing spacing for the gap to the next part
         const w = this._measureText(ctx, currentText, currentStyle, true);
         parts.push({ text: currentText, style: currentStyle, width: w });
-        currentText = '';
+        currentText = "";
         currentStyle = charStyle;
       } else if (!sameStyle) {
         currentStyle = charStyle;
@@ -445,7 +466,7 @@ export class FormattedText extends Konva.Shape {
     const vAlign = this.verticalAlign();
 
     // Block-level background fill
-    const bgFill = this.getAttr('backgroundFill') as string | undefined;
+    const bgFill = this.getAttr("backgroundFill") as string | undefined;
     if (bgFill) {
       ctx.fillStyle = bgFill;
       ctx.fillRect(0, 0, this.width() || 0, this.height() || 0);
@@ -455,19 +476,19 @@ export class FormattedText extends Konva.Shape {
     const textHeight = textLines.reduce((sum, l) => sum + l.height, 0);
 
     let yOffset = pad;
-    if (vAlign === 'middle' && totalHeight > 0) {
+    if (vAlign === "middle" && totalHeight > 0) {
       yOffset = pad + (totalHeight - textHeight) / 2;
-    } else if (vAlign === 'bottom' && totalHeight > 0) {
+    } else if (vAlign === "bottom" && totalHeight > 0) {
       yOffset = pad + totalHeight - textHeight;
     }
 
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = "top";
 
     for (const line of textLines) {
       let xOffset = pad;
-      if (align === 'center') {
+      if (align === "center") {
         xOffset = pad + (totalWidth - line.width) / 2;
-      } else if (align === 'right') {
+      } else if (align === "right") {
         xOffset = pad + totalWidth - line.width;
       }
 
@@ -488,9 +509,11 @@ export class FormattedText extends Konva.Shape {
         }
 
         // Text shadow setup
-        const hasShadow = !!part.style.textShadowColor && (
-          part.style.textShadowBlur > 0 || part.style.textShadowOffsetX !== 0 || part.style.textShadowOffsetY !== 0
-        );
+        const hasShadow =
+          !!part.style.textShadowColor &&
+          (part.style.textShadowBlur > 0 ||
+            part.style.textShadowOffsetX !== 0 ||
+            part.style.textShadowOffsetY !== 0);
         if (hasShadow) {
           ctx.shadowColor = part.style.textShadowColor;
           ctx.shadowBlur = part.style.textShadowBlur;
@@ -503,7 +526,7 @@ export class FormattedText extends Konva.Shape {
         if (hasStroke) {
           ctx.strokeStyle = part.style.textStrokeColor;
           ctx.lineWidth = part.style.textStrokeWidth;
-          ctx.lineJoin = 'round';
+          ctx.lineJoin = "round";
           if (part.style.letterSpacing !== 0 && displayText.length > 0) {
             let charX = xOffset;
             for (let i = 0; i < displayText.length; i++) {
@@ -530,7 +553,7 @@ export class FormattedText extends Konva.Shape {
 
         // Reset shadow
         if (hasShadow) {
-          ctx.shadowColor = 'transparent';
+          ctx.shadowColor = "transparent";
           ctx.shadowBlur = 0;
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
@@ -543,12 +566,12 @@ export class FormattedText extends Konva.Shape {
           ctx.lineWidth = decoLineWidth;
           ctx.beginPath();
 
-          if (part.style.textDecoration.includes('underline')) {
+          if (part.style.textDecoration.includes("underline")) {
             const underY = partYOffset + part.style.fontSize;
             ctx.moveTo(xOffset, underY);
             ctx.lineTo(xOffset + part.width, underY);
           }
-          if (part.style.textDecoration.includes('line-through')) {
+          if (part.style.textDecoration.includes("line-through")) {
             const strikeY = partYOffset + part.style.fontSize / 2;
             ctx.moveTo(xOffset, strikeY);
             ctx.lineTo(xOffset + part.width, strikeY);
@@ -589,6 +612,6 @@ export class FormattedText extends Konva.Shape {
   }
 
   getClassName(): string {
-    return 'FormattedText';
+    return "FormattedText";
   }
 }

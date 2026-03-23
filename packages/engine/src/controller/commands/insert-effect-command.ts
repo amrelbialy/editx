@@ -1,6 +1,6 @@
-import { BlockStore } from '../../block/block-store';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { BlockStore } from "../../block/block-store";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export class InsertEffectCommand extends PatchCommand {
   #store: BlockStore;
@@ -23,8 +23,6 @@ export class InsertEffectCommand extends PatchCommand {
 
     const blockAfter = this.#store.snapshot(this.#blockId);
 
-    return [
-      { id: String(this.#blockId), before: blockBefore, after: blockAfter },
-    ];
+    return [{ id: String(this.#blockId), before: blockBefore, after: blockAfter }];
   }
 }

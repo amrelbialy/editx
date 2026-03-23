@@ -1,23 +1,23 @@
-import React from 'react';
-import { Heading1, Heading, Type, AlignLeft } from 'lucide-react';
-import type { TextPreset } from '../../hooks/use-text-tool';
+import { AlignLeft, Heading, Heading1, Type } from "lucide-react";
+import type React from "react";
+import type { TextPreset } from "../../hooks/use-text-tool";
 
 export interface TextPanelProps {
   onAddText: (preset: TextPreset) => void;
 }
 
 const TEXT_PRESETS: Array<{ preset: TextPreset; label: string; icon: React.ReactNode }> = [
-  { preset: 'title',      label: 'Title',      icon: <Heading1 className="h-5 w-5" /> },
-  { preset: 'heading',    label: 'Heading',    icon: <Heading className="h-5 w-5" /> },
-  { preset: 'subheading', label: 'Subheading', icon: <Type className="h-5 w-5" /> },
-  { preset: 'body',       label: 'Body Text',  icon: <AlignLeft className="h-5 w-5" /> },
+  { preset: "title", label: "Title", icon: <Heading1 className="h-5 w-5" /> },
+  { preset: "heading", label: "Heading", icon: <Heading className="h-5 w-5" /> },
+  { preset: "subheading", label: "Subheading", icon: <Type className="h-5 w-5" /> },
+  { preset: "body", label: "Body Text", icon: <AlignLeft className="h-5 w-5" /> },
 ];
 
 export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
   return (
     <div className="flex flex-col gap-1">
       <div className="text-xs font-medium text-muted-foreground mb-1">Add Text</div>
-        <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         {TEXT_PRESETS.map((item) => (
           <button
             key={item.preset}

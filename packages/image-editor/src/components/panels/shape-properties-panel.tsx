@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import {
-  type CreativeEngine,
   type Color,
+  type CreativeEngine,
   colorToHex,
-  hexToColor,
   FILL_SOLID_COLOR,
+  hexToColor,
   SHAPE_RECT_CORNER_RADIUS,
-  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
-} from '@creative-editor/engine';
-import { Slider } from '../ui/slider';
-import { Separator } from '../ui/separator';
+} from "@creative-editor/engine";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
 export interface ShapePropertiesPanelProps {
   engine: CreativeEngine;
@@ -44,7 +44,7 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
   const pos = b.getPosition(blockId);
   const size = b.getSize(blockId);
 
-  let fillColor = '#4a90e2';
+  let fillColor = "#4a90e2";
   const fillId = b.getFill(blockId);
   if (fillId != null) {
     const c = b.getColor(fillId, FILL_SOLID_COLOR);
@@ -56,7 +56,7 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
   const shapeId = b.getShape(blockId);
   if (shapeId != null) {
     shapeKind = b.getKind(shapeId) || shapeKind;
-    if (shapeKind === 'rect') {
+    if (shapeKind === "rect") {
       cornerRadius = b.getFloat(shapeId, SHAPE_RECT_CORNER_RADIUS) ?? 0;
     }
   }
@@ -74,7 +74,7 @@ function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
     cornerRadius,
     shapeKind,
     shadowEnabled,
-    shadowColor: sc ? colorToInputHex(sc) : '#000000',
+    shadowColor: sc ? colorToInputHex(sc) : "#000000",
     shadowOffsetX: b.getShadowOffsetX(blockId),
     shadowOffsetY: b.getShadowOffsetY(blockId),
     shadowBlur: b.getShadowBlur(blockId),
@@ -94,11 +94,11 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
     const handler = () => setState(readShapeState(engine, blockId));
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, blockId]);
 
@@ -106,98 +106,137 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
     setState(readShapeState(engine, blockId));
   }, [engine, blockId]);
 
-  const handleFillColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const fillId = engine.block.getFill(blockId);
-    if (fillId != null) {
-      engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(e.target.value));
-    }
-    update();
-  }, [engine, blockId, update]);
-
-  const handleOpacity = useCallback(([v]: number[]) => {
-    engine.block.setOpacity(blockId, v);
-    update();
-  }, [engine, blockId, update]);
-
-  const handlePosX = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val)) {
-      engine.block.setPosition(blockId, val, state.y);
+  const handleFillColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const fillId = engine.block.getFill(blockId);
+      if (fillId != null) {
+        engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(e.target.value));
+      }
       update();
-    }
-  }, [engine, blockId, state.y, update]);
+    },
+    [engine, blockId, update],
+  );
 
-  const handlePosY = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val)) {
-      engine.block.setPosition(blockId, state.x, val);
+  const handleOpacity = useCallback(
+    ([v]: number[]) => {
+      engine.block.setOpacity(blockId, v);
       update();
-    }
-  }, [engine, blockId, state.x, update]);
+    },
+    [engine, blockId, update],
+  );
 
-  const handleWidth = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val) && val > 0) {
-      engine.block.setSize(blockId, val, state.height);
-      update();
-    }
-  }, [engine, blockId, state.height, update]);
+  const handlePosX = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val)) {
+        engine.block.setPosition(blockId, val, state.y);
+        update();
+      }
+    },
+    [engine, blockId, state.y, update],
+  );
 
-  const handleHeight = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val) && val > 0) {
-      engine.block.setSize(blockId, state.width, val);
-      update();
-    }
-  }, [engine, blockId, state.width, update]);
+  const handlePosY = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val)) {
+        engine.block.setPosition(blockId, state.x, val);
+        update();
+      }
+    },
+    [engine, blockId, state.x, update],
+  );
 
-  const handleCornerRadius = useCallback(([v]: number[]) => {
-    const shapeId = engine.block.getShape(blockId);
-    if (shapeId != null) {
-      engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, v);
-      update();
-    }
-  }, [engine, blockId, update]);
+  const handleWidth = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val) && val > 0) {
+        engine.block.setSize(blockId, val, state.height);
+        update();
+      }
+    },
+    [engine, blockId, state.height, update],
+  );
+
+  const handleHeight = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val) && val > 0) {
+        engine.block.setSize(blockId, state.width, val);
+        update();
+      }
+    },
+    [engine, blockId, state.width, update],
+  );
+
+  const handleCornerRadius = useCallback(
+    ([v]: number[]) => {
+      const shapeId = engine.block.getShape(blockId);
+      if (shapeId != null) {
+        engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, v);
+        update();
+      }
+    },
+    [engine, blockId, update],
+  );
 
   const handleShadowToggle = useCallback(() => {
     engine.block.setShadowEnabled(blockId, !state.shadowEnabled);
     update();
   }, [engine, blockId, state.shadowEnabled, update]);
 
-  const handleShadowColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowColor(blockId, hexToColor(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleShadowColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowColor(blockId, hexToColor(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleShadowOffsetX = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowOffsetX(blockId, parseFloat(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleShadowOffsetX = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowOffsetX(blockId, parseFloat(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleShadowOffsetY = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowOffsetY(blockId, parseFloat(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleShadowOffsetY = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowOffsetY(blockId, parseFloat(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleShadowBlur = useCallback(([v]: number[]) => {
-    engine.block.setShadowBlur(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleShadowBlur = useCallback(
+    ([v]: number[]) => {
+      engine.block.setShadowBlur(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
   const handleStrokeToggle = useCallback(() => {
     engine.block.setStrokeEnabled(blockId, !state.strokeEnabled);
     update();
   }, [engine, blockId, state.strokeEnabled, update]);
 
-  const handleStrokeColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setStrokeColor(blockId, hexToColor(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleStrokeColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setStrokeColor(blockId, hexToColor(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleStrokeWidth = useCallback(([v]: number[]) => {
-    engine.block.setStrokeWidth(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleStrokeWidth = useCallback(
+    ([v]: number[]) => {
+      engine.block.setStrokeWidth(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -254,7 +293,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
       </Section>
 
       {/* Corner Radius (rect only) */}
-      {state.shapeKind === 'rect' && (
+      {state.shapeKind === "rect" && (
         <Section label="Border Radius">
           <div className="flex items-center gap-2">
             <Slider

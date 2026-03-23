@@ -1,22 +1,32 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Scan, Square, RectangleHorizontal, RectangleVertical, Monitor, Smartphone, Link, Unlink } from 'lucide-react';
-import { useImageEditorStore, type CropPresetId } from '../../store/image-editor-store';
-import { useConfig } from '../../config/config-context';
-import { ResizePresets } from './resize-presets';
-import type { ResizePreset } from '../../config/config.types';
-import { cn } from '../../utils/cn';
+import {
+  Link,
+  Monitor,
+  RectangleHorizontal,
+  RectangleVertical,
+  Scan,
+  Smartphone,
+  Square,
+  Unlink,
+} from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ResizePreset } from "../../config/config.types";
+import { useConfig } from "../../config/config-context";
+import { type CropPresetId, useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
+import { ResizePresets } from "./resize-presets";
 
 const presets: { id: CropPresetId; label: string; icon: React.ReactNode }[] = [
-  { id: 'free', label: 'Free', icon: <Scan className="h-4 w-4" /> },
-  { id: 'original', label: 'Original', icon: <RectangleHorizontal className="h-4 w-4" /> },
-  { id: '1:1', label: '1:1', icon: <Square className="h-4 w-4" /> },
-  { id: '4:3', label: '4:3', icon: <RectangleHorizontal className="h-4 w-4" /> },
-  { id: '3:4', label: '3:4', icon: <RectangleVertical className="h-4 w-4" /> },
-  { id: '16:9', label: '16:9', icon: <Monitor className="h-4 w-4" /> },
-  { id: '9:16', label: '9:16', icon: <Smartphone className="h-4 w-4" /> },
+  { id: "free", label: "Free", icon: <Scan className="h-4 w-4" /> },
+  { id: "original", label: "Original", icon: <RectangleHorizontal className="h-4 w-4" /> },
+  { id: "1:1", label: "1:1", icon: <Square className="h-4 w-4" /> },
+  { id: "4:3", label: "4:3", icon: <RectangleHorizontal className="h-4 w-4" /> },
+  { id: "3:4", label: "3:4", icon: <RectangleVertical className="h-4 w-4" /> },
+  { id: "16:9", label: "16:9", icon: <Monitor className="h-4 w-4" /> },
+  { id: "9:16", label: "9:16", icon: <Smartphone className="h-4 w-4" /> },
 ];
 
-type CropTab = 'aspectRatio' | 'resize';
+type CropTab = "aspectRatio" | "resize";
 
 export interface CropPanelProps {
   /** Called when user selects an aspect ratio preset. */
@@ -36,7 +46,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
   const config = useConfig();
 
-  const [tab, setTab] = useState<CropTab>('aspectRatio');
+  const [tab, setTab] = useState<CropTab>("aspectRatio");
   const [ratioLocked, setRatioLocked] = useState(true);
   const [resizeWidth, setResizeWidth] = useState<number>(0);
   const [resizeHeight, setResizeHeight] = useState<number>(0);
@@ -56,12 +66,12 @@ export const CropPanel: React.FC<CropPanelProps> = ({
 
   // Initialize resize dimensions on tab switch
   useEffect(() => {
-    if (tab === 'resize' && cropDimensions) {
+    if (tab === "resize" && cropDimensions) {
       setResizeWidth(cropDimensions.width);
       setResizeHeight(cropDimensions.height);
       setActiveResizePreset(null);
     }
-  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, cropDimensions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const markUserEditing = useCallback(() => {
     userEditingRef.current = true;
@@ -138,23 +148,23 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       {/* Tab switcher */}
       <div className="flex bg-muted rounded-lg p-0.5">
         <button
-          onClick={() => setTab('aspectRatio')}
+          onClick={() => setTab("aspectRatio")}
           className={cn(
-            'flex-1 text-xs font-medium py-1.5 rounded-md transition-colors',
-            tab === 'aspectRatio'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
+            "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
+            tab === "aspectRatio"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           Aspect Ratio
         </button>
         <button
-          onClick={() => setTab('resize')}
+          onClick={() => setTab("resize")}
           className={cn(
-            'flex-1 text-xs font-medium py-1.5 rounded-md transition-colors',
-            tab === 'resize'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
+            "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
+            tab === "resize"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           Resize
@@ -162,7 +172,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       </div>
 
       {/* Aspect Ratio tab */}
-      {tab === 'aspectRatio' && (
+      {tab === "aspectRatio" && (
         <div>
           <div className="text-xs font-medium text-muted-foreground mb-1">Aspect Ratio</div>
           <div className="grid grid-cols-2 gap-1.5">
@@ -172,10 +182,10 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                 onClick={() => handleSelect(preset.id)}
                 data-testid={`crop-preset-${preset.id}`}
                 className={cn(
-                  'flex flex-col items-center gap-1 rounded-md px-2 py-2.5 text-xs transition-colors',
+                  "flex flex-col items-center gap-1 rounded-md px-2 py-2.5 text-xs transition-colors",
                   cropPreset === preset.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
               >
                 {preset.icon}
@@ -187,7 +197,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       )}
 
       {/* Resize tab */}
-      {tab === 'resize' && (
+      {tab === "resize" && (
         <div className="flex flex-col gap-4">
           {/* Crop Area dimensions */}
           <div>
@@ -199,7 +209,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                 <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
                   <input
                     type="number"
-                    value={resizeWidth || ''}
+                    value={resizeWidth || ""}
                     onChange={(e) => handleWidthChange(Number(e.target.value))}
                     min={1}
                     className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -214,12 +224,12 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                 <button
                   onClick={() => setRatioLocked((v) => !v)}
                   className={cn(
-                    'p-1 rounded transition-colors',
+                    "p-1 rounded transition-colors",
                     ratioLocked
-                      ? 'text-primary hover:text-primary/80'
-                      : 'text-muted-foreground hover:text-foreground',
+                      ? "text-primary hover:text-primary/80"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
-                  title={ratioLocked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
+                  title={ratioLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
                   data-testid="resize-ratio-lock"
                 >
                   {ratioLocked ? <Link className="h-4 w-4" /> : <Unlink className="h-4 w-4" />}
@@ -232,7 +242,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                 <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
                   <input
                     type="number"
-                    value={resizeHeight || ''}
+                    value={resizeHeight || ""}
                     onChange={(e) => handleHeightChange(Number(e.target.value))}
                     min={1}
                     className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

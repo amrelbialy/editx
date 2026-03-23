@@ -1,4 +1,4 @@
-import type { BlockData, Color, PropertyValue, TextRun } from './block.types';
+import type { BlockData, Color, PropertyValue, TextRun } from "./block.types";
 
 /**
  * Typed property accessors for block data.
@@ -23,28 +23,28 @@ export class BlockProperties {
 
   getFloat(id: number, key: string): number {
     const v = this.getProperty(id, key);
-    return typeof v === 'number' ? v : 0;
+    return typeof v === "number" ? v : 0;
   }
 
   getString(id: number, key: string): string {
     const v = this.getProperty(id, key);
-    return typeof v === 'string' ? v : '';
+    return typeof v === "string" ? v : "";
   }
 
   getBool(id: number, key: string): boolean {
     const v = this.getProperty(id, key);
-    return typeof v === 'boolean' ? v : false;
+    return typeof v === "boolean" ? v : false;
   }
 
   getColor(id: number, key: string): Color {
     const v = this.getProperty(id, key);
-    if (v && typeof v === 'object' && 'r' in v) return v as Color;
+    if (v && typeof v === "object" && "r" in v) return v as Color;
     return { r: 0, g: 0, b: 0, a: 1 };
   }
 
   getTextRuns(id: number, key: string): TextRun[] {
     const v = this.getProperty(id, key);
-    return Array.isArray(v) ? v as TextRun[] : [];
+    return Array.isArray(v) ? (v as TextRun[]) : [];
   }
 
   findAllProperties(id: number): string[] {

@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
-import type { RendererAdapter } from '../../render-adapter';
+import { vi } from "vitest";
+import type { RendererAdapter } from "../../render-adapter";
 
 /**
  * Creates a mock RendererAdapter with vi.fn() stubs for all methods.

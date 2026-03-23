@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo, useCallback } from 'react';
-import { en } from './translations/en';
+import type React from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { en } from "./translations/en";
 
 interface I18nContextValue {
   locale: string;
@@ -7,7 +8,7 @@ interface I18nContextValue {
 }
 
 const I18nContext = createContext<I18nContextValue>({
-  locale: 'en',
+  locale: "en",
   t: (key: string, fallback?: string) => fallback ?? key,
 });
 
@@ -18,7 +19,7 @@ interface I18nProviderProps {
 }
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({
-  locale = 'en',
+  locale = "en",
   translations: userTranslations,
   children,
 }) => {
@@ -34,16 +35,9 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
     [merged],
   );
 
-  const value = useMemo<I18nContextValue>(
-    () => ({ locale, t }),
-    [locale, t],
-  );
+  const value = useMemo<I18nContextValue>(() => ({ locale, t }), [locale, t]);
 
-  return (
-    <I18nContext.Provider value={value}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
 
 export function useTranslation() {

@@ -1,10 +1,30 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-export type ImageEditorTool = 'select' | 'crop' | 'rotate' | 'adjust' | 'filter' | 'resize' | 'shapes' | 'text' | 'image' | 'pen';
+export type ImageEditorTool =
+  | "select"
+  | "crop"
+  | "rotate"
+  | "adjust"
+  | "filter"
+  | "resize"
+  | "shapes"
+  | "text"
+  | "image"
+  | "pen";
 
-export type PropertySidePanel = 'color' | 'background' | 'shadow' | 'position' | 'stroke' | 'adjust' | 'filter' | 'imageFill' | 'text-advanced' | null;
+export type PropertySidePanel =
+  | "color"
+  | "background"
+  | "shadow"
+  | "position"
+  | "stroke"
+  | "adjust"
+  | "filter"
+  | "imageFill"
+  | "text-advanced"
+  | null;
 
-export type CropPresetId = 'free' | 'original' | '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
+export type CropPresetId = "free" | "original" | "1:1" | "4:3" | "3:4" | "16:9" | "9:16";
 
 export interface OriginalImageInfo {
   src: string;
@@ -57,13 +77,13 @@ interface ImageEditorState {
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
-  activeTool: 'select',
+  activeTool: "select",
   originalImage: null,
   isLoading: true,
   editableBlockId: null,
   error: null,
   shownImageDimensions: null,
-  cropPreset: 'free',
+  cropPreset: "free",
 
   editingTextBlockId: null,
   textSelectionRange: null,

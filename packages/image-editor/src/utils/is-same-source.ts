@@ -1,4 +1,4 @@
-import type { ImageSource } from '../image-editor';
+import type { ImageSource } from "../image-editor";
 
 /**
  * Compare two image sources for identity.
@@ -10,7 +10,10 @@ import type { ImageSource } from '../image-editor';
  * - `HTMLCanvasElement`:  same object reference
  * - mixed types:          never equal
  */
-export function isSameSource(a: ImageSource | null | undefined, b: ImageSource | null | undefined): boolean {
+export function isSameSource(
+  a: ImageSource | null | undefined,
+  b: ImageSource | null | undefined,
+): boolean {
   if (a == null || b == null) return false;
   if (a === b) return true; // covers same string or same object ref
 

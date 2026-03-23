@@ -1,6 +1,6 @@
-import type { Engine } from '../engine';
-import type { RendererAdapter } from '../render-adapter';
-import type { BlockAPI } from '../block/block-api';
+import type { BlockAPI } from "../block/block-api";
+import type { Engine } from "../engine";
+import type { RendererAdapter } from "../render-adapter";
 
 /**
  * Shared context passed to every editor sub-module.

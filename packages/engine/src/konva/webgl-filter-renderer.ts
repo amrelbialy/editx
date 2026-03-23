@@ -6,26 +6,26 @@
  * The result is fed to Konva.Image.image() — no Konva cache() needed.
  */
 
-import { PRESET_UNIFORMS, type PresetUniforms } from './webgl-preset-data';
+import { PRESET_UNIFORMS } from "./webgl-preset-data";
 
 // ────────────────────────────────────────────────────────
 // Public types
 // ────────────────────────────────────────────────────────
 
 export interface FilterParams {
-  brightness: number;   // -1..1
-  contrast: number;     // -1..1
-  saturation: number;   // -1..1
-  gamma: number;        // -1..1
-  exposure: number;     // -1..1
-  temperature: number;  // -1..1
-  shadows: number;      // -1..1
-  highlights: number;   // -1..1
-  blacks: number;       // -1..1
-  whites: number;       // -1..1
-  clarity: number;      // -1..1
-  sharpness: number;    // 0..100
-  preset: string;       // preset name or '' for none
+  brightness: number; // -1..1
+  contrast: number; // -1..1
+  saturation: number; // -1..1
+  gamma: number; // -1..1
+  exposure: number; // -1..1
+  temperature: number; // -1..1
+  shadows: number; // -1..1
+  highlights: number; // -1..1
+  blacks: number; // -1..1
+  whites: number; // -1..1
+  clarity: number; // -1..1
+  sharpness: number; // 0..100
+  preset: string; // preset name or '' for none
 }
 
 // ────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ void main() {
 
 /** Enable to log per-call timing to the console. Set via window.__CE_PERF = true */
 function perfEnabled(): boolean {
-  return typeof window !== 'undefined' && (window as any).__CE_PERF === true;
+  return typeof window !== "undefined" && (window as any).__CE_PERF === true;
 }
 
 export class WebGLFilterRenderer {
@@ -248,12 +248,12 @@ export class WebGLFilterRenderer {
   #uploadedSource: TexImageSource | null = null;
 
   constructor() {
-    this.#canvas = document.createElement('canvas');
-    const gl = this.#canvas.getContext('webgl2', {
+    this.#canvas = document.createElement("canvas");
+    const gl = this.#canvas.getContext("webgl2", {
       premultipliedAlpha: false,
       preserveDrawingBuffer: true,
     });
-    if (!gl) throw new Error('WebGL2 not available');
+    if (!gl) throw new Error("WebGL2 not available");
     this.#gl = gl;
 
     // Compile shaders & link program
@@ -269,10 +269,10 @@ export class WebGLFilterRenderer {
   /** Returns true if WebGL2 is available in the current browser. */
   static isSupported(): boolean {
     try {
-      const c = document.createElement('canvas');
-      const gl = c.getContext('webgl2');
+      const c = document.createElement("canvas");
+      const gl = c.getContext("webgl2");
       if (gl) {
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
       }
       return !!gl;
     } catch {
@@ -283,8 +283,12 @@ export class WebGLFilterRenderer {
   /** Upload or re-upload the source image as a GPU texture. Skips if same source already uploaded. */
   uploadImage(source: TexImageSource, width: number, height: number): void {
     // Skip if this exact source object is already uploaded
-    if (this.#uploadedSource === source && this.#currentWidth === width && this.#currentHeight === height) {
-      if (perfEnabled()) console.log('[perf:webgl] uploadImage SKIPPED (cached)');
+    if (
+      this.#uploadedSource === source &&
+      this.#currentWidth === width &&
+      this.#currentHeight === height
+    ) {
+      if (perfEnabled()) console.log("[perf:webgl] uploadImage SKIPPED (cached)");
       return;
     }
 
@@ -314,7 +318,10 @@ export class WebGLFilterRenderer {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
 
     this.#uploadedSource = source;
-    if (perfEnabled()) console.log(`[perf:webgl] uploadImage ${width}×${height}: ${(performance.now() - t0).toFixed(2)}ms`);
+    if (perfEnabled())
+      console.log(
+        `[perf:webgl] uploadImage ${width}×${height}: ${(performance.now() - t0).toFixed(2)}ms`,
+      );
   }
 
   /** Render with the given filter parameters. Returns the canvas element. */
@@ -328,22 +335,22 @@ export class WebGLFilterRenderer {
     // Bind texture
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.#texture);
-    this.#setUniform1i('u_image', 0);
-    this.#setUniform2f('u_texSize', this.#currentWidth, this.#currentHeight);
+    this.#setUniform1i("u_image", 0);
+    this.#setUniform2f("u_texSize", this.#currentWidth, this.#currentHeight);
 
     // Set adjustment uniforms
-    this.#setUniform1f('u_brightness', params.brightness);
-    this.#setUniform1f('u_contrast', params.contrast);
-    this.#setUniform1f('u_saturation', params.saturation);
-    this.#setUniform1f('u_gamma', params.gamma);
-    this.#setUniform1f('u_exposure', params.exposure);
-    this.#setUniform1f('u_temperature', params.temperature);
-    this.#setUniform1f('u_shadows', params.shadows);
-    this.#setUniform1f('u_highlights', params.highlights);
-    this.#setUniform1f('u_blacks', params.blacks);
-    this.#setUniform1f('u_whites', params.whites);
-    this.#setUniform1f('u_clarity', params.clarity);
-    this.#setUniform1f('u_sharpness', params.sharpness);
+    this.#setUniform1f("u_brightness", params.brightness);
+    this.#setUniform1f("u_contrast", params.contrast);
+    this.#setUniform1f("u_saturation", params.saturation);
+    this.#setUniform1f("u_gamma", params.gamma);
+    this.#setUniform1f("u_exposure", params.exposure);
+    this.#setUniform1f("u_temperature", params.temperature);
+    this.#setUniform1f("u_shadows", params.shadows);
+    this.#setUniform1f("u_highlights", params.highlights);
+    this.#setUniform1f("u_blacks", params.blacks);
+    this.#setUniform1f("u_whites", params.whites);
+    this.#setUniform1f("u_clarity", params.clarity);
+    this.#setUniform1f("u_sharpness", params.sharpness);
 
     // Set preset uniforms
     this.#applyPresetUniforms(params.preset);
@@ -353,7 +360,9 @@ export class WebGLFilterRenderer {
     // gl.finish() would force GPU sync — only enable for accurate timing
     if (perfEnabled()) {
       gl.finish(); // force GPU to complete so timing is accurate
-      console.log(`[perf:webgl] render (${this.#currentWidth}×${this.#currentHeight}): ${(performance.now() - t0).toFixed(2)}ms`);
+      console.log(
+        `[perf:webgl] render (${this.#currentWidth}×${this.#currentHeight}): ${(performance.now() - t0).toFixed(2)}ms`,
+      );
     }
 
     return this.#canvas;
@@ -369,7 +378,7 @@ export class WebGLFilterRenderer {
     this.#uploadedSource = null;
     gl.deleteVertexArray(this.#vao);
     gl.deleteProgram(this.#program);
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
   }
 
   // ──────────── private helpers ────────────
@@ -385,7 +394,7 @@ export class WebGLFilterRenderer {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
       const info = gl.getProgramInfoLog(prog);
       gl.deleteProgram(prog);
-      throw new Error('Shader link error: ' + info);
+      throw new Error(`Shader link error: ${info}`);
     }
     gl.deleteShader(vs);
     gl.deleteShader(fs);
@@ -400,7 +409,7 @@ export class WebGLFilterRenderer {
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const info = gl.getShaderInfoLog(shader);
       gl.deleteShader(shader);
-      throw new Error('Shader compile error: ' + info);
+      throw new Error(`Shader compile error: ${info}`);
     }
     return shader;
   }
@@ -413,14 +422,9 @@ export class WebGLFilterRenderer {
     const buf = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     // Full-screen quad: two triangles as a triangle strip
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-      -1, -1,
-       1, -1,
-      -1,  1,
-       1,  1,
-    ]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 
-    const loc = gl.getAttribLocation(this.#program, 'a_position');
+    const loc = gl.getAttribLocation(this.#program, "a_position");
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
@@ -469,39 +473,41 @@ export class WebGLFilterRenderer {
   #applyPresetUniforms(presetName: string): void {
     if (!presetName) {
       // Reset all preset uniforms to defaults
-      this.#setUniform1f('u_presetBrightness', 0);
-      this.#setUniform1f('u_presetContrast', 0);
-      this.#setUniform1f('u_presetSaturation', 0);
-      this.#setUniform1f('u_presetSepia', 0);
-      this.#setUniform1f('u_presetGrayscale', 0);
-      this.#setUniform3f('u_presetRGB', 1, 1, 1);
-      this.#setUniform4f('u_presetColorFilter', 0, 0, 0, 0);
-      this.#setUniform1f('u_presetInvert', 0);
-      this.#setUniform1f('u_presetSolarize', 0);
-      this.#setUniform1f('u_presetBlackWhite', 0);
+      this.#setUniform1f("u_presetBrightness", 0);
+      this.#setUniform1f("u_presetContrast", 0);
+      this.#setUniform1f("u_presetSaturation", 0);
+      this.#setUniform1f("u_presetSepia", 0);
+      this.#setUniform1f("u_presetGrayscale", 0);
+      this.#setUniform3f("u_presetRGB", 1, 1, 1);
+      this.#setUniform4f("u_presetColorFilter", 0, 0, 0, 0);
+      this.#setUniform1f("u_presetInvert", 0);
+      this.#setUniform1f("u_presetSolarize", 0);
+      this.#setUniform1f("u_presetBlackWhite", 0);
       return;
     }
 
     const preset = PRESET_UNIFORMS.get(presetName);
     if (!preset) {
       // Unknown preset — clear
-      this.#applyPresetUniforms('');
+      this.#applyPresetUniforms("");
       return;
     }
 
-    this.#setUniform1f('u_presetBrightness', preset.brightness);
-    this.#setUniform1f('u_presetContrast', preset.contrast);
-    this.#setUniform1f('u_presetSaturation', preset.saturation);
-    this.#setUniform1f('u_presetSepia', preset.sepia);
-    this.#setUniform1f('u_presetGrayscale', preset.grayscale);
-    this.#setUniform3f('u_presetRGB', preset.rgb[0], preset.rgb[1], preset.rgb[2]);
+    this.#setUniform1f("u_presetBrightness", preset.brightness);
+    this.#setUniform1f("u_presetContrast", preset.contrast);
+    this.#setUniform1f("u_presetSaturation", preset.saturation);
+    this.#setUniform1f("u_presetSepia", preset.sepia);
+    this.#setUniform1f("u_presetGrayscale", preset.grayscale);
+    this.#setUniform3f("u_presetRGB", preset.rgb[0], preset.rgb[1], preset.rgb[2]);
     this.#setUniform4f(
-      'u_presetColorFilter',
-      preset.colorFilter[0], preset.colorFilter[1],
-      preset.colorFilter[2], preset.colorFilter[3],
+      "u_presetColorFilter",
+      preset.colorFilter[0],
+      preset.colorFilter[1],
+      preset.colorFilter[2],
+      preset.colorFilter[3],
     );
-    this.#setUniform1f('u_presetInvert', preset.invert);
-    this.#setUniform1f('u_presetSolarize', preset.solarize);
-    this.#setUniform1f('u_presetBlackWhite', preset.blackWhite);
+    this.#setUniform1f("u_presetInvert", preset.invert);
+    this.#setUniform1f("u_presetSolarize", preset.solarize);
+    this.#setUniform1f("u_presetBlackWhite", preset.blackWhite);
   }
 }

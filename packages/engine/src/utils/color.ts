@@ -1,4 +1,4 @@
-import type { Color } from '../block/block.types';
+import type { Color } from "../block/block.types";
 
 /**
  * Convert a Color (0–1 range per channel) to a CSS hex string.
@@ -11,9 +11,9 @@ export function colorToHex(c: Color): string {
   if (c.a < 1) {
     return `rgba(${r},${g},${b},${c.a})`;
   }
-  return `#${r.toString(16).padStart(2, '0')}${g
+  return `#${r.toString(16).padStart(2, "0")}${g
     .toString(16)
-    .padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
 /**

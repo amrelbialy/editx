@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { BlockSnapshot } from './block-snapshot';
-import type { BlockData, Color } from './block.types';
+import { beforeEach, describe, expect, it } from "vitest";
+import type { BlockData, Color } from "./block.types";
+import { BlockSnapshot } from "./block-snapshot";
 
 function makeBlock(id: number): BlockData {
   return {
     id,
-    type: 'graphic',
-    kind: '',
+    type: "graphic",
+    kind: "",
     name: `block-${id}`,
     parentId: null,
     children: [10, 20],
@@ -20,7 +20,7 @@ function makeBlock(id: number): BlockData {
   };
 }
 
-describe('BlockSnapshot', () => {
+describe("BlockSnapshot", () => {
   let blocks: Map<number, BlockData>;
   let snapshots: BlockSnapshot;
 
@@ -29,19 +29,19 @@ describe('BlockSnapshot', () => {
     snapshots = new BlockSnapshot(blocks);
   });
 
-  describe('snapshot', () => {
-    it('returns a deep copy of the block data', () => {
+  describe("snapshot", () => {
+    it("returns a deep copy of the block data", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
       const snap = snapshots.snapshot(1);
       expect(snap).not.toBeNull();
       expect(snap!.id).toBe(1);
-      expect(snap!.type).toBe('graphic');
+      expect(snap!.type).toBe("graphic");
       expect(snap!.properties.x).toBe(100);
     });
 
-    it('snapshot children array is a copy', () => {
+    it("snapshot children array is a copy", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
@@ -50,7 +50,7 @@ describe('BlockSnapshot', () => {
       expect(block.children).toEqual([10, 20]); // original unchanged
     });
 
-    it('snapshot Color properties are copies', () => {
+    it("snapshot Color properties are copies", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
@@ -62,30 +62,30 @@ describe('BlockSnapshot', () => {
       expect(originalFill.r).toBe(1); // original unchanged
     });
 
-    it('snapshot properties object is a copy', () => {
+    it("snapshot properties object is a copy", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
       const snap = snapshots.snapshot(1)!;
-      snap.properties.newProp = 'added';
+      snap.properties.newProp = "added";
       expect(block.properties.newProp).toBeUndefined(); // original unchanged
     });
 
-    it('returns null for non-existent block', () => {
+    it("returns null for non-existent block", () => {
       expect(snapshots.snapshot(999)).toBeNull();
     });
   });
 
-  describe('restore', () => {
-    it('overwrites block data in the map', () => {
+  describe("restore", () => {
+    it("overwrites block data in the map", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
       const modified: BlockData = {
         id: 1,
-        type: 'graphic',
-        kind: 'circle',
-        name: 'modified',
+        type: "graphic",
+        kind: "circle",
+        name: "modified",
         parentId: 5,
         children: [30],
         effectIds: [],
@@ -97,19 +97,19 @@ describe('BlockSnapshot', () => {
       snapshots.restore(modified);
 
       const restored = blocks.get(1)!;
-      expect(restored.kind).toBe('circle');
-      expect(restored.name).toBe('modified');
+      expect(restored.kind).toBe("circle");
+      expect(restored.name).toBe("modified");
       expect(restored.parentId).toBe(5);
       expect(restored.children).toEqual([30]);
       expect(restored.properties.y).toBe(200);
     });
 
-    it('restore creates a deep copy (does not mutate source)', () => {
+    it("restore creates a deep copy (does not mutate source)", () => {
       const data: BlockData = {
         id: 2,
-        type: 'text',
-        kind: '',
-        name: 'text-2',
+        type: "text",
+        kind: "",
+        name: "text-2",
         parentId: null,
         children: [5],
         effectIds: [],
@@ -130,12 +130,12 @@ describe('BlockSnapshot', () => {
       expect((data.properties.fill as Color).r).toBe(0);
     });
 
-    it('can restore a block that does not yet exist (creates it)', () => {
+    it("can restore a block that does not yet exist (creates it)", () => {
       const data: BlockData = {
         id: 42,
-        type: 'image',
-        kind: '',
-        name: 'img-42',
+        type: "image",
+        kind: "",
+        name: "img-42",
         parentId: null,
         children: [],
         effectIds: [],
@@ -146,11 +146,11 @@ describe('BlockSnapshot', () => {
 
       snapshots.restore(data);
       expect(blocks.has(42)).toBe(true);
-      expect(blocks.get(42)!.type).toBe('image');
+      expect(blocks.get(42)!.type).toBe("image");
     });
   });
 
-  it('snapshot → restore round-trip preserves data', () => {
+  it("snapshot → restore round-trip preserves data", () => {
     const block = makeBlock(1);
     blocks.set(1, block);
 
@@ -165,7 +165,7 @@ describe('BlockSnapshot', () => {
     expect(blocks.has(1)).toBe(true);
 
     const restored = blocks.get(1)!;
-    expect(restored.type).toBe('graphic');
+    expect(restored.type).toBe("graphic");
     expect(restored.properties.x).toBe(100);
     expect((restored.properties.fill as Color).r).toBe(1);
     expect(restored.children).toEqual([10, 20]);

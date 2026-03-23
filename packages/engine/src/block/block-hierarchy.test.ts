@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { BlockHierarchy } from './block-hierarchy';
-import type { BlockData } from './block.types';
+import { beforeEach, describe, expect, it } from "vitest";
+import type { BlockData } from "./block.types";
+import { BlockHierarchy } from "./block-hierarchy";
 
 function makeBlock(id: number): BlockData {
   return {
     id,
-    type: 'graphic',
-    kind: '',
+    type: "graphic",
+    kind: "",
     name: `block-${id}`,
     parentId: null,
     children: [],
@@ -17,7 +17,7 @@ function makeBlock(id: number): BlockData {
   };
 }
 
-describe('BlockHierarchy', () => {
+describe("BlockHierarchy", () => {
   let blocks: Map<number, BlockData>;
   let hierarchy: BlockHierarchy;
 
@@ -26,8 +26,8 @@ describe('BlockHierarchy', () => {
     hierarchy = new BlockHierarchy(blocks);
   });
 
-  describe('appendChild', () => {
-    it('adds child to parent and sets parentId', () => {
+  describe("appendChild", () => {
+    it("adds child to parent and sets parentId", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -39,7 +39,7 @@ describe('BlockHierarchy', () => {
       expect(child.parentId).toBe(1);
     });
 
-    it('does not duplicate if child already appended', () => {
+    it("does not duplicate if child already appended", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -51,7 +51,7 @@ describe('BlockHierarchy', () => {
       expect(parent.children).toEqual([2]);
     });
 
-    it('does nothing if parent does not exist', () => {
+    it("does nothing if parent does not exist", () => {
       const child = makeBlock(2);
       blocks.set(2, child);
 
@@ -59,7 +59,7 @@ describe('BlockHierarchy', () => {
       expect(child.parentId).toBeNull();
     });
 
-    it('does nothing if child does not exist', () => {
+    it("does nothing if child does not exist", () => {
       const parent = makeBlock(1);
       blocks.set(1, parent);
 
@@ -67,7 +67,7 @@ describe('BlockHierarchy', () => {
       expect(parent.children).toEqual([]);
     });
 
-    it('auto-removes child from old parent on re-parent', () => {
+    it("auto-removes child from old parent on re-parent", () => {
       const oldParent = makeBlock(1);
       const newParent = makeBlock(2);
       const child = makeBlock(3);
@@ -86,8 +86,8 @@ describe('BlockHierarchy', () => {
     });
   });
 
-  describe('removeChild', () => {
-    it('removes child from parent and clears parentId', () => {
+  describe("removeChild", () => {
+    it("removes child from parent and clears parentId", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -100,7 +100,7 @@ describe('BlockHierarchy', () => {
       expect(child.parentId).toBeNull();
     });
 
-    it('does nothing if parent does not exist', () => {
+    it("does nothing if parent does not exist", () => {
       const child = makeBlock(2);
       child.parentId = 999;
       blocks.set(2, child);
@@ -110,8 +110,8 @@ describe('BlockHierarchy', () => {
     });
   });
 
-  describe('getChildren', () => {
-    it('returns a copy of the children array', () => {
+  describe("getChildren", () => {
+    it("returns a copy of the children array", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -126,13 +126,13 @@ describe('BlockHierarchy', () => {
       expect(hierarchy.getChildren(1)).toEqual([2]);
     });
 
-    it('returns empty array for non-existent block', () => {
+    it("returns empty array for non-existent block", () => {
       expect(hierarchy.getChildren(999)).toEqual([]);
     });
   });
 
-  describe('getParent', () => {
-    it('returns parent id', () => {
+  describe("getParent", () => {
+    it("returns parent id", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -142,18 +142,18 @@ describe('BlockHierarchy', () => {
       expect(hierarchy.getParent(2)).toBe(1);
     });
 
-    it('returns null for unparented block', () => {
+    it("returns null for unparented block", () => {
       blocks.set(1, makeBlock(1));
       expect(hierarchy.getParent(1)).toBeNull();
     });
 
-    it('returns null for non-existent block', () => {
+    it("returns null for non-existent block", () => {
       expect(hierarchy.getParent(999)).toBeNull();
     });
   });
 
-  describe('unparent', () => {
-    it('removes block from its parent', () => {
+  describe("unparent", () => {
+    it("removes block from its parent", () => {
       const parent = makeBlock(1);
       const child = makeBlock(2);
       blocks.set(1, parent);
@@ -166,7 +166,7 @@ describe('BlockHierarchy', () => {
       expect(child.parentId).toBeNull();
     });
 
-    it('does nothing if block has no parent', () => {
+    it("does nothing if block has no parent", () => {
       const block = makeBlock(1);
       blocks.set(1, block);
 
@@ -174,7 +174,7 @@ describe('BlockHierarchy', () => {
       expect(block.parentId).toBeNull();
     });
 
-    it('does nothing for non-existent block', () => {
+    it("does nothing for non-existent block", () => {
       // Should not throw
       hierarchy.unparent(999);
     });

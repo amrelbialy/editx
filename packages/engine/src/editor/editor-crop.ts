@@ -1,15 +1,28 @@
-import type { EditorContext } from './editor-context';
-import type { CropRect } from '../utils/crop-math';
-import { SetPropertyCommand } from '../controller/commands';
 import {
-  CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
-  CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
-  SIZE_WIDTH, SIZE_HEIGHT,
-  PAGE_WIDTH, PAGE_HEIGHT,
-  IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
+  CROP_ENABLED,
+  CROP_FLIP_HORIZONTAL,
+  CROP_FLIP_VERTICAL,
+  CROP_HEIGHT,
+  CROP_WIDTH,
+  CROP_X,
+  CROP_Y,
+  IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_ORIGINAL_WIDTH,
   IMAGE_ROTATION,
-} from '../block/property-keys';
-import { normalizeRotation, getSizeAfterRotation, sourceCropToVisual, visualCropToSource } from '../utils/rotation-math';
+  PAGE_HEIGHT,
+  PAGE_WIDTH,
+  SIZE_HEIGHT,
+  SIZE_WIDTH,
+} from "../block/property-keys";
+import { SetPropertyCommand } from "../controller/commands";
+import type { CropRect } from "../utils/crop-math";
+import {
+  getSizeAfterRotation,
+  normalizeRotation,
+  sourceCropToVisual,
+  visualCropToSource,
+} from "../utils/rotation-math";
+import type { EditorContext } from "./editor-context";
 
 /**
  * Internal crop module — manages the crop overlay lifecycle and auto-commit.
@@ -32,7 +45,13 @@ export class EditorCrop {
   #cropBlockId: number | null = null;
 
   /** Rotation/flip/source-dims snapshot taken when the overlay was last (re-)shown. */
-  #cropTransform: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number } | null = null;
+  #cropTransform: {
+    rotation: number;
+    flipH: boolean;
+    flipV: boolean;
+    sourceWidth: number;
+    sourceHeight: number;
+  } | null = null;
 
   constructor(ctx: EditorContext) {
     this.#ctx = ctx;
@@ -67,7 +86,7 @@ export class EditorCrop {
     if (origW > 0 && origH > 0) {
       imgW = origW;
       imgH = origH;
-    } else if (blockType === 'page') {
+    } else if (blockType === "page") {
       imgW = store.getFloat(blockId, PAGE_WIDTH);
       imgH = store.getFloat(blockId, PAGE_HEIGHT);
     } else {
@@ -96,7 +115,11 @@ export class EditorCrop {
     if (cropEnabled && cropW > 0 && cropH > 0) {
       initialCrop = sourceCropToVisual(
         { x: cropX, y: cropY, width: cropW, height: cropH },
-        imgW, imgH, rotation, flipH, flipV,
+        imgW,
+        imgH,
+        rotation,
+        flipH,
+        flipV,
       );
     }
 
@@ -158,8 +181,9 @@ export class EditorCrop {
     const blockType = store.getType(id);
     let imgW: number, imgH: number;
     if (origW > 0 && origH > 0) {
-      imgW = origW; imgH = origH;
-    } else if (blockType === 'page') {
+      imgW = origW;
+      imgH = origH;
+    } else if (blockType === "page") {
       imgW = store.getFloat(id, PAGE_WIDTH);
       imgH = store.getFloat(id, PAGE_HEIGHT);
     } else {
@@ -180,7 +204,7 @@ export class EditorCrop {
     engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, sourceRect.height));
     engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, true));
     // Page dimensions = visual crop dimensions (what the user sees)
-    if (blockType === 'page') {
+    if (blockType === "page") {
       engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, visualRect.width));
       engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, visualRect.height));
     }
@@ -213,7 +237,13 @@ export class EditorCrop {
     const oldVisualCrop = renderer.getCropRect();
     if (!oldVisualCrop) return;
 
-    const { rotation: oldRot, flipH: oldFlipH, flipV: oldFlipV, sourceWidth: imgW, sourceHeight: imgH } = this.#cropTransform;
+    const {
+      rotation: oldRot,
+      flipH: oldFlipH,
+      flipV: oldFlipV,
+      sourceWidth: imgW,
+      sourceHeight: imgH,
+    } = this.#cropTransform;
 
     const store = this.#ctx.engine.getBlockStore();
 
@@ -233,7 +263,13 @@ export class EditorCrop {
     const newVisualCrop = sourceCropToVisual(sourceCrop, imgW, imgH, newRot, newFlipH, newFlipV);
 
     // Update stored transform
-    const newTransform = { rotation: newRot, flipH: newFlipH, flipV: newFlipV, sourceWidth: imgW, sourceHeight: imgH };
+    const newTransform = {
+      rotation: newRot,
+      flipH: newFlipH,
+      flipV: newFlipV,
+      sourceWidth: imgW,
+      sourceHeight: imgH,
+    };
     this.#cropTransform = newTransform;
 
     // Re-show overlay with new visual bounds and crop
@@ -268,7 +304,7 @@ export class EditorCrop {
     engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, false));
     // Restore page dimensions accounting for current rotation
     const blockType = store.getType(id);
-    if (blockType === 'page') {
+    if (blockType === "page") {
       const rotation = store.getFloat(id, IMAGE_ROTATION);
       const isSwap = Math.abs(Math.round(normalizeRotation(rotation) / 90)) % 2 === 1;
       engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, isSwap ? origH : origW));

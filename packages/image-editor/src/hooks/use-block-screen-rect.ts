@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { useEffect, useRef, useState } from "react";
 
 export interface ScreenRect {
   x: number;
@@ -27,8 +27,9 @@ export function useBlockScreenRect(
 
     function tick() {
       // Try transformer rect first; fall back to direct block rect
-      const r = engine!.editor.getSelectedBlockScreenRect()
-        ?? engine!.editor.getBlockScreenRect(selectedBlockId!);
+      const r =
+        engine!.editor.getSelectedBlockScreenRect() ??
+        engine!.editor.getBlockScreenRect(selectedBlockId!);
       setRect((prev) => {
         if (!r) return prev ? null : prev;
         if (

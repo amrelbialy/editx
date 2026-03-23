@@ -1,6 +1,6 @@
-import { BlockStore } from '../../block/block-store';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { BlockStore } from "../../block/block-store";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export class MoveChildCommand extends PatchCommand {
   #store: BlockStore;
@@ -23,8 +23,6 @@ export class MoveChildCommand extends PatchCommand {
 
     const parentAfter = this.#store.snapshot(this.#parentId);
 
-    return [
-      { id: String(this.#parentId), before: parentBefore, after: parentAfter },
-    ];
+    return [{ id: String(this.#parentId), before: parentBefore, after: parentAfter }];
   }
 }

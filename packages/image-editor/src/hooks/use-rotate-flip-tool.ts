@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { useImageEditorStore } from '../store/image-editor-store';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { useCallback, useEffect, useState } from "react";
+import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface RotationState {
   rotation: number;
@@ -15,7 +15,11 @@ export interface UseRotateFlipToolOptions {
 export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
 
-  const [rotationState, setRotationState] = useState<RotationState>({ rotation: 0, flipH: false, flipV: false });
+  const [rotationState, setRotationState] = useState<RotationState>({
+    rotation: 0,
+    flipH: false,
+    flipV: false,
+  });
 
   const syncRotationState = useCallback(() => {
     const ce = engineRef.current;
@@ -27,12 +31,15 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
     });
   }, [engineRef, editableBlockId]);
 
-  const handleRotationChange = useCallback((angle: number) => {
-    const ce = engineRef.current;
-    if (!ce || editableBlockId === null) return;
-    ce.block.setImageRotation(editableBlockId, angle);
-    setRotationState((prev) => ({ ...prev, rotation: angle }));
-  }, [engineRef, editableBlockId]);
+  const handleRotationChange = useCallback(
+    (angle: number) => {
+      const ce = engineRef.current;
+      if (!ce || editableBlockId === null) return;
+      ce.block.setImageRotation(editableBlockId, angle);
+      setRotationState((prev) => ({ ...prev, rotation: angle }));
+    },
+    [engineRef, editableBlockId],
+  );
 
   const handleRotateClockwise = useCallback(() => {
     const ce = engineRef.current;
@@ -91,11 +98,11 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
         flipV: ce.block.isCropFlippedVertical(editableBlockId),
       });
     };
-    ce.on('history:undo', handler);
-    ce.on('history:redo', handler);
+    ce.on("history:undo", handler);
+    ce.on("history:redo", handler);
     return () => {
-      ce.off('history:undo', handler);
-      ce.off('history:redo', handler);
+      ce.off("history:undo", handler);
+      ce.off("history:redo", handler);
     };
   }, [engineRef, editableBlockId]);
 

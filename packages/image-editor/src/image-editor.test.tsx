@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import React from 'react';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
-import { ImageEditor } from './image-editor';
-import { useImageEditorStore } from './store/image-editor-store';
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ImageEditor } from "./image-editor";
+import { useImageEditorStore } from "./store/image-editor-store";
 
 // Track mock engine instances for assertions
 let latestMockEngine: any = null;
 
 // Mock the engine and image loading dependencies
-vi.mock('@creative-editor/engine', () => {
+vi.mock("@creative-editor/engine", () => {
   const createMockEngine = () => {
     const eng = {
       scene: {
@@ -23,11 +23,11 @@ vi.mock('@creative-editor/engine', () => {
         appendChild: vi.fn(),
         setFloat: vi.fn(),
         getFloat: vi.fn().mockReturnValue(0),
-        getString: vi.fn().mockReturnValue(''),
+        getString: vi.fn().mockReturnValue(""),
         setBool: vi.fn(),
         getBool: vi.fn().mockReturnValue(false),
         getEffects: vi.fn().mockReturnValue([]),
-        getKind: vi.fn().mockReturnValue(''),
+        getKind: vi.fn().mockReturnValue(""),
         createEffect: vi.fn().mockReturnValue(100),
         appendEffect: vi.fn(),
         removeEffect: vi.fn(),
@@ -55,7 +55,7 @@ vi.mock('@creative-editor/engine', () => {
         applyCropRatio: vi.fn(),
         // Page convenience methods
         setPageImageSrc: vi.fn(),
-        getPageImageSrc: vi.fn().mockReturnValue(''),
+        getPageImageSrc: vi.fn().mockReturnValue(""),
         setPageImageOriginalDimensions: vi.fn(),
         getPageImageOriginalDimensions: vi.fn().mockReturnValue({ width: 0, height: 0 }),
         setPageDimensions: vi.fn(),
@@ -73,7 +73,7 @@ vi.mock('@creative-editor/engine', () => {
         setZoom: vi.fn(),
         panTo: vi.fn(),
         setEditMode: vi.fn(),
-        getEditMode: vi.fn().mockReturnValue('Transform'),
+        getEditMode: vi.fn().mockReturnValue("Transform"),
         fitToScreen: vi.fn(),
         undo: vi.fn(),
         redo: vi.fn(),
@@ -95,42 +95,57 @@ vi.mock('@creative-editor/engine', () => {
     CreativeEngine: {
       create: vi.fn().mockImplementation(() => Promise.resolve(createMockEngine())),
     },
-    IMAGE_SRC: 'image/src',
-    CROP_X: 'crop/x',
-    CROP_Y: 'crop/y',
-    CROP_WIDTH: 'crop/width',
-    CROP_HEIGHT: 'crop/height',
-    CROP_ENABLED: 'crop/enabled',
-    CROP_SCALE_X: 'crop/scaleX',
-    CROP_SCALE_Y: 'crop/scaleY',
-    CROP_ROTATION: 'crop/rotation',
-    CROP_SCALE_RATIO: 'crop/scaleRatio',
-    CROP_FLIP_HORIZONTAL: 'crop/flipHorizontal',
-    CROP_FLIP_VERTICAL: 'crop/flipVertical',
-    CROP_ASPECT_RATIO_LOCKED: 'crop/aspectRatioLocked',
+    IMAGE_SRC: "image/src",
+    CROP_X: "crop/x",
+    CROP_Y: "crop/y",
+    CROP_WIDTH: "crop/width",
+    CROP_HEIGHT: "crop/height",
+    CROP_ENABLED: "crop/enabled",
+    CROP_SCALE_X: "crop/scaleX",
+    CROP_SCALE_Y: "crop/scaleY",
+    CROP_ROTATION: "crop/rotation",
+    CROP_SCALE_RATIO: "crop/scaleRatio",
+    CROP_FLIP_HORIZONTAL: "crop/flipHorizontal",
+    CROP_FLIP_VERTICAL: "crop/flipVertical",
+    CROP_ASPECT_RATIO_LOCKED: "crop/aspectRatioLocked",
     toPrecisedFloat: vi.fn().mockImplementation((n: number) => n),
     evictImage: vi.fn(),
-    EFFECT_FILTER_NAME: 'effect/filter/name',
+    EFFECT_FILTER_NAME: "effect/filter/name",
     FILTER_PRESETS: new Map(),
     getFilterPreset: vi.fn().mockReturnValue(undefined),
     ADJUSTMENT_CONFIG: {
-      brightness: { key: 'effect/adjustments/brightness', min: -1, max: 1, step: 0.01, default: 0 },
-      saturation: { key: 'effect/adjustments/saturation', min: -1, max: 1, step: 0.01, default: 0 },
-      contrast: { key: 'effect/adjustments/contrast', min: -1, max: 1, step: 0.01, default: 0 },
-      gamma: { key: 'effect/adjustments/gamma', min: -1, max: 1, step: 0.01, default: 0 },
-      clarity: { key: 'effect/adjustments/clarity', min: -1, max: 1, step: 0.01, default: 0 },
-      exposure: { key: 'effect/adjustments/exposure', min: -1, max: 1, step: 0.01, default: 0 },
-      shadows: { key: 'effect/adjustments/shadows', min: -1, max: 1, step: 0.01, default: 0 },
-      highlights: { key: 'effect/adjustments/highlights', min: -1, max: 1, step: 0.01, default: 0 },
-      blacks: { key: 'effect/adjustments/blacks', min: -1, max: 1, step: 0.01, default: 0 },
-      whites: { key: 'effect/adjustments/whites', min: -1, max: 1, step: 0.01, default: 0 },
-      temperature: { key: 'effect/adjustments/temperature', min: -1, max: 1, step: 0.01, default: 0 },
-      sharpness: { key: 'effect/adjustments/sharpness', min: 0, max: 1, step: 0.01, default: 0 },
+      brightness: { key: "effect/adjustments/brightness", min: -1, max: 1, step: 0.01, default: 0 },
+      saturation: { key: "effect/adjustments/saturation", min: -1, max: 1, step: 0.01, default: 0 },
+      contrast: { key: "effect/adjustments/contrast", min: -1, max: 1, step: 0.01, default: 0 },
+      gamma: { key: "effect/adjustments/gamma", min: -1, max: 1, step: 0.01, default: 0 },
+      clarity: { key: "effect/adjustments/clarity", min: -1, max: 1, step: 0.01, default: 0 },
+      exposure: { key: "effect/adjustments/exposure", min: -1, max: 1, step: 0.01, default: 0 },
+      shadows: { key: "effect/adjustments/shadows", min: -1, max: 1, step: 0.01, default: 0 },
+      highlights: { key: "effect/adjustments/highlights", min: -1, max: 1, step: 0.01, default: 0 },
+      blacks: { key: "effect/adjustments/blacks", min: -1, max: 1, step: 0.01, default: 0 },
+      whites: { key: "effect/adjustments/whites", min: -1, max: 1, step: 0.01, default: 0 },
+      temperature: {
+        key: "effect/adjustments/temperature",
+        min: -1,
+        max: 1,
+        step: 0.01,
+        default: 0,
+      },
+      sharpness: { key: "effect/adjustments/sharpness", min: 0, max: 1, step: 0.01, default: 0 },
     },
     ADJUSTMENT_PARAMS: [
-      'brightness', 'saturation', 'contrast', 'gamma',
-      'clarity', 'exposure', 'shadows', 'highlights',
-      'blacks', 'whites', 'temperature', 'sharpness',
+      "brightness",
+      "saturation",
+      "contrast",
+      "gamma",
+      "clarity",
+      "exposure",
+      "shadows",
+      "highlights",
+      "blacks",
+      "whites",
+      "temperature",
+      "sharpness",
     ],
   };
 });
@@ -138,24 +153,24 @@ vi.mock('@creative-editor/engine', () => {
 const mockLoadImage = vi.fn().mockResolvedValue({
   naturalWidth: 800,
   naturalHeight: 600,
-  src: 'https://example.com/img.png',
+  src: "https://example.com/img.png",
 });
 
-vi.mock('./utils/load-image', () => ({
+vi.mock("./utils/load-image", () => ({
   loadImage: (...args: any[]) => mockLoadImage(...args),
   sourceToUrl: vi.fn().mockImplementation((src: any) => {
-    if (typeof src === 'string') return src;
-    return 'blob:http://localhost/mock-blob-url';
+    if (typeof src === "string") return src;
+    return "blob:http://localhost/mock-blob-url";
   }),
   revokeObjectUrl: vi.fn(),
 }));
 
-vi.mock('./utils/validate-image', () => ({
+vi.mock("./utils/validate-image", () => ({
   validateImageFile: vi.fn().mockReturnValue({ valid: true, warnings: [] }),
   validateImageDimensions: vi.fn().mockReturnValue({ valid: true, warnings: [] }),
 }));
 
-vi.mock('./utils/downscale-image', () => ({
+vi.mock("./utils/downscale-image", () => ({
   downscaleIfNeeded: vi.fn().mockImplementation((img: any) => ({
     dataUrl: img.src,
     workingWidth: img.naturalWidth,
@@ -166,20 +181,20 @@ vi.mock('./utils/downscale-image', () => ({
   })),
 }));
 
-vi.mock('./utils/correct-orientation', () => ({
-  correctOrientation: vi.fn().mockRejectedValue(new Error('not a blob')),
+vi.mock("./utils/correct-orientation", () => ({
+  correctOrientation: vi.fn().mockRejectedValue(new Error("not a blob")),
 }));
 
-vi.mock('./utils/is-same-source', () => ({
+vi.mock("./utils/is-same-source", () => ({
   isSameSource: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock('./utils/extract-filename', () => ({
-  extractFilename: vi.fn().mockReturnValue('test-image'),
+vi.mock("./utils/extract-filename", () => ({
+  extractFilename: vi.fn().mockReturnValue("test-image"),
 }));
 
-vi.mock('./components/toolbar', () => ({
-  ImageEditorToolbar: () => React.createElement('div', { 'data-testid': 'toolbar' }),
+vi.mock("./components/toolbar", () => ({
+  ImageEditorToolbar: () => React.createElement("div", { "data-testid": "toolbar" }),
 }));
 
 // Helper to find the EditorShell element (has width/height styles)
@@ -187,7 +202,7 @@ function findEditorShell(container: HTMLElement): HTMLElement {
   // EditorShell is the div with both width and height styles
   // It's inside ThemeProvider > EditorShell
   const shell = container.querySelector('[style*="width"][style*="height"]') as HTMLElement;
-  return shell ?? container.firstElementChild as HTMLElement;
+  return shell ?? (container.firstElementChild as HTMLElement);
 }
 
 // Helper to find the interactive wrapper (the div with tabIndex)
@@ -195,14 +210,14 @@ function findInteractiveWrapper(container: HTMLElement): HTMLElement {
   return container.querySelector('[tabindex="0"]') as HTMLElement;
 }
 
-describe('ImageEditor', () => {
+describe("ImageEditor", () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
     latestMockEngine = null;
     // Reset store
     useImageEditorStore.setState({
-      activeTool: 'select',
+      activeTool: "select",
       originalImage: null,
       isLoading: true,
       editableBlockId: null,
@@ -215,85 +230,87 @@ describe('ImageEditor', () => {
     cleanup();
   });
 
-  it('renders without crashing', () => {
-    const { container } = render(React.createElement(ImageEditor, { src: 'https://example.com/img.png' }));
-    // Component should render the editor shell with topbar content
-    expect(container.textContent).toContain('Photo Editor');
-  });
-
-  it('shows loading overlay initially', () => {
+  it("renders without crashing", () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
-    expect(container.textContent).toContain('Loading image...');
+    // Component should render the editor shell with topbar content
+    expect(container.textContent).toContain("Photo Editor");
   });
 
-  it('applies width and height styles', () => {
+  it("shows loading overlay initially", () => {
+    const { container } = render(
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
+    );
+    expect(container.textContent).toContain("Loading image...");
+  });
+
+  it("applies width and height styles", () => {
     const { container } = render(
       React.createElement(ImageEditor, {
-        src: 'https://example.com/img.png',
+        src: "https://example.com/img.png",
         width: 500,
         height: 400,
-      })
+      }),
     );
     const shell = findEditorShell(container);
-    expect(shell.style.width).toBe('500px');
-    expect(shell.style.height).toBe('400px');
+    expect(shell.style.width).toBe("500px");
+    expect(shell.style.height).toBe("400px");
   });
 
-  it('defaults width to 100% and height to 100vh', () => {
+  it("defaults width to 100% and height to 100vh", () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
     const shell = findEditorShell(container);
-    expect(shell.style.width).toBe('100%');
-    expect(shell.style.height).toBe('100vh');
+    expect(shell.style.width).toBe("100%");
+    expect(shell.style.height).toBe("100vh");
   });
 
-  it('shows error overlay when image fails to load', async () => {
-    mockLoadImage.mockRejectedValueOnce(new Error('Network error'));
+  it("shows error overlay when image fails to load", async () => {
+    mockLoadImage.mockRejectedValueOnce(new Error("Network error"));
 
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/bad.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/bad.png" }),
     );
 
     await waitFor(() => {
-      expect(container.textContent).toContain('Failed to load image');
-      expect(container.textContent).toContain('Network error');
+      expect(container.textContent).toContain("Failed to load image");
+      expect(container.textContent).toContain("Network error");
     });
   });
 
-  it('shows retry button on error', async () => {
-    mockLoadImage.mockRejectedValueOnce(new Error('Timeout'));
+  it("shows retry button on error", async () => {
+    mockLoadImage.mockRejectedValueOnce(new Error("Timeout"));
 
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/timeout.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/timeout.png" }),
     );
 
     await waitFor(() => {
-      const buttons = Array.from(container.querySelectorAll('button'));
-      const retryButton = buttons.find(b => b.textContent?.includes('Retry'));
+      const buttons = Array.from(container.querySelectorAll("button"));
+      const retryButton = buttons.find((b) => b.textContent?.includes("Retry"));
       expect(retryButton).toBeDefined();
     });
   });
 
-  it('retry button re-triggers init', async () => {
+  it("retry button re-triggers init", async () => {
     mockLoadImage
-      .mockRejectedValueOnce(new Error('First fail'))
-      .mockResolvedValueOnce({ naturalWidth: 800, naturalHeight: 600, src: 'test' });
+      .mockRejectedValueOnce(new Error("First fail"))
+      .mockResolvedValueOnce({ naturalWidth: 800, naturalHeight: 600, src: "test" });
 
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/retry.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/retry.png" }),
     );
 
     // Wait for error state
     await waitFor(() => {
-      expect(container.textContent).toContain('Failed to load image');
+      expect(container.textContent).toContain("Failed to load image");
     });
 
     // Click retry
-    const buttons = Array.from(container.querySelectorAll('button'));
-    const retryButton = buttons.find(b => b.textContent?.includes('Retry'))!;
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const retryButton = buttons.find((b) => b.textContent?.includes("Retry"))!;
     fireEvent.click(retryButton);
 
     // loadImage should be called again
@@ -302,9 +319,9 @@ describe('ImageEditor', () => {
     });
   });
 
-  it('disposes engine on unmount', async () => {
+  it("disposes engine on unmount", async () => {
     const { unmount } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
 
     // Wait for engine to be created
@@ -318,30 +335,30 @@ describe('ImageEditor', () => {
     expect(engineToCheck.dispose).toHaveBeenCalled();
   });
 
-  it('has tabIndex for keyboard/paste focus', () => {
+  it("has tabIndex for keyboard/paste focus", () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
     const wrapper = findInteractiveWrapper(container);
     expect(wrapper).toBeDefined();
-    expect(wrapper.getAttribute('tabindex')).toBe('0');
+    expect(wrapper.getAttribute("tabindex")).toBe("0");
   });
 
-  it('accepts drag-over events without error', () => {
+  it("accepts drag-over events without error", () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
     const wrapper = findInteractiveWrapper(container);
 
     // Should not throw
     fireEvent.dragOver(wrapper, {
-      dataTransfer: { files: [], getData: () => '' },
+      dataTransfer: { files: [], getData: () => "" },
     });
   });
 
-  it('handles drop with image file', async () => {
+  it("handles drop with image file", async () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
 
     await waitFor(() => {
@@ -349,12 +366,12 @@ describe('ImageEditor', () => {
     });
 
     const wrapper = findInteractiveWrapper(container);
-    const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+    const file = new File(["data"], "photo.jpg", { type: "image/jpeg" });
 
     fireEvent.drop(wrapper, {
       dataTransfer: {
         files: [file],
-        getData: () => '',
+        getData: () => "",
       },
     });
 
@@ -364,9 +381,9 @@ describe('ImageEditor', () => {
     });
   });
 
-  it('handles paste with image blob', async () => {
+  it("handles paste with image blob", async () => {
     const { container } = render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
+      React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
 
     await waitFor(() => {
@@ -374,13 +391,13 @@ describe('ImageEditor', () => {
     });
 
     const wrapper = findInteractiveWrapper(container);
-    const blob = new File(['data'], 'clipboard.png', { type: 'image/png' });
+    const blob = new File(["data"], "clipboard.png", { type: "image/png" });
 
     fireEvent.paste(wrapper, {
       clipboardData: {
         items: [
           {
-            type: 'image/png',
+            type: "image/png",
             getAsFile: () => blob,
           },
         ],
@@ -392,10 +409,8 @@ describe('ImageEditor', () => {
     });
   });
 
-  it('stores shownImageDimensions after load', async () => {
-    render(
-      React.createElement(ImageEditor, { src: 'https://example.com/img.png' })
-    );
+  it("stores shownImageDimensions after load", async () => {
+    render(React.createElement(ImageEditor, { src: "https://example.com/img.png" }));
 
     await waitFor(() => {
       const dims = useImageEditorStore.getState().shownImageDimensions;
@@ -407,15 +422,13 @@ describe('ImageEditor', () => {
     });
   });
 
-  it('stores extracted filename in originalImage.name', async () => {
-    render(
-      React.createElement(ImageEditor, { src: 'https://example.com/sunset.jpg' })
-    );
+  it("stores extracted filename in originalImage.name", async () => {
+    render(React.createElement(ImageEditor, { src: "https://example.com/sunset.jpg" }));
 
     await waitFor(() => {
       const img = useImageEditorStore.getState().originalImage;
       expect(img).not.toBeNull();
-      expect(img!.name).toBe('test-image');
+      expect(img!.name).toBe("test-image");
     });
   });
 });

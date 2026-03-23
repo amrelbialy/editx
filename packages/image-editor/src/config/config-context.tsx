@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import type { ImageEditorConfig, ImageEditorToolId } from './config.types';
-import { defaultConfig } from './default-config';
-import { deepMerge } from '../utils/deep-merge';
+import type React from "react";
+import { createContext, useContext, useMemo } from "react";
+import { deepMerge } from "../utils/deep-merge";
+import type { ImageEditorConfig, ImageEditorToolId } from "./config.types";
+import { defaultConfig } from "./default-config";
 
 interface ConfigContextValue {
   config: ImageEditorConfig & { tools: ImageEditorToolId[] };
@@ -22,16 +23,15 @@ export const ImageEditorProvider: React.FC<ImageEditorProviderProps> = ({
 }) => {
   const value = useMemo<ConfigContextValue>(() => {
     const merged = userConfig
-      ? deepMerge(defaultConfig as unknown as Record<string, unknown>, userConfig as unknown as Record<string, unknown>)
+      ? deepMerge(
+          defaultConfig as unknown as Record<string, unknown>,
+          userConfig as unknown as Record<string, unknown>,
+        )
       : defaultConfig;
     return { config: merged as ImageEditorConfig & { tools: ImageEditorToolId[] } };
   }, [userConfig]);
 
-  return (
-    <ConfigContext.Provider value={value}>
-      {children}
-    </ConfigContext.Provider>
-  );
+  return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
 };
 
 export function useConfig(): ImageEditorConfig & { tools: ImageEditorToolId[] } {

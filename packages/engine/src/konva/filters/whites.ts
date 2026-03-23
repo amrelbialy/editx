@@ -6,7 +6,7 @@
  * Negative values pull highlights down.
  */
 export function Whites(this: any, imageData: ImageData): void {
-  const whites = this.getAttr('whites') ?? 0;
+  const whites = this.getAttr("whites") ?? 0;
   if (whites === 0) return;
 
   const pixels = imageData.data;

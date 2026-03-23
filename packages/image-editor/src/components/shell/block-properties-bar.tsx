@@ -1,47 +1,51 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { colorToHex, FILL_SOLID_COLOR, TEXT_ALIGN } from "@creative-editor/engine";
 import {
-  colorToHex,
-  FILL_SOLID_COLOR,
-  TEXT_ALIGN,
-} from '@creative-editor/engine';
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  AlignLeft,
   AlignCenter,
+  AlignLeft,
   AlignRight,
-  CircleOff,
-  Paintbrush,
-  Sun,
-  Grid2x2,
-  Move,
+  Bold,
   ChevronDown,
-  Sparkles,
-  SlidersHorizontal,
-  Palette,
+  CircleOff,
+  Grid2x2,
   ImageIcon,
+  Italic,
   MoreHorizontal,
+  Move,
+  Paintbrush,
+  Palette,
   RemoveFormatting,
+  SlidersHorizontal,
+  Sparkles,
+  Strikethrough,
+  Sun,
   TextCursorInput,
-} from 'lucide-react';
-import { Slider } from '../ui/slider';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '../ui/dropdown-menu';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { Separator } from '../ui/separator';
-import { useImageEditorStore } from '../../store/image-editor-store';
-import type { PropertySidePanel } from '../../store/image-editor-store';
-import { cn } from '../../utils/cn';
+  Underline,
+} from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { PropertySidePanel } from "../../store/image-editor-store";
+import { useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
 interface BlockPropertiesBarProps {
   engine: CreativeEngine;
   blockId: number;
-  blockType: 'text' | 'graphic' | 'image';
+  blockType: "text" | "graphic" | "image";
 }
 
-const FONT_FAMILIES = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana'];
+const FONT_FAMILIES = [
+  "Arial",
+  "Helvetica",
+  "Times New Roman",
+  "Georgia",
+  "Courier New",
+  "Verdana",
+];
 
 // ── State readers ──
 
@@ -63,12 +67,12 @@ function readTextState(engine: CreativeEngine, blockId: number, selectionStart?:
 
   return {
     fontSize: targetStyle.fontSize ?? 24,
-    fontFamily: targetStyle.fontFamily ?? 'Arial',
-    fontWeight: targetStyle.fontWeight ?? 'normal',
-    fontStyle: targetStyle.fontStyle ?? 'normal',
-    fill: targetStyle.fill ?? '#000000',
-    textDecoration: targetStyle.textDecoration ?? '',
-    textAlign: align || 'left',
+    fontFamily: targetStyle.fontFamily ?? "Arial",
+    fontWeight: targetStyle.fontWeight ?? "normal",
+    fontStyle: targetStyle.fontStyle ?? "normal",
+    fill: targetStyle.fill ?? "#000000",
+    textDecoration: targetStyle.textDecoration ?? "",
+    textAlign: align || "left",
     opacity: engine.block.getOpacity(blockId),
   };
 }
@@ -79,26 +83,30 @@ function readBlockColor(engine: CreativeEngine, blockId: number): string {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
     if (c) return colorToHex(c).substring(0, 7);
   }
-  return '#4a90e2';
+  return "#4a90e2";
 }
 
 // ── Main Component ──
 
-export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, blockId, blockType }) => {
+export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
+  engine,
+  blockId,
+  blockType,
+}) => {
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
-  const isText = blockType === 'text';
-  const isImage = blockType === 'image';
+  const isText = blockType === "text";
+  const isImage = blockType === "image";
 
   // State
   const [textState, setTextState] = useState(() =>
     isText ? readTextState(engine, blockId, textSelectionRange?.from) : null,
   );
   const [fillColor, setFillColor] = useState(() =>
-    !isText && !isImage ? readBlockColor(engine, blockId) : '#000000',
+    !isText && !isImage ? readBlockColor(engine, blockId) : "#000000",
   );
   const [opacity, setOpacity] = useState(() => engine.block.getOpacity(blockId));
 
@@ -122,8 +130,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
   }, [engine, blockId, isText, isImage, textSelectionRange]);
 
   // ── Selection-aware style range ──
-  const hasCharSelection = editingTextBlockId === blockId && textSelectionRange !== null
-    && textSelectionRange.from !== textSelectionRange.to;
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
 
   const getStyleRange = useCallback((): { start: number; end: number } => {
     if (hasCharSelection && textSelectionRange) {
@@ -133,11 +143,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
   }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
   // ── Text handlers ──
-  const handleFontFamily = useCallback((value: string) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextFontFamily(blockId, start, end, value);
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const handleFontFamily = useCallback(
+    (value: string) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextFontFamily(blockId, start, end, value);
+      refresh();
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
   const handleBoldToggle = useCallback(() => {
     const { start, end } = getStyleRange();
@@ -151,78 +164,94 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
     refresh();
   }, [engine, blockId, getStyleRange, refresh]);
 
-  const handleFontSize = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val) && val > 0) {
+  const handleFontSize = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val) && val > 0) {
+        const { start, end } = getStyleRange();
+        engine.block.setTextFontSize(blockId, start, end, val);
+        refresh();
+      }
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
+
+  const handleFontSizePreset = useCallback(
+    (size: number) => {
       const { start, end } = getStyleRange();
-      engine.block.setTextFontSize(blockId, start, end, val);
+      engine.block.setTextFontSize(blockId, start, end, size);
       refresh();
-    }
-  }, [engine, blockId, getStyleRange, refresh]);
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
-  const handleFontSizePreset = useCallback((size: number) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextFontSize(blockId, start, end, size);
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const handleTextAlign = useCallback(
+    (align: string) => {
+      engine.block.setTextAlign(blockId, align);
+      refresh();
+    },
+    [engine, blockId, refresh],
+  );
 
-  const handleTextAlign = useCallback((align: string) => {
-    engine.block.setTextAlign(blockId, align);
-    refresh();
-  }, [engine, blockId, refresh]);
-
-  const handleTextColor = useCallback((color: string) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextColor(blockId, start, end, color);
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const _handleTextColor = useCallback(
+    (color: string) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextColor(blockId, start, end, color);
+      refresh();
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
   const handleUnderlineToggle = useCallback(() => {
     const { start, end } = getStyleRange();
     const runs = engine.block.getTextRuns(blockId);
-    let currentDeco = '';
+    let currentDeco = "";
     let offset = 0;
     for (const run of runs) {
       if (offset + run.text.length > (textSelectionRange?.from ?? 0)) {
-        currentDeco = run.style.textDecoration ?? '';
+        currentDeco = run.style.textDecoration ?? "";
         break;
       }
       offset += run.text.length;
     }
-    const hasUnderline = currentDeco.includes('underline');
-    const parts = currentDeco.split(' ').filter((d) => d && d !== 'underline');
-    if (!hasUnderline) parts.push('underline');
-    engine.block.setTextStyle(blockId, start, end, { textDecoration: parts.join(' ') || undefined });
+    const hasUnderline = currentDeco.includes("underline");
+    const parts = currentDeco.split(" ").filter((d) => d && d !== "underline");
+    if (!hasUnderline) parts.push("underline");
+    engine.block.setTextStyle(blockId, start, end, {
+      textDecoration: parts.join(" ") || undefined,
+    });
     refresh();
   }, [engine, blockId, getStyleRange, textSelectionRange, refresh]);
 
   const handleStrikethroughToggle = useCallback(() => {
     const { start, end } = getStyleRange();
     const runs = engine.block.getTextRuns(blockId);
-    let currentDeco = '';
+    let currentDeco = "";
     let offset = 0;
     for (const run of runs) {
       if (offset + run.text.length > (textSelectionRange?.from ?? 0)) {
-        currentDeco = run.style.textDecoration ?? '';
+        currentDeco = run.style.textDecoration ?? "";
         break;
       }
       offset += run.text.length;
     }
-    const hasStrikethrough = currentDeco.includes('line-through');
-    const parts = currentDeco.split(' ').filter((d) => d && d !== 'line-through');
-    if (!hasStrikethrough) parts.push('line-through');
-    engine.block.setTextStyle(blockId, start, end, { textDecoration: parts.join(' ') || undefined });
+    const hasStrikethrough = currentDeco.includes("line-through");
+    const parts = currentDeco.split(" ").filter((d) => d && d !== "line-through");
+    if (!hasStrikethrough) parts.push("line-through");
+    engine.block.setTextStyle(blockId, start, end, {
+      textDecoration: parts.join(" ") || undefined,
+    });
     refresh();
   }, [engine, blockId, getStyleRange, textSelectionRange, refresh]);
 
   const handleClearFormatting = useCallback(() => {
     const { start, end } = getStyleRange();
     engine.block.setTextStyle(blockId, start, end, {
-      fontWeight: 'normal',
-      fontStyle: 'normal',
+      fontWeight: "normal",
+      fontStyle: "normal",
       textDecoration: undefined,
       backgroundColor: undefined,
-      textTransform: 'none',
+      textTransform: "none",
       textShadowColor: undefined,
       textShadowBlur: undefined,
       textShadowOffsetX: undefined,
@@ -234,14 +263,20 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
   }, [engine, blockId, getStyleRange, refresh]);
 
   // ── Shared handlers ──
-  const handleOpacityChange = useCallback(([v]: number[]) => {
-    engine.block.setOpacity(blockId, v);
-    setOpacity(v);
-  }, [engine, blockId]);
+  const handleOpacityChange = useCallback(
+    ([v]: number[]) => {
+      engine.block.setOpacity(blockId, v);
+      setOpacity(v);
+    },
+    [engine, blockId],
+  );
 
-  const togglePanel = useCallback((panel: PropertySidePanel) => {
-    setPropertySidePanel(propertySidePanel === panel ? null : panel);
-  }, [propertySidePanel, setPropertySidePanel]);
+  const togglePanel = useCallback(
+    (panel: PropertySidePanel) => {
+      setPropertySidePanel(propertySidePanel === panel ? null : panel);
+    },
+    [propertySidePanel, setPropertySidePanel],
+  );
 
   // Toolbar button helper
   const PanelButton: React.FC<{
@@ -252,10 +287,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
     <button
       onClick={() => togglePanel(panel)}
       className={cn(
-        'flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap',
+        "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
         propertySidePanel === panel
-          ? 'bg-primary/20 text-primary ring-1 ring-primary/30'
-          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          ? "bg-primary/20 text-primary ring-1 ring-primary/30"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}
     >
       {icon}
@@ -263,15 +298,15 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
     </button>
   );
 
-  const colorSwatch = isText ? (textState?.fill ?? '#000000') : fillColor;
+  const colorSwatch = isText ? (textState?.fill ?? "#000000") : fillColor;
 
   return (
     <div
       className={cn(
-        'flex items-center gap-1 h-10 px-3',
-        'bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg',
-        'animate-in fade-in-0 slide-in-from-top-1 duration-150',
-        'overflow-x-auto scrollbar-none',
+        "flex items-center gap-1 h-10 px-3",
+        "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
+        "animate-in fade-in-0 slide-in-from-top-1 duration-150",
+        "overflow-x-auto scrollbar-none",
       )}
       data-text-toolbar
     >
@@ -285,7 +320,9 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             </SelectTrigger>
             <SelectContent>
               {FONT_FAMILIES.map((f) => (
-                <SelectItem key={f} value={f}>{f}</SelectItem>
+                <SelectItem key={f} value={f}>
+                  {f}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -297,10 +334,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleBoldToggle}
             className={cn(
-              'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
-              textState.fontWeight === 'bold'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-accent',
+              "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+              textState.fontWeight === "bold"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent",
             )}
           >
             <Bold className="h-3.5 w-3.5" />
@@ -309,10 +346,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleItalicToggle}
             className={cn(
-              'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
-              textState.fontStyle === 'italic'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-accent',
+              "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+              textState.fontStyle === "italic"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent",
             )}
           >
             <Italic className="h-3.5 w-3.5" />
@@ -342,7 +379,11 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
                 </button>
               </DropdownMenuTrigger>
             </div>
-            <DropdownMenuContent className="w-auto p-1 min-w-[60px]" align="start" data-text-toolbar>
+            <DropdownMenuContent
+              className="w-auto p-1 min-w-[60px]"
+              align="start"
+              data-text-toolbar
+            >
               <div className="flex flex-col gap-0.5">
                 {[14, 16, 18, 21, 24, 28, 32, 36, 48, 54].map((size) => (
                   <button
@@ -350,10 +391,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleFontSizePreset(size)}
                     className={cn(
-                      'px-3 py-1 rounded-md text-xs tabular-nums text-left transition-colors',
+                      "px-3 py-1 rounded-md text-xs tabular-nums text-left transition-colors",
                       Math.round(textState.fontSize) === size
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
                     {size}
@@ -370,9 +411,9 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors">
-                {textState.textAlign === 'center' ? (
+                {textState.textAlign === "center" ? (
                   <AlignCenter className="h-3.5 w-3.5" />
-                ) : textState.textAlign === 'right' ? (
+                ) : textState.textAlign === "right" ? (
                   <AlignRight className="h-3.5 w-3.5" />
                 ) : (
                   <AlignLeft className="h-3.5 w-3.5" />
@@ -381,23 +422,27 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
               <div className="flex gap-0.5">
-                {([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(
-                  ([align, Icon]) => (
-                    <button
-                      key={align}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleTextAlign(align)}
-                      className={cn(
-                        'h-8 w-8 rounded-md flex items-center justify-center transition-colors',
-                        textState.textAlign === align
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent',
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </button>
-                  ),
-                )}
+                {(
+                  [
+                    ["left", AlignLeft],
+                    ["center", AlignCenter],
+                    ["right", AlignRight],
+                  ] as const
+                ).map(([align, Icon]) => (
+                  <button
+                    key={align}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleTextAlign(align)}
+                    className={cn(
+                      "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
+                      textState.textAlign === align
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                ))}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -422,10 +467,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleUnderlineToggle}
                   className={cn(
-                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
-                    textState.textDecoration.includes('underline')
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                    textState.textDecoration.includes("underline")
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <Underline className="h-4 w-4" />
@@ -435,10 +480,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleStrikethroughToggle}
                   className={cn(
-                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
-                    textState.textDecoration.includes('line-through')
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                    textState.textDecoration.includes("line-through")
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <Strikethrough className="h-4 w-4" />
@@ -486,12 +531,12 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             refresh();
           }}
           className={cn(
-            'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
+            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
             !engine.block.isFillEnabled(blockId)
-              ? 'bg-primary/20 text-primary'
-              : 'text-muted-foreground hover:bg-accent',
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:bg-accent",
           )}
-          title={engine.block.isFillEnabled(blockId) ? 'Disable fill' : 'Enable fill'}
+          title={engine.block.isFillEnabled(blockId) ? "Disable fill" : "Enable fill"}
         >
           <CircleOff className="h-3.5 w-3.5" />
         </button>
@@ -508,20 +553,12 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
 
       {/* Stroke (graphic only) */}
       {!isText && !isImage && (
-        <PanelButton
-          panel="stroke"
-          icon={<Paintbrush className="h-3.5 w-3.5" />}
-          label="Stroke"
-        />
+        <PanelButton panel="stroke" icon={<Paintbrush className="h-3.5 w-3.5" />} label="Stroke" />
       )}
 
       {/* Image fill panel button (image only) */}
       {isImage && (
-        <PanelButton
-          panel="imageFill"
-          icon={<ImageIcon className="h-3.5 w-3.5" />}
-          label="Image"
-        />
+        <PanelButton panel="imageFill" icon={<ImageIcon className="h-3.5 w-3.5" />} label="Image" />
       )}
 
       {/* Style dropdown (image only — Adjustments / Filters) */}
@@ -530,10 +567,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                'flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap',
-                propertySidePanel === 'adjust' || propertySidePanel === 'filter'
-                  ? 'bg-primary/20 text-primary ring-1 ring-primary/30'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+                propertySidePanel === "adjust" || propertySidePanel === "filter"
+                  ? "bg-primary/20 text-primary ring-1 ring-primary/30"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -543,24 +580,24 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-auto p-1" align="center">
             <button
-              onClick={() => togglePanel('adjust')}
+              onClick={() => togglePanel("adjust")}
               className={cn(
-                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
-                propertySidePanel === 'adjust'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                propertySidePanel === "adjust"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
               <SlidersHorizontal className="h-4 w-4" />
               Adjustments
             </button>
             <button
-              onClick={() => togglePanel('filter')}
+              onClick={() => togglePanel("filter")}
               className={cn(
-                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
-                propertySidePanel === 'filter'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                propertySidePanel === "filter"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
               <Palette className="h-4 w-4" />
@@ -571,26 +608,26 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
       )}
 
       {/* Shadow */}
-      <PanelButton
-        panel="shadow"
-        icon={<Sun className="h-3.5 w-3.5" />}
-        label="Shadow"
-      />
+      <PanelButton panel="shadow" icon={<Sun className="h-3.5 w-3.5" />} label="Shadow" />
 
       {/* Opacity (dropdown) */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              'flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap',
-              'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+              "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
             <Grid2x2 className="h-3.5 w-3.5" />
             Opacity
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 p-3" align="center" onCloseAutoFocus={(e) => e.preventDefault()}>
+        <DropdownMenuContent
+          className="w-56 p-3"
+          align="center"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium">Opacity</span>
@@ -611,11 +648,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
       </DropdownMenu>
 
       {/* Position */}
-      <PanelButton
-        panel="position"
-        icon={<Move className="h-3.5 w-3.5" />}
-        label="Position"
-      />
+      <PanelButton panel="position" icon={<Move className="h-3.5 w-3.5" />} label="Position" />
     </div>
   );
 };

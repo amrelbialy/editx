@@ -1,13 +1,13 @@
-import { Engine } from '../engine';
-import type { EditMode, CursorType, EditModeConfig } from '../editor-types';
-import { EDIT_MODE_DEFAULTS } from '../editor-types';
-import type { BlockAPI } from '../block/block-api';
-import type { CropRect } from '../utils/crop-math';
-import type { EditorContext } from './editor-context';
-import { EditorCrop } from './editor-crop';
-import { EditorCursor } from './editor-cursor';
-import { EditorHistory } from './editor-history';
-import { EditorViewport } from './editor-viewport';
+import type { BlockAPI } from "../block/block-api";
+import type { CursorType, EditMode, EditModeConfig } from "../editor-types";
+import { EDIT_MODE_DEFAULTS } from "../editor-types";
+import type { Engine } from "../engine";
+import type { CropRect } from "../utils/crop-math";
+import type { EditorContext } from "./editor-context";
+import { EditorCrop } from "./editor-crop";
+import { EditorCursor } from "./editor-cursor";
+import { EditorHistory } from "./editor-history";
+import { EditorViewport } from "./editor-viewport";
 
 /**
  * Public editor API — the single entry-point for UI-level operations
@@ -32,8 +32,8 @@ export class EditorAPI {
   #viewport: EditorViewport;
 
   // ── Edit-mode state (cross-cuts crop & cursor) ─────────
-  #editMode: EditMode = 'Transform';
-  #editModeConfig: EditModeConfig = EDIT_MODE_DEFAULTS['Transform'];
+  #editMode: EditMode = "Transform";
+  #editModeConfig: EditModeConfig = EDIT_MODE_DEFAULTS.Transform;
 
   constructor(engine: Engine) {
     this.#ctx = {
@@ -75,10 +75,7 @@ export class EditorAPI {
    *   engine.editor.setEditMode('Transform');           // back to default
    *   engine.editor.setEditMode('CustomMode', { baseMode: 'Crop' });
    */
-  setEditMode(
-    mode: EditMode,
-    opts?: { baseMode?: string; blockId?: number },
-  ): void {
+  setEditMode(mode: EditMode, opts?: { baseMode?: string; blockId?: number }): void {
     const prev = this.#editMode;
 
     // ── Tear down previous mode ──────────────────────
@@ -90,7 +87,7 @@ export class EditorAPI {
     this.#editMode = mode;
 
     const configKey = opts?.baseMode ?? mode;
-    this.#editModeConfig = EDIT_MODE_DEFAULTS[configKey] ?? EDIT_MODE_DEFAULTS['Transform'];
+    this.#editModeConfig = EDIT_MODE_DEFAULTS[configKey] ?? EDIT_MODE_DEFAULTS.Transform;
 
     // Reset cursor to mode default
     this.#cursor.setCursorType(this.#editModeConfig.defaultCursor);
@@ -99,7 +96,7 @@ export class EditorAPI {
     // ── Enter new mode ───────────────────────────────
     this.#enterMode(mode, opts?.blockId);
 
-    this.#ctx.engine.emit('editMode:changed', { mode, previousMode: prev });
+    this.#ctx.engine.emit("editMode:changed", { mode, previousMode: prev });
   }
 
   /**
@@ -110,7 +107,7 @@ export class EditorAPI {
    * is used — the standard multi-block editor workflow.
    */
   #enterMode(mode: EditMode, blockId?: number): void {
-    if (mode === 'Crop') {
+    if (mode === "Crop") {
       const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
       if (targetId === null) return;
       this.#crop.setupCropOverlay(targetId);
@@ -121,7 +118,7 @@ export class EditorAPI {
    * Handle mode-specific teardown when leaving a mode.
    */
   #exitMode(mode: EditMode): void {
-    if (mode === 'Crop') {
+    if (mode === "Crop") {
       this.#crop.teardownCropOverlay();
     }
   }
@@ -144,10 +141,18 @@ export class EditorAPI {
 
   // ─── Cursor (delegated) ───────────────────────────────
 
-  setCursorType(type: CursorType): void { this.#cursor.setCursorType(type); }
-  getCursorType(): CursorType { return this.#cursor.getCursorType(); }
-  setCursorRotation(degrees: number): void { this.#cursor.setCursorRotation(degrees); }
-  getCursorRotation(): number { return this.#cursor.getCursorRotation(); }
+  setCursorType(type: CursorType): void {
+    this.#cursor.setCursorType(type);
+  }
+  getCursorType(): CursorType {
+    return this.#cursor.getCursorType();
+  }
+  setCursorRotation(degrees: number): void {
+    this.#cursor.setCursorRotation(degrees);
+  }
+  getCursorRotation(): number {
+    return this.#cursor.getCursorRotation();
+  }
 
   setTextCursorPositionInScreenSpace(x: number, y: number): void {
     this.#cursor.setTextCursorPositionInScreenSpace(x, y);
@@ -161,29 +166,63 @@ export class EditorAPI {
 
   // ─── History (delegated) ──────────────────────────────
 
-  undo(): void { this.#history.undo(); }
-  redo(): void { this.#history.redo(); }
-  canUndo(): boolean { return this.#history.canUndo(); }
-  canRedo(): boolean { return this.#history.canRedo(); }
-  clearHistory(): void { this.#history.clearHistory(); }
+  undo(): void {
+    this.#history.undo();
+  }
+  redo(): void {
+    this.#history.redo();
+  }
+  canUndo(): boolean {
+    return this.#history.canUndo();
+  }
+  canRedo(): boolean {
+    return this.#history.canRedo();
+  }
+  clearHistory(): void {
+    this.#history.clearHistory();
+  }
 
   // ─── Viewport / Camera (delegated) ────────────────────
 
-  setZoom(zoom: number, animate = false): void { this.#viewport.setZoom(zoom, animate); }
-  getZoom(): number { return this.#viewport.getZoom(); }
-  zoomIn(step = 0.1): void { this.#viewport.zoomIn(step); }
-  zoomOut(step = 0.1): void { this.#viewport.zoomOut(step); }
-  resetZoom(): void { this.#viewport.resetZoom(); }
+  setZoom(zoom: number, animate = false): void {
+    this.#viewport.setZoom(zoom, animate);
+  }
+  getZoom(): number {
+    return this.#viewport.getZoom();
+  }
+  zoomIn(step = 0.1): void {
+    this.#viewport.zoomIn(step);
+  }
+  zoomOut(step = 0.1): void {
+    this.#viewport.zoomOut(step);
+  }
+  resetZoom(): void {
+    this.#viewport.resetZoom();
+  }
 
-  panTo(x: number, y: number): void { this.#viewport.panTo(x, y); }
-  panBy(dx: number, dy: number): void { this.#viewport.panBy(dx, dy); }
-  getPan(): { x: number; y: number } { return this.#viewport.getPan(); }
+  panTo(x: number, y: number): void {
+    this.#viewport.panTo(x, y);
+  }
+  panBy(dx: number, dy: number): void {
+    this.#viewport.panBy(dx, dy);
+  }
+  getPan(): { x: number; y: number } {
+    return this.#viewport.getPan();
+  }
 
-  fitToScreen(padding = 24, animate = false): void { this.#viewport.fitToScreen(padding, animate); }
-  fitToSelection(padding = 24, animate = false): void { this.#viewport.fitToSelection(padding, animate); }
+  fitToScreen(padding = 24, animate = false): void {
+    this.#viewport.fitToScreen(padding, animate);
+  }
+  fitToSelection(padding = 24, animate = false): void {
+    this.#viewport.fitToSelection(padding, animate);
+  }
 
-  screenToWorld(pt: { x: number; y: number }) { return this.#viewport.screenToWorld(pt); }
-  worldToScreen(pt: { x: number; y: number }) { return this.#viewport.worldToScreen(pt); }
+  screenToWorld(pt: { x: number; y: number }) {
+    return this.#viewport.screenToWorld(pt);
+  }
+  worldToScreen(pt: { x: number; y: number }) {
+    return this.#viewport.worldToScreen(pt);
+  }
 
   /** Returns the screen-pixel bounding rect of the current transformer selection, relative to the canvas root. */
   getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
@@ -191,7 +230,9 @@ export class EditorAPI {
   }
 
   /** Returns the screen-pixel bounding rect of a specific block, independent of transformer. */
-  getBlockScreenRect(blockId: number): { x: number; y: number; width: number; height: number } | null {
+  getBlockScreenRect(
+    blockId: number,
+  ): { x: number; y: number; width: number; height: number } | null {
     return this.#ctx.renderer?.getBlockScreenRect(blockId) ?? null;
   }
 
@@ -199,7 +240,9 @@ export class EditorAPI {
   // Used by BlockAPI to route applyCropRatio through the active overlay.
 
   /** @internal */
-  _getCrop(): EditorCrop { return this.#crop; }
+  _getCrop(): EditorCrop {
+    return this.#crop;
+  }
 
   // ─── Crop (high-level) ────────────────────────────────
 
@@ -210,7 +253,7 @@ export class EditorAPI {
   commitCrop(): CropRect | null {
     if (this.#crop.getCropBlockId() === null) return null;
     const rect = this.#ctx.renderer?.getCropRect() ?? null;
-    this.setEditMode('Transform');
+    this.setEditMode("Transform");
     return rect;
   }
 
@@ -250,7 +293,13 @@ export class EditorAPI {
     blockId: number,
     imageRect: CropRect,
     initialCrop?: CropRect,
-    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+    transform?: {
+      rotation: number;
+      flipH: boolean;
+      flipV: boolean;
+      sourceWidth: number;
+      sourceHeight: number;
+    },
   ): void {
     this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
   }

@@ -7,8 +7,8 @@
  * Range: -1 to 1, default 0 (no change).
  */
 export function HighlightsShadows(this: any, imageData: ImageData): void {
-  const highlights = this.getAttr('highlights') ?? 0;
-  const shadows = this.getAttr('shadows') ?? 0;
+  const highlights = this.getAttr("highlights") ?? 0;
+  const shadows = this.getAttr("shadows") ?? 0;
   if (highlights === 0 && shadows === 0) return;
 
   const pixels = imageData.data;
@@ -28,7 +28,7 @@ export function HighlightsShadows(this: any, imageData: ImageData): void {
 
     // Blend factor: 0 at one extreme, 1 at the other
     const highlightWeight = Math.max(0, (lum / 255 - 0.5) * 2); // 0 for dark, 1 for bright
-    const shadowWeight = Math.max(0, (0.5 - lum / 255) * 2);    // 1 for dark, 0 for bright
+    const shadowWeight = Math.max(0, (0.5 - lum / 255) * 2); // 1 for dark, 0 for bright
 
     const adjustment = hAdj * highlightWeight + sAdj * shadowWeight;
 

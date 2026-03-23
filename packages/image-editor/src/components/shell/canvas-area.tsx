@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '../../utils/cn';
+import type React from "react";
+import { cn } from "../../utils/cn";
 
 interface CanvasAreaProps {
   /** Ref passed to the container div where Konva mounts */
@@ -13,7 +13,11 @@ interface CanvasAreaProps {
 
 export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, overlay, children }) => {
   return (
-    <div className={cn('relative flex flex-col flex-1 min-w-0 overflow-hidden')} role="region" aria-label="Image canvas">
+    <div
+      className={cn("relative flex flex-col flex-1 min-w-0 overflow-hidden")}
+      role="region"
+      aria-label="Image canvas"
+    >
       {header && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100%-1rem)]">
           {header}

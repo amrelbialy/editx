@@ -2,10 +2,7 @@
  * Deep-merge two objects. Arrays are replaced (not concatenated).
  * Source values override target values for primitives.
  */
-export function deepMerge<T extends Record<string, unknown>>(
-  target: T,
-  source: Partial<T>,
-): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
   const output = { ...target };
 
   for (const key of Object.keys(source) as (keyof T)[]) {
@@ -15,11 +12,11 @@ export function deepMerge<T extends Record<string, unknown>>(
     if (
       sourceVal !== null &&
       sourceVal !== undefined &&
-      typeof sourceVal === 'object' &&
+      typeof sourceVal === "object" &&
       !Array.isArray(sourceVal) &&
       targetVal !== null &&
       targetVal !== undefined &&
-      typeof targetVal === 'object' &&
+      typeof targetVal === "object" &&
       !Array.isArray(targetVal)
     ) {
       output[key] = deepMerge(

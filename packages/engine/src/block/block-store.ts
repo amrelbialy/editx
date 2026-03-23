@@ -1,8 +1,21 @@
-import { BlockData, BlockType, Color, EffectType, FillType, PropertyValue, ShapeType } from './block.types';
-import { getBlockDefaults, getEffectDefaults, getShapeDefaults, getFillDefaults } from './block-defaults';
-import { BlockHierarchy } from './block-hierarchy';
-import { BlockProperties } from './block-properties';
-import { BlockSnapshot } from './block-snapshot';
+import type {
+  BlockData,
+  BlockType,
+  Color,
+  EffectType,
+  FillType,
+  PropertyValue,
+  ShapeType,
+} from "./block.types";
+import {
+  getBlockDefaults,
+  getEffectDefaults,
+  getFillDefaults,
+  getShapeDefaults,
+} from "./block-defaults";
+import { BlockHierarchy } from "./block-hierarchy";
+import { BlockProperties } from "./block-properties";
+import { BlockSnapshot } from "./block-snapshot";
 
 /**
  * Central block registry. Owns the blocks Map and delegates domain logic
@@ -24,7 +37,7 @@ export class BlockStore {
 
   // --- CRUD ---
 
-  create(type: BlockType, kind = ''): number {
+  create(type: BlockType, kind = ""): number {
     const id = this.#nextId++;
     const block: BlockData = {
       id,
@@ -46,7 +59,7 @@ export class BlockStore {
     const id = this.#nextId++;
     const block: BlockData = {
       id,
-      type: 'effect',
+      type: "effect",
       kind: effectType,
       name: `effect-${effectType}-${id}`,
       parentId: null,
@@ -64,7 +77,7 @@ export class BlockStore {
     const id = this.#nextId++;
     const block: BlockData = {
       id,
-      type: 'shape',
+      type: "shape",
       kind: shapeType,
       name: `shape-${shapeType}-${id}`,
       parentId: null,
@@ -82,7 +95,7 @@ export class BlockStore {
     const id = this.#nextId++;
     const block: BlockData = {
       id,
-      type: 'fill',
+      type: "fill",
       kind: fillType,
       name: `fill-${fillType}-${id}`,
       parentId: null,
@@ -111,7 +124,7 @@ export class BlockStore {
     this.#hierarchy.unparent(id);
 
     // Remove from any parent's effectIds list
-    if (block.type === 'effect') {
+    if (block.type === "effect") {
       for (const [, b] of this.#blocks) {
         const idx = b.effectIds.indexOf(id);
         if (idx !== -1) {
@@ -122,14 +135,20 @@ export class BlockStore {
     }
 
     // Remove from any owner's shapeId / fillId reference
-    if (block.type === 'shape') {
+    if (block.type === "shape") {
       for (const [, b] of this.#blocks) {
-        if (b.shapeId === id) { b.shapeId = null; break; }
+        if (b.shapeId === id) {
+          b.shapeId = null;
+          break;
+        }
       }
     }
-    if (block.type === 'fill') {
+    if (block.type === "fill") {
       for (const [, b] of this.#blocks) {
-        if (b.fillId === id) { b.fillId = null; break; }
+        if (b.fillId === id) {
+          b.fillId = null;
+          break;
+        }
       }
     }
 
@@ -163,7 +182,7 @@ export class BlockStore {
   }
 
   getKind(id: number): string {
-    return this.#blocks.get(id)?.kind ?? '';
+    return this.#blocks.get(id)?.kind ?? "";
   }
 
   setKind(id: number, kind: string): void {
@@ -177,7 +196,7 @@ export class BlockStore {
   }
 
   getName(id: number): string {
-    return this.#blocks.get(id)?.name ?? '';
+    return this.#blocks.get(id)?.name ?? "";
   }
 
   // --- Query ---
@@ -279,7 +298,7 @@ export class BlockStore {
   }
 
   supportsShape(blockId: number): boolean {
-    return this.#blocks.get(blockId)?.type === 'graphic';
+    return this.#blocks.get(blockId)?.type === "graphic";
   }
 
   // --- Fill sub-block ---
@@ -294,7 +313,7 @@ export class BlockStore {
   }
 
   supportsFill(blockId: number): boolean {
-    return this.#blocks.get(blockId)?.type === 'graphic';
+    return this.#blocks.get(blockId)?.type === "graphic";
   }
 
   // --- Properties (delegated) ---
@@ -337,4 +356,3 @@ export class BlockStore {
     this.#snapshots.restore(data);
   }
 }
-

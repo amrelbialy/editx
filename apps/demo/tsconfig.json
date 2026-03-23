@@ -17,9 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@creative-editor/engine": ["../../packages/engine/src"],
-      // "@creative-editor/renderer": ["../../packages/renderer/src"],
-      "@creative-editor/react-editor": ["../../packages/react-editor/src"]
+      "@creative-editor/engine": ["../../packages/engine/src"]
     }
   },
   "include": ["src"],

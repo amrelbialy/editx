@@ -1,22 +1,22 @@
 import {
   $createParagraphNode,
+  $createRangeSelection,
   $createTextNode,
   $getRoot,
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  $setSelection,
   type EditorState,
-  type LexicalEditor,
-  type ParagraphNode,
   IS_BOLD,
   IS_ITALIC,
-  IS_UNDERLINE,
   IS_STRIKETHROUGH,
-  $createRangeSelection,
-  $setSelection,
-} from 'lexical';
-import type { TextRun, TextRunStyle } from './block.types';
-import { mergeAdjacentRuns } from './text-run-utils';
+  IS_UNDERLINE,
+  type LexicalEditor,
+  type ParagraphNode,
+} from "lexical";
+import type { TextRun, TextRunStyle } from "./block.types";
+import { mergeAdjacentRuns } from "./text-run-utils";
 
 // ── TextRun[] → Lexical EditorState ─────────────────────────────────
 
@@ -32,7 +32,7 @@ export function runsToEditorState(editor: LexicalEditor, runs: TextRun[]): void 
     // Group runs into paragraphs on '\n' boundaries
     const paragraphs: TextRun[][] = [[]];
     for (const run of runs) {
-      const segments = run.text.split('\n');
+      const segments = run.text.split("\n");
       segments.forEach((segment, i) => {
         if (i > 0) paragraphs.push([]);
         if (segment.length > 0) {
@@ -48,10 +48,10 @@ export function runsToEditorState(editor: LexicalEditor, runs: TextRun[]): void 
 
         // Map TextRunStyle to Lexical format flags
         let format = 0;
-        if (run.style.fontWeight === 'bold' || run.style.fontWeight === '700') format |= IS_BOLD;
-        if (run.style.fontStyle === 'italic') format |= IS_ITALIC;
-        if (run.style.textDecoration?.includes('underline')) format |= IS_UNDERLINE;
-        if (run.style.textDecoration?.includes('line-through')) format |= IS_STRIKETHROUGH;
+        if (run.style.fontWeight === "bold" || run.style.fontWeight === "700") format |= IS_BOLD;
+        if (run.style.fontStyle === "italic") format |= IS_ITALIC;
+        if (run.style.textDecoration?.includes("underline")) format |= IS_UNDERLINE;
+        if (run.style.textDecoration?.includes("line-through")) format |= IS_STRIKETHROUGH;
         if (format !== 0) textNode.setFormat(format);
 
         // Store remaining style props as inline CSS via node.setStyle()
@@ -62,7 +62,7 @@ export function runsToEditorState(editor: LexicalEditor, runs: TextRun[]): void 
       }
       // Empty paragraphs still need an empty text node
       if (pRuns.length === 0) {
-        paragraph.append($createTextNode(''));
+        paragraph.append($createTextNode(""));
       }
       root.append(paragraph);
     }
@@ -91,29 +91,29 @@ export function editorStateToRuns(editorState: EditorState): TextRun[] {
           const format = node.getFormat();
 
           // Map Lexical format flags → TextRunStyle (always set explicit values)
-          style.fontWeight = (format & IS_BOLD) ? 'bold' : 'normal';
-          style.fontStyle = (format & IS_ITALIC) ? 'italic' : 'normal';
+          style.fontWeight = format & IS_BOLD ? "bold" : "normal";
+          style.fontStyle = format & IS_ITALIC ? "italic" : "normal";
 
           // Combine underline/line-through into textDecoration
           const decorations: string[] = [];
-          if (format & IS_UNDERLINE) decorations.push('underline');
-          if (format & IS_STRIKETHROUGH) decorations.push('line-through');
-          if (decorations.length > 0) style.textDecoration = decorations.join(' ');
+          if (format & IS_UNDERLINE) decorations.push("underline");
+          if (format & IS_STRIKETHROUGH) decorations.push("line-through");
+          if (decorations.length > 0) style.textDecoration = decorations.join(" ");
 
           const text = node.getTextContent();
           if (text.length > 0) {
             runs.push({ text, style });
           }
-        } else if (node.getType() === 'linebreak') {
+        } else if (node.getType() === "linebreak") {
           const lastStyle = runs.length > 0 ? { ...runs[runs.length - 1].style } : {};
-          runs.push({ text: '\n', style: lastStyle });
+          runs.push({ text: "\n", style: lastStyle });
         }
       }
 
       // '\n' between paragraphs (not after the last one)
       if (pIdx < paragraphs.length - 1) {
         const lastStyle = runs.length > 0 ? { ...runs[runs.length - 1].style } : {};
-        runs.push({ text: '\n', style: lastStyle });
+        runs.push({ text: "\n", style: lastStyle });
       }
     });
   });
@@ -203,15 +203,19 @@ export function $restoreSelectionFromOffsets(from: number, to: number): void {
   if (!anchorPoint || !focusPoint) return;
 
   const sel = $createRangeSelection();
-  sel.anchor.set(anchorPoint.key, anchorPoint.offset, 'text');
-  sel.focus.set(focusPoint.key, focusPoint.offset, 'text');
+  sel.anchor.set(anchorPoint.key, anchorPoint.offset, "text");
+  sel.focus.set(focusPoint.key, focusPoint.offset, "text");
   $setSelection(sel);
 }
 
 /**
  * Compute global character offset for a node key + local offset.
  */
-function getGlobalOffset(root: ReturnType<typeof $getRoot>, nodeKey: string, localOffset: number): number | null {
+function getGlobalOffset(
+  root: ReturnType<typeof $getRoot>,
+  nodeKey: string,
+  localOffset: number,
+): number | null {
   const paragraphs = root.getChildren() as ParagraphNode[];
   let globalOffset = 0;
 
@@ -239,21 +243,23 @@ export function runStyleToCssString(style: TextRunStyle): string {
   if (style.fontFamily != null) parts.push(`font-family: ${style.fontFamily}`);
   if (style.fill != null) parts.push(`color: ${style.fill}`);
   if (style.letterSpacing != null) parts.push(`letter-spacing: ${style.letterSpacing}px`);
-  if (style.backgroundColor != null && style.backgroundColor !== '') {
+  if (style.backgroundColor != null && style.backgroundColor !== "") {
     parts.push(`background-color: ${style.backgroundColor}`);
   }
   if (style.textTransform != null) parts.push(`text-transform: ${style.textTransform}`);
-  if (style.textShadowColor != null && style.textShadowColor !== '') {
+  if (style.textShadowColor != null && style.textShadowColor !== "") {
     parts.push(`--text-shadow-color: ${style.textShadowColor}`);
   }
   if (style.textShadowBlur != null) parts.push(`--text-shadow-blur: ${style.textShadowBlur}`);
-  if (style.textShadowOffsetX != null) parts.push(`--text-shadow-offset-x: ${style.textShadowOffsetX}`);
-  if (style.textShadowOffsetY != null) parts.push(`--text-shadow-offset-y: ${style.textShadowOffsetY}`);
-  if (style.textStrokeColor != null && style.textStrokeColor !== '') {
+  if (style.textShadowOffsetX != null)
+    parts.push(`--text-shadow-offset-x: ${style.textShadowOffsetX}`);
+  if (style.textShadowOffsetY != null)
+    parts.push(`--text-shadow-offset-y: ${style.textShadowOffsetY}`);
+  if (style.textStrokeColor != null && style.textStrokeColor !== "") {
     parts.push(`--text-stroke-color: ${style.textStrokeColor}`);
   }
   if (style.textStrokeWidth != null) parts.push(`--text-stroke-width: ${style.textStrokeWidth}`);
-  return parts.join('; ');
+  return parts.join("; ");
 }
 
 /** Parse a CSS string from node.getStyle() back to TextRunStyle. */
@@ -261,49 +267,49 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
   const style: TextRunStyle = {};
   if (!cssStr) return style;
 
-  for (const decl of cssStr.split(';')) {
-    const colonIdx = decl.indexOf(':');
+  for (const decl of cssStr.split(";")) {
+    const colonIdx = decl.indexOf(":");
     if (colonIdx === -1) continue;
     const prop = decl.slice(0, colonIdx).trim();
     const val = decl.slice(colonIdx + 1).trim();
 
     switch (prop) {
-      case 'font-size':
+      case "font-size":
         style.fontSize = parseFloat(val);
         break;
-      case 'font-family':
+      case "font-family":
         style.fontFamily = val;
         break;
-      case 'color':
+      case "color":
         style.fill = val;
         break;
-      case 'letter-spacing':
+      case "letter-spacing":
         style.letterSpacing = parseFloat(val);
         break;
-      case 'background-color':
+      case "background-color":
         style.backgroundColor = val;
         break;
-      case 'text-transform':
-        if (val === 'uppercase' || val === 'lowercase' || val === 'capitalize' || val === 'none') {
+      case "text-transform":
+        if (val === "uppercase" || val === "lowercase" || val === "capitalize" || val === "none") {
           style.textTransform = val;
         }
         break;
-      case '--text-shadow-color':
+      case "--text-shadow-color":
         style.textShadowColor = val;
         break;
-      case '--text-shadow-blur':
+      case "--text-shadow-blur":
         style.textShadowBlur = parseFloat(val);
         break;
-      case '--text-shadow-offset-x':
+      case "--text-shadow-offset-x":
         style.textShadowOffsetX = parseFloat(val);
         break;
-      case '--text-shadow-offset-y':
+      case "--text-shadow-offset-y":
         style.textShadowOffsetY = parseFloat(val);
         break;
-      case '--text-stroke-color':
+      case "--text-stroke-color":
         style.textStrokeColor = val;
         break;
-      case '--text-stroke-width':
+      case "--text-stroke-width":
         style.textStrokeWidth = parseFloat(val);
         break;
     }
@@ -316,19 +322,33 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
  * Convert a partial TextRunStyle update to a CSS patch object for $patchStyleText.
  * Only includes CSS-stored properties (not format-flag ones like fontWeight/fontStyle/textDecoration).
  */
-export function textRunStyleToCssPatch(update: Partial<TextRunStyle>): Record<string, string | null> {
+export function textRunStyleToCssPatch(
+  update: Partial<TextRunStyle>,
+): Record<string, string | null> {
   const patch: Record<string, string | null> = {};
-  if (update.fill !== undefined) patch['color'] = update.fill;
-  if (update.fontSize !== undefined) patch['font-size'] = update.fontSize != null ? `${update.fontSize}px` : null;
-  if (update.fontFamily !== undefined) patch['font-family'] = update.fontFamily ?? null;
-  if (update.letterSpacing !== undefined) patch['letter-spacing'] = update.letterSpacing != null ? `${update.letterSpacing}px` : null;
-  if (update.backgroundColor !== undefined) patch['background-color'] = update.backgroundColor || null;
-  if (update.textTransform !== undefined) patch['text-transform'] = update.textTransform ?? null;
-  if (update.textShadowColor !== undefined) patch['--text-shadow-color'] = update.textShadowColor || null;
-  if (update.textShadowBlur !== undefined) patch['--text-shadow-blur'] = update.textShadowBlur != null ? `${update.textShadowBlur}` : null;
-  if (update.textShadowOffsetX !== undefined) patch['--text-shadow-offset-x'] = update.textShadowOffsetX != null ? `${update.textShadowOffsetX}` : null;
-  if (update.textShadowOffsetY !== undefined) patch['--text-shadow-offset-y'] = update.textShadowOffsetY != null ? `${update.textShadowOffsetY}` : null;
-  if (update.textStrokeColor !== undefined) patch['--text-stroke-color'] = update.textStrokeColor || null;
-  if (update.textStrokeWidth !== undefined) patch['--text-stroke-width'] = update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
+  if (update.fill !== undefined) patch.color = update.fill;
+  if (update.fontSize !== undefined)
+    patch["font-size"] = update.fontSize != null ? `${update.fontSize}px` : null;
+  if (update.fontFamily !== undefined) patch["font-family"] = update.fontFamily ?? null;
+  if (update.letterSpacing !== undefined)
+    patch["letter-spacing"] = update.letterSpacing != null ? `${update.letterSpacing}px` : null;
+  if (update.backgroundColor !== undefined)
+    patch["background-color"] = update.backgroundColor || null;
+  if (update.textTransform !== undefined) patch["text-transform"] = update.textTransform ?? null;
+  if (update.textShadowColor !== undefined)
+    patch["--text-shadow-color"] = update.textShadowColor || null;
+  if (update.textShadowBlur !== undefined)
+    patch["--text-shadow-blur"] = update.textShadowBlur != null ? `${update.textShadowBlur}` : null;
+  if (update.textShadowOffsetX !== undefined)
+    patch["--text-shadow-offset-x"] =
+      update.textShadowOffsetX != null ? `${update.textShadowOffsetX}` : null;
+  if (update.textShadowOffsetY !== undefined)
+    patch["--text-shadow-offset-y"] =
+      update.textShadowOffsetY != null ? `${update.textShadowOffsetY}` : null;
+  if (update.textStrokeColor !== undefined)
+    patch["--text-stroke-color"] = update.textStrokeColor || null;
+  if (update.textStrokeWidth !== undefined)
+    patch["--text-stroke-width"] =
+      update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
   return patch;
 }

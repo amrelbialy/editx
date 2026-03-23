@@ -1,5 +1,5 @@
-import type { EditorContext } from './editor-context';
-import type { CursorType } from '../editor-types';
+import type { CursorType } from "../editor-types";
+import type { EditorContext } from "./editor-context";
 
 /**
  * Manages cursor state: type, rotation, and text-cursor screen position.
@@ -7,7 +7,7 @@ import type { CursorType } from '../editor-types';
  */
 export class EditorCursor {
   #ctx: EditorContext;
-  #cursorType: CursorType = 'default';
+  #cursorType: CursorType = "default";
   #cursorRotation = 0;
   #textCursorScreenX = 0;
   #textCursorScreenY = 0;

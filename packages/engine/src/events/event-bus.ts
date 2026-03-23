@@ -1,11 +1,11 @@
 /** Known event signatures emitted by the engine. */
 export interface EventMap {
-  'selection:changed': (ids: number[]) => void;
-  'history:undo': () => void;
-  'history:redo': () => void;
-  'history:clear': () => void;
-  'stage:click': (worldPos: { x: number; y: number }) => void;
-  'zoom:changed': (zoom: number) => void;
+  "selection:changed": (ids: number[]) => void;
+  "history:undo": () => void;
+  "history:redo": () => void;
+  "history:clear": () => void;
+  "stage:click": (worldPos: { x: number; y: number }) => void;
+  "zoom:changed": (zoom: number) => void;
 }
 
 type EventName = keyof EventMap;

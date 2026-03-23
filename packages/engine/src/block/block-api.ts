@@ -1,60 +1,108 @@
-import { Engine } from '../engine';
 import {
-  CreateBlockCommand,
-  DestroyBlockCommand,
-  SetPropertyCommand,
-  SetKindCommand,
   AppendChildCommand,
-  RemoveChildCommand,
-  CreateEffectCommand,
   AppendEffectCommand,
-  InsertEffectCommand,
-  RemoveEffectCommand,
-  CreateShapeCommand,
+  CreateBlockCommand,
+  CreateEffectCommand,
   CreateFillCommand,
-  SetShapeCommand,
-  SetFillCommand,
+  CreateShapeCommand,
+  DestroyBlockCommand,
+  InsertEffectCommand,
   MoveChildCommand,
-} from '../controller/commands';
-import { BlockType, Color, EffectType, FillType, PropertyValue, ShapeType, TextRun, TextRunStyle } from './block.types';
+  RemoveChildCommand,
+  RemoveEffectCommand,
+  SetFillCommand,
+  SetKindCommand,
+  SetPropertyCommand,
+  SetShapeCommand,
+} from "../controller/commands";
+import type { Engine } from "../engine";
+import { normalizeRotation } from "../utils/rotation-math";
+import type {
+  BlockType,
+  Color,
+  EffectType,
+  FillType,
+  PropertyValue,
+  ShapeType,
+  TextRun,
+  TextRunStyle,
+} from "./block.types";
 import {
-  CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
-  CROP_SCALE_X, CROP_SCALE_Y, CROP_ROTATION, CROP_SCALE_RATIO,
-  CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL, CROP_ASPECT_RATIO_LOCKED,
-  PAGE_WIDTH, PAGE_HEIGHT,
-  IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT, IMAGE_ROTATION,
-  PAGE_MARGIN_ENABLED, PAGE_MARGIN_TOP, PAGE_MARGIN_BOTTOM,
-  PAGE_MARGIN_LEFT, PAGE_MARGIN_RIGHT,
-  FILL_COLOR, FILL_ENABLED, STROKE_ENABLED, STROKE_COLOR, STROKE_WIDTH,
-  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
-  SHAPE_POLYGON_SIDES,
+  CROP_ASPECT_RATIO_LOCKED,
+  CROP_ENABLED,
+  CROP_FLIP_HORIZONTAL,
+  CROP_FLIP_VERTICAL,
+  CROP_HEIGHT,
+  CROP_ROTATION,
+  CROP_SCALE_RATIO,
+  CROP_SCALE_X,
+  CROP_SCALE_Y,
+  CROP_WIDTH,
+  CROP_X,
+  CROP_Y,
+  EFFECT_ADJUSTMENTS_BLACKS,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS,
+  EFFECT_ADJUSTMENTS_CLARITY,
+  EFFECT_ADJUSTMENTS_CONTRAST,
+  EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_SHADOWS,
+  EFFECT_ADJUSTMENTS_SHARPNESS,
+  EFFECT_ADJUSTMENTS_TEMPERATURE,
+  EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_ENABLED,
-  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
-  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
-  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
-  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
-  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
-  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
-} from './property-keys';
+  FILL_COLOR,
+  FILL_ENABLED,
+  IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_ORIGINAL_WIDTH,
+  IMAGE_ROTATION,
+  IMAGE_SRC,
+  PAGE_HEIGHT,
+  PAGE_MARGIN_BOTTOM,
+  PAGE_MARGIN_ENABLED,
+  PAGE_MARGIN_LEFT,
+  PAGE_MARGIN_RIGHT,
+  PAGE_MARGIN_TOP,
+  PAGE_WIDTH,
+  SHADOW_BLUR,
+  SHADOW_COLOR,
+  SHADOW_ENABLED,
+  SHADOW_OFFSET_X,
+  SHADOW_OFFSET_Y,
+  SHAPE_POLYGON_SIDES,
+  STROKE_COLOR,
+  STROKE_ENABLED,
+  STROKE_WIDTH,
+  TEXT_ALIGN,
+  TEXT_LINE_HEIGHT,
+  TEXT_RUNS,
+  TEXT_VERTICAL_ALIGN,
+} from "./property-keys";
+import { TextEditorSession } from "./text-editor-session";
 import {
-  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP,
-} from './property-keys';
-import { normalizeRotation } from '../utils/rotation-math';
-import {
+  getPlainText as utilGetPlainText,
   insertText as utilInsertText,
   removeRange as utilRemoveRange,
   replaceRange as utilReplaceRange,
   setStyleOnRange as utilSetStyleOnRange,
-  getPlainText as utilGetPlainText,
-  mergeAdjacentRuns,
-} from './text-run-utils';
-import { TextEditorSession } from './text-editor-session';
+} from "./text-run-utils";
 
 /** Identifies one of the 12 adjustment parameters. */
 export type AdjustmentParam =
-  | 'brightness' | 'saturation' | 'contrast' | 'gamma'
-  | 'clarity' | 'exposure' | 'shadows' | 'highlights'
-  | 'blacks' | 'whites' | 'temperature' | 'sharpness';
+  | "brightness"
+  | "saturation"
+  | "contrast"
+  | "gamma"
+  | "clarity"
+  | "exposure"
+  | "shadows"
+  | "highlights"
+  | "blacks"
+  | "whites"
+  | "temperature"
+  | "sharpness";
 
 /** Configuration for a single adjustment parameter: property key + valid range. */
 export interface AdjustmentConfig {
@@ -66,22 +114,24 @@ export interface AdjustmentConfig {
 
 /** Maps each AdjustmentParam to its effect property key and valid range. */
 export const ADJUSTMENT_CONFIG: Record<AdjustmentParam, AdjustmentConfig> = {
-  brightness:  { key: EFFECT_ADJUSTMENTS_BRIGHTNESS,   min: -1,   max: 1,   step: 0.05 },
-  saturation:  { key: EFFECT_ADJUSTMENTS_SATURATION,   min: -1,   max: 1,   step: 0.05 },
-  contrast:    { key: EFFECT_ADJUSTMENTS_CONTRAST,     min: -1,   max: 1,   step: 0.05 },
-  gamma:       { key: EFFECT_ADJUSTMENTS_GAMMA,        min: -1,   max: 1,   step: 0.05 },
-  clarity:     { key: EFFECT_ADJUSTMENTS_CLARITY,      min: -1,   max: 1,   step: 0.05 },
-  exposure:    { key: EFFECT_ADJUSTMENTS_EXPOSURE,     min: -1,   max: 1,   step: 0.05 },
-  shadows:     { key: EFFECT_ADJUSTMENTS_SHADOWS,      min: -1,   max: 1,   step: 0.05 },
-  highlights:  { key: EFFECT_ADJUSTMENTS_HIGHLIGHTS,   min: -1,   max: 1,   step: 0.05 },
-  blacks:      { key: EFFECT_ADJUSTMENTS_BLACKS,       min: -1,   max: 1,   step: 0.05 },
-  whites:      { key: EFFECT_ADJUSTMENTS_WHITES,       min: -1,   max: 1,   step: 0.05 },
-  temperature: { key: EFFECT_ADJUSTMENTS_TEMPERATURE,  min: -1,   max: 1,   step: 0.05 },
-  sharpness:   { key: EFFECT_ADJUSTMENTS_SHARPNESS,    min: -1,   max: 1,   step: 0.05 },
+  brightness: { key: EFFECT_ADJUSTMENTS_BRIGHTNESS, min: -1, max: 1, step: 0.05 },
+  saturation: { key: EFFECT_ADJUSTMENTS_SATURATION, min: -1, max: 1, step: 0.05 },
+  contrast: { key: EFFECT_ADJUSTMENTS_CONTRAST, min: -1, max: 1, step: 0.05 },
+  gamma: { key: EFFECT_ADJUSTMENTS_GAMMA, min: -1, max: 1, step: 0.05 },
+  clarity: { key: EFFECT_ADJUSTMENTS_CLARITY, min: -1, max: 1, step: 0.05 },
+  exposure: { key: EFFECT_ADJUSTMENTS_EXPOSURE, min: -1, max: 1, step: 0.05 },
+  shadows: { key: EFFECT_ADJUSTMENTS_SHADOWS, min: -1, max: 1, step: 0.05 },
+  highlights: { key: EFFECT_ADJUSTMENTS_HIGHLIGHTS, min: -1, max: 1, step: 0.05 },
+  blacks: { key: EFFECT_ADJUSTMENTS_BLACKS, min: -1, max: 1, step: 0.05 },
+  whites: { key: EFFECT_ADJUSTMENTS_WHITES, min: -1, max: 1, step: 0.05 },
+  temperature: { key: EFFECT_ADJUSTMENTS_TEMPERATURE, min: -1, max: 1, step: 0.05 },
+  sharpness: { key: EFFECT_ADJUSTMENTS_SHARPNESS, min: -1, max: 1, step: 0.05 },
 };
 
 /** All adjustment param names, useful for iteration. */
-export const ADJUSTMENT_PARAMS: AdjustmentParam[] = Object.keys(ADJUSTMENT_CONFIG) as AdjustmentParam[];
+export const ADJUSTMENT_PARAMS: AdjustmentParam[] = Object.keys(
+  ADJUSTMENT_CONFIG,
+) as AdjustmentParam[];
 
 export class BlockAPI {
   #engine: Engine;
@@ -111,7 +161,9 @@ export class BlockAPI {
   }
 
   /** @internal */
-  _setGetCropVisualDimensionsHandler(handler: () => { width: number; height: number } | null): void {
+  _setGetCropVisualDimensionsHandler(
+    handler: () => { width: number; height: number } | null,
+  ): void {
     this.#getCropVisualDimensionsHandler = handler;
   }
 
@@ -171,7 +223,7 @@ export class BlockAPI {
 
   #syncTransformer(): void {
     const ids = [...this.#selection];
-    this.#engine.emit('selection:changed', ids);
+    this.#engine.emit("selection:changed", ids);
     const renderer = this.#engine.getRenderer();
     if (ids.length > 0 && this.#transformerEnabled) {
       const blockType = ids.length === 1 ? this.getType(ids[0]) : undefined;
@@ -293,47 +345,47 @@ export class BlockAPI {
   setPosition(id: number, x: number, y: number): void {
     this.#engine.beginBatch();
     const store = this.#engine.getBlockStore();
-    this.#engine.exec(new SetPropertyCommand(store, id, 'transform/position/x', x));
-    this.#engine.exec(new SetPropertyCommand(store, id, 'transform/position/y', y));
+    this.#engine.exec(new SetPropertyCommand(store, id, "transform/position/x", x));
+    this.#engine.exec(new SetPropertyCommand(store, id, "transform/position/y", y));
     this.#engine.endBatch();
   }
 
   getPosition(id: number): { x: number; y: number } {
     return {
-      x: this.getFloat(id, 'transform/position/x'),
-      y: this.getFloat(id, 'transform/position/y'),
+      x: this.getFloat(id, "transform/position/x"),
+      y: this.getFloat(id, "transform/position/y"),
     };
   }
 
   setSize(id: number, width: number, height: number): void {
     this.#engine.beginBatch();
     const store = this.#engine.getBlockStore();
-    this.#engine.exec(new SetPropertyCommand(store, id, 'transform/size/width', width));
-    this.#engine.exec(new SetPropertyCommand(store, id, 'transform/size/height', height));
+    this.#engine.exec(new SetPropertyCommand(store, id, "transform/size/width", width));
+    this.#engine.exec(new SetPropertyCommand(store, id, "transform/size/height", height));
     this.#engine.endBatch();
   }
 
   getSize(id: number): { width: number; height: number } {
     return {
-      width: this.getFloat(id, 'transform/size/width'),
-      height: this.getFloat(id, 'transform/size/height'),
+      width: this.getFloat(id, "transform/size/width"),
+      height: this.getFloat(id, "transform/size/height"),
     };
   }
 
   setRotation(id: number, degrees: number): void {
-    this.setFloat(id, 'transform/rotation', degrees);
+    this.setFloat(id, "transform/rotation", degrees);
   }
 
   setOpacity(id: number, opacity: number): void {
-    this.setFloat(id, 'appearance/opacity', opacity);
+    this.setFloat(id, "appearance/opacity", opacity);
   }
 
   getOpacity(id: number): number {
-    return this.getFloat(id, 'appearance/opacity');
+    return this.getFloat(id, "appearance/opacity");
   }
 
   setVisible(id: number, visible: boolean): void {
-    this.setBool(id, 'appearance/visible', visible);
+    this.setBool(id, "appearance/visible", visible);
   }
 
   // --- Query ---
@@ -366,7 +418,7 @@ export class BlockAPI {
   /** Checks if a block supports cropping (image blocks and page blocks). */
   supportsCrop(id: number): boolean {
     const type = this.getType(id);
-    return type === 'image' || type === 'page';
+    return type === "image" || type === "page";
   }
 
   /** Sets the horizontal crop scale of a block. */
@@ -452,7 +504,7 @@ export class BlockAPI {
     this.setBool(id, CROP_ASPECT_RATIO_LOCKED, false);
     // For page blocks, restore page dimensions to original image size
     const blockType = this.getType(id);
-    if (blockType === 'page') {
+    if (blockType === "page") {
       const origW = this.getFloat(id, IMAGE_ORIGINAL_WIDTH);
       const origH = this.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
       if (origW > 0 && origH > 0) {
@@ -500,8 +552,8 @@ export class BlockAPI {
    * Sets crop to cover the entire image dimensions (block size).
    */
   adjustCropToFillFrame(id: number): void {
-    const w = this.getFloat(id, 'transform/size/width');
-    const h = this.getFloat(id, 'transform/size/height');
+    const w = this.getFloat(id, "transform/size/width");
+    const h = this.getFloat(id, "transform/size/height");
     this.#engine.beginBatch();
     this.setFloat(id, CROP_X, 0);
     this.setFloat(id, CROP_Y, 0);
@@ -657,7 +709,7 @@ export class BlockAPI {
 
     // Swap page dimensions for page blocks
     const blockType = this.getType(id);
-    if (blockType === 'page') {
+    if (blockType === "page") {
       const pageW = this.getFloat(id, PAGE_WIDTH);
       const pageH = this.getFloat(id, PAGE_HEIGHT);
       this.setFloat(id, PAGE_WIDTH, pageH);
@@ -678,7 +730,7 @@ export class BlockAPI {
     this.setFloat(id, IMAGE_ROTATION, newAngle);
 
     const blockType = this.getType(id);
-    if (blockType === 'page') {
+    if (blockType === "page") {
       const pageW = this.getFloat(id, PAGE_WIDTH);
       const pageH = this.getFloat(id, PAGE_HEIGHT);
       this.setFloat(id, PAGE_WIDTH, pageH);
@@ -699,7 +751,7 @@ export class BlockAPI {
 
     // Restore page dimensions from original image dims if available
     const blockType = this.getType(id);
-    if (blockType === 'page') {
+    if (blockType === "page") {
       const origW = this.getFloat(id, IMAGE_ORIGINAL_WIDTH);
       const origH = this.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
       if (origW > 0 && origH > 0) {
@@ -751,7 +803,7 @@ export class BlockAPI {
   /** Checks if a block type supports effects (page, image, graphic). */
   supportsEffects(blockId: number): boolean {
     const type = this.getType(blockId);
-    return type === 'page' || type === 'image' || type === 'graphic';
+    return type === "page" || type === "image" || type === "graphic";
   }
 
   /** Returns true if the block has any effects attached. */
@@ -947,7 +999,7 @@ export class BlockAPI {
   ): number {
     this.#engine.beginBatch();
 
-    const graphicId = this.create('graphic');
+    const graphicId = this.create("graphic");
     this.setKind(graphicId, shapeKind);
     this.setPosition(graphicId, x, y);
     this.setSize(graphicId, width, height);
@@ -956,7 +1008,7 @@ export class BlockAPI {
     this.setShape(graphicId, shapeId);
 
     // Set polygon sides inside the batch so it's part of one undo step
-    if (opts?.sides != null && shapeKind === 'polygon') {
+    if (opts?.sides != null && shapeKind === "polygon") {
       this.setFloat(shapeId, SHAPE_POLYGON_SIDES, opts.sides);
     }
 
@@ -964,7 +1016,7 @@ export class BlockAPI {
     this.setFill(graphicId, fillId);
 
     // Arrow/line shapes need stroke enabled to render the line body
-    if (shapeKind === 'line') {
+    if (shapeKind === "line") {
       this.setBool(graphicId, STROKE_ENABLED, true);
       this.setFloat(graphicId, STROKE_WIDTH, 10);
       this.setColor(graphicId, STROKE_COLOR, { r: 0.29, g: 0.56, b: 0.89, a: 1 });
@@ -993,12 +1045,12 @@ export class BlockAPI {
   ): number {
     this.#engine.beginBatch();
 
-    const textId = this.create('text');
+    const textId = this.create("text");
     this.setPosition(textId, x, y);
     this.setSize(textId, width, height);
 
     if (initialText !== undefined) {
-      const baseStyle: TextRunStyle = { fontSize: 24, fontFamily: 'Arial', fill: '#000000' };
+      const baseStyle: TextRunStyle = { fontSize: 24, fontFamily: "Arial", fill: "#000000" };
       const mergedStyle: TextRunStyle = opts?.style ? { ...baseStyle, ...opts.style } : baseStyle;
       const runs: TextRun[] = [{ text: initialText, style: mergedStyle }];
       this.setProperty(textId, TEXT_RUNS, runs);
@@ -1029,7 +1081,7 @@ export class BlockAPI {
   ): number {
     this.#engine.beginBatch();
 
-    const imageId = this.create('image');
+    const imageId = this.create("image");
     this.setPosition(imageId, x, y);
     this.setSize(imageId, width, height);
     this.setString(imageId, IMAGE_SRC, src);
@@ -1093,33 +1145,35 @@ export class BlockAPI {
   /** Align a block relative to its parent page. */
   alignToPage(
     blockId: number,
-    alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom',
+    alignment: "left" | "center" | "right" | "top" | "middle" | "bottom",
   ): void {
     const parentId = this.getParent(blockId);
     if (parentId === null) return;
 
-    const pageW = this.getFloat(parentId, PAGE_WIDTH) || this.getFloat(parentId, 'transform/size/width');
-    const pageH = this.getFloat(parentId, PAGE_HEIGHT) || this.getFloat(parentId, 'transform/size/height');
+    const pageW =
+      this.getFloat(parentId, PAGE_WIDTH) || this.getFloat(parentId, "transform/size/width");
+    const pageH =
+      this.getFloat(parentId, PAGE_HEIGHT) || this.getFloat(parentId, "transform/size/height");
     const { width: blockW, height: blockH } = this.getSize(blockId);
 
     switch (alignment) {
-      case 'left':
-        this.setFloat(blockId, 'transform/position/x', 0);
+      case "left":
+        this.setFloat(blockId, "transform/position/x", 0);
         break;
-      case 'center':
-        this.setFloat(blockId, 'transform/position/x', (pageW - blockW) / 2);
+      case "center":
+        this.setFloat(blockId, "transform/position/x", (pageW - blockW) / 2);
         break;
-      case 'right':
-        this.setFloat(blockId, 'transform/position/x', pageW - blockW);
+      case "right":
+        this.setFloat(blockId, "transform/position/x", pageW - blockW);
         break;
-      case 'top':
-        this.setFloat(blockId, 'transform/position/y', 0);
+      case "top":
+        this.setFloat(blockId, "transform/position/y", 0);
         break;
-      case 'middle':
-        this.setFloat(blockId, 'transform/position/y', (pageH - blockH) / 2);
+      case "middle":
+        this.setFloat(blockId, "transform/position/y", (pageH - blockH) / 2);
         break;
-      case 'bottom':
-        this.setFloat(blockId, 'transform/position/y', pageH - blockH);
+      case "bottom":
+        this.setFloat(blockId, "transform/position/y", pageH - blockH);
         break;
     }
   }
@@ -1239,7 +1293,7 @@ export class BlockAPI {
   /** Get the current TextRun[] for a text block. */
   getTextRuns(blockId: number): TextRun[] {
     const val = this.getProperty(blockId, TEXT_RUNS);
-    return Array.isArray(val) ? val as TextRun[] : [];
+    return Array.isArray(val) ? (val as TextRun[]) : [];
   }
 
   /** Get plain text content from a text block. */
@@ -1269,7 +1323,12 @@ export class BlockAPI {
   }
 
   /** Apply a partial style update to characters in [start, end). */
-  setTextStyle(blockId: number, start: number, end: number, styleUpdate: Partial<TextRunStyle>): void {
+  setTextStyle(
+    blockId: number,
+    start: number,
+    end: number,
+    styleUpdate: Partial<TextRunStyle>,
+  ): void {
     const session = this.#textEditingSessions.get(blockId);
     if (session) {
       session.setTextStyle(start, end, styleUpdate);
@@ -1307,16 +1366,16 @@ export class BlockAPI {
       session.toggleBold(start, end);
     } else {
       const runs = this.getTextRuns(blockId);
-      let currentWeight = 'normal';
+      let currentWeight = "normal";
       let offset = 0;
       for (const run of runs) {
         if (offset + run.text.length > start) {
-          currentWeight = run.style.fontWeight ?? 'normal';
+          currentWeight = run.style.fontWeight ?? "normal";
           break;
         }
         offset += run.text.length;
       }
-      const newWeight = currentWeight === 'bold' ? 'normal' : 'bold';
+      const newWeight = currentWeight === "bold" ? "normal" : "bold";
       this.setTextStyle(blockId, start, end, { fontWeight: newWeight });
     }
   }
@@ -1328,16 +1387,16 @@ export class BlockAPI {
       session.toggleItalic(start, end);
     } else {
       const runs = this.getTextRuns(blockId);
-      let currentStyle = 'normal';
+      let currentStyle = "normal";
       let offset = 0;
       for (const run of runs) {
         if (offset + run.text.length > start) {
-          currentStyle = run.style.fontStyle ?? 'normal';
+          currentStyle = run.style.fontStyle ?? "normal";
           break;
         }
         offset += run.text.length;
       }
-      const newStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+      const newStyle = currentStyle === "italic" ? "normal" : "italic";
       this.setTextStyle(blockId, start, end, { fontStyle: newStyle });
     }
   }
@@ -1358,17 +1417,32 @@ export class BlockAPI {
   }
 
   /** Set text background/highlight color for characters in [start, end). */
-  setTextBackgroundColor(blockId: number, start: number, end: number, color: string | undefined): void {
+  setTextBackgroundColor(
+    blockId: number,
+    start: number,
+    end: number,
+    color: string | undefined,
+  ): void {
     this.setTextStyle(blockId, start, end, { backgroundColor: color });
   }
 
   /** Set text transform (uppercase/lowercase/capitalize) for characters in [start, end). */
-  setTextTransform(blockId: number, start: number, end: number, transform: 'none' | 'uppercase' | 'lowercase' | 'capitalize'): void {
+  setTextTransform(
+    blockId: number,
+    start: number,
+    end: number,
+    transform: "none" | "uppercase" | "lowercase" | "capitalize",
+  ): void {
     this.setTextStyle(blockId, start, end, { textTransform: transform });
   }
 
   /** Set text shadow for characters in [start, end). */
-  setTextShadow(blockId: number, start: number, end: number, shadow: { color?: string; blur?: number; offsetX?: number; offsetY?: number }): void {
+  setTextShadow(
+    blockId: number,
+    start: number,
+    end: number,
+    shadow: { color?: string; blur?: number; offsetX?: number; offsetY?: number },
+  ): void {
     this.setTextStyle(blockId, start, end, {
       textShadowColor: shadow.color,
       textShadowBlur: shadow.blur,
@@ -1378,7 +1452,12 @@ export class BlockAPI {
   }
 
   /** Set text stroke/outline for characters in [start, end). */
-  setTextStroke(blockId: number, start: number, end: number, stroke: { color?: string; width?: number }): void {
+  setTextStroke(
+    blockId: number,
+    start: number,
+    end: number,
+    stroke: { color?: string; width?: number },
+  ): void {
     this.setTextStyle(blockId, start, end, {
       textStrokeColor: stroke.color,
       textStrokeWidth: stroke.width,

@@ -1,10 +1,10 @@
-import { BlockStore } from './block/block-store';
-import { BlockData } from './block/block.types';
-import { Command } from './controller/commands';
-import { EventAPI, BlockEvent } from './event-api';
-import { EventBus } from './events/event-bus';
-import { HistoryManager, Patch } from './history-manager';
-import { RendererAdapter } from './render-adapter';
+import type { BlockData } from "./block/block.types";
+import { BlockStore } from "./block/block-store";
+import type { Command } from "./controller/commands";
+import { type BlockEvent, EventAPI } from "./event-api";
+import { EventBus } from "./events/event-bus";
+import { HistoryManager, type Patch } from "./history-manager";
+import type { RendererAdapter } from "./render-adapter";
 
 export class Engine {
   #blockStore: BlockStore;
@@ -106,13 +106,13 @@ export class Engine {
   #enqueueBlockEvents(patches: Patch[]) {
     for (const p of patches) {
       const blockId = Number(p.id);
-      let type: BlockEvent['type'];
+      let type: BlockEvent["type"];
       if (p.before === null) {
-        type = 'created';
+        type = "created";
       } else if (p.after === null) {
-        type = 'destroyed';
+        type = "destroyed";
       } else {
-        type = 'updated';
+        type = "updated";
       }
       this.#eventApi._enqueue({ type, block: blockId });
     }
@@ -134,7 +134,7 @@ export class Engine {
 
     this.#applyPatches(patches);
     this.#cleanupSelections(patches);
-    this.#events.emit('history:undo');
+    this.#events.emit("history:undo");
     this.#flush();
   }
 
@@ -144,15 +144,13 @@ export class Engine {
 
     this.#applyPatches(patches);
     this.#cleanupSelections(patches);
-    this.#events.emit('history:redo');
+    this.#events.emit("history:redo");
     this.#flush();
   }
 
   #cleanupSelections(patches: Patch[]) {
     if (!this.#onSelectionCleanup) return;
-    const destroyed = patches
-      .filter((p) => p.after === null)
-      .map((p) => Number(p.id));
+    const destroyed = patches.filter((p) => p.after === null).map((p) => Number(p.id));
     if (destroyed.length > 0) {
       this.#onSelectionCleanup(destroyed);
     }
@@ -168,7 +166,7 @@ export class Engine {
 
   clearHistory() {
     this.#history.clear();
-    this.#events.emit('history:clear');
+    this.#events.emit("history:clear");
   }
 
   /** Render all dirty blocks now. Useful during a batch for live visual preview. */
@@ -201,7 +199,7 @@ export class Engine {
     // graphic block must also re-render so the visual update is applied.
     for (const id of [...this.#dirty]) {
       const block = this.#blockStore.get(id);
-      if (block && (block.type === 'effect' || block.type === 'fill' || block.type === 'shape')) {
+      if (block && (block.type === "effect" || block.type === "fill" || block.type === "shape")) {
         const ownerId = this.#blockStore.findSubBlockOwner(id);
         if (ownerId !== null) this.#dirty.add(ownerId);
       }
@@ -210,7 +208,7 @@ export class Engine {
     const dirtyIds = [...this.#dirty];
     this.#dirty.clear();
 
-    const t0 = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
+    const t0 = typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
       if (block) {
@@ -223,16 +221,19 @@ export class Engine {
     // Sync child z-order AFTER all blocks are synced (so all Konva nodes exist)
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
-      if (block?.type === 'page' && block.children.length > 0) {
+      if (block?.type === "page" && block.children.length > 0) {
         this.#renderer.syncChildOrder?.(block.children);
       }
     }
-    const tSync = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
+    const tSync =
+      typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
 
     this.#renderer.renderFrame();
-    if (typeof window !== 'undefined' && (window as any).__CE_PERF) {
+    if (typeof window !== "undefined" && (window as any).__CE_PERF) {
       const tEnd = performance.now();
-      console.log(`[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`);
+      console.log(
+        `[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`,
+      );
     }
 
     // Deliver bundled events AFTER render — end of update cycle

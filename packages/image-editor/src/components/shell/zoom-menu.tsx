@@ -1,13 +1,13 @@
-import React from 'react';
-import { ChevronUp, ZoomIn, ZoomOut } from 'lucide-react';
-import { Button } from '../ui/button';
+import { ChevronUp, ZoomIn, ZoomOut } from "lucide-react";
+import type React from "react";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+} from "../ui/dropdown-menu";
 
 export interface ZoomMenuProps {
   zoomLabel: string;
@@ -46,29 +46,21 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
 
       <DropdownMenuContent align="end" className="w-48">
         {/* Fit modes */}
-        <DropdownMenuItem onClick={onAutoFitPage}>
-          Auto-Fit Page
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onFitPage}>
-          Fit Page
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onAutoFitPage}>Auto-Fit Page</DropdownMenuItem>
+        <DropdownMenuItem onClick={onFitPage}>Fit Page</DropdownMenuItem>
         <DropdownMenuItem onClick={onFitSelection} disabled={!canFitSelection}>
-          Fit Selection
+          Fit
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
         {/* Zoom presets */}
-        <DropdownMenuItem onClick={() => onZoomPreset?.(2)}>
-          200% Zoom
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onZoomPreset?.(2)}>200% Zoom</DropdownMenuItem>
         <DropdownMenuItem onClick={() => onZoomPreset?.(1)}>
           <span className="flex-1">100% Zoom</span>
           <kbd className="ml-auto text-[10px] text-muted-foreground">⇧2</kbd>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onZoomPreset?.(0.5)}>
-          50% Zoom
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onZoomPreset?.(0.5)}>50% Zoom</DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

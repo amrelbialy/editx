@@ -1,11 +1,10 @@
 // Re-export from engine — the canonical implementation now lives there.
 export {
-  runsToEditorState,
+  $restoreSelectionFromOffsets,
+  cssStringToRunStyle,
   editorStateToRuns,
   getSelectionOffsets,
-  $restoreSelectionFromOffsets,
   runStyleToCssString,
-  cssStringToRunStyle,
+  runsToEditorState,
   textRunStyleToCssPatch,
-} from '@creative-editor/engine';
-
+} from "@creative-editor/engine";

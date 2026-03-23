@@ -1,17 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ADJUSTMENT_CONFIG,
   ADJUSTMENT_PARAMS,
-  EFFECT_FILTER_NAME,
   type AdjustmentParam,
   type CreativeEngine,
-} from '@creative-editor/engine';
-import type { AdjustmentValues } from '../components/panels/adjust-panel';
+  EFFECT_FILTER_NAME,
+} from "@creative-editor/engine";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AdjustmentValues } from "../components/panels/adjust-panel";
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
-  brightness: 0, saturation: 0, contrast: 0, gamma: 0,
-  clarity: 0, exposure: 0, shadows: 0, highlights: 0,
-  blacks: 0, whites: 0, temperature: 0, sharpness: 0,
+  brightness: 0,
+  saturation: 0,
+  contrast: 0,
+  gamma: 0,
+  clarity: 0,
+  exposure: 0,
+  shadows: 0,
+  highlights: 0,
+  blacks: 0,
+  whites: 0,
+  temperature: 0,
+  sharpness: 0,
 };
 
 export interface UseBlockEffectsOptions {
@@ -27,7 +36,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   const adjustEffectIdRef = useRef<number | null>(null);
   const filterEffectIdRef = useRef<number | null>(null);
   const [adjustValues, setAdjustValues] = useState<AdjustmentValues>(DEFAULT_ADJUSTMENTS);
-  const [activeFilter, setActiveFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState("");
 
   // Render-throttle refs
   const rafRef = useRef<number | null>(null);
@@ -41,7 +50,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
       adjustEffectIdRef.current = null;
       filterEffectIdRef.current = null;
       setAdjustValues(DEFAULT_ADJUSTMENTS);
-      setActiveFilter('');
+      setActiveFilter("");
       return;
     }
 
@@ -51,7 +60,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     let foundFilter = false;
     for (const eid of effects) {
       const kind = ce.block.getKind(eid);
-      if (kind === 'adjustments') {
+      if (kind === "adjustments") {
         adjustEffectIdRef.current = eid;
         const vals = {} as AdjustmentValues;
         for (const param of ADJUSTMENT_PARAMS) {
@@ -59,7 +68,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
         }
         setAdjustValues(vals);
         foundAdjust = true;
-      } else if (kind === 'filter') {
+      } else if (kind === "filter") {
         filterEffectIdRef.current = eid;
         setActiveFilter(ce.block.getString(eid, EFFECT_FILTER_NAME));
         foundFilter = true;
@@ -71,7 +80,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     }
     if (!foundFilter) {
       filterEffectIdRef.current = null;
-      setActiveFilter('');
+      setActiveFilter("");
     }
   }, [engineRef, blockId]);
 
@@ -82,7 +91,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     if (!ce || blockId === null) return null;
     if (adjustEffectIdRef.current !== null) return adjustEffectIdRef.current;
 
-    const eid = ce.block.createEffect('adjustments');
+    const eid = ce.block.createEffect("adjustments");
     ce.block.appendEffect(blockId, eid);
     adjustEffectIdRef.current = eid;
     return eid;
@@ -103,40 +112,43 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     ce.core.renderDirty();
   }, [engineRef]);
 
-  const handleAdjustChange = useCallback((param: AdjustmentParam, value: number) => {
-    // Update React state immediately for responsive slider UI
-    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+  const handleAdjustChange = useCallback(
+    (param: AdjustmentParam, value: number) => {
+      // Update React state immediately for responsive slider UI
+      setAdjustValues((prev) => ({ ...prev, [param]: value }));
 
-    const ce = engineRef.current;
-    let eid = adjustEffectIdRef.current;
-    if (!ce) return;
-    if (eid === null) {
-      eid = ensureAdjustEffect();
-      if (eid === null) return;
-    }
+      const ce = engineRef.current;
+      let eid = adjustEffectIdRef.current;
+      if (!ce) return;
+      if (eid === null) {
+        eid = ensureAdjustEffect();
+        if (eid === null) return;
+      }
 
-    // Start a batch on first change of this drag
-    if (!inBatchRef.current) {
-      ce.core.beginBatch();
-      inBatchRef.current = true;
-    }
+      // Start a batch on first change of this drag
+      if (!inBatchRef.current) {
+        ce.core.beginBatch();
+        inBatchRef.current = true;
+      }
 
-    // Store the pending write; throttle to rAF (GPU render is fast)
-    pendingRef.current = { param, value };
-    if (rafRef.current === null) {
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        const p = pendingRef.current;
-        if (!p) return;
-        pendingRef.current = null;
-        const engine = engineRef.current;
-        const effectId = adjustEffectIdRef.current;
-        if (!engine || effectId === null) return;
-        engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
-        engine.core.renderDirty();
-      });
-    }
-  }, [engineRef, ensureAdjustEffect]);
+      // Store the pending write; throttle to rAF (GPU render is fast)
+      pendingRef.current = { param, value };
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const p = pendingRef.current;
+          if (!p) return;
+          pendingRef.current = null;
+          const engine = engineRef.current;
+          const effectId = adjustEffectIdRef.current;
+          if (!engine || effectId === null) return;
+          engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
+          engine.core.renderDirty();
+        });
+      }
+    },
+    [engineRef, ensureAdjustEffect],
+  );
 
   const handleAdjustCommit = useCallback(() => {
     flushPending();
@@ -152,7 +164,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
 
     const effects = ce.block.getEffects(blockId);
     for (let i = effects.length - 1; i >= 0; i--) {
-      if (ce.block.getKind(effects[i]) === 'adjustments') {
+      if (ce.block.getKind(effects[i]) === "adjustments") {
         ce.block.removeEffect(blockId, i);
         break;
       }
@@ -168,23 +180,26 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     if (!ce || blockId === null) return null;
     if (filterEffectIdRef.current !== null) return filterEffectIdRef.current;
 
-    const eid = ce.block.createEffect('filter');
+    const eid = ce.block.createEffect("filter");
     ce.block.appendEffect(blockId, eid);
     filterEffectIdRef.current = eid;
     return eid;
   }, [engineRef, blockId]);
 
-  const handleFilterSelect = useCallback((name: string) => {
-    const ce = engineRef.current;
-    let eid = filterEffectIdRef.current;
-    if (!ce) return;
-    if (eid === null) {
-      eid = ensureFilterEffect();
-      if (eid === null) return;
-    }
-    ce.block.setString(eid, EFFECT_FILTER_NAME, name);
-    setActiveFilter(name);
-  }, [engineRef, ensureFilterEffect]);
+  const handleFilterSelect = useCallback(
+    (name: string) => {
+      const ce = engineRef.current;
+      let eid = filterEffectIdRef.current;
+      if (!ce) return;
+      if (eid === null) {
+        eid = ensureFilterEffect();
+        if (eid === null) return;
+      }
+      ce.block.setString(eid, EFFECT_FILTER_NAME, name);
+      setActiveFilter(name);
+    },
+    [engineRef, ensureFilterEffect],
+  );
 
   // Clean up rAF on unmount
   useEffect(() => {
@@ -205,7 +220,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
       let foundFilter = false;
       for (const eid of effects) {
         const kind = ce.block.getKind(eid);
-        if (kind === 'adjustments') {
+        if (kind === "adjustments") {
           adjustEffectIdRef.current = eid;
           const vals = {} as AdjustmentValues;
           for (const param of ADJUSTMENT_PARAMS) {
@@ -213,20 +228,26 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
           }
           setAdjustValues(vals);
           foundAdjust = true;
-        } else if (kind === 'filter') {
+        } else if (kind === "filter") {
           filterEffectIdRef.current = eid;
           setActiveFilter(ce.block.getString(eid, EFFECT_FILTER_NAME));
           foundFilter = true;
         }
       }
-      if (!foundAdjust) { adjustEffectIdRef.current = null; setAdjustValues(DEFAULT_ADJUSTMENTS); }
-      if (!foundFilter) { filterEffectIdRef.current = null; setActiveFilter(''); }
+      if (!foundAdjust) {
+        adjustEffectIdRef.current = null;
+        setAdjustValues(DEFAULT_ADJUSTMENTS);
+      }
+      if (!foundFilter) {
+        filterEffectIdRef.current = null;
+        setActiveFilter("");
+      }
     };
-    ce.on('history:undo', handler);
-    ce.on('history:redo', handler);
+    ce.on("history:undo", handler);
+    ce.on("history:redo", handler);
     return () => {
-      ce.off('history:undo', handler);
-      ce.off('history:redo', handler);
+      ce.off("history:undo", handler);
+      ce.off("history:redo", handler);
     };
   }, [engineRef, blockId]);
 

@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { TEXT_ALIGN } from '@creative-editor/engine';
-import { Bold, Italic } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '../ui/dropdown-menu';
-import { cn } from '../../utils/cn';
-import { useImageEditorStore } from '../../store/image-editor-store';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { Bold, Italic } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 interface TextEditToolbarProps {
   engine: CreativeEngine;
@@ -25,22 +25,34 @@ function readTargetStyle(engine: CreativeEngine, blockId: number, selectionStart
     }
   }
   return {
-    fontWeight: style.fontWeight ?? 'normal',
-    fontStyle: style.fontStyle ?? 'normal',
-    fill: style.fill ?? '#000000',
+    fontWeight: style.fontWeight ?? "normal",
+    fontStyle: style.fontStyle ?? "normal",
+    fill: style.fill ?? "#000000",
   };
 }
 
 const PRESET_COLORS = [
-  '#000000', '#ffffff', '#ff0000', '#00aa00', '#0000ff', '#ff8800',
-  '#8800ff', '#00cccc', '#ff00ff', '#888888', '#cc0000', '#006600',
+  "#000000",
+  "#ffffff",
+  "#ff0000",
+  "#00aa00",
+  "#0000ff",
+  "#ff8800",
+  "#8800ff",
+  "#00cccc",
+  "#ff00ff",
+  "#888888",
+  "#cc0000",
+  "#006600",
 ];
 
 export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockId }) => {
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
-  const [state, setState] = useState(() => readTargetStyle(engine, blockId, textSelectionRange?.from));
+  const [state, setState] = useState(() =>
+    readTargetStyle(engine, blockId, textSelectionRange?.from),
+  );
 
   useEffect(() => {
     setState(readTargetStyle(engine, blockId, textSelectionRange?.from));
@@ -50,8 +62,10 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
     setState(readTargetStyle(engine, blockId, textSelectionRange?.from));
   }, [engine, blockId, textSelectionRange]);
 
-  const hasCharSelection = editingTextBlockId === blockId && textSelectionRange !== null
-    && textSelectionRange.from !== textSelectionRange.to;
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
 
   const getStyleRange = useCallback((): { start: number; end: number } => {
     if (hasCharSelection && textSelectionRange) {
@@ -72,18 +86,21 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
     refresh();
   }, [engine, blockId, getStyleRange, refresh]);
 
-  const handleTextColor = useCallback((color: string) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextColor(blockId, start, end, color);
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const handleTextColor = useCallback(
+    (color: string) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextColor(blockId, start, end, color);
+      refresh();
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-0.5 h-9 px-1.5',
-        'bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg',
-        'animate-in fade-in-0 slide-in-from-bottom-1 duration-150',
+        "inline-flex items-center gap-0.5 h-9 px-1.5",
+        "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
+        "animate-in fade-in-0 slide-in-from-bottom-1 duration-150",
       )}
       data-text-toolbar
     >
@@ -109,8 +126,8 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleTextColor(c)}
                   className={cn(
-                    'w-6 h-6 rounded-full border transition-transform hover:scale-110',
-                    state.fill === c ? 'border-primary ring-2 ring-primary/30' : 'border-border',
+                    "w-6 h-6 rounded-full border transition-transform hover:scale-110",
+                    state.fill === c ? "border-primary ring-2 ring-primary/30" : "border-border",
                   )}
                   style={{ backgroundColor: c }}
                 />
@@ -139,10 +156,10 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleBoldToggle}
         className={cn(
-          'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
-          state.fontWeight === 'bold'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-accent',
+          "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+          state.fontWeight === "bold"
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-accent",
         )}
       >
         <Bold className="h-3.5 w-3.5" />
@@ -153,10 +170,10 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleItalicToggle}
         className={cn(
-          'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
-          state.fontStyle === 'italic'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-accent',
+          "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+          state.fontStyle === "italic"
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-accent",
         )}
       >
         <Italic className="h-3.5 w-3.5" />

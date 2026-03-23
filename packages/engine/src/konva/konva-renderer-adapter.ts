@@ -1,16 +1,16 @@
-import Konva from 'konva';
-import type { RendererAdapter } from '../render-adapter';
-import type { BlockData } from '../block/block.types';
-import type { CropRect } from '../utils/crop-math';
-import type { ExportOptions } from '../editor-types';
-import { PAGE_WIDTH, PAGE_HEIGHT } from '../block/property-keys';
-import { clearImageCache } from '../utils/image-loader';
-import { KonvaCamera } from './konva-camera';
-import { KonvaNodeFactory } from './konva-node-factory';
-import { KonvaCropOverlay } from './konva-crop-overlay';
-import { setupInteraction } from './konva-interaction-handler';
-import { WebGLFilterRenderer } from './webgl-filter-renderer';
-import { createStyledTransformer } from './konva-transformer-style';
+import Konva from "konva";
+import type { BlockData } from "../block/block.types";
+import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import type { ExportOptions } from "../editor-types";
+import type { RendererAdapter } from "../render-adapter";
+import type { CropRect } from "../utils/crop-math";
+import { clearImageCache } from "../utils/image-loader";
+import { KonvaCamera } from "./konva-camera";
+import { KonvaCropOverlay } from "./konva-crop-overlay";
+import { setupInteraction } from "./konva-interaction-handler";
+import { KonvaNodeFactory } from "./konva-node-factory";
+import { createStyledTransformer } from "./konva-transformer-style";
+import { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export class KonvaRendererAdapter implements RendererAdapter {
   #stage!: Konva.Stage;
@@ -49,7 +49,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#rootEl = root;
   }
 
-  async createScene(sceneBlock: BlockData, pageBlock: BlockData): Promise<void> {
+  async createScene(_sceneBlock: BlockData, pageBlock: BlockData): Promise<void> {
     const pageW = (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080;
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
 
@@ -71,8 +71,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#uiLayer.add(this.#transformer);
 
     this.#selectionRect = new Konva.Rect({
-      fill: 'rgba(0,120,215,0.15)',
-      stroke: 'rgba(0,120,215,0.6)',
+      fill: "rgba(0,120,215,0.15)",
+      stroke: "rgba(0,120,215,0.6)",
       strokeWidth: 1,
       visible: false,
     });
@@ -90,8 +90,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#nodeFactory = new KonvaNodeFactory(this.#stage, this.#webgl);
     this.#cropOverlay = new KonvaCropOverlay(
       this.#uiLayer,
-      (rect) => { this.onCropChange?.(rect); },
-      (rect) => { this.#camera.fitToRect(rect, 24); },
+      (rect) => {
+        this.onCropChange?.(rect);
+      },
+      (rect) => {
+        this.#camera.fitToRect(rect, 24);
+      },
     );
 
     setupInteraction({
@@ -129,21 +133,26 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Block lifecycle ---
 
   syncBlock(id: number, block: BlockData): void {
-    if (block.type === 'scene') return;
+    if (block.type === "scene") return;
     // Effect blocks are not rendered directly; they are resolved by their owner.
-    if (block.type === 'effect') return;
+    if (block.type === "effect") return;
     // Shape and fill sub-blocks are resolved by their owner graphic block.
-    if (block.type === 'shape' || block.type === 'fill') return;
+    if (block.type === "shape" || block.type === "fill") return;
     // Guard: renderer not yet initialised (createScene hasn't run)
     if (!this.#nodeFactory) return;
 
     let node = this.#nodeMap.get(id);
 
     if (!node) {
-      const created = this.#nodeFactory.createNode(id, block, {
-        onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
-        onTransformEnd: (blockId, transform) => this.onBlockTransformEnd?.(blockId, transform),
-      }, this.resolveBlock);
+      const created = this.#nodeFactory.createNode(
+        id,
+        block,
+        {
+          onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
+          onTransformEnd: (blockId, transform) => this.onBlockTransformEnd?.(blockId, transform),
+        },
+        this.resolveBlock,
+      );
       if (!created) return;
       node = created;
       this.#nodeMap.set(id, node);
@@ -159,7 +168,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
 
     // Keep camera page size in sync for pan clamping
-    if (block.type === 'page') {
+    if (block.type === "page") {
       const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
       const ph = (block.properties[PAGE_HEIGHT] as number) ?? 1080;
       this.#camera.setPageSize(pw, ph);
@@ -192,18 +201,22 @@ export class KonvaRendererAdapter implements RendererAdapter {
   // --- Transformer ---
 
   showTransformer(blockIds: number[], blockType?: string): void {
-    const nodes = blockIds
-      .map((id) => this.#nodeMap.get(id))
-      .filter((n): n is Konva.Node => !!n);
+    const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
     this.#transformer.nodes(nodes);
 
     // Text blocks: corners only (no center pill handles)
-    if (blockType === 'text') {
-      this.#transformer.enabledAnchors(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
+    if (blockType === "text") {
+      this.#transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
     } else {
       this.#transformer.enabledAnchors([
-        'top-left', 'top-right', 'bottom-left', 'bottom-right',
-        'middle-left', 'middle-right', 'top-center', 'bottom-center',
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "middle-left",
+        "middle-right",
+        "top-center",
+        "bottom-center",
       ]);
     }
 
@@ -224,7 +237,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   }
 
   /** Get the screen rect of a specific block node (independent of transformer). */
-  getBlockScreenRect(blockId: number): { x: number; y: number; width: number; height: number } | null {
+  getBlockScreenRect(
+    blockId: number,
+  ): { x: number; y: number; width: number; height: number } | null {
     const node = this.#nodeMap.get(blockId);
     if (!node) return null;
     const rect = node.getClientRect();
@@ -249,11 +264,18 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!this.#stage) return;
     this.#camera.fitToScreen(opts, animate);
   }
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }, animate = false): void {
+  centerOnRect(
+    rect: { x: number; y: number; width: number; height: number },
+    animate = false,
+  ): void {
     if (!this.#stage) return;
     this.#camera.centerOnRect(rect, animate);
   }
-  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding = 24, animate = false): void {
+  fitToRect(
+    rect: { x: number; y: number; width: number; height: number },
+    padding = 24,
+    animate = false,
+  ): void {
     if (!this.#stage) return;
     this.#camera.fitToRect(rect, padding, animate);
   }
@@ -270,7 +292,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
     blockId: number,
     imageRect: CropRect,
     initialCrop?: CropRect,
-    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+    transform?: {
+      rotation: number;
+      flipH: boolean;
+      flipV: boolean;
+      sourceWidth: number;
+      sourceHeight: number;
+    },
   ): void {
     // Hide the normal transformer while crop mode is active
     this.hideTransformer();
@@ -278,7 +306,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     // Expand the page node to show the full original image while keeping
     // rotation/flip intact — the crop overlay works in visual (rotated) space.
     const pageNode = this.#nodeMap.get(blockId);
-    if (pageNode && pageNode.getAttr('isPage')) {
+    if (pageNode?.getAttr("isPage")) {
       const group = pageNode as Konva.Group;
       const bgRect = group.children[0] as Konva.Rect;
       const imgNode = group.children[1] as Konva.Image;
@@ -316,7 +344,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     // Mark the page node as being in crop-overlay mode so that any re-sync
     // (e.g. triggered by a flip during crop mode) doesn't shrink the image
     // back to crop dimensions.
-    if (pageNode) pageNode.setAttr('_cropOverlayActive', true);
+    if (pageNode) pageNode.setAttr("_cropOverlayActive", true);
 
     this.#cropOverlay.show(imageRect, initialCrop);
     // Redraw both content and UI layers
@@ -327,8 +355,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#cropOverlay.hide();
     // Clear the crop-overlay flag on all page nodes
     this.#nodeMap.forEach((node) => {
-      if (node.getAttr('_cropOverlayActive')) {
-        node.setAttr('_cropOverlayActive', false);
+      if (node.getAttr("_cropOverlayActive")) {
+        node.setAttr("_cropOverlayActive", false);
       }
     });
   }
@@ -362,10 +390,10 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   async exportScene(options: ExportOptions): Promise<Blob> {
     if (!this.#stage || !this.#lastPageSize) {
-      throw new Error('Cannot export: scene not initialised');
+      throw new Error("Cannot export: scene not initialised");
     }
 
-    const format = options.format ?? 'png';
+    const format = options.format ?? "png";
     const quality = options.quality ?? 0.92;
     const pixelRatio = options.pixelRatio ?? 1;
     const { width: pageW, height: pageH } = this.#lastPageSize;
@@ -395,7 +423,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
         height: pageH,
         pixelRatio,
         mimeType,
-        quality: format === 'png' ? undefined : quality,
+        quality: format === "png" ? undefined : quality,
       });
 
       return await dataUrlToBlob(dataUrl, mimeType);
@@ -428,7 +456,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 function dataUrlToBlob(dataUrl: string, mimeType: string): Promise<Blob> {
   return new Promise((resolve, reject) => {
     try {
-      const base64 = dataUrl.split(',')[1];
+      const base64 = dataUrl.split(",")[1];
       const binaryStr = atob(base64);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {

@@ -1,5 +1,5 @@
-import Konva from 'konva';
-import type { CropRect } from '../utils/crop-math';
+import Konva from "konva";
+import type { CropRect } from "../utils/crop-math";
 
 /**
  * Manages the crop overlay UI on the Konva stage:
@@ -37,9 +37,9 @@ export class KonvaCropOverlay {
     this.#onChange = onChange;
     this.#onLiveUpdate = onLiveUpdate;
 
-    this.#group = new Konva.Group({ name: 'crop-overlay', visible: false });
+    this.#group = new Konva.Group({ name: "crop-overlay", visible: false });
 
-    const darkFill = 'rgba(0, 0, 0, 0.5)';
+    const darkFill = "rgba(0, 0, 0, 0.5)";
     this.#darkTop = new Konva.Rect({ fill: darkFill, listening: false });
     this.#darkBottom = new Konva.Rect({ fill: darkFill, listening: false });
     this.#darkLeft = new Konva.Rect({ fill: darkFill, listening: false });
@@ -48,11 +48,11 @@ export class KonvaCropOverlay {
     // Cutout rect — the bright area the user drags/resizes.
     // hitFunc ensures the full interior is draggable (not just the stroke).
     this.#cutout = new Konva.Rect({
-      fill: 'transparent',
-      stroke: '#ffffff',
+      fill: "transparent",
+      stroke: "#ffffff",
       strokeWidth: 2,
       draggable: true,
-      name: 'crop-cutout',
+      name: "crop-cutout",
       hitFunc: (ctx, shape) => {
         ctx.beginPath();
         ctx.rect(0, 0, shape.width(), shape.height());
@@ -67,7 +67,7 @@ export class KonvaCropOverlay {
       this.#gridLines.add(
         new Konva.Line({
           points: [0, 0, 0, 0],
-          stroke: 'rgba(255, 255, 255, 0.4)',
+          stroke: "rgba(255, 255, 255, 0.4)",
           strokeWidth: 1,
           listening: false,
         }),
@@ -81,15 +81,21 @@ export class KonvaCropOverlay {
       centeredScaling: false,
       anchorSize: 12,
       anchorCornerRadius: 6,
-      anchorStroke: '#2563eb',
-      anchorFill: '#ffffff',
+      anchorStroke: "#2563eb",
+      anchorFill: "#ffffff",
       anchorStrokeWidth: 2,
-      borderStroke: '#2563eb',
+      borderStroke: "#2563eb",
       borderStrokeWidth: 2,
       keepRatio: false,
       enabledAnchors: [
-        'top-left', 'top-right', 'bottom-left', 'bottom-right',
-        'middle-left', 'middle-right', 'top-center', 'bottom-center',
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "middle-left",
+        "middle-right",
+        "top-center",
+        "bottom-center",
       ],
       // Constrain transform within image bounds
       boundBoxFunc: (oldBox, newBox) => {
@@ -113,7 +119,7 @@ export class KonvaCropOverlay {
             height = width / this.#ratio;
           }
           if (y < imgY) {
-            height -= imgY -y ;
+            height -= imgY - y;
             y = imgY;
             width = height * this.#ratio;
           }
@@ -152,10 +158,10 @@ export class KonvaCropOverlay {
 
     // Wire up events on the CUTOUT node — Konva fires transform/transformend
     // on the target node being transformed, not on the Transformer itself.
-    this.#cutout.on('dragmove', () => this.#onDragMove());
-    this.#cutout.on('dragend', () => this.#onDragEnd());
-    this.#cutout.on('transform', () => this.#onTransform());
-    this.#cutout.on('transformend', () => this.#onTransformEnd());
+    this.#cutout.on("dragmove", () => this.#onDragMove());
+    this.#cutout.on("dragend", () => this.#onDragEnd());
+    this.#cutout.on("transform", () => this.#onTransform());
+    this.#cutout.on("transformend", () => this.#onTransformEnd());
 
     this.#group.add(this.#darkTop);
     this.#group.add(this.#darkBottom);
@@ -172,9 +178,7 @@ export class KonvaCropOverlay {
   show(imageRect: CropRect, initialCrop?: CropRect): void {
     this.#imageRect = { ...imageRect };
 
-    const crop = initialCrop && initialCrop.width > 0
-      ? { ...initialCrop }
-      : { ...imageRect };
+    const crop = initialCrop && initialCrop.width > 0 ? { ...initialCrop } : { ...imageRect };
 
     this.#cutout.setAttrs({
       x: crop.x,
@@ -250,7 +254,7 @@ export class KonvaCropOverlay {
 
   /** Clean up nodes. */
   destroy(): void {
-    this.#cutout.off('dragmove dragend transform transformend');
+    this.#cutout.off("dragmove dragend transform transformend");
     this.#group.destroy();
   }
 
@@ -283,7 +287,8 @@ export class KonvaCropOverlay {
 
     // Top: full width, from image top to cutout top
     this.#darkTop.setAttrs({
-      x: img.x, y: img.y,
+      x: img.x,
+      y: img.y,
       width: img.width,
       height: Math.max(0, c.y - img.y),
     });
@@ -291,14 +296,16 @@ export class KonvaCropOverlay {
     // Bottom: full width, from cutout bottom to image bottom
     const cutBottom = c.y + c.height;
     this.#darkBottom.setAttrs({
-      x: img.x, y: cutBottom,
+      x: img.x,
+      y: cutBottom,
       width: img.width,
       height: Math.max(0, img.y + img.height - cutBottom),
     });
 
     // Left: from cutout top to cutout bottom, image left to cutout left
     this.#darkLeft.setAttrs({
-      x: img.x, y: c.y,
+      x: img.x,
+      y: c.y,
       width: Math.max(0, c.x - img.x),
       height: c.height,
     });
@@ -306,7 +313,8 @@ export class KonvaCropOverlay {
     // Right: from cutout top to cutout bottom, cutout right to image right
     const cutRight = c.x + c.width;
     this.#darkRight.setAttrs({
-      x: cutRight, y: c.y,
+      x: cutRight,
+      y: c.y,
       width: Math.max(0, img.x + img.width - cutRight),
       height: c.height,
     });
@@ -332,14 +340,18 @@ export class KonvaCropOverlay {
   #applyRatioConfig(): void {
     if (this.#ratio !== null) {
       this.#transformer.keepRatio(true);
-      this.#transformer.enabledAnchors([
-        'top-left', 'top-right', 'bottom-left', 'bottom-right',
-      ]);
+      this.#transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
     } else {
       this.#transformer.keepRatio(false);
       this.#transformer.enabledAnchors([
-        'top-left', 'top-right', 'bottom-left', 'bottom-right',
-        'middle-left', 'middle-right', 'top-center', 'bottom-center',
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "middle-left",
+        "middle-right",
+        "top-center",
+        "bottom-center",
       ]);
     }
   }
@@ -399,14 +411,8 @@ export class KonvaCropOverlay {
       this.#imageRect.y,
       Math.min(newY, this.#imageRect.y + this.#imageRect.height - newHeight),
     );
-    let clampedW = Math.min(
-      newWidth,
-      this.#imageRect.x + this.#imageRect.width - clampedX,
-    );
-    let clampedH = Math.min(
-      newHeight,
-      this.#imageRect.y + this.#imageRect.height - clampedY,
-    );
+    let clampedW = Math.min(newWidth, this.#imageRect.x + this.#imageRect.width - clampedX);
+    let clampedH = Math.min(newHeight, this.#imageRect.y + this.#imageRect.height - clampedY);
 
     // Enforce aspect ratio after clamping (safety net for floating-point drift)
     if (this.#ratio !== null) {

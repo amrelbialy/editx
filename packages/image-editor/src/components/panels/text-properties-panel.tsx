@@ -1,13 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  type CreativeEngine,
-  type TextRun,
-  TEXT_ALIGN,
-  TEXT_LINE_HEIGHT,
-} from '@creative-editor/engine';
-import { Slider } from '../ui/slider';
-import { Separator } from '../ui/separator';
-import { useImageEditorStore } from '../../store/image-editor-store';
+import { type CreativeEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@creative-editor/engine";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useImageEditorStore } from "../../store/image-editor-store";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
 export interface TextPropertiesPanelProps {
   engine: CreativeEngine;
@@ -26,9 +22,20 @@ interface TextBlockState {
   opacity: number;
 }
 
-const FONT_FAMILIES = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana'];
+const FONT_FAMILIES = [
+  "Arial",
+  "Helvetica",
+  "Times New Roman",
+  "Georgia",
+  "Courier New",
+  "Verdana",
+];
 
-function readTextBlockState(engine: CreativeEngine, blockId: number, selectionStart?: number): TextBlockState {
+function readTextBlockState(
+  engine: CreativeEngine,
+  blockId: number,
+  selectionStart?: number,
+): TextBlockState {
   const runs = engine.block.getTextRuns(blockId);
   const align = engine.block.getString(blockId, TEXT_ALIGN);
   const lh = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT);
@@ -48,12 +55,12 @@ function readTextBlockState(engine: CreativeEngine, blockId: number, selectionSt
 
   return {
     fontSize: targetStyle.fontSize ?? 24,
-    fontFamily: targetStyle.fontFamily ?? 'Arial',
-    fontWeight: targetStyle.fontWeight ?? 'normal',
-    fontStyle: targetStyle.fontStyle ?? 'normal',
-    fill: targetStyle.fill ?? '#000000',
+    fontFamily: targetStyle.fontFamily ?? "Arial",
+    fontWeight: targetStyle.fontWeight ?? "normal",
+    fontStyle: targetStyle.fontStyle ?? "normal",
+    fill: targetStyle.fill ?? "#000000",
     letterSpacing: targetStyle.letterSpacing ?? 0,
-    textAlign: align || 'left',
+    textAlign: align || "left",
     lineHeight: lh || 1.2,
     opacity: engine.block.getOpacity(blockId),
   };
@@ -64,10 +71,14 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
   // Whether we're in inline-editing mode for this block with an active selection
-  const hasCharSelection = editingTextBlockId === blockId && textSelectionRange !== null
-    && textSelectionRange.from !== textSelectionRange.to;
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
 
-  const [state, setState] = useState<TextBlockState>(() => readTextBlockState(engine, blockId, textSelectionRange?.from));
+  const [state, setState] = useState<TextBlockState>(() =>
+    readTextBlockState(engine, blockId, textSelectionRange?.from),
+  );
 
   useEffect(() => {
     setState(readTextBlockState(engine, blockId, textSelectionRange?.from));
@@ -87,20 +98,26 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
 
   // --- Handlers ---
 
-  const handleFontSize = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val) && val > 0) {
-      const { start, end } = getStyleRange();
-      engine.block.setTextFontSize(blockId, start, end, val);
-      update();
-    }
-  }, [engine, blockId, getStyleRange, update]);
+  const handleFontSize = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!Number.isNaN(val) && val > 0) {
+        const { start, end } = getStyleRange();
+        engine.block.setTextFontSize(blockId, start, end, val);
+        update();
+      }
+    },
+    [engine, blockId, getStyleRange, update],
+  );
 
-  const handleFontFamily = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextFontFamily(blockId, start, end, e.target.value);
-    update();
-  }, [engine, blockId, getStyleRange, update]);
+  const handleFontFamily = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextFontFamily(blockId, start, end, e.target.value);
+      update();
+    },
+    [engine, blockId, getStyleRange, update],
+  );
 
   const handleBoldToggle = useCallback(() => {
     const { start, end } = getStyleRange();
@@ -114,40 +131,53 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
     update();
   }, [engine, blockId, getStyleRange, update]);
 
-  const handleFillColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextColor(blockId, start, end, e.target.value);
-    update();
-  }, [engine, blockId, getStyleRange, update]);
+  const handleFillColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextColor(blockId, start, end, e.target.value);
+      update();
+    },
+    [engine, blockId, getStyleRange, update],
+  );
 
-  const handleLetterSpacing = useCallback(([v]: number[]) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextStyle(blockId, start, end, { letterSpacing: v });
-    update();
-  }, [engine, blockId, getStyleRange, update]);
+  const handleLetterSpacing = useCallback(
+    ([v]: number[]) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextStyle(blockId, start, end, { letterSpacing: v });
+      update();
+    },
+    [engine, blockId, getStyleRange, update],
+  );
 
-  const handleTextAlign = useCallback((align: string) => {
-    engine.block.setTextAlign(blockId, align);
-    update();
-  }, [engine, blockId, update]);
+  const handleTextAlign = useCallback(
+    (align: string) => {
+      engine.block.setTextAlign(blockId, align);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleLineHeight = useCallback(([v]: number[]) => {
-    engine.block.setTextLineHeight(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleLineHeight = useCallback(
+    ([v]: number[]) => {
+      engine.block.setTextLineHeight(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleOpacity = useCallback(([v]: number[]) => {
-    engine.block.setOpacity(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleOpacity = useCallback(
+    ([v]: number[]) => {
+      engine.block.setOpacity(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
   return (
     <div className="flex flex-col gap-3" data-text-toolbar>
       <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         Text Properties
-        {hasCharSelection && (
-          <span className="ml-1 text-primary normal-case">(selection)</span>
-        )}
+        {hasCharSelection && <span className="ml-1 text-primary normal-case">(selection)</span>}
       </div>
 
       {/* Font Family */}
@@ -158,7 +188,9 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           className="w-full h-8 rounded-md border border-border bg-background px-2 text-sm"
         >
           {FONT_FAMILIES.map((f) => (
-            <option key={f} value={f}>{f}</option>
+            <option key={f} value={f}>
+              {f}
+            </option>
           ))}
         </select>
       </Section>
@@ -184,9 +216,9 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           <button
             onClick={handleBoldToggle}
             className={`h-8 w-8 rounded-md text-sm font-bold transition-colors ${
-              state.fontWeight === 'bold'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
+              state.fontWeight === "bold"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent"
             }`}
           >
             B
@@ -194,9 +226,9 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           <button
             onClick={handleItalicToggle}
             className={`h-8 w-8 rounded-md text-sm italic transition-colors ${
-              state.fontStyle === 'italic'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
+              state.fontStyle === "italic"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent"
             }`}
           >
             I
@@ -222,14 +254,14 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
       {/* Alignment */}
       <Section label="Alignment">
         <div className="flex gap-1">
-          {(['left', 'center', 'right'] as const).map((align) => (
+          {(["left", "center", "right"] as const).map((align) => (
             <button
               key={align}
               onClick={() => handleTextAlign(align)}
               className={`h-8 px-3 rounded-md text-xs transition-colors ${
                 state.textAlign === align
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-accent'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
               {align.charAt(0).toUpperCase() + align.slice(1)}

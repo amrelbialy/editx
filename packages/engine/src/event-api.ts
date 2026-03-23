@@ -1,4 +1,4 @@
-export type BlockEventType = 'created' | 'updated' | 'destroyed';
+export type BlockEventType = "created" | "updated" | "destroyed";
 
 export interface BlockEvent {
   type: BlockEventType;
@@ -33,10 +33,7 @@ export class EventAPI {
    * @param callback — called with bundled events at end of update cycle.
    * @returns unsubscribe function
    */
-  subscribe(
-    blocks: number[],
-    callback: (events: BlockEvent[]) => void,
-  ): () => void {
+  subscribe(blocks: number[], callback: (events: BlockEvent[]) => void): () => void {
     const id = this.#nextId++;
     const sub: Subscription = {
       blocks: blocks.length > 0 ? new Set(blocks) : null,
@@ -82,9 +79,9 @@ export class EventAPI {
       const existing = map.get(e.block);
       if (!existing) {
         map.set(e.block, e);
-      } else if (e.type === 'destroyed') {
+      } else if (e.type === "destroyed") {
         map.set(e.block, e);
-      } else if (e.type === 'created' && existing.type !== 'destroyed') {
+      } else if (e.type === "created" && existing.type !== "destroyed") {
         map.set(e.block, e);
       }
     }

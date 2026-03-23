@@ -1,4 +1,4 @@
-import type { BlockData } from './block.types';
+import type { BlockData } from "./block.types";
 
 /**
  * Manages parent/child relationships between blocks.

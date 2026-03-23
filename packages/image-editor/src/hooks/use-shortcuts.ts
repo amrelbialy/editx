@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import type { ImageEditorToolId } from '../config/config.types';
+import { useEffect } from "react";
+import type { ImageEditorToolId } from "../config/config.types";
 
 export interface ShortcutActions {
   onToolSelect?: (tool: ImageEditorToolId) => void;
@@ -20,12 +20,12 @@ export interface ShortcutActions {
 }
 
 const TOOL_KEYS: Record<string, ImageEditorToolId> = {
-  c: 'crop',
-  a: 'adjust',
-  f: 'filter',
-  t: 'text',
-  s: 'shapes',
-  i: 'image',
+  c: "crop",
+  a: "adjust",
+  f: "filter",
+  t: "text",
+  s: "shapes",
+  i: "image",
 };
 
 export function useShortcuts(actions: ShortcutActions) {
@@ -37,11 +37,11 @@ export function useShortcuts(actions: ShortcutActions) {
     const handler = (e: KeyboardEvent) => {
       // Ignore when typing in input fields
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
       // Ctrl/Cmd + Z = Undo, Ctrl/Cmd + Shift + Z = Redo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) {
           actions.onRedo?.();
@@ -52,21 +52,21 @@ export function useShortcuts(actions: ShortcutActions) {
       }
 
       // Ctrl/Cmd + Y = Redo (Windows)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
         e.preventDefault();
         actions.onRedo?.();
         return;
       }
 
       // Ctrl/Cmd + D = Duplicate
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "d") {
         e.preventDefault();
         actions.onDuplicate?.();
         return;
       }
 
       // Ctrl/Cmd + ] = Bring Forward, Ctrl/Cmd + Shift + ] = Bring to Front
-      if ((e.ctrlKey || e.metaKey) && e.key === ']') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "]") {
         e.preventDefault();
         if (e.shiftKey) {
           actions.onBringToFront?.();
@@ -77,7 +77,7 @@ export function useShortcuts(actions: ShortcutActions) {
       }
 
       // Ctrl/Cmd + [ = Send Backward, Ctrl/Cmd + Shift + [ = Send to Back
-      if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "[") {
         e.preventDefault();
         if (e.shiftKey) {
           actions.onSendToBack?.();
@@ -91,33 +91,33 @@ export function useShortcuts(actions: ShortcutActions) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       // Escape
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         actions.onEscape?.();
         return;
       }
 
       // Delete/Backspace
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === "Delete" || e.key === "Backspace") {
         actions.onDelete?.();
         return;
       }
 
       // Shift+2 = 100% zoom (actual pixel size)
-      if (e.shiftKey && e.key === '@') {
+      if (e.shiftKey && e.key === "@") {
         actions.onZoom100?.();
         return;
       }
 
       // Zoom: +/= to zoom in, - to zoom out, 0 to fit
-      if (e.key === '+' || e.key === '=') {
+      if (e.key === "+" || e.key === "=") {
         actions.onZoomIn?.();
         return;
       }
-      if (e.key === '-') {
+      if (e.key === "-") {
         actions.onZoomOut?.();
         return;
       }
-      if (e.key === '0') {
+      if (e.key === "0") {
         actions.onZoomFit?.();
         return;
       }
@@ -129,7 +129,7 @@ export function useShortcuts(actions: ShortcutActions) {
       }
     };
 
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [actions, enabled]);
 }

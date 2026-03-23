@@ -1,7 +1,7 @@
-import { BlockStore } from '../../block/block-store';
-import { PropertyValue } from '../../block/block.types';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { PropertyValue } from "../../block/block.types";
+import type { BlockStore } from "../../block/block-store";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export class SetPropertyCommand extends PatchCommand {
   #store: BlockStore;

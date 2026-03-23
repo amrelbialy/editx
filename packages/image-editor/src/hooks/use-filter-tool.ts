@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { EFFECT_FILTER_NAME, type CreativeEngine } from '@creative-editor/engine';
-import { useImageEditorStore } from '../store/image-editor-store';
+import { type CreativeEngine, EFFECT_FILTER_NAME } from "@creative-editor/engine";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseFilterToolOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
@@ -9,7 +9,7 @@ export interface UseFilterToolOptions {
 export function useFilterTool({ engineRef }: UseFilterToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
   const filterEffectIdRef = useRef<number | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('');
+  const [activeFilter, setActiveFilter] = useState<string>("");
 
   const ensureFilterEffect = useCallback((): number | null => {
     const ce = engineRef.current;
@@ -17,13 +17,13 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
 
     const effects = ce.block.getEffects(editableBlockId);
     for (const eid of effects) {
-      if (ce.block.getKind(eid) === 'filter') {
+      if (ce.block.getKind(eid) === "filter") {
         filterEffectIdRef.current = eid;
         return eid;
       }
     }
 
-    const eid = ce.block.createEffect('filter');
+    const eid = ce.block.createEffect("filter");
     ce.block.appendEffect(editableBlockId, eid);
     filterEffectIdRef.current = eid;
     return eid;
@@ -33,21 +33,24 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
     const ce = engineRef.current;
     const eid = filterEffectIdRef.current;
     if (!ce || eid === null) {
-      setActiveFilter('');
+      setActiveFilter("");
       return;
     }
     const name = ce.block.getString(eid, EFFECT_FILTER_NAME);
     setActiveFilter(name);
   }, [engineRef]);
 
-  const handleFilterSelect = useCallback((name: string) => {
-    const ce = engineRef.current;
-    const eid = filterEffectIdRef.current;
-    if (!ce || eid === null) return;
+  const handleFilterSelect = useCallback(
+    (name: string) => {
+      const ce = engineRef.current;
+      const eid = filterEffectIdRef.current;
+      if (!ce || eid === null) return;
 
-    ce.block.setString(eid, EFFECT_FILTER_NAME, name);
-    setActiveFilter(name);
-  }, [engineRef]);
+      ce.block.setString(eid, EFFECT_FILTER_NAME, name);
+      setActiveFilter(name);
+    },
+    [engineRef],
+  );
 
   // Re-sync local state when undo/redo changes the engine state
   useEffect(() => {
@@ -59,7 +62,7 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
         // Effect was destroyed by undo — re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
-          const found = effects.find((id) => ce.block.getKind(id) === 'filter');
+          const found = effects.find((id) => ce.block.getKind(id) === "filter");
           filterEffectIdRef.current = found ?? null;
         } else {
           filterEffectIdRef.current = null;
@@ -67,16 +70,16 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
       }
       const eid2 = filterEffectIdRef.current;
       if (!eid2 || !ce.core.getBlockStore().exists(eid2)) {
-        setActiveFilter('');
+        setActiveFilter("");
       } else {
         setActiveFilter(ce.block.getString(eid2, EFFECT_FILTER_NAME));
       }
     };
-    ce.on('history:undo', handler);
-    ce.on('history:redo', handler);
+    ce.on("history:undo", handler);
+    ce.on("history:redo", handler);
     return () => {
-      ce.off('history:undo', handler);
-      ce.off('history:redo', handler);
+      ce.off("history:undo", handler);
+      ce.off("history:redo", handler);
     };
   }, [engineRef, editableBlockId]);
 

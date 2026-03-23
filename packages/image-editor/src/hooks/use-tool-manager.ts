@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { useImageEditorStore, type ImageEditorTool } from '../store/image-editor-store';
-import type { ImageEditorToolId, EditorEventCallbacks } from '../config/config.types';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { useCallback } from "react";
+import type { EditorEventCallbacks, ImageEditorToolId } from "../config/config.types";
+import { type ImageEditorTool, useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseToolManagerOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
@@ -36,55 +36,81 @@ export function useToolManager({
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
 
   const activeToolId: ImageEditorToolId | null =
-    activeTool === 'select' || activeTool === 'rotate' || activeTool === 'resize' || activeTool === 'pen'
+    activeTool === "select" ||
+    activeTool === "rotate" ||
+    activeTool === "resize" ||
+    activeTool === "pen"
       ? null
       : (activeTool as ImageEditorToolId);
 
-  const handleToolChange = useCallback((tool: ImageEditorTool) => {
-    if (tool === 'crop') {
-      enterCropMode();
-    } else {
-      if (activeTool === 'crop') {
-        const ce = engineRef.current;
-        if (ce) {
-          ce.editor.setEditMode('Transform');
-          ce.editor.fitToScreen();
+  const handleToolChange = useCallback(
+    (tool: ImageEditorTool) => {
+      if (tool === "crop") {
+        enterCropMode();
+      } else {
+        if (activeTool === "crop") {
+          const ce = engineRef.current;
+          if (ce) {
+            ce.editor.setEditMode("Transform");
+            ce.editor.fitToScreen();
+          }
+        }
+        setActiveTool(tool);
+
+        if (tool === "rotate") syncRotationState();
+        if (tool === "adjust") {
+          ensureAdjustEffect();
+          syncAdjustValues();
+        }
+        if (tool === "filter") {
+          ensureFilterEffect();
+          syncFilterState();
         }
       }
-      setActiveTool(tool);
+      events?.onToolChange?.(tool === "select" ? null : tool);
+    },
+    [
+      activeTool,
+      engineRef,
+      enterCropMode,
+      setActiveTool,
+      syncRotationState,
+      ensureAdjustEffect,
+      syncAdjustValues,
+      ensureFilterEffect,
+      syncFilterState,
+      events,
+    ],
+  );
 
-      if (tool === 'rotate') syncRotationState();
-      if (tool === 'adjust') { ensureAdjustEffect(); syncAdjustValues(); }
-      if (tool === 'filter') { ensureFilterEffect(); syncFilterState(); }
-    }
-    events?.onToolChange?.(tool === 'select' ? null : tool);
-  }, [activeTool, engineRef, enterCropMode, setActiveTool, syncRotationState, ensureAdjustEffect, syncAdjustValues, ensureFilterEffect, syncFilterState, events]);
-
-  const handleSidebarToolSelect = useCallback((toolId: ImageEditorToolId) => {
-    if (activeToolId === toolId) {
-      const ce = engineRef.current;
-      if (activeTool === 'crop' && ce) {
-        ce.editor.setEditMode('Transform');
-        ce.editor.fitToScreen();
+  const handleSidebarToolSelect = useCallback(
+    (toolId: ImageEditorToolId) => {
+      if (activeToolId === toolId) {
+        const ce = engineRef.current;
+        if (activeTool === "crop" && ce) {
+          ce.editor.setEditMode("Transform");
+          ce.editor.fitToScreen();
+        }
+        setActiveTool("select");
+        return;
       }
-      setActiveTool('select');
-      return;
-    }
-    handleToolChange(toolId as ImageEditorTool);
-  }, [activeToolId, activeTool, engineRef, handleToolChange, setActiveTool]);
+      handleToolChange(toolId as ImageEditorTool);
+    },
+    [activeToolId, activeTool, engineRef, handleToolChange, setActiveTool],
+  );
 
   const handleDone = useCallback(() => {
-    if (activeTool === 'crop') {
+    if (activeTool === "crop") {
       handleCropApply();
     } else {
-      setActiveTool('select');
+      setActiveTool("select");
     }
   }, [activeTool, handleCropApply, setActiveTool]);
 
   const handleContextualReset = useCallback(() => {
-    if (activeTool === 'crop') handleCropCancel();
-    else if (activeTool === 'rotate') handleRotateReset();
-    else if (activeTool === 'adjust') handleAdjustReset();
+    if (activeTool === "crop") handleCropCancel();
+    else if (activeTool === "rotate") handleRotateReset();
+    else if (activeTool === "adjust") handleAdjustReset();
   }, [activeTool, handleCropCancel, handleRotateReset, handleAdjustReset]);
 
   return {

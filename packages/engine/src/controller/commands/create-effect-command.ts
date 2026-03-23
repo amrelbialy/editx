@@ -1,7 +1,7 @@
-import { BlockStore } from '../../block/block-store';
-import { EffectType } from '../../block/block.types';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { EffectType } from "../../block/block.types";
+import type { BlockStore } from "../../block/block-store";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export class CreateEffectCommand extends PatchCommand {
   #store: BlockStore;

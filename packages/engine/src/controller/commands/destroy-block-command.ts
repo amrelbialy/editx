@@ -1,7 +1,6 @@
-import { BlockStore } from '../../block/block-store';
-import { BlockData } from '../../block/block.types';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { BlockStore } from "../../block/block-store";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export class DestroyBlockCommand extends PatchCommand {
   #store: BlockStore;

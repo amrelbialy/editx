@@ -1,13 +1,11 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
-@import '@creative-editor/react-editor/styles.css';
-@import '@creative-editor/image-editor/styles.css';
+@import "@creative-editor/image-editor/styles.css";
 
 /* Ensure Tailwind scans all workspace package source files */
-@source '../../../packages/image-editor/src';
-@source '../../../packages/react-editor/src';
-@source '../../../packages/engine/src';
+@source "../../../packages/image-editor/src";
+@source "../../../packages/engine/src";
 
 #root {
   width: 100vw;

@@ -1,11 +1,11 @@
-import { BlockAPI } from './block/block-api';
-import { Engine } from './engine';
-import { EditorAPI } from './editor/editor-api';
-import type { ExportOptions } from './editor-types';
-import { EventAPI } from './event-api';
-import { SceneAPI } from './scene';
-import { KonvaRendererAdapter } from './konva/konva-renderer-adapter';
-import { clearImageCache } from './utils/image-loader';
+import { BlockAPI } from "./block/block-api";
+import { EditorAPI } from "./editor/editor-api";
+import type { ExportOptions } from "./editor-types";
+import { Engine } from "./engine";
+import type { EventAPI } from "./event-api";
+import { KonvaRendererAdapter } from "./konva/konva-renderer-adapter";
+import { SceneAPI } from "./scene";
+import { clearImageCache } from "./utils/image-loader";
 
 export class CreativeEngine {
   block: BlockAPI;
@@ -53,9 +53,9 @@ export class CreativeEngine {
    */
   async exportScene(options?: ExportOptions): Promise<Blob> {
     const renderer = this.core.getRenderer();
-    if (!renderer) throw new Error('Cannot export: no renderer attached');
+    if (!renderer) throw new Error("Cannot export: no renderer attached");
     return renderer.exportScene({
-      format: options?.format ?? 'png',
+      format: options?.format ?? "png",
       quality: options?.quality ?? 0.92,
       pixelRatio: options?.pixelRatio ?? 1,
     });
@@ -88,16 +88,16 @@ export class CreativeEngine {
     };
 
     adapter.onBlockDblClick = (blockId) => {
-      core.emit('block:dblclick', blockId);
+      core.emit("block:dblclick", blockId);
     };
 
     adapter.onStageClick = (worldPos) => {
       block.deselectAll();
-      core.emit('stage:click', worldPos);
+      core.emit("stage:click", worldPos);
     };
 
     adapter.onZoomChange = (zoom: number) => {
-      core.emit('zoom:changed', zoom);
+      core.emit("zoom:changed", zoom);
     };
 
     adapter.onBlockDragEnd = (blockId, x, y) => {
@@ -110,8 +110,8 @@ export class CreativeEngine {
       block.setSize(blockId, transform.width, transform.height);
       block.setRotation(blockId, transform.rotation);
       // If user manually resizes a text block, disable auto-height
-      if (block.getType(blockId) === 'text') {
-        block.setBool(blockId, 'text/autoHeight', false);
+      if (block.getType(blockId) === "text") {
+        block.setBool(blockId, "text/autoHeight", false);
       }
       core.endBatch();
     };
@@ -122,9 +122,9 @@ export class CreativeEngine {
       const store = core.getBlockStore();
       const b = store.get(blockId);
       if (b) {
-        const current = (b.properties['transform/size/height'] as number) ?? 0;
+        const current = (b.properties["transform/size/height"] as number) ?? 0;
         if (Math.abs(current - computedHeight) > 0.5) {
-          b.properties['transform/size/height'] = Math.max(computedHeight, 10);
+          b.properties["transform/size/height"] = Math.max(computedHeight, 10);
         }
       }
     };

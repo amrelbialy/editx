@@ -1,8 +1,9 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import type { ThemeConfig } from '../config/config.types';
-import type { ThemeColorKey } from './presets';
-import { themePresets, type ThemePresetValues } from './presets';
-import { PopoverContainerProvider } from '../components/ui/popover-container-context';
+import type React from "react";
+import { useCallback, useMemo, useState } from "react";
+import { PopoverContainerProvider } from "../components/ui/popover-container-context";
+import type { ThemeConfig } from "../config/config.types";
+import type { ThemeColorKey } from "./presets";
+import { type ThemePresetValues, themePresets } from "./presets";
 
 interface ThemeProviderProps {
   theme?: ThemeConfig;
@@ -10,11 +11,11 @@ interface ThemeProviderProps {
 }
 
 function buildCssVariables(theme: ThemeConfig): Record<string, string> {
-  const preset = theme.preset ?? 'dark';
+  const preset = theme.preset ?? "dark";
   const base: ThemePresetValues =
-    preset === 'custom'
-      ? themePresets['dark']
-      : themePresets[preset as keyof typeof themePresets] ?? themePresets['dark'];
+    preset === "custom"
+      ? themePresets.dark
+      : (themePresets[preset as keyof typeof themePresets] ?? themePresets.dark);
 
   const vars: Record<string, string> = {};
 
@@ -34,32 +35,30 @@ function buildCssVariables(theme: ThemeConfig): Record<string, string> {
 
   // Border radius
   if (theme.borderRadius) {
-    vars['--radius'] = theme.borderRadius;
+    vars["--radius"] = theme.borderRadius;
   } else {
-    vars['--radius'] = '0.5rem';
+    vars["--radius"] = "0.5rem";
   }
 
   return vars;
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, children }) => {
-  const colorsJson = theme.colors ? JSON.stringify(theme.colors) : '';
+  const _colorsJson = theme.colors ? JSON.stringify(theme.colors) : "";
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined);
   const refCallback = useCallback((node: HTMLDivElement | null) => {
     setContainer(node ?? undefined);
   }, []);
   const style = useMemo(() => {
     const vars = buildCssVariables(theme);
-    const fontFamily = theme.fontFamily ?? 'Inter, system-ui, sans-serif';
+    const fontFamily = theme.fontFamily ?? "Inter, system-ui, sans-serif";
     return { ...vars, fontFamily } as React.CSSProperties;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme.preset, theme.borderRadius, theme.fontFamily, colorsJson]);
+  }, [theme.preset, theme.borderRadius, theme.fontFamily, theme]);
 
   return (
     <div ref={refCallback} style={style} className="ie-theme">
-      <PopoverContainerProvider value={container}>
-        {children}
-      </PopoverContainerProvider>
+      <PopoverContainerProvider value={container}>{children}</PopoverContainerProvider>
     </div>
   );
 };

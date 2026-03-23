@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine, TextRunStyle } from '@creative-editor/engine';
-import { TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN } from '@creative-editor/engine';
+import type { CreativeEngine, TextRunStyle } from "@creative-editor/engine";
+import { TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN } from "@creative-editor/engine";
 import {
-  AlignVerticalJustifyStart,
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
-} from 'lucide-react';
-import { Slider } from '../ui/slider';
-import { Separator } from '../ui/separator';
-import { useImageEditorStore } from '../../store/image-editor-store';
-import { cn } from '../../utils/cn';
+  AlignVerticalJustifyStart,
+} from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
 interface TextAdvancedPanelProps {
   engine: CreativeEngine;
@@ -25,7 +26,11 @@ interface AdvancedState {
   textStrokeWidth: number;
 }
 
-function readAdvancedState(engine: CreativeEngine, blockId: number, selectionStart?: number): AdvancedState {
+function readAdvancedState(
+  engine: CreativeEngine,
+  blockId: number,
+  selectionStart?: number,
+): AdvancedState {
   const runs = engine.block.getTextRuns(blockId);
   const vAlign = engine.block.getString(blockId, TEXT_VERTICAL_ALIGN);
   const lh = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT);
@@ -43,11 +48,11 @@ function readAdvancedState(engine: CreativeEngine, blockId: number, selectionSta
   }
 
   return {
-    verticalAlign: vAlign || 'top',
+    verticalAlign: vAlign || "top",
     lineHeight: lh || 1.2,
     letterSpacing: targetStyle.letterSpacing ?? 0,
-    textTransform: targetStyle.textTransform ?? 'none',
-    textStrokeColor: targetStyle.textStrokeColor ?? '#ffffff',
+    textTransform: targetStyle.textTransform ?? "none",
+    textStrokeColor: targetStyle.textStrokeColor ?? "#ffffff",
     textStrokeWidth: targetStyle.textStrokeWidth ?? 0,
   };
 }
@@ -56,8 +61,10 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
-  const hasCharSelection = editingTextBlockId === blockId && textSelectionRange !== null
-    && textSelectionRange.from !== textSelectionRange.to;
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
 
   const [state, setState] = useState<AdvancedState>(() =>
     readAdvancedState(engine, blockId, textSelectionRange?.from),
@@ -81,61 +88,79 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
   // Re-sync on undo/redo
   useEffect(() => {
     const handler = () => refresh();
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, refresh]);
 
   // ── Handlers ──
 
-  const handleVerticalAlign = useCallback((align: string) => {
-    engine.block.setTextVerticalAlign(blockId, align);
-    refresh();
-  }, [engine, blockId, refresh]);
+  const handleVerticalAlign = useCallback(
+    (align: string) => {
+      engine.block.setTextVerticalAlign(blockId, align);
+      refresh();
+    },
+    [engine, blockId, refresh],
+  );
 
-  const handleLineHeight = useCallback(([v]: number[]) => {
-    engine.block.setTextLineHeight(blockId, v);
-    refresh();
-  }, [engine, blockId, refresh]);
+  const handleLineHeight = useCallback(
+    ([v]: number[]) => {
+      engine.block.setTextLineHeight(blockId, v);
+      refresh();
+    },
+    [engine, blockId, refresh],
+  );
 
-  const handleLetterSpacing = useCallback(([v]: number[]) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextStyle(blockId, start, end, { letterSpacing: v });
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const handleLetterSpacing = useCallback(
+    ([v]: number[]) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextStyle(blockId, start, end, { letterSpacing: v });
+      refresh();
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
-  const handleTextTransform = useCallback((transform: 'none' | 'uppercase' | 'lowercase' | 'capitalize') => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextTransform(blockId, start, end, transform);
-    refresh();
-  }, [engine, blockId, getStyleRange, refresh]);
+  const handleTextTransform = useCallback(
+    (transform: "none" | "uppercase" | "lowercase" | "capitalize") => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextTransform(blockId, start, end, transform);
+      refresh();
+    },
+    [engine, blockId, getStyleRange, refresh],
+  );
 
-  const handleStrokeColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextStroke(blockId, start, end, {
-      color: e.target.value,
-      width: state.textStrokeWidth || 1,
-    });
-    refresh();
-  }, [engine, blockId, getStyleRange, state.textStrokeWidth, refresh]);
+  const handleStrokeColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextStroke(blockId, start, end, {
+        color: e.target.value,
+        width: state.textStrokeWidth || 1,
+      });
+      refresh();
+    },
+    [engine, blockId, getStyleRange, state.textStrokeWidth, refresh],
+  );
 
-  const handleStrokeWidth = useCallback(([v]: number[]) => {
-    const { start, end } = getStyleRange();
-    engine.block.setTextStroke(blockId, start, end, {
-      color: state.textStrokeColor,
-      width: v,
-    });
-    refresh();
-  }, [engine, blockId, getStyleRange, state.textStrokeColor, refresh]);
+  const handleStrokeWidth = useCallback(
+    ([v]: number[]) => {
+      const { start, end } = getStyleRange();
+      engine.block.setTextStroke(blockId, start, end, {
+        color: state.textStrokeColor,
+        width: v,
+      });
+      refresh();
+    },
+    [engine, blockId, getStyleRange, state.textStrokeColor, refresh],
+  );
 
   const CASE_OPTIONS = [
-    { value: 'none', label: '—' },
-    { value: 'uppercase', label: 'AG' },
-    { value: 'lowercase', label: 'ag' },
-    { value: 'capitalize', label: 'Ag' },
+    { value: "none", label: "—" },
+    { value: "uppercase", label: "AG" },
+    { value: "lowercase", label: "ag" },
+    { value: "capitalize", label: "Ag" },
   ] as const;
 
   return (
@@ -143,19 +168,21 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
       {/* Vertical Alignment */}
       <Section label="Vertical Alignment">
         <div className="flex gap-1">
-          {([
-            ['top', AlignVerticalJustifyStart],
-            ['middle', AlignVerticalJustifyCenter],
-            ['bottom', AlignVerticalJustifyEnd],
-          ] as const).map(([align, Icon]) => (
+          {(
+            [
+              ["top", AlignVerticalJustifyStart],
+              ["middle", AlignVerticalJustifyCenter],
+              ["bottom", AlignVerticalJustifyEnd],
+            ] as const
+          ).map(([align, Icon]) => (
             <button
               key={align}
               onClick={() => handleVerticalAlign(align)}
               className={cn(
-                'h-8 w-8 rounded-md flex items-center justify-center transition-colors',
+                "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
                 state.verticalAlign === align
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-accent',
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent",
               )}
               title={align.charAt(0).toUpperCase() + align.slice(1)}
             >
@@ -173,7 +200,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             value={state.lineHeight.toFixed(1)}
             onChange={(e) => {
               const v = parseFloat(e.target.value);
-              if (!isNaN(v) && v > 0) {
+              if (!Number.isNaN(v) && v > 0) {
                 engine.block.setTextLineHeight(blockId, v);
                 refresh();
               }
@@ -202,10 +229,10 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
               key={opt.value}
               onClick={() => handleTextTransform(opt.value)}
               className={cn(
-                'h-8 px-3 rounded-md text-xs font-medium transition-colors',
+                "h-8 px-3 rounded-md text-xs font-medium transition-colors",
                 state.textTransform === opt.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-accent',
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent",
               )}
             >
               {opt.label}
@@ -222,7 +249,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             value={state.letterSpacing.toFixed(1)}
             onChange={(e) => {
               const v = parseFloat(e.target.value);
-              if (!isNaN(v)) {
+              if (!Number.isNaN(v)) {
                 const { start, end } = getStyleRange();
                 engine.block.setTextStyle(blockId, start, end, { letterSpacing: v });
                 refresh();

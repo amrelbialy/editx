@@ -1,7 +1,7 @@
-import React from 'react';
-import { RotateCcw, Check } from 'lucide-react';
-import { Button } from '../ui/button';
-import { cn } from '../../utils/cn';
+import { Check, RotateCcw } from "lucide-react";
+import type React from "react";
+import { cn } from "../../utils/cn";
+import { Button } from "../ui/button";
 
 interface ContextualBarProps {
   visible: boolean;
@@ -21,15 +21,13 @@ export const ContextualBar: React.FC<ContextualBarProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between h-10 px-4',
-        'bg-card border-b border-border',
-        'animate-in fade-in-0 slide-in-from-top-1 duration-150',
+        "flex items-center justify-between h-10 px-4",
+        "bg-card border-b border-border",
+        "animate-in fade-in-0 slide-in-from-top-1 duration-150",
       )}
     >
       {/* Tool-specific controls */}
-      <div className="flex items-center gap-2 flex-1">
-        {children}
-      </div>
+      <div className="flex items-center gap-2 flex-1">{children}</div>
 
       {/* Right: Reset + Done (always present) */}
       <div className="flex items-center gap-1.5">

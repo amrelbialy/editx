@@ -1,36 +1,73 @@
-import Konva from 'konva';
-import type { BlockData, Color, TextRun } from '../block/block.types';
+import Konva from "konva";
+import type { BlockData, Color, TextRun } from "../block/block.types";
 import {
-  POSITION_X, POSITION_Y, SIZE_WIDTH, SIZE_HEIGHT, ROTATION,
-  OPACITY, VISIBLE,
-  FILL_COLOR, STROKE_COLOR, STROKE_WIDTH,
-  TEXT_CONTENT, FONT_SIZE, FONT_FAMILY,
-  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP, TEXT_AUTO_HEIGHT,
-  IMAGE_SRC,
-  CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
-  CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
-  PAGE_WIDTH, PAGE_HEIGHT,
-  IMAGE_ROTATION,
-  IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT,
-  EFFECT_ADJUSTMENTS_BRIGHTNESS, EFFECT_ADJUSTMENTS_SATURATION,
-  EFFECT_ADJUSTMENTS_CONTRAST, EFFECT_ADJUSTMENTS_GAMMA,
-  EFFECT_ADJUSTMENTS_CLARITY, EFFECT_ADJUSTMENTS_EXPOSURE,
-  EFFECT_ADJUSTMENTS_SHADOWS, EFFECT_ADJUSTMENTS_HIGHLIGHTS,
-  EFFECT_ADJUSTMENTS_BLACKS, EFFECT_ADJUSTMENTS_WHITES,
-  EFFECT_ADJUSTMENTS_TEMPERATURE, EFFECT_ADJUSTMENTS_SHARPNESS,
+  CROP_ENABLED,
+  CROP_FLIP_HORIZONTAL,
+  CROP_FLIP_VERTICAL,
+  CROP_HEIGHT,
+  CROP_WIDTH,
+  CROP_X,
+  CROP_Y,
+  EFFECT_ADJUSTMENTS_BLACKS,
+  EFFECT_ADJUSTMENTS_BRIGHTNESS,
+  EFFECT_ADJUSTMENTS_CLARITY,
+  EFFECT_ADJUSTMENTS_CONTRAST,
+  EFFECT_ADJUSTMENTS_EXPOSURE,
+  EFFECT_ADJUSTMENTS_GAMMA,
+  EFFECT_ADJUSTMENTS_HIGHLIGHTS,
+  EFFECT_ADJUSTMENTS_SATURATION,
+  EFFECT_ADJUSTMENTS_SHADOWS,
+  EFFECT_ADJUSTMENTS_SHARPNESS,
+  EFFECT_ADJUSTMENTS_TEMPERATURE,
+  EFFECT_ADJUSTMENTS_WHITES,
   EFFECT_FILTER_NAME,
-  FILL_SOLID_COLOR, FILL_ENABLED, STROKE_ENABLED,
-  SHAPE_RECT_CORNER_RADIUS, SHAPE_POLYGON_SIDES,
-  SHAPE_STAR_POINTS, SHAPE_STAR_INNER_DIAMETER,
-  SHAPE_LINE_POINTER_LENGTH, SHAPE_LINE_POINTER_WIDTH,
-  SHADOW_ENABLED, SHADOW_COLOR, SHADOW_OFFSET_X, SHADOW_OFFSET_Y, SHADOW_BLUR,
-} from '../block/property-keys';
-import { colorToHex } from '../utils/color';
-import { loadImage } from '../utils/image-loader';
-import { buildFilterPipeline, type AdjustmentValues } from './filters/build-filter-pipeline';
-import { getFilterPreset } from './filters/presets';
-import { FormattedText } from './formatted-text';
-import type { WebGLFilterRenderer, FilterParams } from './webgl-filter-renderer';
+  FILL_COLOR,
+  FILL_ENABLED,
+  FILL_SOLID_COLOR,
+  FONT_FAMILY,
+  FONT_SIZE,
+  IMAGE_ORIGINAL_HEIGHT,
+  IMAGE_ORIGINAL_WIDTH,
+  IMAGE_ROTATION,
+  IMAGE_SRC,
+  OPACITY,
+  PAGE_HEIGHT,
+  PAGE_WIDTH,
+  POSITION_X,
+  POSITION_Y,
+  ROTATION,
+  SHADOW_BLUR,
+  SHADOW_COLOR,
+  SHADOW_ENABLED,
+  SHADOW_OFFSET_X,
+  SHADOW_OFFSET_Y,
+  SHAPE_LINE_POINTER_LENGTH,
+  SHAPE_LINE_POINTER_WIDTH,
+  SHAPE_POLYGON_SIDES,
+  SHAPE_RECT_CORNER_RADIUS,
+  SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_STAR_POINTS,
+  SIZE_HEIGHT,
+  SIZE_WIDTH,
+  STROKE_COLOR,
+  STROKE_ENABLED,
+  STROKE_WIDTH,
+  TEXT_ALIGN,
+  TEXT_AUTO_HEIGHT,
+  TEXT_CONTENT,
+  TEXT_LINE_HEIGHT,
+  TEXT_PADDING,
+  TEXT_RUNS,
+  TEXT_VERTICAL_ALIGN,
+  TEXT_WRAP,
+  VISIBLE,
+} from "../block/property-keys";
+import { colorToHex } from "../utils/color";
+import { loadImage } from "../utils/image-loader";
+import { type AdjustmentValues, buildFilterPipeline } from "./filters/build-filter-pipeline";
+import { getFilterPreset } from "./filters/presets";
+import { FormattedText } from "./formatted-text";
+import type { FilterParams, WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
@@ -59,45 +96,45 @@ export class KonvaNodeFactory {
     resolveBlock?: (id: number) => BlockData | undefined,
   ): Konva.Node | null {
     // --- Page block: wrapped in a non-draggable Group ---
-    if (block.type === 'page') {
+    if (block.type === "page") {
       return this.#createPageNode(id);
     }
 
     // Resolve the shape sub-block's kind for graphic blocks
-    let shapeKind: string = block.kind || 'rect';
-    if (block.type === 'graphic' && block.shapeId != null && resolveBlock) {
+    let shapeKind: string = block.kind || "rect";
+    if (block.type === "graphic" && block.shapeId != null && resolveBlock) {
       const shapeBlock = resolveBlock(block.shapeId);
-      if (shapeBlock) shapeKind = shapeBlock.kind || 'rect';
+      if (shapeBlock) shapeKind = shapeBlock.kind || "rect";
     }
 
     let node: Konva.Shape;
 
-    if (block.type === 'image') {
+    if (block.type === "image") {
       node = new Konva.Image({
         name: `block-${id}`,
         draggable: true,
         image: undefined as unknown as CanvasImageSource,
       });
-    } else if (block.type === 'text') {
+    } else if (block.type === "text") {
       node = new FormattedText({
         name: `block-${id}`,
         draggable: true,
       });
-    } else if (shapeKind === 'ellipse') {
+    } else if (shapeKind === "ellipse") {
       node = new Konva.Ellipse({
         name: `block-${id}`,
         draggable: true,
         radiusX: 50,
         radiusY: 50,
       });
-    } else if (shapeKind === 'polygon') {
+    } else if (shapeKind === "polygon") {
       node = new Konva.RegularPolygon({
         name: `block-${id}`,
         draggable: true,
         sides: 5,
         radius: 50,
       });
-    } else if (shapeKind === 'star') {
+    } else if (shapeKind === "star") {
       node = new Konva.Star({
         name: `block-${id}`,
         draggable: true,
@@ -105,7 +142,7 @@ export class KonvaNodeFactory {
         innerRadius: 25,
         outerRadius: 50,
       });
-    } else if (shapeKind === 'line') {
+    } else if (shapeKind === "line") {
       node = new Konva.Arrow({
         name: `block-${id}`,
         draggable: true,
@@ -120,20 +157,20 @@ export class KonvaNodeFactory {
       });
     }
 
-    node.setAttr('blockId', id);
+    node.setAttr("blockId", id);
 
-    node.on('dragend', () => {
+    node.on("dragend", () => {
       const pos = node.position();
       callbacks.onDragEnd(id, pos.x, pos.y);
     });
 
-    node.on('transformend', () => {
+    node.on("transformend", () => {
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       // Arrow nodes store logical block dimensions since Konva computes
       // width/height from points (which can give 0 height for horizontal arrows).
-      const baseW = node.getAttr('blockWidth') ?? node.width();
-      const baseH = node.getAttr('blockHeight') ?? node.height();
+      const baseW = node.getAttr("blockWidth") ?? node.width();
+      const baseH = node.getAttr("blockHeight") ?? node.height();
       callbacks.onTransformEnd(id, {
         x: node.x(),
         y: node.y(),
@@ -152,11 +189,11 @@ export class KonvaNodeFactory {
     node: Konva.Node,
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): { autoHeight?: number } | void {
+  ): { autoHeight?: number } | undefined {
     const props = block.properties;
 
     // Page blocks use PAGE_WIDTH/PAGE_HEIGHT and are always at origin
-    if (block.type === 'page') {
+    if (block.type === "page") {
       this.#updatePageNode(node as Konva.Group, block, resolveBlock);
       return;
     }
@@ -171,13 +208,20 @@ export class KonvaNodeFactory {
 
     node.setAttrs({ x, y, rotation, opacity, visible });
 
-    if (block.type === 'image') {
+    if (block.type === "image") {
       this.#updateImageNode(node as Konva.Image, props, width, height, block, resolveBlock);
       return;
     }
 
-    if (block.type === 'text') {
-      const result = this.#updateTextNode(node as FormattedText, props, width, height, block, resolveBlock);
+    if (block.type === "text") {
+      const result = this.#updateTextNode(
+        node as FormattedText,
+        props,
+        width,
+        height,
+        block,
+        resolveBlock,
+      );
       if (result.computedHeight != null) {
         return { autoHeight: result.computedHeight };
       }
@@ -216,26 +260,26 @@ export class KonvaNodeFactory {
       name: `block-${id}`,
       draggable: false,
     });
-    group.setAttr('blockId', id);
-    group.setAttr('isPage', true);
+    group.setAttr("blockId", id);
+    group.setAttr("isPage", true);
 
     // Background colour rect (visible when no IMAGE_SRC)
     const bgRect = new Konva.Rect({
-      name: 'page-bg',
-      fill: '#ffffff',
+      name: "page-bg",
+      fill: "#ffffff",
       listening: true,
     });
-    bgRect.setAttr('isPageBackground', true);
+    bgRect.setAttr("isPageBackground", true);
     group.add(bgRect);
 
     // Background image (visible when IMAGE_SRC is set)
     const bgImg = new Konva.Image({
-      name: 'page-img',
+      name: "page-img",
       image: undefined as unknown as CanvasImageSource,
       visible: false,
       listening: true,
     });
-    bgImg.setAttr('isPageBackground', true);
+    bgImg.setAttr("isPageBackground", true);
     group.add(bgImg);
 
     return group;
@@ -251,7 +295,7 @@ export class KonvaNodeFactory {
     const pageH = (props[PAGE_HEIGHT] as number) ?? 1080;
     const opacity = (props[OPACITY] as number) ?? 1;
     const visible = (props[VISIBLE] as boolean) ?? true;
-    const src = (props[IMAGE_SRC] as string) ?? '';
+    const src = (props[IMAGE_SRC] as string) ?? "";
 
     group.setAttrs({ x: 0, y: 0, opacity, visible });
 
@@ -262,7 +306,7 @@ export class KonvaNodeFactory {
     if (src) {
       // Image mode — show both bgRect (transparent, for Transformer bounds) + image
       bgRect.visible(true);
-      bgRect.fill('transparent');
+      bgRect.fill("transparent");
       imgNode.visible(true);
 
       const imageRotation = (props[IMAGE_ROTATION] as number) ?? 0;
@@ -295,7 +339,7 @@ export class KonvaNodeFactory {
       // When the crop overlay is active (user is in crop mode), showCropOverlay
       // has already expanded the page node to full image bounds. Only update
       // rotation/flip here — don't touch dimensions, crop, offset, or position.
-      const cropOverlayActive = group.getAttr('_cropOverlayActive') === true;
+      const cropOverlayActive = group.getAttr("_cropOverlayActive") === true;
 
       const flipH = (props[CROP_FLIP_HORIZONTAL] as boolean) ?? false;
       const flipV = (props[CROP_FLIP_VERTICAL] as boolean) ?? false;
@@ -318,8 +362,8 @@ export class KonvaNodeFactory {
         }
 
         // Dimensions used for centering: crop dims when cropped, source dims otherwise
-        const renderW = (cropEnabled && cropW > 0) ? cropW : sourceW;
-        const renderH = (cropEnabled && cropH > 0) ? cropH : sourceH;
+        const renderW = cropEnabled && cropW > 0 ? cropW : sourceW;
+        const renderH = cropEnabled && cropH > 0 ? cropH : sourceH;
 
         // Flip + rotation around the rendered image centre
         imgNode.rotation(imageRotation);
@@ -337,10 +381,10 @@ export class KonvaNodeFactory {
       }
 
       // Load image
-      if (imgNode.getAttr('loadedSrc') !== src) {
-        imgNode.setAttr('loadedSrc', src);
+      if (imgNode.getAttr("loadedSrc") !== src) {
+        imgNode.setAttr("loadedSrc", src);
         loadImage(src).then((htmlImg) => {
-          imgNode.setAttr('_sourceImage', htmlImg);
+          imgNode.setAttr("_sourceImage", htmlImg);
           imgNode.image(htmlImg);
           // Re-apply cache after image loads if filters are active
           if (imgNode.filters()?.length) {
@@ -360,9 +404,7 @@ export class KonvaNodeFactory {
       bgRect.height(pageH);
       const fillColor = props[FILL_COLOR];
       bgRect.fill(
-        fillColor && typeof fillColor === 'object'
-          ? colorToHex(fillColor as Color)
-          : '#ffffff',
+        fillColor && typeof fillColor === "object" ? colorToHex(fillColor as Color) : "#ffffff",
       );
     }
   }
@@ -377,19 +419,19 @@ export class KonvaNodeFactory {
     const values = this.#collectAdjustmentValues(block, resolveBlock);
     const presetName = this.#collectFilterPresetName(block, resolveBlock);
     const hasAdjustments = values != null;
-    const hasPreset = presetName !== '';
+    const hasPreset = presetName !== "";
 
-    const _perf = typeof window !== 'undefined' && (window as any).__CE_PERF;
+    const _perf = typeof window !== "undefined" && (window as any).__CE_PERF;
 
     if (!hasAdjustments && !hasPreset) {
-      if (_perf) console.log('[perf:applyFilters] no adjustments/preset, skipping');
+      if (_perf) console.log("[perf:applyFilters] no adjustments/preset, skipping");
       // No adjustments and no filter — clear any existing filters/image override
       if (imgNode.filters()?.length) {
         imgNode.filters([]);
         imgNode.clearCache();
       }
       // Restore original image if we previously set a WebGL-rendered canvas
-      const orig = imgNode.getAttr('_sourceImage') as HTMLImageElement | undefined;
+      const orig = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
       if (orig && imgNode.image() !== orig) {
         imgNode.image(orig);
       }
@@ -399,17 +441,24 @@ export class KonvaNodeFactory {
     // ── WebGL path ──
     if (this.#webgl) {
       // Recover _sourceImage if not set (e.g. image loaded before WebGL code deployed)
-      let sourceImg = imgNode.getAttr('_sourceImage') as HTMLImageElement | undefined;
+      let sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
       if (!sourceImg) {
         const currentImg = imgNode.image();
-        if (_perf) console.log('[perf:applyFilters] _sourceImage missing, imgNode.image() is:', currentImg?.constructor?.name, 'value:', currentImg);
+        if (_perf)
+          console.log(
+            "[perf:applyFilters] _sourceImage missing, imgNode.image() is:",
+            currentImg?.constructor?.name,
+            "value:",
+            currentImg,
+          );
         if (currentImg instanceof HTMLImageElement) {
           sourceImg = currentImg;
-          imgNode.setAttr('_sourceImage', sourceImg);
+          imgNode.setAttr("_sourceImage", sourceImg);
         }
       }
       if (sourceImg) {
-        const t0 = typeof window !== 'undefined' && (window as any).__CE_PERF ? performance.now() : 0;
+        const t0 =
+          typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
         // Upload source image (only uploads if size changed or first time)
         this.#webgl.uploadImage(sourceImg, sourceImg.naturalWidth, sourceImg.naturalHeight);
 
@@ -437,20 +486,21 @@ export class KonvaNodeFactory {
           imgNode.clearCache();
         }
         imgNode.image(filteredCanvas);
-        if (typeof window !== 'undefined' && (window as any).__CE_PERF) {
+        if (typeof window !== "undefined" && (window as any).__CE_PERF) {
           console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
         }
         return;
       }
-      if (_perf) console.log('[perf:applyFilters] WebGL path: sourceImg is null, falling through to CPU');
+      if (_perf)
+        console.log("[perf:applyFilters] WebGL path: sourceImg is null, falling through to CPU");
     } else {
-      if (_perf) console.log('[perf:applyFilters] #webgl is null, using CPU fallback');
+      if (_perf) console.log("[perf:applyFilters] #webgl is null, using CPU fallback");
     }
 
     // ── CPU fallback path ──
-    if (_perf) console.log('[perf:applyFilters] CPU fallback running');
+    if (_perf) console.log("[perf:applyFilters] CPU fallback running");
     const t1 = _perf ? performance.now() : 0;
-    const filterPresetFn = presetName ? getFilterPreset(presetName) ?? null : null;
+    const filterPresetFn = presetName ? (getFilterPreset(presetName) ?? null) : null;
 
     const allFilters: Array<(imageData: ImageData) => void> = [];
 
@@ -484,7 +534,10 @@ export class KonvaNodeFactory {
     if (imgNode.image()) {
       imgNode.cache();
     }
-    if (_perf) console.log(`[perf:applyFilters] CPU fallback total: ${(performance.now() - t1).toFixed(2)}ms (${allFilters.length} filters)`);
+    if (_perf)
+      console.log(
+        `[perf:applyFilters] CPU fallback total: ${(performance.now() - t1).toFixed(2)}ms (${allFilters.length} filters)`,
+      );
   }
 
   /** Collect adjustment values from all adjustments-type effect blocks. */
@@ -497,7 +550,7 @@ export class KonvaNodeFactory {
     // Find the first adjustments effect (typically there's only one)
     for (const effectId of block.effectIds) {
       const effectBlock = resolveBlock(effectId);
-      if (!effectBlock || effectBlock.kind !== 'adjustments') continue;
+      if (!effectBlock || effectBlock.kind !== "adjustments") continue;
 
       const p = effectBlock.properties;
       return {
@@ -524,16 +577,16 @@ export class KonvaNodeFactory {
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
   ): string {
-    if (!resolveBlock || block.effectIds.length === 0) return '';
+    if (!resolveBlock || block.effectIds.length === 0) return "";
 
     for (const effectId of block.effectIds) {
       const effectBlock = resolveBlock(effectId);
-      if (!effectBlock || effectBlock.kind !== 'filter') continue;
+      if (!effectBlock || effectBlock.kind !== "filter") continue;
 
-      return (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? '';
+      return (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? "";
     }
 
-    return '';
+    return "";
   }
 
   // --- Per-type updaters ---
@@ -575,11 +628,11 @@ export class KonvaNodeFactory {
     if (flipV) imgNode.offsetY(height);
     else imgNode.offsetY(0);
 
-    const src = (props[IMAGE_SRC] as string) ?? '';
-    if (src && imgNode.getAttr('loadedSrc') !== src) {
-      imgNode.setAttr('loadedSrc', src);
+    const src = (props[IMAGE_SRC] as string) ?? "";
+    if (src && imgNode.getAttr("loadedSrc") !== src) {
+      imgNode.setAttr("loadedSrc", src);
       loadImage(src).then((htmlImg) => {
-        imgNode.setAttr('_sourceImage', htmlImg);
+        imgNode.setAttr("_sourceImage", htmlImg);
         imgNode.image(htmlImg);
         // Re-apply cache after image loads if filters are active
         if (imgNode.filters()?.length) {
@@ -606,28 +659,31 @@ export class KonvaNodeFactory {
     // Prefer TEXT_RUNS; fall back to legacy single-style properties
     let runs = props[TEXT_RUNS] as TextRun[] | undefined;
     if (!runs || !Array.isArray(runs) || runs.length === 0) {
-      const text = (props[TEXT_CONTENT] as string) ?? 'Text';
+      const text = (props[TEXT_CONTENT] as string) ?? "Text";
       const fillColor = props[FILL_COLOR];
-      const fill = fillColor && typeof fillColor === 'object' ? colorToHex(fillColor as Color) : '#000000';
-      runs = [{
-        text,
-        style: {
-          fontSize: (props[FONT_SIZE] as number) ?? 24,
-          fontFamily: (props[FONT_FAMILY] as string) ?? 'Arial',
-          fill,
+      const fill =
+        fillColor && typeof fillColor === "object" ? colorToHex(fillColor as Color) : "#000000";
+      runs = [
+        {
+          text,
+          style: {
+            fontSize: (props[FONT_SIZE] as number) ?? 24,
+            fontFamily: (props[FONT_FAMILY] as string) ?? "Arial",
+            fill,
+          },
         },
-      }];
+      ];
     }
     textNode.textRuns(runs);
     textNode.width(width);
-    textNode.align((props[TEXT_ALIGN] as string) ?? 'left');
+    textNode.align((props[TEXT_ALIGN] as string) ?? "left");
     textNode.lineHeight((props[TEXT_LINE_HEIGHT] as number) ?? 1.2);
-    textNode.verticalAlign((props[TEXT_VERTICAL_ALIGN] as string) ?? 'top');
+    textNode.verticalAlign((props[TEXT_VERTICAL_ALIGN] as string) ?? "top");
     textNode.padding((props[TEXT_PADDING] as number) ?? 0);
-    textNode.wrap((props[TEXT_WRAP] as string) ?? 'word');
+    textNode.wrap((props[TEXT_WRAP] as string) ?? "word");
 
     // Block-level background fill
-    let bgFill = '';
+    let bgFill = "";
     const fillEnabled = (props[FILL_ENABLED] as boolean) ?? false;
     if (fillEnabled) {
       let bgColor: Color | undefined;
@@ -635,22 +691,24 @@ export class KonvaNodeFactory {
         const fillBlock = resolveBlock(block.fillId);
         if (fillBlock) {
           const c = fillBlock.properties[FILL_SOLID_COLOR];
-          if (c && typeof c === 'object') bgColor = c as Color;
+          if (c && typeof c === "object") bgColor = c as Color;
         }
       }
       if (!bgColor) {
         const fc = props[FILL_COLOR];
-        if (fc && typeof fc === 'object') bgColor = fc as Color;
+        if (fc && typeof fc === "object") bgColor = fc as Color;
       }
       if (bgColor) bgFill = colorToHex(bgColor);
     }
-    textNode.setAttr('backgroundFill', bgFill);
+    textNode.setAttr("backgroundFill", bgFill);
 
     // Block-level shadow
     const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
     if (shadowEnabled) {
       const sc = props[SHADOW_COLOR];
-      textNode.shadowColor(sc && typeof sc === 'object' ? colorToHex(sc as Color) : 'rgba(0,0,0,0.5)');
+      textNode.shadowColor(
+        sc && typeof sc === "object" ? colorToHex(sc as Color) : "rgba(0,0,0,0.5)",
+      );
       textNode.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
       textNode.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
       textNode.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
@@ -777,8 +835,8 @@ export class KonvaNodeFactory {
     // Store logical block dimensions so transformend can read them back.
     // Konva.Arrow computes width/height from points, which gives 0 height
     // for horizontal arrows — breaking transform calculations.
-    node.setAttr('blockWidth', width);
-    node.setAttr('blockHeight', height);
+    node.setAttr("blockWidth", width);
+    node.setAttr("blockHeight", height);
 
     // Override getSelfRect so the Transformer shows the full bounding box
     // instead of the points-derived rect (which has 0 height).
@@ -822,7 +880,7 @@ export class KonvaNodeFactory {
       const fillBlock = resolveBlock(block.fillId);
       if (fillBlock) {
         const c = fillBlock.properties[FILL_SOLID_COLOR];
-        if (c && typeof c === 'object') fillColor = c as Color;
+        if (c && typeof c === "object") fillColor = c as Color;
       }
     }
 
@@ -832,27 +890,27 @@ export class KonvaNodeFactory {
 
     // Stroke props live on the graphic block
     const sc = props[STROKE_COLOR];
-    if (sc && typeof sc === 'object') strokeColor = sc as Color;
+    if (sc && typeof sc === "object") strokeColor = sc as Color;
     strokeW = (props[STROKE_WIDTH] as number) ?? 0;
 
     // Fall back to legacy FILL_COLOR if no fill sub-block
     if (!fillColor) {
       const fc = props[FILL_COLOR];
-      if (fc && typeof fc === 'object') fillColor = fc as Color;
+      if (fc && typeof fc === "object") fillColor = fc as Color;
     }
 
     // Apply
     if (fillEnabled && fillColor) {
       node.fill(colorToHex(fillColor));
     } else {
-      node.fill('');
+      node.fill("");
     }
 
     if (strokeEnabled && strokeColor && strokeW > 0) {
       node.stroke(colorToHex(strokeColor));
       node.strokeWidth(strokeW);
     } else {
-      node.stroke('');
+      node.stroke("");
       node.strokeWidth(0);
     }
 
@@ -860,7 +918,7 @@ export class KonvaNodeFactory {
     const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
     if (shadowEnabled) {
       const sc = props[SHADOW_COLOR];
-      node.shadowColor(sc && typeof sc === 'object' ? colorToHex(sc as Color) : 'rgba(0,0,0,0.5)');
+      node.shadowColor(sc && typeof sc === "object" ? colorToHex(sc as Color) : "rgba(0,0,0,0.5)");
       node.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
       node.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
       node.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);

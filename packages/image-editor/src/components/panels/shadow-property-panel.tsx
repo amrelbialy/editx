@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { colorToHex, hexToColor } from '@creative-editor/engine';
-import { Slider } from '../ui/slider';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { colorToHex, hexToColor } from "@creative-editor/engine";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Slider } from "../ui/slider";
 
 interface ShadowPropertyPanelProps {
   engine: CreativeEngine;
@@ -20,7 +21,7 @@ function readShadow(engine: CreativeEngine, blockId: number): ShadowState {
   const sc = engine.block.getShadowColor(blockId);
   return {
     enabled: engine.block.isShadowEnabled(blockId),
-    color: sc ? colorToHex(sc).substring(0, 7) : '#000000',
+    color: sc ? colorToHex(sc).substring(0, 7) : "#000000",
     offsetX: engine.block.getShadowOffsetX(blockId),
     offsetY: engine.block.getShadowOffsetY(blockId),
     blur: engine.block.getShadowBlur(blockId),
@@ -37,11 +38,11 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
     const handler = () => setState(readShadow(engine, blockId));
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, blockId]);
 
@@ -52,25 +53,37 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
     update();
   }, [engine, blockId, state.enabled, update]);
 
-  const handleColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowColor(blockId, hexToColor(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowColor(blockId, hexToColor(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleOffsetX = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowOffsetX(blockId, parseFloat(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleOffsetX = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowOffsetX(blockId, parseFloat(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleOffsetY = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setShadowOffsetY(blockId, parseFloat(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleOffsetY = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setShadowOffsetY(blockId, parseFloat(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleBlur = useCallback(([v]: number[]) => {
-    engine.block.setShadowBlur(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleBlur = useCallback(
+    ([v]: number[]) => {
+      engine.block.setShadowBlur(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
   return (
     <div className="flex flex-col gap-4">

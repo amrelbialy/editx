@@ -4,7 +4,7 @@
  * Range: 0–100, default 0 (no sharpening).
  */
 export function Sharpness(this: any, imageData: ImageData): void {
-  const amount = this.getAttr('sharpness') ?? 0;
+  const amount = this.getAttr("sharpness") ?? 0;
   if (amount === 0) return;
 
   const strength = amount / 100;

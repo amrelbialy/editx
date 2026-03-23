@@ -92,9 +92,13 @@ export function getPageDimsAfterRotation(
  *   1. Center on source image  2. Flip  3. Rotate  4. Re-center on visual bounds.
  */
 function sourcePointToVisual(
-  sx: number, sy: number,
-  origW: number, origH: number,
-  rotDeg: number, flipH: boolean, flipV: boolean,
+  sx: number,
+  sy: number,
+  origW: number,
+  origH: number,
+  rotDeg: number,
+  flipH: boolean,
+  flipV: boolean,
 ): { x: number; y: number } {
   let px = sx - origW / 2;
   let py = sy - origH / 2;
@@ -106,13 +110,17 @@ function sourcePointToVisual(
   let rx: number, ry: number;
 
   if (Math.abs(angle) < 0.001) {
-    rx = px; ry = py;
+    rx = px;
+    ry = py;
   } else if (Math.abs(angle - 90) < 0.001) {
-    rx = -py; ry = px;
+    rx = -py;
+    ry = px;
   } else if (Math.abs(angle + 90) < 0.001) {
-    rx = py; ry = -px;
+    rx = py;
+    ry = -px;
   } else if (Math.abs(Math.abs(angle) - 180) < 0.001) {
-    rx = -px; ry = -py;
+    rx = -px;
+    ry = -py;
   } else {
     const rad = (angle * Math.PI) / 180;
     rx = px * Math.cos(rad) - py * Math.sin(rad);
@@ -131,28 +139,36 @@ function sourcePointToVisual(
  * Inverse of sourcePointToVisual.
  */
 function visualPointToSource(
-  vx: number, vy: number,
-  origW: number, origH: number,
-  rotDeg: number, flipH: boolean, flipV: boolean,
+  vx: number,
+  vy: number,
+  origW: number,
+  origH: number,
+  rotDeg: number,
+  flipH: boolean,
+  flipV: boolean,
 ): { x: number; y: number } {
   const angle = normalizeRotation(rotDeg);
   const isSwap = Math.abs(Math.round(angle / 90)) % 2 === 1;
   const visualW = isSwap ? origH : origW;
   const visualH = isSwap ? origW : origH;
 
-  let rx = vx - visualW / 2;
-  let ry = vy - visualH / 2;
+  const rx = vx - visualW / 2;
+  const ry = vy - visualH / 2;
 
   // Inverse rotation
   let px: number, py: number;
   if (Math.abs(angle) < 0.001) {
-    px = rx; py = ry;
+    px = rx;
+    py = ry;
   } else if (Math.abs(angle - 90) < 0.001) {
-    px = ry; py = -rx;
+    px = ry;
+    py = -rx;
   } else if (Math.abs(angle + 90) < 0.001) {
-    px = -ry; py = rx;
+    px = -ry;
+    py = rx;
   } else if (Math.abs(Math.abs(angle) - 180) < 0.001) {
-    px = -rx; py = -ry;
+    px = -rx;
+    py = -ry;
   } else {
     const rad = (-angle * Math.PI) / 180;
     px = rx * Math.cos(rad) - ry * Math.sin(rad);
@@ -167,7 +183,10 @@ function visualPointToSource(
 }
 
 export interface CropTransformRect {
-  x: number; y: number; width: number; height: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 /**
@@ -175,15 +194,27 @@ export interface CropTransformRect {
  */
 export function sourceCropToVisual(
   crop: CropTransformRect,
-  origW: number, origH: number,
-  rotDeg: number, flipH: boolean, flipV: boolean,
+  origW: number,
+  origH: number,
+  rotDeg: number,
+  flipH: boolean,
+  flipV: boolean,
 ): CropTransformRect {
   const p1 = sourcePointToVisual(crop.x, crop.y, origW, origH, rotDeg, flipH, flipV);
-  const p2 = sourcePointToVisual(crop.x + crop.width, crop.y + crop.height, origW, origH, rotDeg, flipH, flipV);
+  const p2 = sourcePointToVisual(
+    crop.x + crop.width,
+    crop.y + crop.height,
+    origW,
+    origH,
+    rotDeg,
+    flipH,
+    flipV,
+  );
   const minX = Math.min(p1.x, p2.x);
   const minY = Math.min(p1.y, p2.y);
   return {
-    x: minX, y: minY,
+    x: minX,
+    y: minY,
     width: Math.max(p1.x, p2.x) - minX,
     height: Math.max(p1.y, p2.y) - minY,
   };
@@ -194,15 +225,27 @@ export function sourceCropToVisual(
  */
 export function visualCropToSource(
   crop: CropTransformRect,
-  origW: number, origH: number,
-  rotDeg: number, flipH: boolean, flipV: boolean,
+  origW: number,
+  origH: number,
+  rotDeg: number,
+  flipH: boolean,
+  flipV: boolean,
 ): CropTransformRect {
   const p1 = visualPointToSource(crop.x, crop.y, origW, origH, rotDeg, flipH, flipV);
-  const p2 = visualPointToSource(crop.x + crop.width, crop.y + crop.height, origW, origH, rotDeg, flipH, flipV);
+  const p2 = visualPointToSource(
+    crop.x + crop.width,
+    crop.y + crop.height,
+    origW,
+    origH,
+    rotDeg,
+    flipH,
+    flipV,
+  );
   const minX = Math.min(p1.x, p2.x);
   const minY = Math.min(p1.y, p2.y);
   return {
-    x: minX, y: minY,
+    x: minX,
+    y: minY,
     width: Math.max(p1.x, p2.x) - minX,
     height: Math.max(p1.y, p2.y) - minY,
   };

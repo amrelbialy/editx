@@ -1,4 +1,4 @@
-import type { BlockData, Color, PropertyValue, TextRun } from './block.types';
+import type { BlockData, Color, PropertyValue, TextRun } from "./block.types";
 
 /**
  * Creates deep-copy snapshots of blocks for undo/redo.
@@ -34,9 +34,7 @@ export class BlockSnapshot {
 }
 
 /** Deep-copy a properties bag (handles nested Color objects and TextRun arrays). */
-function deepCopyProperties(
-  props: Record<string, PropertyValue>,
-): Record<string, PropertyValue> {
+function deepCopyProperties(props: Record<string, PropertyValue>): Record<string, PropertyValue> {
   const copy: Record<string, PropertyValue> = {};
   for (const key in props) {
     const v = props[key];
@@ -46,7 +44,7 @@ function deepCopyProperties(
         text: run.text,
         style: { ...run.style },
       }));
-    } else if (v && typeof v === 'object' && 'r' in v) {
+    } else if (v && typeof v === "object" && "r" in v) {
       copy[key] = { ...(v as Color) };
     } else {
       copy[key] = v;

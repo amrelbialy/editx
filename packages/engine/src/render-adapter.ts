@@ -1,6 +1,6 @@
-import { BlockData } from './block/block.types';
-import type { CursorType, ExportOptions } from './editor-types';
-import type { CropRect } from './utils/crop-math';
+import type { BlockData } from "./block/block.types";
+import type { CursorType, ExportOptions } from "./editor-types";
+import type { CropRect } from "./utils/crop-math";
 
 export interface RendererAdapter {
   //
@@ -30,7 +30,9 @@ export interface RendererAdapter {
   /** Returns the screen-pixel bounding rect of the current transformer selection, or null. */
   getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null;
   /** Returns the screen-pixel bounding rect of a specific block node, or null. */
-  getBlockScreenRect(blockId: number): { x: number; y: number; width: number; height: number } | null;
+  getBlockScreenRect(
+    blockId: number,
+  ): { x: number; y: number; width: number; height: number } | null;
 
   //
   // Camera / viewport
@@ -42,8 +44,15 @@ export interface RendererAdapter {
   getPan(): { x: number; y: number };
 
   fitToScreen(opts: { width: number; height: number; padding: number }, animate?: boolean): void;
-  fitToRect(rect: { x: number; y: number; width: number; height: number }, padding?: number, animate?: boolean): void;
-  centerOnRect(rect: { x: number; y: number; width: number; height: number }, animate?: boolean): void;
+  fitToRect(
+    rect: { x: number; y: number; width: number; height: number },
+    padding?: number,
+    animate?: boolean,
+  ): void;
+  centerOnRect(
+    rect: { x: number; y: number; width: number; height: number },
+    animate?: boolean,
+  ): void;
 
   //
   // Coordinate transforms
@@ -80,7 +89,13 @@ export interface RendererAdapter {
     blockId: number,
     imageRect: CropRect,
     initialCrop?: CropRect,
-    transform?: { rotation: number; flipH: boolean; flipV: boolean; sourceWidth: number; sourceHeight: number },
+    transform?: {
+      rotation: number;
+      flipH: boolean;
+      flipV: boolean;
+      sourceWidth: number;
+      sourceHeight: number;
+    },
   ): void;
   hideCropOverlay(): void;
   setCropRect(rect: CropRect): void;
@@ -94,7 +109,10 @@ export interface RendererAdapter {
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
   onBlockDblClick?: (blockId: number) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (blockId: number, transform: { x: number; y: number; width: number; height: number; rotation: number }) => void;
+  onBlockTransformEnd?: (
+    blockId: number,
+    transform: { x: number; y: number; width: number; height: number; rotation: number },
+  ) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   /** Called when the user drags/resizes the crop overlay. */
   onCropChange?: (rect: CropRect) => void;

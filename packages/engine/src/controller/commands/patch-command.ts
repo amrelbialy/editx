@@ -1,5 +1,5 @@
-import { Patch } from '../../history-manager';
-import { Command } from './commands.types';
+import type { Patch } from "../../history-manager";
+import type { Command } from "./commands.types";
 
 abstract class PatchCommand implements Command {
   abstract do(): Patch[];

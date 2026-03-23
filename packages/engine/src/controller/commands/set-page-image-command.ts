@@ -1,7 +1,7 @@
-import { BlockStore } from '../../block/block-store';
-import { IMAGE_SRC, PAGE_WIDTH, PAGE_HEIGHT } from '../../block/property-keys';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+import type { BlockStore } from "../../block/block-store";
+import { IMAGE_SRC, PAGE_HEIGHT, PAGE_WIDTH } from "../../block/property-keys";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 /**
  * Sets the page IMAGE_SRC and optionally auto-adjusts PAGE_WIDTH/HEIGHT

@@ -1,9 +1,8 @@
-import React from 'react';
-import { RotateCcw, RotateCw, FlipHorizontal, FlipVertical } from 'lucide-react';
-import { Slider } from '../ui/slider';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { cn } from '../../utils/cn';
+import { FlipHorizontal, FlipVertical, RotateCcw, RotateCw } from "lucide-react";
+import type React from "react";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
 export interface RotatePanelProps {
   rotation: number;
@@ -34,7 +33,9 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground">Straighten</span>
-          <span className="text-xs tabular-nums text-muted-foreground">{Math.round(rotation)}°</span>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {Math.round(rotation)}°
+          </span>
         </div>
         <Slider
           min={-180}
@@ -84,7 +85,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
         <div className="text-xs font-medium text-muted-foreground mb-2">Flip</div>
         <div className="flex gap-1.5">
           <Button
-            variant={flipH ? 'default' : 'secondary'}
+            variant={flipH ? "default" : "secondary"}
             size="sm"
             className="flex-1 gap-1.5"
             onClick={onFlipHorizontal}
@@ -95,7 +96,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             Horizontal
           </Button>
           <Button
-            variant={flipV ? 'default' : 'secondary'}
+            variant={flipV ? "default" : "secondary"}
             size="sm"
             className="flex-1 gap-1.5"
             onClick={onFlipVertical}

@@ -25,12 +25,12 @@ export interface ValidationResult {
 }
 
 const DEFAULT_ACCEPTED_FORMATS = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'image/svg+xml',
-  'image/bmp',
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "image/bmp",
 ];
 
 const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -65,7 +65,7 @@ export function validateImageFile(
   if (file.type && !acceptedFormats.includes(file.type)) {
     return {
       valid: false,
-      error: `Unsupported image format: ${file.type}. Accepted formats: ${acceptedFormats.join(', ')}`,
+      error: `Unsupported image format: ${file.type}. Accepted formats: ${acceptedFormats.join(", ")}`,
       warnings,
     };
   }
@@ -80,9 +80,7 @@ export function validateImageFile(
   }
 
   if (file.size > warnFileSize) {
-    warnings.push(
-      `Large image (${formatBytes(file.size)}). This may slow down the editor.`,
-    );
+    warnings.push(`Large image (${formatBytes(file.size)}). This may slow down the editor.`);
   }
 
   return { valid: true, warnings };
@@ -97,10 +95,7 @@ export function validateImageDimensions(
   height: number,
   options: ImageValidationOptions = {},
 ): ValidationResult {
-  const {
-    maxDimension = DEFAULT_MAX_DIMENSION,
-    warnDimension = DEFAULT_WARN_DIMENSION,
-  } = options;
+  const { maxDimension = DEFAULT_MAX_DIMENSION, warnDimension = DEFAULT_WARN_DIMENSION } = options;
 
   const warnings: string[] = [];
   const maxSide = Math.max(width, height);
@@ -114,9 +109,7 @@ export function validateImageDimensions(
   }
 
   if (maxSide > warnDimension) {
-    warnings.push(
-      `Large image dimensions (${width}×${height}). Performance may be affected.`,
-    );
+    warnings.push(`Large image dimensions (${width}×${height}). Performance may be affected.`);
   }
 
   return { valid: true, warnings };

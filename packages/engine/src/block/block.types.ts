@@ -1,15 +1,24 @@
-export type BlockType = 'scene' | 'page' | 'graphic' | 'text' | 'image' | 'group' | 'effect' | 'shape' | 'fill';
+export type BlockType =
+  | "scene"
+  | "page"
+  | "graphic"
+  | "text"
+  | "image"
+  | "group"
+  | "effect"
+  | "shape"
+  | "fill";
 
 /** Effect type identifiers — mirrors img.ly EFFECT_TYPES. */
-export type EffectType = 'adjustments' | 'filter';
+export type EffectType = "adjustments" | "filter";
 
 /** Shape geometry types — sub-block kinds for type='shape'. */
-export type ShapeType = 'rect' | 'ellipse' | 'polygon' | 'star' | 'line';
+export type ShapeType = "rect" | "ellipse" | "polygon" | "star" | "line";
 
 /** Fill content types — sub-block kinds for type='fill'. */
-export type FillType = 'color';
+export type FillType = "color";
 
-export type PageLayoutMode = 'VerticalStack' | 'HorizontalStack' | 'DepthStack' | 'Free';
+export type PageLayoutMode = "VerticalStack" | "HorizontalStack" | "DepthStack" | "Free";
 
 export interface Color {
   r: number;
@@ -28,7 +37,7 @@ export interface TextRunStyle {
   letterSpacing?: number;
   textDecoration?: string;
   backgroundColor?: string;
-  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
   textShadowColor?: string;
   textShadowBlur?: number;
   textShadowOffsetX?: number;

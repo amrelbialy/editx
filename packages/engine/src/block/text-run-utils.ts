@@ -1,4 +1,4 @@
-import type { TextRun, TextRunStyle } from './block.types';
+import type { TextRun, TextRunStyle } from "./block.types";
 
 /**
  * Pure utility functions for manipulating TextRun arrays.
@@ -18,7 +18,7 @@ export function getRunIndices(runs: TextRun[]): { start: number; end: number }[]
 
 /** Returns the plain text represented by the runs. */
 export function getPlainText(runs: TextRun[]): string {
-  return runs.map((r) => r.text).join('');
+  return runs.map((r) => r.text).join("");
 }
 
 /** IMP-2: Merge adjacent runs that have identical styles. */
@@ -148,7 +148,7 @@ export function removeRange(runs: TextRun[], start: number, end: number): TextRu
       result.push({ text: run.text, style: { ...run.style } });
     } else {
       // Partially or fully within the removal range
-      let kept = '';
+      let kept = "";
       if (runStart < start) {
         kept += run.text.slice(0, start - runStart);
       }

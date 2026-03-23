@@ -1,4 +1,4 @@
-import type { BlockData } from './block/block.types';
+import type { BlockData } from "./block/block.types";
 
 export interface Patch {
   id: string;

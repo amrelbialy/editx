@@ -1,4 +1,4 @@
-import { Patch } from '../../history-manager';
+import type { Patch } from "../../history-manager";
 
 export interface Command {
   do(): Patch[];

@@ -1,5 +1,5 @@
-import { useCallback, useRef, useSyncExternalStore } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 /**
  * Returns a version counter that increments on every undo/redo.
@@ -16,11 +16,11 @@ export function useHistoryVersion(engine: CreativeEngine | null): number {
         versionRef.current++;
         onStoreChange();
       };
-      engine.on('history:undo', handler);
-      engine.on('history:redo', handler);
+      engine.on("history:undo", handler);
+      engine.on("history:redo", handler);
       return () => {
-        engine.off('history:undo', handler);
-        engine.off('history:redo', handler);
+        engine.off("history:undo", handler);
+        engine.off("history:redo", handler);
       };
     },
     [engine],

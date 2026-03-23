@@ -1,19 +1,19 @@
-import React from 'react';
-import { Square, Circle, Triangle, Pentagon, Hexagon, Star, MoveRight } from 'lucide-react';
-import type { ShapeType } from '@creative-editor/engine';
+import type { ShapeType } from "@creative-editor/engine";
+import { Circle, Hexagon, MoveRight, Pentagon, Square, Star, Triangle } from "lucide-react";
+import type React from "react";
 
 export interface ShapesPanelProps {
   onAddShape: (shapeType: ShapeType, sides?: number) => void;
 }
 
 const SHAPES: Array<{ type: ShapeType; label: string; icon: React.ReactNode; sides?: number }> = [
-  { type: 'rect', label: 'Rectangle', icon: <Square className="h-5 w-5" /> },
-  { type: 'ellipse', label: 'Ellipse', icon: <Circle className="h-5 w-5" /> },
-  { type: 'polygon', label: 'Triangle', icon: <Triangle className="h-5 w-5" />, sides: 3 },
-  { type: 'polygon', label: 'Pentagon', icon: <Pentagon className="h-5 w-5" />, sides: 5 },
-  { type: 'polygon', label: 'Hexagon', icon: <Hexagon className="h-5 w-5" />, sides: 6 },
-  { type: 'star', label: 'Star', icon: <Star className="h-5 w-5" /> },
-  { type: 'line', label: 'Arrow', icon: <MoveRight className="h-5 w-5" /> },
+  { type: "rect", label: "Rectangle", icon: <Square className="h-5 w-5" /> },
+  { type: "ellipse", label: "Ellipse", icon: <Circle className="h-5 w-5" /> },
+  { type: "polygon", label: "Triangle", icon: <Triangle className="h-5 w-5" />, sides: 3 },
+  { type: "polygon", label: "Pentagon", icon: <Pentagon className="h-5 w-5" />, sides: 5 },
+  { type: "polygon", label: "Hexagon", icon: <Hexagon className="h-5 w-5" />, sides: 6 },
+  { type: "star", label: "Star", icon: <Star className="h-5 w-5" /> },
+  { type: "line", label: "Arrow", icon: <MoveRight className="h-5 w-5" /> },
 ];
 
 export const ShapesPanel: React.FC<ShapesPanelProps> = ({ onAddShape }) => {

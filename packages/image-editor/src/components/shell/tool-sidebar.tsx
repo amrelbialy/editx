@@ -1,34 +1,34 @@
-import React from 'react';
 import {
-  Crop,
-  SlidersHorizontal,
   Blend,
-  Type,
+  Crop,
   Hexagon,
   ImagePlus,
   LayoutGrid,
   type LucideIcon,
-} from 'lucide-react';
-import { Separator } from '../ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { cn } from '../../utils/cn';
-import { useConfig } from '../../config/config-context';
-import type { ImageEditorToolId } from '../../config/config.types';
+  SlidersHorizontal,
+  Type,
+} from "lucide-react";
+import type React from "react";
+import type { ImageEditorToolId } from "../../config/config.types";
+import { useConfig } from "../../config/config-context";
+import { cn } from "../../utils/cn";
+import { Separator } from "../ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface ToolDef {
   id: ImageEditorToolId;
   label: string;
   icon: LucideIcon;
-  group: 'editing' | 'annotation';
+  group: "editing" | "annotation";
 }
 
 const allTools: ToolDef[] = [
-  { id: 'crop', label: 'Crop', icon: Crop, group: 'editing' },
-  { id: 'adjust', label: 'Adjust', icon: SlidersHorizontal, group: 'editing' },
-  { id: 'filter', label: 'Filters', icon: Blend, group: 'editing' },
-  { id: 'text', label: 'Text', icon: Type, group: 'annotation' },
-  { id: 'shapes', label: 'Shapes', icon: Hexagon, group: 'annotation' },
-  { id: 'image', label: 'Image', icon: ImagePlus, group: 'annotation' },
+  { id: "crop", label: "Crop", icon: Crop, group: "editing" },
+  { id: "adjust", label: "Adjust", icon: SlidersHorizontal, group: "editing" },
+  { id: "filter", label: "Filters", icon: Blend, group: "editing" },
+  { id: "text", label: "Text", icon: Type, group: "annotation" },
+  { id: "shapes", label: "Shapes", icon: Hexagon, group: "annotation" },
+  { id: "image", label: "Image", icon: ImagePlus, group: "annotation" },
 ];
 
 interface ToolSidebarProps {
@@ -39,7 +39,7 @@ interface ToolSidebarProps {
     id: string;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
-    group?: 'editing' | 'annotation';
+    group?: "editing" | "annotation";
   }>;
   /** Slot: extra content rendered above the Apps button */
   sidebarBottom?: React.ReactNode;
@@ -57,8 +57,8 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
   const showSeparators = config.ui?.toolSidebar?.groupSeparators ?? true;
 
   const visibleTools = allTools.filter((t) => enabledTools.includes(t.id));
-  const editingTools = visibleTools.filter((t) => t.group === 'editing');
-  const annotationTools = visibleTools.filter((t) => t.group === 'annotation');
+  const editingTools = visibleTools.filter((t) => t.group === "editing");
+  const annotationTools = visibleTools.filter((t) => t.group === "annotation");
 
   const renderToolButton = (tool: ToolDef) => {
     const Icon = tool.icon;
@@ -70,20 +70,16 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
           <button
             onClick={() => onToolSelect(tool.id)}
             className={cn(
-              'flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors',
-              'text-muted-foreground hover:text-foreground hover:bg-accent',
-              isActive && 'bg-accent text-accent-foreground',
+              "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors",
+              "text-muted-foreground hover:text-foreground hover:bg-accent",
+              isActive && "bg-accent text-accent-foreground",
             )}
           >
             <Icon className="h-5 w-5" />
-            {showLabels && (
-              <span className="text-[10px] mt-1 leading-none">{tool.label}</span>
-            )}
+            {showLabels && <span className="text-[10px] mt-1 leading-none">{tool.label}</span>}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="right">
-          {tool.label}
-        </TooltipContent>
+        <TooltipContent side="right">{tool.label}</TooltipContent>
       </Tooltip>
     );
   };
@@ -94,8 +90,8 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
       aria-label="Editor tools"
       aria-orientation="vertical"
       className={cn(
-        'flex flex-col items-center w-[72px] py-2',
-        'bg-sidebar border-r border-sidebar-border',
+        "flex flex-col items-center w-[72px] py-2",
+        "bg-sidebar border-r border-sidebar-border",
       )}
     >
       {/* Editing tools group */}
@@ -132,9 +128,9 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
                       onClick={() => onToolSelect(ct.id as ImageEditorToolId)}
                       aria-pressed={isActive}
                       className={cn(
-                        'flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors',
-                        'text-muted-foreground hover:text-foreground hover:bg-accent',
-                        isActive && 'bg-accent text-accent-foreground',
+                        "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors",
+                        "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        isActive && "bg-accent text-accent-foreground",
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -163,19 +159,15 @@ export const ToolSidebar: React.FC<ToolSidebarProps> = ({
           <TooltipTrigger asChild>
             <button
               className={cn(
-                'flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors',
-                'text-muted-foreground hover:text-foreground hover:bg-accent',
+                "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors",
+                "text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
             >
               <LayoutGrid className="h-5 w-5" />
-              {showLabels && (
-                <span className="text-[10px] mt-1 leading-none">Apps</span>
-              )}
+              {showLabels && <span className="text-[10px] mt-1 leading-none">Apps</span>}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">
-            Apps
-          </TooltipContent>
+          <TooltipContent side="right">Apps</TooltipContent>
         </Tooltip>
       </div>
     </nav>

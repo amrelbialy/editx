@@ -1,5 +1,5 @@
-import type { EditorContext } from './editor-context';
-import { PAGE_WIDTH, PAGE_HEIGHT } from '../block/property-keys';
+import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import type { EditorContext } from "./editor-context";
 
 /**
  * Viewport / camera management: zoom, pan, fitting, and coordinate transforms.
@@ -62,11 +62,14 @@ export class EditorViewport {
     const pageBlock = store.get(pageId);
     if (!pageBlock) return;
 
-    this.#ctx.renderer?.fitToScreen({
-      width: (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080,
-      height: (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080,
-      padding,
-    }, animate);
+    this.#ctx.renderer?.fitToScreen(
+      {
+        width: (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080,
+        height: (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080,
+        padding,
+      },
+      animate,
+    );
   }
 
   /**
@@ -81,7 +84,10 @@ export class EditorViewport {
     if (ids.length === 0) return;
 
     // Compute union bounding box of all selected blocks
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     for (const id of ids) {
       const pos = block.getPosition(id);
       const size = block.getSize(id);

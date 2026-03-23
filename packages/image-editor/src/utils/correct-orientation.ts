@@ -17,14 +17,14 @@ export async function correctOrientation(source: File | Blob): Promise<{
 }> {
   // Use createImageBitmap with orientation correction (wide support since ~2020)
   const bitmap = await createImageBitmap(source, {
-    imageOrientation: 'from-image',
+    imageOrientation: "from-image",
   });
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.drawImage(bitmap, 0, 0);
   bitmap.close();
 

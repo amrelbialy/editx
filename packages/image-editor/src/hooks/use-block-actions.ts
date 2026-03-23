@@ -1,13 +1,7 @@
-import { useCallback } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { useCallback } from "react";
 
-export type AlignDirection =
-  | 'left'
-  | 'center'
-  | 'right'
-  | 'top'
-  | 'middle'
-  | 'bottom';
+export type AlignDirection = "left" | "center" | "right" | "top" | "middle" | "bottom";
 
 export interface UseBlockActionsOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
@@ -60,11 +54,14 @@ export function useBlockActions({
     onDeselect?.();
   }, [engineRef, selectedBlockId, onDeselect]);
 
-  const alignToPage = useCallback((direction: AlignDirection) => {
-    const ce = engineRef.current;
-    if (!ce || selectedBlockId === null) return;
-    ce.block.alignToPage(selectedBlockId, direction);
-  }, [engineRef, selectedBlockId]);
+  const alignToPage = useCallback(
+    (direction: AlignDirection) => {
+      const ce = engineRef.current;
+      if (!ce || selectedBlockId === null) return;
+      ce.block.alignToPage(selectedBlockId, direction);
+    },
+    [engineRef, selectedBlockId],
+  );
 
   return {
     bringForward,

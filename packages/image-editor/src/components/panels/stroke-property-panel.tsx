@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { colorToHex, hexToColor } from '@creative-editor/engine';
-import { Slider } from '../ui/slider';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { colorToHex, hexToColor } from "@creative-editor/engine";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Slider } from "../ui/slider";
 
 interface StrokePropertyPanelProps {
   engine: CreativeEngine;
@@ -32,11 +33,11 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
     const handler = () => setState(readStroke(engine, blockId));
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, blockId]);
 
@@ -47,15 +48,21 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
     update();
   }, [engine, blockId, state.enabled, update]);
 
-  const handleColor = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    engine.block.setStrokeColor(blockId, hexToColor(e.target.value));
-    update();
-  }, [engine, blockId, update]);
+  const handleColor = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.block.setStrokeColor(blockId, hexToColor(e.target.value));
+      update();
+    },
+    [engine, blockId, update],
+  );
 
-  const handleWidth = useCallback(([v]: number[]) => {
-    engine.block.setStrokeWidth(blockId, v);
-    update();
-  }, [engine, blockId, update]);
+  const handleWidth = useCallback(
+    ([v]: number[]) => {
+      engine.block.setStrokeWidth(blockId, v);
+      update();
+    },
+    [engine, blockId, update],
+  );
 
   return (
     <div className="flex flex-col gap-4">

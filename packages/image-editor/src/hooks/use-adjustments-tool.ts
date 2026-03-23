@@ -1,17 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ADJUSTMENT_CONFIG,
   ADJUSTMENT_PARAMS,
   type AdjustmentParam,
   type CreativeEngine,
-} from '@creative-editor/engine';
-import { useImageEditorStore } from '../store/image-editor-store';
-import type { AdjustmentValues } from '../components/panels/adjust-panel';
+} from "@creative-editor/engine";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AdjustmentValues } from "../components/panels/adjust-panel";
+import { useImageEditorStore } from "../store/image-editor-store";
 
 const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
-  brightness: 0, saturation: 0, contrast: 0, gamma: 0,
-  clarity: 0, exposure: 0, shadows: 0, highlights: 0,
-  blacks: 0, whites: 0, temperature: 0, sharpness: 0,
+  brightness: 0,
+  saturation: 0,
+  contrast: 0,
+  gamma: 0,
+  clarity: 0,
+  exposure: 0,
+  shadows: 0,
+  highlights: 0,
+  blacks: 0,
+  whites: 0,
+  temperature: 0,
+  sharpness: 0,
 };
 
 export interface UseAdjustmentsToolOptions {
@@ -34,13 +43,13 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
 
     const effects = ce.block.getEffects(editableBlockId);
     for (const eid of effects) {
-      if (ce.block.getKind(eid) === 'adjustments') {
+      if (ce.block.getKind(eid) === "adjustments") {
         adjustEffectIdRef.current = eid;
         return eid;
       }
     }
 
-    const eid = ce.block.createEffect('adjustments');
+    const eid = ce.block.createEffect("adjustments");
     ce.block.appendEffect(editableBlockId, eid);
     adjustEffectIdRef.current = eid;
     return eid;
@@ -76,36 +85,39 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     ce.core.renderDirty();
   }, [engineRef]);
 
-  const handleAdjustChange = useCallback((param: AdjustmentParam, value: number) => {
-    // Update React state immediately for responsive slider UI
-    setAdjustValues((prev) => ({ ...prev, [param]: value }));
+  const handleAdjustChange = useCallback(
+    (param: AdjustmentParam, value: number) => {
+      // Update React state immediately for responsive slider UI
+      setAdjustValues((prev) => ({ ...prev, [param]: value }));
 
-    const ce = engineRef.current;
-    const eid = adjustEffectIdRef.current;
-    if (!ce || eid === null) return;
+      const ce = engineRef.current;
+      const eid = adjustEffectIdRef.current;
+      if (!ce || eid === null) return;
 
-    // Start a batch on first change of this drag (groups into one undo entry)
-    if (!inBatchRef.current) {
-      ce.core.beginBatch();
-      inBatchRef.current = true;
-    }
+      // Start a batch on first change of this drag (groups into one undo entry)
+      if (!inBatchRef.current) {
+        ce.core.beginBatch();
+        inBatchRef.current = true;
+      }
 
-    // Store the pending write; throttle to rAF (GPU render is fast)
-    pendingRef.current = { param, value };
-    if (rafRef.current === null) {
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        const p = pendingRef.current;
-        if (!p) return;
-        pendingRef.current = null;
-        const engine = engineRef.current;
-        const effectId = adjustEffectIdRef.current;
-        if (!engine || effectId === null) return;
-        engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
-        engine.core.renderDirty();
-      });
-    }
-  }, [engineRef]);
+      // Store the pending write; throttle to rAF (GPU render is fast)
+      pendingRef.current = { param, value };
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const p = pendingRef.current;
+          if (!p) return;
+          pendingRef.current = null;
+          const engine = engineRef.current;
+          const effectId = adjustEffectIdRef.current;
+          if (!engine || effectId === null) return;
+          engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
+          engine.core.renderDirty();
+        });
+      }
+    },
+    [engineRef],
+  );
 
   const handleAdjustCommit = useCallback(() => {
     // Flush any pending RAF to ensure the final value is written
@@ -122,13 +134,13 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
 
     const effects = ce.block.getEffects(editableBlockId);
     for (let i = effects.length - 1; i >= 0; i--) {
-      if (ce.block.getKind(effects[i]) === 'adjustments') {
+      if (ce.block.getKind(effects[i]) === "adjustments") {
         ce.block.removeEffect(editableBlockId, i);
         break;
       }
     }
 
-    const eid = ce.block.createEffect('adjustments');
+    const eid = ce.block.createEffect("adjustments");
     ce.block.appendEffect(editableBlockId, eid);
     adjustEffectIdRef.current = eid;
     setAdjustValues(DEFAULT_ADJUSTMENTS);
@@ -153,7 +165,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
         // Effect was destroyed by undo — re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
-          const found = effects.find((id) => ce.block.getKind(id) === 'adjustments');
+          const found = effects.find((id) => ce.block.getKind(id) === "adjustments");
           adjustEffectIdRef.current = found ?? null;
         } else {
           adjustEffectIdRef.current = null;
@@ -170,11 +182,11 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
         setAdjustValues(vals);
       }
     };
-    ce.on('history:undo', handler);
-    ce.on('history:redo', handler);
+    ce.on("history:undo", handler);
+    ce.on("history:redo", handler);
     return () => {
-      ce.off('history:undo', handler);
-      ce.off('history:redo', handler);
+      ce.off("history:undo", handler);
+      ce.off("history:redo", handler);
     };
   }, [engineRef, editableBlockId]);
 

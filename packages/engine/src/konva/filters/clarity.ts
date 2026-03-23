@@ -5,7 +5,7 @@
  * Range: -1 to 1, default 0 (no change).
  */
 export function Clarity(this: any, imageData: ImageData): void {
-  const clarity = this.getAttr('clarity') ?? 0;
+  const clarity = this.getAttr("clarity") ?? 0;
   if (clarity === 0) return;
 
   const { data, width, height } = imageData;

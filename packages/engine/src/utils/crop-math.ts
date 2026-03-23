@@ -37,13 +37,13 @@ export function compareRatios(a: number, b: number): boolean {
 // ── Preset definitions ──────────────────────────────
 
 export const CROP_PRESETS: CropPreset[] = [
-  { id: 'free', label: 'Free', ratio: null },
-  { id: 'original', label: 'Original', ratio: null }, // filled at runtime
-  { id: '1:1', label: '1:1', ratio: 1 },
-  { id: '4:3', label: '4:3', ratio: toPrecisedFloat(4 / 3) },
-  { id: '3:4', label: '3:4', ratio: toPrecisedFloat(3 / 4) },
-  { id: '16:9', label: '16:9', ratio: toPrecisedFloat(16 / 9) },
-  { id: '9:16', label: '9:16', ratio: toPrecisedFloat(9 / 16) },
+  { id: "free", label: "Free", ratio: null },
+  { id: "original", label: "Original", ratio: null }, // filled at runtime
+  { id: "1:1", label: "1:1", ratio: 1 },
+  { id: "4:3", label: "4:3", ratio: toPrecisedFloat(4 / 3) },
+  { id: "3:4", label: "3:4", ratio: toPrecisedFloat(3 / 4) },
+  { id: "16:9", label: "16:9", ratio: toPrecisedFloat(16 / 9) },
+  { id: "9:16", label: "9:16", ratio: toPrecisedFloat(9 / 16) },
 ];
 
 // ── Constraint functions ────────────────────────────
@@ -52,7 +52,10 @@ export const CROP_PRESETS: CropPreset[] = [
  * Constrain a crop rectangle so it stays fully inside the image bounds.
  * Returns a new rect (never mutates input).
  */
-export function constrainCropToImage(crop: CropRect, image: { width: number; height: number }): CropRect {
+export function constrainCropToImage(
+  crop: CropRect,
+  image: { width: number; height: number },
+): CropRect {
   let { x, y, width, height } = crop;
 
   // Clamp dimensions
@@ -117,7 +120,10 @@ export function applyCropRatio(
  * Constrain a crop rect during dragging to stay within image bounds.
  * Only adjusts position, not size.
  */
-export function boundDragging(crop: CropRect, image: { width: number; height: number }): { x: number; y: number } {
+export function boundDragging(
+  crop: CropRect,
+  image: { width: number; height: number },
+): { x: number; y: number } {
   const maxX = image.width - crop.width;
   const maxY = image.height - crop.height;
   return {
@@ -164,7 +170,7 @@ export function boundResizing(
   bounded.height = Math.max(bounded.height, 1);
 
   // Enforce aspect ratio if provided
-  if (typeof ratio === 'number') {
+  if (typeof ratio === "number") {
     const currentRatio = bounded.width / bounded.height;
     if (!compareRatios(currentRatio, ratio)) {
       const ratioedHeight = bounded.width / ratio;

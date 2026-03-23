@@ -1,12 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import {
-  colorToHex,
-  hexToColor,
-  FILL_SOLID_COLOR,
-  FILL_COLOR,
-} from '@creative-editor/engine';
-import { cn } from '../../utils/cn';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@creative-editor/engine";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "../../utils/cn";
 
 interface BackgroundPropertyPanelProps {
   engine: CreativeEngine;
@@ -14,15 +10,27 @@ interface BackgroundPropertyPanelProps {
 }
 
 const DEFAULT_COLORS = [
-  '#FFFFFF', '#000000', '#3B82F6', '#6366F1',
-  '#10B981', '#059669', '#EF4444', '#DC2626',
-  '#F59E0B', '#D97706', '#8B5CF6', '#EC4899',
-  '#14B8A6', '#06B6D4', '#F97316', '#84CC16',
+  "#FFFFFF",
+  "#000000",
+  "#3B82F6",
+  "#6366F1",
+  "#10B981",
+  "#059669",
+  "#EF4444",
+  "#DC2626",
+  "#F59E0B",
+  "#D97706",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#06B6D4",
+  "#F97316",
+  "#84CC16",
 ];
 
 function readFillState(engine: CreativeEngine, blockId: number) {
   const fillEnabled = engine.block.isFillEnabled(blockId);
-  let color = '#000000';
+  let color = "#000000";
   const fillId = engine.block.getFill(blockId);
   if (fillId != null) {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
@@ -35,7 +43,10 @@ function readFillState(engine: CreativeEngine, blockId: number) {
   return { enabled: fillEnabled, color };
 }
 
-export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = ({ engine, blockId }) => {
+export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = ({
+  engine,
+  blockId,
+}) => {
   const [state, setState] = useState(() => readFillState(engine, blockId));
 
   useEffect(() => {
@@ -45,11 +56,11 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
     const handler = () => setState(readFillState(engine, blockId));
-    engine.on('history:undo', handler);
-    engine.on('history:redo', handler);
+    engine.on("history:undo", handler);
+    engine.on("history:redo", handler);
     return () => {
-      engine.off('history:undo', handler);
-      engine.off('history:redo', handler);
+      engine.off("history:undo", handler);
+      engine.off("history:redo", handler);
     };
   }, [engine, blockId]);
 
@@ -60,19 +71,22 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
     refresh();
   }, [engine, blockId, state.enabled, refresh]);
 
-  const handleColorChange = useCallback((newColor: string) => {
-    const fillId = engine.block.getFill(blockId);
-    if (fillId != null) {
-      engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
-    } else {
-      // Text blocks: set fill color directly on the block
-      engine.block.setColor(blockId, FILL_COLOR, hexToColor(newColor));
-    }
-    if (!state.enabled) {
-      engine.block.setFillEnabled(blockId, true);
-    }
-    refresh();
-  }, [engine, blockId, state.enabled, refresh]);
+  const handleColorChange = useCallback(
+    (newColor: string) => {
+      const fillId = engine.block.getFill(blockId);
+      if (fillId != null) {
+        engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
+      } else {
+        // Text blocks: set fill color directly on the block
+        engine.block.setColor(blockId, FILL_COLOR, hexToColor(newColor));
+      }
+      if (!state.enabled) {
+        engine.block.setFillEnabled(blockId, true);
+      }
+      refresh();
+    },
+    [engine, blockId, state.enabled, refresh],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,8 +120,10 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
                   key={c}
                   onClick={() => handleColorChange(c)}
                   className={cn(
-                    'w-7 h-7 rounded-md border transition-transform hover:scale-110',
-                    state.color === c ? 'ring-2 ring-primary ring-offset-1 ring-offset-card' : 'border-border',
+                    "w-7 h-7 rounded-md border transition-transform hover:scale-110",
+                    state.color === c
+                      ? "ring-2 ring-primary ring-offset-1 ring-offset-card"
+                      : "border-border",
                   )}
                   style={{ backgroundColor: c }}
                 />

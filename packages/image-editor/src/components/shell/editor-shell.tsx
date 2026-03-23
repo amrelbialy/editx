@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { cn } from '../../utils/cn';
-import { PopoverContainerProvider } from '../ui/popover-container-context';
+import type React from "react";
+import { useCallback, useState } from "react";
+import { cn } from "../../utils/cn";
+import { PopoverContainerProvider } from "../ui/popover-container-context";
 
 interface EditorShellProps {
   children: React.ReactNode;
@@ -21,14 +22,12 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
       aria-label="Image editor"
       style={style}
       className={cn(
-        'flex flex-col h-full w-full overflow-hidden',
-        'bg-background text-foreground',
+        "flex flex-col h-full w-full overflow-hidden",
+        "bg-background text-foreground",
         className,
       )}
     >
-      <PopoverContainerProvider value={container ?? undefined}>
-        {children}
-      </PopoverContainerProvider>
+      <PopoverContainerProvider value={container ?? undefined}>{children}</PopoverContainerProvider>
     </div>
   );
 };

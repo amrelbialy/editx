@@ -1,10 +1,10 @@
-import React from 'react';
-import { Undo2, Redo2, ZoomOut, ZoomIn, Download, Loader2 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { cn } from '../../utils/cn';
-import { useConfig } from '../../config/config-context';
-import { ZoomMenu } from './zoom-menu';
+import { Download, Loader2, Redo2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import type React from "react";
+import { useConfig } from "../../config/config-context";
+import { cn } from "../../utils/cn";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { ZoomMenu } from "./zoom-menu";
 
 interface TopbarProps {
   onUndo?: () => void;
@@ -38,50 +38,34 @@ export const Topbar: React.FC<TopbarProps> = ({
   onFitSelection,
   canFitSelection = false,
   onZoomPreset,
-  zoomLabel = 'Auto',
+  zoomLabel = "Auto",
   onExport,
   isExporting = false,
   topbarRight,
 }) => {
   const config = useConfig();
-  const title = config.ui?.title ?? 'Photo Editor';
+  const title = config.ui?.title ?? "Photo Editor";
   const showTitle = config.ui?.showTitle ?? true;
 
   return (
     <div
       className={cn(
-        'flex items-center justify-between h-12 px-3',
-        'bg-card border-b border-border',
+        "flex items-center justify-between h-12 px-3",
+        "bg-card border-b border-border",
       )}
     >
       {/* Left: Undo / Redo */}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onUndo}
-          disabled={!canUndo}
-          title="Undo"
-        >
+        <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} title="Undo">
           <Undo2 className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onRedo}
-          disabled={!canRedo}
-          title="Redo"
-        >
+        <Button variant="ghost" size="icon" onClick={onRedo} disabled={!canRedo} title="Redo">
           <Redo2 className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Center: Title */}
-      {showTitle && (
-        <span className="text-sm font-medium text-muted-foreground">
-          {title}
-        </span>
-      )}
+      {showTitle && <span className="text-sm font-medium text-muted-foreground">{title}</span>}
 
       {/* Right: Zoom + Export */}
       <div className="flex items-center gap-1">
@@ -109,7 +93,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           ) : (
             <Download className="h-4 w-4" />
           )}
-          {isExporting ? 'Exporting…' : 'Export Image'}
+          {isExporting ? "Exporting…" : "Export Image"}
         </Button>
       </div>
     </div>

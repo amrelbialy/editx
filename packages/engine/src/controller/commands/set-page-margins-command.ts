@@ -1,11 +1,13 @@
-import { BlockStore } from '../../block/block-store';
+import type { BlockStore } from "../../block/block-store";
 import {
+  PAGE_MARGIN_BOTTOM,
   PAGE_MARGIN_ENABLED,
-  PAGE_MARGIN_TOP, PAGE_MARGIN_RIGHT,
-  PAGE_MARGIN_BOTTOM, PAGE_MARGIN_LEFT,
-} from '../../block/property-keys';
-import { Patch } from '../../history-manager';
-import PatchCommand from './patch-command';
+  PAGE_MARGIN_LEFT,
+  PAGE_MARGIN_RIGHT,
+  PAGE_MARGIN_TOP,
+} from "../../block/property-keys";
+import type { Patch } from "../../history-manager";
+import PatchCommand from "./patch-command";
 
 export interface PageMargins {
   top: number;

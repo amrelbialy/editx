@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import type { CreativeEngine } from '@creative-editor/engine';
-import { IMAGE_SRC, IMAGE_ORIGINAL_WIDTH, IMAGE_ORIGINAL_HEIGHT } from '@creative-editor/engine';
-import { useImageEditorStore } from '../store/image-editor-store';
-import { useConfig } from '../config/config-context';
+import type { CreativeEngine } from "@creative-editor/engine";
+import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@creative-editor/engine";
+import { useCallback } from "react";
+import { useConfig } from "../config/config-context";
+import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseImageToolOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
@@ -16,7 +16,7 @@ function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -26,7 +26,7 @@ function loadImageElement(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new Error("Failed to load image"));
     img.src = src;
   });
 }
@@ -45,12 +45,12 @@ function downscaleImage(img: HTMLImageElement, maxDim: number): string {
   const newW = Math.round(w * scale);
   const newH = Math.round(h * scale);
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = newW;
   canvas.height = newH;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0, newW, newH);
-  return canvas.toDataURL('image/png');
+  return canvas.toDataURL("image/png");
 }
 
 export function useImageTool({ engineRef }: UseImageToolOptions) {
@@ -65,84 +65,93 @@ export function useImageTool({ engineRef }: UseImageToolOptions) {
    * Add an image overlay to the page from a File.
    * Validates size, downscales if needed, centers on page at ~40% size.
    */
-  const handleAddImage = useCallback(async (file: File) => {
-    const ce = engineRef.current;
-    if (!ce || editableBlockId === null) return;
+  const handleAddImage = useCallback(
+    async (file: File) => {
+      const ce = engineRef.current;
+      if (!ce || editableBlockId === null) return;
 
-    // Validate file size
-    if (file.size > maxFileSize) {
-      const maxMB = Math.round(maxFileSize / (1024 * 1024));
-      throw new Error(`File size exceeds ${maxMB}MB limit`);
-    }
+      // Validate file size
+      if (file.size > maxFileSize) {
+        const maxMB = Math.round(maxFileSize / (1024 * 1024));
+        throw new Error(`File size exceeds ${maxMB}MB limit`);
+      }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      throw new Error('File is not an image');
-    }
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        throw new Error("File is not an image");
+      }
 
-    const dataUrl = await readFileAsDataURL(file);
-    const img = await loadImageElement(dataUrl);
+      const dataUrl = await readFileAsDataURL(file);
+      const img = await loadImageElement(dataUrl);
 
-    // Downscale if exceeds max dimension
-    const finalSrc = downscaleImage(img, maxDimension);
-    const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
-    const naturalW = finalImg.naturalWidth;
-    const naturalH = finalImg.naturalHeight;
+      // Downscale if exceeds max dimension
+      const finalSrc = downscaleImage(img, maxDimension);
+      const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
+      const naturalW = finalImg.naturalWidth;
+      const naturalH = finalImg.naturalHeight;
 
-    // Place on page at ~40% of the shortest side
-    const pageW = ce.block.getFloat(editableBlockId, 'page/width') ?? 1080;
-    const pageH = ce.block.getFloat(editableBlockId, 'page/height') ?? 1080;
+      // Place on page at ~40% of the shortest side
+      const pageW = ce.block.getFloat(editableBlockId, "page/width") ?? 1080;
+      const pageH = ce.block.getFloat(editableBlockId, "page/height") ?? 1080;
 
-    const targetSize = Math.min(pageW, pageH) * 0.4;
-    const aspect = naturalW / naturalH;
-    let width: number, height: number;
-    if (aspect >= 1) {
-      width = targetSize;
-      height = targetSize / aspect;
-    } else {
-      height = targetSize;
-      width = targetSize * aspect;
-    }
+      const targetSize = Math.min(pageW, pageH) * 0.4;
+      const aspect = naturalW / naturalH;
+      let width: number, height: number;
+      if (aspect >= 1) {
+        width = targetSize;
+        height = targetSize / aspect;
+      } else {
+        height = targetSize;
+        width = targetSize * aspect;
+      }
 
-    const x = (pageW - width) / 2;
-    const y = (pageH - height) / 2;
+      const x = (pageW - width) / 2;
+      const y = (pageH - height) / 2;
 
-    const imageId = ce.block.addImage(
-      editableBlockId,
-      finalSrc,
-      x, y,
-      width, height,
-      naturalW, naturalH,
-    );
-    ce.block.select(imageId);
-  }, [engineRef, editableBlockId, maxFileSize, maxDimension]);
+      const imageId = ce.block.addImage(
+        editableBlockId,
+        finalSrc,
+        x,
+        y,
+        width,
+        height,
+        naturalW,
+        naturalH,
+      );
+      ce.block.select(imageId);
+    },
+    [engineRef, editableBlockId, maxFileSize, maxDimension],
+  );
 
   /**
    * Replace the image source on the currently selected image block.
    */
-  const handleReplaceImage = useCallback(async (file: File, blockId: number) => {
-    const ce = engineRef.current;
-    if (!ce) return;
+  const handleReplaceImage = useCallback(
+    async (file: File, blockId: number) => {
+      const ce = engineRef.current;
+      if (!ce) return;
 
-    if (file.size > maxFileSize) {
-      const maxMB = Math.round(maxFileSize / (1024 * 1024));
-      throw new Error(`File size exceeds ${maxMB}MB limit`);
-    }
+      if (file.size > maxFileSize) {
+        const maxMB = Math.round(maxFileSize / (1024 * 1024));
+        throw new Error(`File size exceeds ${maxMB}MB limit`);
+      }
 
-    if (!file.type.startsWith('image/')) {
-      throw new Error('File is not an image');
-    }
+      if (!file.type.startsWith("image/")) {
+        throw new Error("File is not an image");
+      }
 
-    const dataUrl = await readFileAsDataURL(file);
-    const img = await loadImageElement(dataUrl);
+      const dataUrl = await readFileAsDataURL(file);
+      const img = await loadImageElement(dataUrl);
 
-    const finalSrc = downscaleImage(img, maxDimension);
-    const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
+      const finalSrc = downscaleImage(img, maxDimension);
+      const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
 
-    ce.block.setString(blockId, IMAGE_SRC, finalSrc);
-    ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, finalImg.naturalWidth);
-    ce.block.setFloat(blockId, IMAGE_ORIGINAL_HEIGHT, finalImg.naturalHeight);
-  }, [engineRef, maxFileSize, maxDimension]);
+      ce.block.setString(blockId, IMAGE_SRC, finalSrc);
+      ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, finalImg.naturalWidth);
+      ce.block.setFloat(blockId, IMAGE_ORIGINAL_HEIGHT, finalImg.naturalHeight);
+    },
+    [engineRef, maxFileSize, maxDimension],
+  );
 
   return { handleAddImage, handleReplaceImage };
 }

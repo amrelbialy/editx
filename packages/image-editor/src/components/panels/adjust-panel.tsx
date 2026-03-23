@@ -1,34 +1,36 @@
-import React from 'react';
-import {
-  ADJUSTMENT_CONFIG,
-  type AdjustmentParam,
-} from '@creative-editor/engine';
-import { RotateCcw } from 'lucide-react';
-import { Slider } from '../ui/slider';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { ADJUSTMENT_CONFIG, type AdjustmentParam } from "@creative-editor/engine";
+import { RotateCcw } from "lucide-react";
+import type React from "react";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { Slider } from "../ui/slider";
 
-const BASIC_PARAMS: AdjustmentParam[] = [
-  'brightness', 'saturation', 'contrast', 'gamma',
-];
+const BASIC_PARAMS: AdjustmentParam[] = ["brightness", "saturation", "contrast", "gamma"];
 
 const REFINEMENT_PARAMS: AdjustmentParam[] = [
-  'clarity', 'exposure', 'shadows', 'highlights', 'blacks', 'whites', 'temperature', 'sharpness',
+  "clarity",
+  "exposure",
+  "shadows",
+  "highlights",
+  "blacks",
+  "whites",
+  "temperature",
+  "sharpness",
 ];
 
 const LABELS: Record<AdjustmentParam, string> = {
-  brightness: 'Brightness',
-  saturation: 'Saturation',
-  contrast: 'Contrast',
-  gamma: 'Gamma',
-  clarity: 'Clarity',
-  exposure: 'Exposure',
-  shadows: 'Shadows',
-  highlights: 'Highlights',
-  blacks: 'Blacks',
-  whites: 'Whites',
-  temperature: 'Temperature',
-  sharpness: 'Sharpness',
+  brightness: "Brightness",
+  saturation: "Saturation",
+  contrast: "Contrast",
+  gamma: "Gamma",
+  clarity: "Clarity",
+  exposure: "Exposure",
+  shadows: "Shadows",
+  highlights: "Highlights",
+  blacks: "Blacks",
+  whites: "Whites",
+  temperature: "Temperature",
+  sharpness: "Sharpness",
 };
 
 export type AdjustmentValues = Record<AdjustmentParam, number>;
@@ -73,7 +75,12 @@ const AdjustSlider: React.FC<{
   );
 };
 
-export const AdjustPanel: React.FC<AdjustPanelProps> = ({ values, onChange, onCommit, onReset }) => {
+export const AdjustPanel: React.FC<AdjustPanelProps> = ({
+  values,
+  onChange,
+  onCommit,
+  onReset,
+}) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-xs font-medium text-muted-foreground">Basic</div>

@@ -1,4 +1,4 @@
-import { BaseFilters } from '../base-filters';
+import { BaseFilters } from "../base-filters";
 
 export interface FilterPresetInfo {
   /** Display label for the UI */
@@ -6,7 +6,7 @@ export interface FilterPresetInfo {
   /** Filter function to apply — mutates ImageData in-place */
   filter: (imageData: ImageData) => void;
   /** 'custom' = pixel-manipulation, 'konva' = built-in Konva filter */
-  type: 'custom' | 'konva';
+  type: "custom" | "konva";
 }
 
 // ── Custom presets (ported from filerobot) ──────────────
@@ -21,19 +21,11 @@ function clarendon(imageData: ImageData): void {
 }
 
 function gingham(imageData: ImageData): void {
-  BaseFilters.apply(
-    imageData,
-    BaseFilters.sepia(0.04),
-    BaseFilters.contrast(-0.15),
-  );
+  BaseFilters.apply(imageData, BaseFilters.sepia(0.04), BaseFilters.contrast(-0.15));
 }
 
 function moon(imageData: ImageData): void {
-  BaseFilters.apply(
-    imageData,
-    BaseFilters.grayscale(),
-    BaseFilters.brightness(0.1),
-  );
+  BaseFilters.apply(imageData, BaseFilters.grayscale(), BaseFilters.brightness(0.1));
 }
 
 function lark(imageData: ImageData): void {
@@ -55,11 +47,7 @@ function reyes(imageData: ImageData): void {
 }
 
 function juno(imageData: ImageData): void {
-  BaseFilters.apply(
-    imageData,
-    BaseFilters.adjustRGB([1.01, 1.04, 1]),
-    BaseFilters.saturation(0.3),
-  );
+  BaseFilters.apply(imageData, BaseFilters.adjustRGB([1.01, 1.04, 1]), BaseFilters.saturation(0.3));
 }
 
 function aden(imageData: ImageData): void {
@@ -71,11 +59,7 @@ function aden(imageData: ImageData): void {
 }
 
 function amaro(imageData: ImageData): void {
-  BaseFilters.apply(
-    imageData,
-    BaseFilters.saturation(0.3),
-    BaseFilters.brightness(0.15),
-  );
+  BaseFilters.apply(imageData, BaseFilters.saturation(0.3), BaseFilters.brightness(0.15));
 }
 
 function valencia(imageData: ImageData): void {
@@ -106,10 +90,7 @@ function rise(imageData: ImageData): void {
 }
 
 function earlybird(imageData: ImageData): void {
-  BaseFilters.apply(
-    imageData,
-    BaseFilters.colorFilter([255, 165, 40, 0.2]),
-  );
+  BaseFilters.apply(imageData, BaseFilters.colorFilter([255, 165, 40, 0.2]));
 }
 
 function nashville(imageData: ImageData): void {
@@ -153,7 +134,11 @@ function slumber(imageData: ImageData): void {
 }
 
 function crema(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.adjustRGB([1.04, 1, 1.02]), BaseFilters.saturation(-0.05));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.adjustRGB([1.04, 1, 1.02]),
+    BaseFilters.saturation(-0.05),
+  );
 }
 
 function ludwig(imageData: ImageData): void {
@@ -165,7 +150,11 @@ function perpetua(imageData: ImageData): void {
 }
 
 function mayfair(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.colorFilter([230, 115, 108, 0.05]), BaseFilters.saturation(0.15));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.colorFilter([230, 115, 108, 0.05]),
+    BaseFilters.saturation(0.15),
+  );
 }
 
 function xpro2(imageData: ImageData): void {
@@ -203,7 +192,11 @@ function vesper(imageData: ImageData): void {
 }
 
 function brannan(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.contrast(0.2), BaseFilters.colorFilter([140, 10, 185, 0.1]));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.contrast(0.2),
+    BaseFilters.colorFilter([140, 10, 185, 0.1]),
+  );
 }
 
 function sutro(imageData: ImageData): void {
@@ -215,11 +208,19 @@ function toaster(imageData: ImageData): void {
 }
 
 function walden(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.brightness(0.1), BaseFilters.colorFilter([255, 255, 0, 0.2]));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.brightness(0.1),
+    BaseFilters.colorFilter([255, 255, 0, 0.2]),
+  );
 }
 
 function nineteenSeventySeven(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.colorFilter([255, 25, 0, 0.15]), BaseFilters.brightness(0.1));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.colorFilter([255, 25, 0, 0.15]),
+    BaseFilters.brightness(0.1),
+  );
 }
 
 function kelvin(imageData: ImageData): void {
@@ -253,15 +254,27 @@ function dogpatch(imageData: ImageData): void {
 }
 
 function helena(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.colorFilter([208, 208, 86, 0.2]), BaseFilters.contrast(0.15));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.colorFilter([208, 208, 86, 0.2]),
+    BaseFilters.contrast(0.15),
+  );
 }
 
 function ashby(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.colorFilter([255, 160, 25, 0.1]), BaseFilters.brightness(0.1));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.colorFilter([255, 160, 25, 0.1]),
+    BaseFilters.brightness(0.1),
+  );
 }
 
 function charmes(imageData: ImageData): void {
-  BaseFilters.apply(imageData, BaseFilters.colorFilter([255, 50, 80, 0.12]), BaseFilters.contrast(0.05));
+  BaseFilters.apply(
+    imageData,
+    BaseFilters.colorFilter([255, 50, 80, 0.12]),
+    BaseFilters.contrast(0.05),
+  );
 }
 
 // ── Konva built-in presets ──────────────────────────────
@@ -300,51 +313,51 @@ function konvaGrayscale(imageData: ImageData): void {
  */
 export const FILTER_PRESETS: ReadonlyMap<string, FilterPresetInfo> = new Map([
   // Konva built-in presets (re-implemented as ImageData ops for uniform pipeline)
-  ['Invert', { label: 'Invert', filter: konvaInvert, type: 'konva' }],
-  ['BlackAndWhite', { label: 'B&W', filter: blackAndWhite, type: 'custom' }],
-  ['Sepia', { label: 'Sepia', filter: konvaSepia, type: 'konva' }],
-  ['Solarize', { label: 'Solarize', filter: konvaSolarize, type: 'konva' }],
+  ["Invert", { label: "Invert", filter: konvaInvert, type: "konva" }],
+  ["BlackAndWhite", { label: "B&W", filter: blackAndWhite, type: "custom" }],
+  ["Sepia", { label: "Sepia", filter: konvaSepia, type: "konva" }],
+  ["Solarize", { label: "Solarize", filter: konvaSolarize, type: "konva" }],
   // Custom presets (ported from filerobot, ordered to match)
-  ['Clarendon', { label: 'Clarendon', filter: clarendon, type: 'custom' }],
-  ['Gingham', { label: 'Gingham', filter: gingham, type: 'custom' }],
-  ['Moon', { label: 'Moon', filter: moon, type: 'custom' }],
-  ['Lark', { label: 'Lark', filter: lark, type: 'custom' }],
-  ['Reyes', { label: 'Reyes', filter: reyes, type: 'custom' }],
-  ['Juno', { label: 'Juno', filter: juno, type: 'custom' }],
-  ['Slumber', { label: 'Slumber', filter: slumber, type: 'custom' }],
-  ['Crema', { label: 'Crema', filter: crema, type: 'custom' }],
-  ['Ludwig', { label: 'Ludwig', filter: ludwig, type: 'custom' }],
-  ['Aden', { label: 'Aden', filter: aden, type: 'custom' }],
-  ['Perpetua', { label: 'Perpetua', filter: perpetua, type: 'custom' }],
-  ['Amaro', { label: 'Amaro', filter: amaro, type: 'custom' }],
-  ['Mayfair', { label: 'Mayfair', filter: mayfair, type: 'custom' }],
-  ['Rise', { label: 'Rise', filter: rise, type: 'custom' }],
-  ['Hudson', { label: 'Hudson', filter: hudson, type: 'custom' }],
-  ['Valencia', { label: 'Valencia', filter: valencia, type: 'custom' }],
-  ['XPro2', { label: 'X-Pro II', filter: xpro2, type: 'custom' }],
-  ['Sierra', { label: 'Sierra', filter: sierra, type: 'custom' }],
-  ['Willow', { label: 'Willow', filter: willow, type: 'custom' }],
-  ['LoFi', { label: 'Lo-Fi', filter: lofi, type: 'custom' }],
-  ['Inkwell', { label: 'Inkwell', filter: konvaGrayscale, type: 'konva' }],
-  ['Hefe', { label: 'Hefe', filter: hefe, type: 'custom' }],
-  ['Nashville', { label: 'Nashville', filter: nashville, type: 'custom' }],
-  ['Stinson', { label: 'Stinson', filter: stinson, type: 'custom' }],
-  ['Vesper', { label: 'Vesper', filter: vesper, type: 'custom' }],
-  ['Earlybird', { label: 'Earlybird', filter: earlybird, type: 'custom' }],
-  ['Brannan', { label: 'Brannan', filter: brannan, type: 'custom' }],
-  ['Sutro', { label: 'Sutro', filter: sutro, type: 'custom' }],
-  ['Toaster', { label: 'Toaster', filter: toaster, type: 'custom' }],
-  ['Walden', { label: 'Walden', filter: walden, type: 'custom' }],
-  ['1977', { label: '1977', filter: nineteenSeventySeven, type: 'custom' }],
-  ['Kelvin', { label: 'Kelvin', filter: kelvin, type: 'custom' }],
-  ['Maven', { label: 'Maven', filter: maven, type: 'custom' }],
-  ['Ginza', { label: 'Ginza', filter: ginza, type: 'custom' }],
-  ['Skyline', { label: 'Skyline', filter: skyline, type: 'custom' }],
-  ['Dogpatch', { label: 'Dogpatch', filter: dogpatch, type: 'custom' }],
-  ['Brooklyn', { label: 'Brooklyn', filter: brooklyn, type: 'custom' }],
-  ['Helena', { label: 'Helena', filter: helena, type: 'custom' }],
-  ['Ashby', { label: 'Ashby', filter: ashby, type: 'custom' }],
-  ['Charmes', { label: 'Charmes', filter: charmes, type: 'custom' }],
+  ["Clarendon", { label: "Clarendon", filter: clarendon, type: "custom" }],
+  ["Gingham", { label: "Gingham", filter: gingham, type: "custom" }],
+  ["Moon", { label: "Moon", filter: moon, type: "custom" }],
+  ["Lark", { label: "Lark", filter: lark, type: "custom" }],
+  ["Reyes", { label: "Reyes", filter: reyes, type: "custom" }],
+  ["Juno", { label: "Juno", filter: juno, type: "custom" }],
+  ["Slumber", { label: "Slumber", filter: slumber, type: "custom" }],
+  ["Crema", { label: "Crema", filter: crema, type: "custom" }],
+  ["Ludwig", { label: "Ludwig", filter: ludwig, type: "custom" }],
+  ["Aden", { label: "Aden", filter: aden, type: "custom" }],
+  ["Perpetua", { label: "Perpetua", filter: perpetua, type: "custom" }],
+  ["Amaro", { label: "Amaro", filter: amaro, type: "custom" }],
+  ["Mayfair", { label: "Mayfair", filter: mayfair, type: "custom" }],
+  ["Rise", { label: "Rise", filter: rise, type: "custom" }],
+  ["Hudson", { label: "Hudson", filter: hudson, type: "custom" }],
+  ["Valencia", { label: "Valencia", filter: valencia, type: "custom" }],
+  ["XPro2", { label: "X-Pro II", filter: xpro2, type: "custom" }],
+  ["Sierra", { label: "Sierra", filter: sierra, type: "custom" }],
+  ["Willow", { label: "Willow", filter: willow, type: "custom" }],
+  ["LoFi", { label: "Lo-Fi", filter: lofi, type: "custom" }],
+  ["Inkwell", { label: "Inkwell", filter: konvaGrayscale, type: "konva" }],
+  ["Hefe", { label: "Hefe", filter: hefe, type: "custom" }],
+  ["Nashville", { label: "Nashville", filter: nashville, type: "custom" }],
+  ["Stinson", { label: "Stinson", filter: stinson, type: "custom" }],
+  ["Vesper", { label: "Vesper", filter: vesper, type: "custom" }],
+  ["Earlybird", { label: "Earlybird", filter: earlybird, type: "custom" }],
+  ["Brannan", { label: "Brannan", filter: brannan, type: "custom" }],
+  ["Sutro", { label: "Sutro", filter: sutro, type: "custom" }],
+  ["Toaster", { label: "Toaster", filter: toaster, type: "custom" }],
+  ["Walden", { label: "Walden", filter: walden, type: "custom" }],
+  ["1977", { label: "1977", filter: nineteenSeventySeven, type: "custom" }],
+  ["Kelvin", { label: "Kelvin", filter: kelvin, type: "custom" }],
+  ["Maven", { label: "Maven", filter: maven, type: "custom" }],
+  ["Ginza", { label: "Ginza", filter: ginza, type: "custom" }],
+  ["Skyline", { label: "Skyline", filter: skyline, type: "custom" }],
+  ["Dogpatch", { label: "Dogpatch", filter: dogpatch, type: "custom" }],
+  ["Brooklyn", { label: "Brooklyn", filter: brooklyn, type: "custom" }],
+  ["Helena", { label: "Helena", filter: helena, type: "custom" }],
+  ["Ashby", { label: "Ashby", filter: ashby, type: "custom" }],
+  ["Charmes", { label: "Charmes", filter: charmes, type: "custom" }],
 ]);
 
 /** Get the filter function for a preset name, or undefined if not found. */

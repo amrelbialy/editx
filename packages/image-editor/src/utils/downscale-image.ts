@@ -52,17 +52,17 @@ export function downscaleIfNeeded(
 
   console.warn(
     `[creative-editor] Image is ${megapixels.toFixed(1)} MP (${naturalWidth}×${naturalHeight}). ` +
-    `Downscaling to ${workingWidth}×${workingHeight} for editing. Original dimensions preserved for export.`,
+      `Downscaling to ${workingWidth}×${workingHeight} for editing. Original dimensions preserved for export.`,
   );
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = workingWidth;
   canvas.height = workingHeight;
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0, workingWidth, workingHeight);
 
-  const dataUrl = canvas.toDataURL('image/png');
+  const dataUrl = canvas.toDataURL("image/png");
 
   return {
     dataUrl,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -9,8 +9,8 @@ export interface ResponsiveState {
 
 export function useResponsive(): ResponsiveState {
   const [state, setState] = useState<ResponsiveState>(() => ({
-    isMobile: typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false,
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    isMobile: typeof window !== "undefined" ? window.innerWidth < MOBILE_BREAKPOINT : false,
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
   }));
 
   useEffect(() => {
@@ -23,8 +23,8 @@ export function useResponsive(): ResponsiveState {
       });
     };
 
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, []);
 
   return state;

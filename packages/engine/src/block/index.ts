@@ -1,18 +1,34 @@
-export { BlockStore } from './block-store';
-export { BlockAPI, ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS } from './block-api';
-export type { AdjustmentParam, AdjustmentConfig } from './block-api';
-export type { BlockData, BlockType, Color, PropertyValue, PageLayoutMode, EffectType, ShapeType, FillType, TextRun, TextRunStyle } from './block.types';
-export { getBlockDefaults, getEffectDefaults, getShapeDefaults, getFillDefaults } from './block-defaults';
-export { mergeAdjacentRuns } from './text-run-utils';
-export { TextEditorSession } from './text-editor-session';
-export type { TextEditorSessionOnChange } from './text-editor-session';
+export type {
+  BlockData,
+  BlockType,
+  Color,
+  EffectType,
+  FillType,
+  PageLayoutMode,
+  PropertyValue,
+  ShapeType,
+  TextRun,
+  TextRunStyle,
+} from "./block.types";
+export type { AdjustmentConfig, AdjustmentParam } from "./block-api";
+export { ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS, BlockAPI } from "./block-api";
 export {
-  runsToEditorState,
+  getBlockDefaults,
+  getEffectDefaults,
+  getFillDefaults,
+  getShapeDefaults,
+} from "./block-defaults";
+export { BlockStore } from "./block-store";
+export {
+  $restoreSelectionFromOffsets,
+  cssStringToRunStyle,
   editorStateToRuns,
   getSelectionOffsets,
-  $restoreSelectionFromOffsets,
   runStyleToCssString,
-  cssStringToRunStyle,
+  runsToEditorState,
   textRunStyleToCssPatch,
-} from './lexical-bridge';
-export * from './property-keys';
+} from "./lexical-bridge";
+export * from "./property-keys";
+export type { TextEditorSessionOnChange } from "./text-editor-session";
+export { TextEditorSession } from "./text-editor-session";
+export { mergeAdjacentRuns } from "./text-run-utils";

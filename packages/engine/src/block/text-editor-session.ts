@@ -1,22 +1,19 @@
+import { $patchStyleText } from "@lexical/selection";
 import {
-  createEditor,
-  $getRoot,
   $getSelection,
   $isRangeSelection,
-  $isTextNode,
+  createEditor,
   FORMAT_TEXT_COMMAND,
-  COMMAND_PRIORITY_LOW,
   type LexicalEditor,
-} from 'lexical';
-import { $patchStyleText } from '@lexical/selection';
-import type { TextRun, TextRunStyle } from './block.types';
+} from "lexical";
+import type { TextRun, TextRunStyle } from "./block.types";
 import {
-  runsToEditorState,
+  $restoreSelectionFromOffsets,
   editorStateToRuns,
   getSelectionOffsets,
-  $restoreSelectionFromOffsets,
+  runsToEditorState,
   textRunStyleToCssPatch,
-} from './lexical-bridge';
+} from "./lexical-bridge";
 
 export type TextEditorSessionOnChange = (runs: TextRun[]) => void;
 
@@ -37,8 +34,10 @@ export class TextEditorSession {
     this.#onChange = onChange;
 
     this.editor = createEditor({
-      namespace: 'TextEditorSession',
-      onError: (error: Error) => { console.error('TextEditorSession Lexical error:', error); },
+      namespace: "TextEditorSession",
+      onError: (error: Error) => {
+        console.error("TextEditorSession Lexical error:", error);
+      },
     });
 
     // Populate with initial content
@@ -70,51 +69,54 @@ export class TextEditorSession {
   setTextStyle(start: number, end: number, update: Partial<TextRunStyle>): void {
     this.#isProgrammatic = true;
     try {
-      this.editor.update(() => {
-        // Set selection to the target range
-        $restoreSelectionFromOffsets(start, end);
-        const sel = $getSelection();
-        if (!$isRangeSelection(sel)) return;
+      this.editor.update(
+        () => {
+          // Set selection to the target range
+          $restoreSelectionFromOffsets(start, end);
+          const sel = $getSelection();
+          if (!$isRangeSelection(sel)) return;
 
-        // ── Format-flag properties (must use FORMAT_TEXT_COMMAND path) ──
-        if (update.fontWeight !== undefined) {
-          const isBold = sel.hasFormat('bold');
-          const wantBold = update.fontWeight === 'bold' || update.fontWeight === '700';
-          if (isBold !== wantBold) {
-            this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+          // ── Format-flag properties (must use FORMAT_TEXT_COMMAND path) ──
+          if (update.fontWeight !== undefined) {
+            const isBold = sel.hasFormat("bold");
+            const wantBold = update.fontWeight === "bold" || update.fontWeight === "700";
+            if (isBold !== wantBold) {
+              this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+            }
           }
-        }
-        if (update.fontStyle !== undefined) {
-          const isItalic = sel.hasFormat('italic');
-          const wantItalic = update.fontStyle === 'italic';
-          if (isItalic !== wantItalic) {
-            this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+          if (update.fontStyle !== undefined) {
+            const isItalic = sel.hasFormat("italic");
+            const wantItalic = update.fontStyle === "italic";
+            if (isItalic !== wantItalic) {
+              this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+            }
           }
-        }
-        if (update.textDecoration !== undefined) {
-          const decoValue = update.textDecoration ?? '';
-          const hasUnderline = sel.hasFormat('underline');
-          const wantUnderline = decoValue.includes('underline');
-          if (hasUnderline !== wantUnderline) {
-            this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+          if (update.textDecoration !== undefined) {
+            const decoValue = update.textDecoration ?? "";
+            const hasUnderline = sel.hasFormat("underline");
+            const wantUnderline = decoValue.includes("underline");
+            if (hasUnderline !== wantUnderline) {
+              this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+            }
+            const hasStrikethrough = sel.hasFormat("strikethrough");
+            const wantStrikethrough = decoValue.includes("line-through");
+            if (hasStrikethrough !== wantStrikethrough) {
+              this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
+            }
           }
-          const hasStrikethrough = sel.hasFormat('strikethrough');
-          const wantStrikethrough = decoValue.includes('line-through');
-          if (hasStrikethrough !== wantStrikethrough) {
-            this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
-          }
-        }
 
-        // ── CSS properties (use $patchStyleText) ──
-        const cssPatch = textRunStyleToCssPatch(update);
-        if (Object.keys(cssPatch).length > 0) {
-          // Re-read selection since FORMAT_TEXT_COMMAND may have split nodes
-          const currentSel = $getSelection();
-          if ($isRangeSelection(currentSel)) {
-            $patchStyleText(currentSel, cssPatch);
+          // ── CSS properties (use $patchStyleText) ──
+          const cssPatch = textRunStyleToCssPatch(update);
+          if (Object.keys(cssPatch).length > 0) {
+            // Re-read selection since FORMAT_TEXT_COMMAND may have split nodes
+            const currentSel = $getSelection();
+            if ($isRangeSelection(currentSel)) {
+              $patchStyleText(currentSel, cssPatch);
+            }
           }
-        }
-      }, { discrete: true });
+        },
+        { discrete: true },
+      );
 
       // Synchronous readback — push to engine immediately
       const runs = editorStateToRuns(this.editor.getEditorState());
@@ -143,10 +145,13 @@ export class TextEditorSession {
   toggleBold(start: number, end: number): void {
     this.#isProgrammatic = true;
     try {
-      this.editor.update(() => {
-        $restoreSelectionFromOffsets(start, end);
-        this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-      }, { discrete: true });
+      this.editor.update(
+        () => {
+          $restoreSelectionFromOffsets(start, end);
+          this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        },
+        { discrete: true },
+      );
       const runs = editorStateToRuns(this.editor.getEditorState());
       this.#onChange(runs);
     } finally {
@@ -158,10 +163,13 @@ export class TextEditorSession {
   toggleItalic(start: number, end: number): void {
     this.#isProgrammatic = true;
     try {
-      this.editor.update(() => {
-        $restoreSelectionFromOffsets(start, end);
-        this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-      }, { discrete: true });
+      this.editor.update(
+        () => {
+          $restoreSelectionFromOffsets(start, end);
+          this.editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        },
+        { discrete: true },
+      );
       const runs = editorStateToRuns(this.editor.getEditorState());
       this.#onChange(runs);
     } finally {

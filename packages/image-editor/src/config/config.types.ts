@@ -1,18 +1,13 @@
-import type React from 'react';
-import type { BuiltInPreset } from '../theme/presets';
+import type React from "react";
+import type { BuiltInPreset } from "../theme/presets";
 
-export type { ThemeColorKey } from '../theme/presets';
-import type { ThemeColorKey } from '../theme/presets';
+export type { ThemeColorKey } from "../theme/presets";
 
-export type ImageEditorToolId =
-  | 'crop'
-  | 'adjust'
-  | 'filter'
-  | 'text'
-  | 'shapes'
-  | 'image';
+import type { ThemeColorKey } from "../theme/presets";
 
-export type ThemePreset = BuiltInPreset | 'custom';
+export type ImageEditorToolId = "crop" | "adjust" | "filter" | "text" | "shapes" | "image";
+
+export type ThemePreset = BuiltInPreset | "custom";
 
 export interface ThemeConfig {
   preset?: ThemePreset;
@@ -35,8 +30,8 @@ export interface UIConfig {
 
 export interface CropToolConfig {
   presets?: string[];
-  modes?: ('crop' | 'cover' | 'fit')[];
-  defaultMode?: 'crop' | 'cover' | 'fit';
+  modes?: ("crop" | "cover" | "fit")[];
+  defaultMode?: "crop" | "cover" | "fit";
   allowCustomRatio?: boolean;
   showStraighten?: boolean;
   showRotateFlip?: boolean;
@@ -71,7 +66,7 @@ export interface TextToolConfig {
 
 export interface ShapesToolConfig {
   presets?: string[];
-  defaultFillMode?: 'filled' | 'outlined';
+  defaultFillMode?: "filled" | "outlined";
   defaultColor?: string;
 }
 
@@ -83,8 +78,8 @@ export interface ImageToolConfig {
 }
 
 export interface ExportConfig {
-  formats?: ('png' | 'jpeg' | 'webp')[];
-  defaultFormat?: 'png' | 'jpeg' | 'webp';
+  formats?: ("png" | "jpeg" | "webp")[];
+  defaultFormat?: "png" | "jpeg" | "webp";
   quality?: number;
 }
 
@@ -94,7 +89,7 @@ export interface CustomTool {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  group?: 'editing' | 'annotation';
+  group?: "editing" | "annotation";
   /** Panel content rendered when this tool is selected. */
   panel?: React.ComponentType;
   /** Content rendered in the contextual bar when this tool is active. */
