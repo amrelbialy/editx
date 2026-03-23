@@ -29,9 +29,7 @@ export type {
   UIConfig,
 } from "./config/config.types";
 export { useConfig } from "./config/config-context";
-export type { ResponsiveState } from "./hooks/use-responsive";
 // Phase 5+6: hooks, i18n, mobile components
-export { useResponsive } from "./hooks/use-responsive";
 export type { ShortcutActions } from "./hooks/use-shortcuts";
 export { useShortcuts } from "./hooks/use-shortcuts";
 export { I18nProvider, useTranslation } from "./i18n/i18n-context";

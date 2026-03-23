@@ -1,43 +1,27 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { AdjustPanel } from "./components/panels/adjust-panel";
-import { BackgroundPropertyPanel } from "./components/panels/background-property-panel";
-import { ColorPropertyPanel } from "./components/panels/color-property-panel";
-import { CropPanel } from "./components/panels/crop-panel";
-import { FilterPanel } from "./components/panels/filter-panel";
-import { ImageFillPanel } from "./components/panels/image-fill-panel";
-import { ImagePanel } from "./components/panels/image-panel";
-import { PositionPropertyPanel } from "./components/panels/position-property-panel";
-import { RotatePanel } from "./components/panels/rotate-panel";
-import { ShadowPropertyPanel } from "./components/panels/shadow-property-panel";
-import { ShapesPanel } from "./components/panels/shapes-panel";
-import { StrokePropertyPanel } from "./components/panels/stroke-property-panel";
-import { TextAdvancedPanel } from "./components/panels/text-advanced-panel";
-import { TextPanel } from "./components/panels/text-panel";
-import { BlockActionBar } from "./components/shell/block-action-bar";
-import { BlockPropertiesBar } from "./components/shell/block-properties-bar";
-import { CanvasArea } from "./components/shell/canvas-area";
+import type React from "react";
+import { useEffect, useMemo } from "react";
+import { ActiveToolContent } from "./components/shell/active-tool-content";
+import { CanvasSection } from "./components/shell/canvas-section";
 import { EditorShell } from "./components/shell/editor-shell";
-import { MobileToolbar } from "./components/shell/mobile-toolbar";
+import { ErrorPlaceholder } from "./components/shell/error-placeholder";
+import { LoadingOverlay } from "./components/shell/loading-overlay";
+import { getPropertyPanelTitle, getToolPanelTitle } from "./components/shell/panel-titles";
+import { PropertySubPanels } from "./components/shell/property-sub-panels";
+import { ToolNav } from "./components/shell/tool-nav";
 import { ToolPanel } from "./components/shell/tool-panel";
-import { ToolPropertiesBar } from "./components/shell/tool-properties-bar";
-import { ToolSheet } from "./components/shell/tool-sheet";
-import { ToolSidebar } from "./components/shell/tool-sidebar";
 import { Topbar } from "./components/shell/topbar";
-import { TextEditorOverlay } from "./components/text-editor-overlay";
-import { Spinner } from "./components/ui/spinner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import type { EditorEventCallbacks, EditorSlots, ImageEditorConfig } from "./config/config.types";
 import { ImageEditorProvider } from "./config/config-context";
 import { useAdjustmentsTool } from "./hooks/use-adjustments-tool";
 import { useBlockActions } from "./hooks/use-block-actions";
 import { useBlockEffects } from "./hooks/use-block-effects";
-import { useBlockScreenRect } from "./hooks/use-block-screen-rect";
 import { useCropTool } from "./hooks/use-crop-tool";
+import { useEditorZoom } from "./hooks/use-editor-zoom";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
 import { useFilterTool } from "./hooks/use-filter-tool";
 import { useImageTool } from "./hooks/use-image-tool";
-import { useResponsive } from "./hooks/use-responsive";
 import { useRotateFlipTool } from "./hooks/use-rotate-flip-tool";
 import { useShapesTool } from "./hooks/use-shapes-tool";
 import { useShortcuts } from "./hooks/use-shortcuts";
@@ -68,18 +52,18 @@ export interface ImageEditorProps {
   events?: EditorEventCallbacks;
 }
 
-export const ImageEditor: React.FC<ImageEditorProps> = ({
-  src,
-  onSave,
-  onClose,
-  width = "100%",
-  height = "100vh",
-  validation,
-  keepZoomOnSourceChange = false,
-  config: userConfig,
-  slots,
-  events,
-}) => {
+export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
+  const {
+    src,
+    onSave,
+    width = "100%",
+    height = "100vh",
+    validation,
+    keepZoomOnSourceChange = false,
+    config: userConfig,
+    slots,
+    events,
+  } = props;
   // --- Engine lifecycle ---
   const {
     containerRef,
@@ -97,77 +81,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const error = useImageEditorStore((s) => s.error);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
 
-  // --- Responsive hook ---
-  const { isMobile } = useResponsive();
-
-  // --- Zoom state & helpers ---
-  const [zoomPercent, setZoomPercent] = useState<number | null>(null);
-
-  const updateZoomLabel = useCallback(() => {
-    const ce = engineRef.current;
-    if (!ce) return;
-    setZoomPercent(Math.round(ce.editor.getZoom() * 100));
-  }, [engineRef]);
-
-  const handleZoomIn = useCallback(() => {
-    const ce = engineRef.current;
-    if (!ce) return;
-    const target = ce.editor.getZoom() * 1.25;
-    ce.editor.setZoom(target, true);
-    setZoomPercent(Math.round(target * 100));
-  }, [engineRef]);
-
-  const handleZoomOut = useCallback(() => {
-    const ce = engineRef.current;
-    if (!ce) return;
-    const target = ce.editor.getZoom() * 0.8;
-    ce.editor.setZoom(target, true);
-    setZoomPercent(Math.round(target * 100));
-  }, [engineRef]);
-
-  const handleAutoFitPage = useCallback(() => {
-    engineRef.current?.editor.fitToScreen(24, true);
-    updateZoomLabel();
-  }, [engineRef, updateZoomLabel]);
-
-  const handleFitPage = useCallback(() => {
-    engineRef.current?.editor.fitToScreen(0, true);
-    updateZoomLabel();
-  }, [engineRef, updateZoomLabel]);
-
-  const handleFitSelection = useCallback(() => {
-    engineRef.current?.editor.fitToSelection(24, true);
-    updateZoomLabel();
-  }, [engineRef, updateZoomLabel]);
-
-  const handleZoomPreset = useCallback(
-    (factor: number) => {
-      const ce = engineRef.current;
-      if (!ce) return;
-      ce.editor.setZoom(factor, true);
-      setZoomPercent(Math.round(factor * 100));
-    },
-    [engineRef],
-  );
-
-  const handleZoom100 = useCallback(() => {
-    handleZoomPreset(1);
-  }, [handleZoomPreset]);
-
-  // Initialize zoom label when engine becomes available
-  useEffect(() => {
-    if (engine) updateZoomLabel();
-  }, [engine, updateZoomLabel]);
-
-  // Update zoom label when wheel-zoom changes it from the canvas
-  useEffect(() => {
-    if (!engine) return;
-    const handler = () => updateZoomLabel();
-    engine.on("zoom:changed", handler);
-    return () => engine.off("zoom:changed", handler);
-  }, [engine, updateZoomLabel]);
-
-  const zoomLabel = zoomPercent !== null ? `${zoomPercent}%` : "Auto";
+  // --- Zoom ---
+  const zoom = useEditorZoom({ engineRef, engine });
 
   // --- Tool hooks ---
   const crop = useCropTool({ engineRef });
@@ -183,8 +98,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     onDeselect: () => setSelectedShapeId(null),
   });
 
-  const blockScreenRect = useBlockScreenRect(engine ?? null, selectedShapeId);
-
   // Determine if a block is selected and its type
   const selectedBlockType =
     engine && selectedShapeId !== null
@@ -194,27 +107,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     engineRef,
     blockId: selectedBlockType === "image" ? selectedShapeId : null,
   });
-
-  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
-  const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
-
-  // Subscribe to dblclick on text blocks to enter inline editing
-  useEffect(() => {
-    if (!engine) return;
-    const unsub = engine.on("block:dblclick", (blockId: number) => {
-      if (engine.block.getType(blockId) === "text") {
-        setEditingTextBlockId(blockId);
-      }
-    });
-    return unsub;
-  }, [engine, setEditingTextBlockId]);
-
-  const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
-
-  const handleCloseTextEditor = useCallback(() => {
-    setEditingTextBlockId(null);
-    setTextSelectionRange(null);
-  }, [setEditingTextBlockId, setTextSelectionRange]);
 
   const { activeTool, activeToolId, handleSidebarToolSelect, handleDone, handleContextualReset } =
     useToolManager({
@@ -240,94 +132,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     events,
   });
 
-  const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
-  const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
-
-  const isCropMode = activeTool === "crop";
-  const isRotateMode = activeTool === "rotate";
-  const isAdjustMode = activeTool === "adjust";
-  const isFilterMode = activeTool === "filter";
-  const isShapesMode = activeTool === "shapes";
-  const isTextMode = activeTool === "text";
-  const isImageMode = activeTool === "image";
-
-  const toolPanelTitle = (() => {
-    switch (activeTool) {
-      case "crop":
-        return "Crop";
-      case "rotate":
-        return "Rotate & Flip";
-      case "adjust":
-        return "Adjustments";
-      case "filter":
-        return "Filters";
-      case "shapes":
-        return "Shapes";
-      case "text":
-        return "Text";
-      case "image":
-        return "Image";
-      default: {
-        const ct = userConfig?.customTools?.find((t) => t.id === activeTool);
-        return ct?.label;
-      }
-    }
-  })();
-
-  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === activeTool);
-
-  const hasSelectedBlock =
-    selectedBlockType === "text" ||
-    selectedBlockType === "graphic" ||
-    selectedBlockType === "image";
-
-  // Property side panel title mapping
-  const propertySidePanelTitle = (() => {
-    switch (propertySidePanel) {
-      case "color":
-        return "Color";
-      case "background":
-        return "Background";
-      case "shadow":
-        return "Shadow";
-      case "position":
-        return "Position";
-      case "stroke":
-        return "Stroke";
-      case "adjust":
-        return "Adjustments";
-      case "filter":
-        return "Filters";
-      case "imageFill":
-        return "Image";
-      case "text-advanced":
-        return "Advanced";
-      default:
-        return undefined;
-    }
-  })();
-
-  // Whether the tool panel should be open
-  const toolPanelOpen = activeTool !== "select" || propertySidePanel !== null;
-  const effectivePanelTitle = propertySidePanel ? propertySidePanelTitle : toolPanelTitle;
-
-  // Reset property side panel when block is deselected
-  useEffect(() => {
-    if (!hasSelectedBlock && propertySidePanel !== null) {
-      setPropertySidePanel(null);
-    }
-  }, [hasSelectedBlock, propertySidePanel, setPropertySidePanel]);
-
+  
   // --- Keyboard shortcuts ---
   useShortcuts({
     enabled: !isLoading && !error,
     onToolSelect: handleSidebarToolSelect,
     onUndo: () => engineRef.current?.editor.undo(),
     onRedo: () => engineRef.current?.editor.redo(),
-    onZoomIn: handleZoomIn,
-    onZoomOut: handleZoomOut,
-    onZoomFit: handleAutoFitPage,
-    onZoom100: handleZoom100,
+    onZoomIn: zoom.handleZoomIn,
+    onZoomOut: zoom.handleZoomOut,
+    onZoomFit: zoom.handleAutoFitPage,
+    onZoom100: zoom.handleZoom100,
     onDuplicate: blockActions.duplicate,
     onBringForward: blockActions.bringForward,
     onSendBackward: blockActions.sendBackward,
@@ -350,6 +165,33 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     },
   });
 
+
+  const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
+  const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
+
+  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === activeTool);
+
+  const hasSelectedBlock =
+    selectedBlockType === "text" ||
+    selectedBlockType === "graphic" ||
+    selectedBlockType === "image";
+
+  const toolPanelOpen = activeTool !== "select" || propertySidePanel !== null;
+  const effectivePanelTitle = useMemo(
+    () =>
+      propertySidePanel
+        ? getPropertyPanelTitle(propertySidePanel)
+        : getToolPanelTitle(activeTool, userConfig?.customTools),
+    [propertySidePanel, activeTool, userConfig?.customTools],
+  );
+
+  // Reset property side panel when block is deselected
+  useEffect(() => {
+    if (!hasSelectedBlock && propertySidePanel !== null) {
+      setPropertySidePanel(null);
+    }
+  }, [hasSelectedBlock, propertySidePanel, setPropertySidePanel]);
+
   return (
     <ImageEditorProvider config={userConfig}>
       <ThemeProvider theme={userConfig?.theme}>
@@ -357,9 +199,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
           <TooltipProvider>
             <EditorShell style={{ width, height }} className="relative">
               {/* Drag/drop + paste wrapper */}
-              {/* biome-ignore lint/a11y/noNoninteractiveTabindex: tabIndex needed for paste/keyboard focus */}
               <div
                 className="flex flex-col h-full w-full"
+                role="application"
                 tabIndex={0}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
@@ -370,312 +212,86 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                   onRedo={() => engineRef.current?.editor.redo()}
                   canUndo={!!engine}
                   canRedo={!!engine}
-                  onZoomIn={handleZoomIn}
-                  onZoomOut={handleZoomOut}
-                  onAutoFitPage={handleAutoFitPage}
-                  onFitPage={handleFitPage}
-                  onFitSelection={handleFitSelection}
+                  onZoomIn={zoom.handleZoomIn}
+                  onZoomOut={zoom.handleZoomOut}
+                  onAutoFitPage={zoom.handleAutoFitPage}
+                  onFitPage={zoom.handleFitPage}
+                  onFitSelection={zoom.handleFitSelection}
                   canFitSelection={selectedShapeId !== null}
-                  onZoomPreset={handleZoomPreset}
-                  zoomLabel={zoomLabel}
+                  onZoomPreset={zoom.handleZoomPreset}
+                  zoomLabel={zoom.zoomLabel}
                   onExport={handleExport}
                   isExporting={isExporting}
                   topbarRight={slots?.topbarRight}
                 />
 
-                <div className="flex flex-1 overflow-hidden">
-                  {/* Desktop: sidebar + slide-out panel */}
-                  {!isMobile && (
-                    <>
-                      <ToolSidebar
-                        activeTool={activeToolId}
-                        onToolSelect={handleSidebarToolSelect}
-                        customTools={userConfig?.customTools}
-                        sidebarBottom={slots?.sidebarBottom}
-                      />
+                <div className="flex flex-col-reverse @3xl/editor:flex-row flex-1 overflow-hidden">
+                  <ToolNav
+                    activeTool={activeToolId}
+                    onToolSelect={handleSidebarToolSelect}
+                    sidebarBottom={slots?.sidebarBottom}
+                  />
 
-                      <ToolPanel
-                        open={toolPanelOpen}
-                        title={effectivePanelTitle}
-                        onClose={() => {
-                          if (propertySidePanel) {
-                            setPropertySidePanel(null);
-                          } else if (activeTool === "crop") {
-                            crop.handleCropCancel();
-                          } else {
-                            setActiveTool("select");
-                          }
-                        }}
-                      >
-                        {/* Property sub-panels (override tool content) */}
-                        {propertySidePanel && engine && selectedShapeId !== null ? (
-                          <>
-                            {propertySidePanel === "color" && (
-                              <ColorPropertyPanel
-                                engine={engine}
-                                blockId={selectedShapeId}
-                                blockType={selectedBlockType as "text" | "graphic"}
-                              />
-                            )}
-                            {propertySidePanel === "background" && (
-                              <BackgroundPropertyPanel engine={engine} blockId={selectedShapeId} />
-                            )}
-                            {propertySidePanel === "shadow" && (
-                              <ShadowPropertyPanel engine={engine} blockId={selectedShapeId} />
-                            )}
-                            {propertySidePanel === "stroke" && (
-                              <StrokePropertyPanel engine={engine} blockId={selectedShapeId} />
-                            )}
-                            {propertySidePanel === "position" && (
-                              <PositionPropertyPanel
-                                engine={engine}
-                                blockId={selectedShapeId}
-                                onBringForward={blockActions.bringForward}
-                                onSendBackward={blockActions.sendBackward}
-                                onBringToFront={blockActions.bringToFront}
-                                onSendToBack={blockActions.sendToBack}
-                                onAlign={blockActions.alignToPage}
-                              />
-                            )}
-                            {propertySidePanel === "text-advanced" &&
-                              selectedBlockType === "text" && (
-                                <TextAdvancedPanel engine={engine} blockId={selectedShapeId} />
-                              )}
-                            {propertySidePanel === "adjust" && selectedBlockType === "image" && (
-                              <AdjustPanel
-                                values={blockEffects.adjustValues}
-                                onChange={blockEffects.handleAdjustChange}
-                                onCommit={blockEffects.handleAdjustCommit}
-                                onReset={blockEffects.handleAdjustReset}
-                              />
-                            )}
-                            {propertySidePanel === "filter" && selectedBlockType === "image" && (
-                              <FilterPanel
-                                activeFilter={blockEffects.activeFilter}
-                                onSelect={blockEffects.handleFilterSelect}
-                              />
-                            )}
-                            {propertySidePanel === "imageFill" && selectedBlockType === "image" && (
-                              <ImageFillPanel
-                                engine={engine}
-                                blockId={selectedShapeId}
-                                onReplace={(file: File) =>
-                                  imageTool.handleReplaceImage(file, selectedShapeId)
-                                }
-                              />
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {isCropMode && (
-                              <CropPanel
-                                onPresetChange={crop.handleCropPresetChange}
-                                onResizeDimensions={crop.handleResizeDimensions}
-                                cropDimensions={crop.cropDimensions}
-                              />
-                            )}
-                            {isRotateMode && (
-                              <RotatePanel
-                                rotation={rotateFlip.rotationState.rotation}
-                                flipH={rotateFlip.rotationState.flipH}
-                                flipV={rotateFlip.rotationState.flipV}
-                                onRotationChange={rotateFlip.handleRotationChange}
-                                onRotateClockwise={rotateFlip.handleRotateClockwise}
-                                onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
-                                onFlipHorizontal={rotateFlip.handleFlipHorizontal}
-                                onFlipVertical={rotateFlip.handleFlipVertical}
-                                onReset={rotateFlip.handleRotateReset}
-                              />
-                            )}
-                            {isAdjustMode && (
-                              <AdjustPanel
-                                values={adjustments.adjustValues}
-                                onChange={adjustments.handleAdjustChange}
-                                onCommit={adjustments.handleAdjustCommit}
-                                onReset={adjustments.handleAdjustReset}
-                              />
-                            )}
-                            {isFilterMode && (
-                              <FilterPanel
-                                activeFilter={filter.activeFilter}
-                                onSelect={filter.handleFilterSelect}
-                              />
-                            )}
-                            {isShapesMode && <ShapesPanel onAddShape={shapes.handleAddShape} />}
-                            {isTextMode && <TextPanel onAddText={textTool.handleAddText} />}
-                            {isImageMode && <ImagePanel onAddImage={imageTool.handleAddImage} />}
-                            {/* Custom tool panel */}
-                            {activeCustomTool?.panel && <activeCustomTool.panel />}
-                          </>
-                        )}
-                      </ToolPanel>
-                    </>
-                  )}
-
-                  <CanvasArea
-                    canvasRef={containerRef}
-                    header={
-                      engine && selectedShapeId !== null && hasSelectedBlock ? (
-                        <BlockPropertiesBar
-                          engine={engine}
-                          blockId={selectedShapeId}
-                          blockType={selectedBlockType as "text" | "graphic" | "image"}
-                        />
-                      ) : activeTool !== "select" ? (
-                        <ToolPropertiesBar
-                          activeTool={activeTool}
-                          onReset={handleContextualReset}
-                          onDone={handleDone}
-                          onRotateClockwise={rotateFlip.handleRotateClockwise}
-                          onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
-                          onFlipHorizontal={rotateFlip.handleFlipHorizontal}
-                          onFlipVertical={rotateFlip.handleFlipVertical}
-                          customContent={
-                            activeCustomTool?.contextualBar
-                              ? React.createElement(activeCustomTool.contextualBar)
-                              : slots?.contextualBarExtra
-                          }
-                        />
-                      ) : undefined
-                    }
-                    overlay={
-                      engine && selectedShapeId !== null && hasSelectedBlock && blockScreenRect ? (
-                        <div
-                          className="absolute z-10 pointer-events-none"
-                          style={{
-                            left: blockScreenRect.x + blockScreenRect.width / 2,
-                            top: blockScreenRect.y - 8,
-                            transform: "translate(-50%, -100%)",
-                          }}
-                        >
-                          <div className="pointer-events-auto" data-text-toolbar>
-                            {editingTextBlockId !== null ? null : (
-                              <BlockActionBar
-                                blockType={selectedBlockType!}
-                                onEdit={
-                                  selectedBlockType === "text"
-                                    ? () => setEditingTextBlockId(selectedShapeId)
-                                    : undefined
-                                }
-                                onReplace={
-                                  selectedBlockType === "image"
-                                    ? (file: File) =>
-                                        imageTool.handleReplaceImage(file, selectedShapeId)
-                                    : undefined
-                                }
-                                onBringForward={blockActions.bringForward}
-                                onSendBackward={blockActions.sendBackward}
-                                onBringToFront={blockActions.bringToFront}
-                                onSendToBack={blockActions.sendToBack}
-                                onDuplicate={blockActions.duplicate}
-                                onDelete={blockActions.deleteBlock}
-                                onAlign={blockActions.alignToPage}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      ) : undefined
-                    }
+                  <ToolPanel
+                    open={toolPanelOpen}
+                    title={effectivePanelTitle}
+                    onClose={() => {
+                      if (propertySidePanel) {
+                        setPropertySidePanel(null);
+                      } else if (activeTool === "crop") {
+                        crop.handleCropCancel();
+                      } else {
+                        setActiveTool("select");
+                      }
+                    }}
                   >
-                    {engine && editingTextBlockId !== null && (
-                      <TextEditorOverlay
+                    {propertySidePanel && engine && selectedShapeId !== null ? (
+                      <PropertySubPanels
+                        panel={propertySidePanel}
                         engine={engine}
-                        blockId={editingTextBlockId}
-                        canvasRef={containerRef}
-                        onClose={handleCloseTextEditor}
+                        blockId={selectedShapeId}
+                        blockType={selectedBlockType}
+                        blockEffects={blockEffects}
+                        blockActions={blockActions}
+                        onReplaceImage={(file: File) =>
+                          imageTool.handleReplaceImage(file, selectedShapeId)
+                        }
+                      />
+                    ) : (
+                      <ActiveToolContent
+                        activeTool={activeTool}
+                        crop={crop}
+                        rotateFlip={rotateFlip}
+                        adjustments={adjustments}
+                        filter={filter}
+                        shapes={shapes}
+                        textTool={textTool}
+                        imageTool={imageTool}
+                        activeCustomToolPanel={activeCustomTool?.panel}
                       />
                     )}
-                  </CanvasArea>
-                </div>
+                  </ToolPanel>
 
-                {/* Mobile: bottom toolbar + sheet */}
-                {isMobile && (
-                  <>
-                    <MobileToolbar
-                      activeTool={activeToolId}
-                      onToolSelect={handleSidebarToolSelect}
-                    />
-                    <ToolSheet
-                      open={activeTool !== "select"}
-                      title={toolPanelTitle}
-                      onClose={() => {
-                        if (activeTool === "crop") {
-                          crop.handleCropCancel();
-                        } else {
-                          setActiveTool("select");
-                        }
-                      }}
-                    >
-                      {isCropMode && (
-                        <CropPanel
-                          onPresetChange={crop.handleCropPresetChange}
-                          onResizeDimensions={crop.handleResizeDimensions}
-                          cropDimensions={crop.cropDimensions}
-                        />
-                      )}
-                      {isRotateMode && (
-                        <RotatePanel
-                          rotation={rotateFlip.rotationState.rotation}
-                          flipH={rotateFlip.rotationState.flipH}
-                          flipV={rotateFlip.rotationState.flipV}
-                          onRotationChange={rotateFlip.handleRotationChange}
-                          onRotateClockwise={rotateFlip.handleRotateClockwise}
-                          onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
-                          onFlipHorizontal={rotateFlip.handleFlipHorizontal}
-                          onFlipVertical={rotateFlip.handleFlipVertical}
-                          onReset={rotateFlip.handleRotateReset}
-                        />
-                      )}
-                      {isAdjustMode && (
-                        <AdjustPanel
-                          values={adjustments.adjustValues}
-                          onChange={adjustments.handleAdjustChange}
-                          onCommit={adjustments.handleAdjustCommit}
-                          onReset={adjustments.handleAdjustReset}
-                        />
-                      )}
-                      {isFilterMode && (
-                        <FilterPanel
-                          activeFilter={filter.activeFilter}
-                          onSelect={filter.handleFilterSelect}
-                        />
-                      )}
-                      {isShapesMode && <ShapesPanel onAddShape={shapes.handleAddShape} />}
-                      {isTextMode && <TextPanel onAddText={textTool.handleAddText} />}
-                      {isImageMode && <ImagePanel onAddImage={imageTool.handleAddImage} />}
-                      {activeCustomTool?.panel && <activeCustomTool.panel />}
-                    </ToolSheet>
-                  </>
-                )}
+                  <CanvasSection
+                    canvasRef={containerRef}
+                    engine={engine}
+                    activeTool={activeTool}
+                    selectedShapeId={selectedShapeId}
+                    selectedBlockType={selectedBlockType}
+                    hasSelectedBlock={hasSelectedBlock}
+                    blockActions={blockActions}
+                    rotateFlip={rotateFlip}
+                    imageTool={imageTool}
+                    activeCustomToolBar={activeCustomTool?.contextualBar}
+                    slots={slots}
+                    onContextualReset={handleContextualReset}
+                    onDone={handleDone}
+                  />
+                </div>
               </div>
 
-              {/* Loading overlay */}
-              {isLoading && !error && (
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-10 gap-3"
-                  role="status"
-                >
-                  <Spinner size="lg" />
-                  <span className="text-muted-foreground text-sm">Loading image...</span>
-                </div>
-              )}
-
-              {/* Error overlay with retry */}
-              {error && (
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 z-20 gap-4"
-                  role="alert"
-                >
-                  <div className="text-destructive text-lg font-medium">Failed to load image</div>
-                  <div className="text-muted-foreground text-sm max-w-md text-center">{error}</div>
-                  <button
-                    onClick={handleRetry}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
+              {isLoading && !error && <LoadingOverlay />}
+              {error && <ErrorPlaceholder error={error} onRetry={handleRetry} />}
             </EditorShell>
           </TooltipProvider>
         </I18nProvider>

@@ -4,7 +4,7 @@ Prepare the creative-editor for first alpha npm publish. Three tracks: **code qu
 
 ---
 
-## Phase 0: Project Rules & Conventions
+## Phase 0: Project Rules & Conventions ✅ DONE
 
 **0a. Create `CLAUDE.md`** at project root — project rules loaded by Claude-based agents
 
@@ -49,7 +49,7 @@ Contents:
 
 ---
 
-## Phase 1: Code Cleanup & Dead Dependencies
+## Phase 1: Code Cleanup & Dead Dependencies ✅ DONE
 
 1. **Delete `packages/react-editor/` entirely** — no code imports it; image-editor is fully independent
    - Delete the directory
@@ -88,9 +88,9 @@ Contents:
 
 ---
 
-## Phase 2: Image-Editor File Structure Refactoring
+## Phase 2: Image-Editor File Structure Refactoring ✅ DONE
 
-### 2A. Container-query responsive layout (SDK-friendly)
+### 2A. Container-query responsive layout (SDK-friendly) ✅
 
 Replace the `useResponsive()` + `isMobile` conditional rendering pattern with **CSS Container Queries** (`@container`). This makes the editor respond to its **own container size**, not the viewport — critical for SDK usage where the editor may be embedded in a sidebar, modal, or partial-width area.
 
@@ -137,7 +137,7 @@ Tailwind 4 supports container queries natively via `@container` variants.
    - Remove from `index.ts` exports (breaking change — document in changelog)
    - If any edge case needs JS container width, use `ResizeObserver` on the shell ref (not `window.innerWidth`)
 
-### 2B. Break up `image-editor.tsx` (632 lines → ~250)
+### 2B. Break up `image-editor.tsx` (632 lines → ~250) ✅
 
 10. **Extract `useEditorZoom` hook** — zoom state + 7 callbacks + 2 effects (~60 lines)
     - New file: `packages/image-editor/src/hooks/use-editor-zoom.ts`
@@ -153,7 +153,7 @@ Tailwind 4 supports container queries natively via `@container` variants.
     - New file: `packages/image-editor/src/components/shell/canvas-block-overlay.tsx`
     - Currently inline as `overlay` prop of `<CanvasArea>`
 
-### 2C. Resulting parent layout in `image-editor.tsx`
+### 2C. Resulting parent layout in `image-editor.tsx` ✅
 
 After all extractions, the JSX becomes:
 
@@ -179,7 +179,7 @@ After all extractions, the JSX becomes:
 No `isMobile` checks. No duplicated panel content. No viewport dependency. ~250 lines.
 Editor layout adapts to its own container width — works correctly at any embedding size.
 
-### 2D. Add barrel exports for internal modules
+### 2D. Add barrel exports for internal modules (deferred to Phase 3+)
 
 13. **Add `index.ts` barrel files** to:
     - `components/panels/index.ts`

@@ -43,7 +43,7 @@ Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tes
 - **Max 250 lines per file** (components, hooks, utils). Split by concern before adding more code.
 - **One React component per file**. Co-located types and small helpers are fine.
 - **One concern per hook**. Compose via aggregator hooks.
-- **CSS Container Queries** (`@container/editor` + `@md/editor:`) over viewport breakpoints or JS detection — the editor must adapt to its own container size, not the viewport.
+- **CSS Container Queries** (`@container/editor` + `@3xl/editor:`) over viewport breakpoints or JS detection — the editor must adapt to its own container size, not the viewport.
 - **No `console.log` in production code** — use `__CE_PERF` flag for perf instrumentation.
 
 ## Coding Conventions
