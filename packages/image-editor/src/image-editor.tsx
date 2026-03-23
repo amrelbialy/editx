@@ -9,6 +9,7 @@ import { ImagePanel } from './components/panels/image-panel';
 import { ColorPropertyPanel } from './components/panels/color-property-panel';
 import { BackgroundPropertyPanel } from './components/panels/background-property-panel';
 import { ShadowPropertyPanel } from './components/panels/shadow-property-panel';
+import { TextAdvancedPanel } from './components/panels/text-advanced-panel';
 import { StrokePropertyPanel } from './components/panels/stroke-property-panel';
 import { PositionPropertyPanel } from './components/panels/position-property-panel';
 import { ImageFillPanel } from './components/panels/image-fill-panel';
@@ -284,6 +285,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       case 'adjust': return 'Adjustments';
       case 'filter': return 'Filters';
       case 'imageFill': return 'Image';
+      case 'text-advanced': return 'Advanced';
       default: return undefined;
     }
   })();
@@ -420,6 +422,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                                 onAlign={blockActions.alignToPage}
                               />
                             )}
+                            {propertySidePanel === 'text-advanced' && selectedBlockType === 'text' && (
+                              <TextAdvancedPanel engine={engine} blockId={selectedShapeId} />
+                            )}
                             {propertySidePanel === 'adjust' && selectedBlockType === 'image' && (
                               <AdjustPanel
                                 values={blockEffects.adjustValues}
@@ -531,9 +536,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                             transform: 'translate(-50%, -100%)',
                           }}
                         >
-                          <div className="pointer-events-auto">
-                            <BlockActionBar
-                              blockType={selectedBlockType!}
+                          <div className="pointer-events-auto" data-text-toolbar>
+                            {editingTextBlockId !== null ? null : (
+                              <BlockActionBar
+                                blockType={selectedBlockType!}
+                                onEdit={
+                                  selectedBlockType === 'text'
+                                    ? () => setEditingTextBlockId(selectedShapeId)
+                                    : undefined
+                                }
                               onReplace={
                                 selectedBlockType === 'image'
                                   ? (file: File) => imageTool.handleReplaceImage(file, selectedShapeId)
@@ -547,6 +558,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                               onDelete={blockActions.deleteBlock}
                               onAlign={blockActions.alignToPage}
                             />
+                            )}
                           </div>
                         </div>
                       ) : undefined

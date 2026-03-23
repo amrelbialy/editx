@@ -65,6 +65,33 @@ describe('text-run-utils', () => {
     it('returns false with different fontWeight', () => {
       expect(stylesEqual({ fontWeight: 'bold' }, { fontWeight: 'normal' })).toBe(false);
     });
+
+    it('returns true when new style properties match', () => {
+      expect(stylesEqual(
+        { backgroundColor: '#ff0', textTransform: 'uppercase', textStrokeColor: '#000', textStrokeWidth: 2 },
+        { backgroundColor: '#ff0', textTransform: 'uppercase', textStrokeColor: '#000', textStrokeWidth: 2 },
+      )).toBe(true);
+    });
+
+    it('returns false when backgroundColor differs', () => {
+      expect(stylesEqual({ backgroundColor: '#ff0' }, { backgroundColor: '#0ff' })).toBe(false);
+    });
+
+    it('returns false when textTransform differs', () => {
+      expect(stylesEqual({ textTransform: 'uppercase' }, { textTransform: 'lowercase' })).toBe(false);
+    });
+
+    it('returns false when textStrokeWidth differs', () => {
+      expect(stylesEqual({ textStrokeWidth: 1 }, { textStrokeWidth: 2 })).toBe(false);
+    });
+
+    it('returns false when textShadowColor differs', () => {
+      expect(stylesEqual({ textShadowColor: '#000' }, { textShadowColor: '#fff' })).toBe(false);
+    });
+
+    it('treats undefined and missing new properties as equal', () => {
+      expect(stylesEqual({ fill: '#000' }, { fill: '#000', backgroundColor: undefined })).toBe(true);
+    });
   });
 
   // ── mergeAdjacentRuns ──────────────────────────────

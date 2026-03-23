@@ -48,7 +48,15 @@ export function stylesEqual(a: TextRunStyle, b: TextRunStyle): boolean {
     (a.fontStyle ?? undefined) === (b.fontStyle ?? undefined) &&
     (a.fill ?? undefined) === (b.fill ?? undefined) &&
     (a.letterSpacing ?? undefined) === (b.letterSpacing ?? undefined) &&
-    (a.textDecoration ?? undefined) === (b.textDecoration ?? undefined)
+    (a.textDecoration ?? undefined) === (b.textDecoration ?? undefined) &&
+    (a.backgroundColor ?? undefined) === (b.backgroundColor ?? undefined) &&
+    (a.textTransform ?? undefined) === (b.textTransform ?? undefined) &&
+    (a.textShadowColor ?? undefined) === (b.textShadowColor ?? undefined) &&
+    (a.textShadowBlur ?? undefined) === (b.textShadowBlur ?? undefined) &&
+    (a.textShadowOffsetX ?? undefined) === (b.textShadowOffsetX ?? undefined) &&
+    (a.textShadowOffsetY ?? undefined) === (b.textShadowOffsetY ?? undefined) &&
+    (a.textStrokeColor ?? undefined) === (b.textStrokeColor ?? undefined) &&
+    (a.textStrokeWidth ?? undefined) === (b.textStrokeWidth ?? undefined)
   );
 }
 

@@ -5,7 +5,7 @@ import {
   OPACITY, VISIBLE,
   FILL_COLOR, STROKE_COLOR, STROKE_WIDTH,
   TEXT_CONTENT, FONT_SIZE, FONT_FAMILY,
-  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP,
+  TEXT_RUNS, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN, TEXT_PADDING, TEXT_WRAP, TEXT_AUTO_HEIGHT,
   IMAGE_SRC,
   CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT, CROP_ENABLED,
   CROP_FLIP_HORIZONTAL, CROP_FLIP_VERTICAL,
@@ -152,7 +152,7 @@ export class KonvaNodeFactory {
     node: Konva.Node,
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): void {
+  ): { autoHeight?: number } | void {
     const props = block.properties;
 
     // Page blocks use PAGE_WIDTH/PAGE_HEIGHT and are always at origin
@@ -177,7 +177,10 @@ export class KonvaNodeFactory {
     }
 
     if (block.type === 'text') {
-      this.#updateTextNode(node as FormattedText, props, width, height);
+      const result = this.#updateTextNode(node as FormattedText, props, width, height, block, resolveBlock);
+      if (result.computedHeight != null) {
+        return { autoHeight: result.computedHeight };
+      }
       return;
     }
 
@@ -592,7 +595,14 @@ export class KonvaNodeFactory {
     }
   }
 
-  #updateTextNode(textNode: FormattedText, props: Record<string, unknown>, width: number, height: number): void {
+  #updateTextNode(
+    textNode: FormattedText,
+    props: Record<string, unknown>,
+    width: number,
+    height: number,
+    block?: BlockData,
+    resolveBlock?: (id: number) => BlockData | undefined,
+  ): { computedHeight: number | null } {
     // Prefer TEXT_RUNS; fall back to legacy single-style properties
     let runs = props[TEXT_RUNS] as TextRun[] | undefined;
     if (!runs || !Array.isArray(runs) || runs.length === 0) {
@@ -610,12 +620,56 @@ export class KonvaNodeFactory {
     }
     textNode.textRuns(runs);
     textNode.width(width);
-    textNode.height(height);
     textNode.align((props[TEXT_ALIGN] as string) ?? 'left');
     textNode.lineHeight((props[TEXT_LINE_HEIGHT] as number) ?? 1.2);
     textNode.verticalAlign((props[TEXT_VERTICAL_ALIGN] as string) ?? 'top');
     textNode.padding((props[TEXT_PADDING] as number) ?? 0);
     textNode.wrap((props[TEXT_WRAP] as string) ?? 'word');
+
+    // Block-level background fill
+    let bgFill = '';
+    const fillEnabled = (props[FILL_ENABLED] as boolean) ?? false;
+    if (fillEnabled) {
+      let bgColor: Color | undefined;
+      if (block?.fillId != null && resolveBlock) {
+        const fillBlock = resolveBlock(block.fillId);
+        if (fillBlock) {
+          const c = fillBlock.properties[FILL_SOLID_COLOR];
+          if (c && typeof c === 'object') bgColor = c as Color;
+        }
+      }
+      if (!bgColor) {
+        const fc = props[FILL_COLOR];
+        if (fc && typeof fc === 'object') bgColor = fc as Color;
+      }
+      if (bgColor) bgFill = colorToHex(bgColor);
+    }
+    textNode.setAttr('backgroundFill', bgFill);
+
+    // Block-level shadow
+    const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
+    if (shadowEnabled) {
+      const sc = props[SHADOW_COLOR];
+      textNode.shadowColor(sc && typeof sc === 'object' ? colorToHex(sc as Color) : 'rgba(0,0,0,0.5)');
+      textNode.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
+      textNode.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
+      textNode.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
+      textNode.shadowEnabled(true);
+      textNode.shadowForStrokeEnabled(false);
+    } else {
+      textNode.shadowEnabled(false);
+    }
+
+    // Auto-height: let the text block grow to fit content
+    const autoHeight = (props[TEXT_AUTO_HEIGHT] as boolean) ?? true;
+    if (autoHeight) {
+      const computed = textNode.getComputedHeight();
+      textNode.height(Math.max(computed, 10));
+      return { computedHeight: computed };
+    } else {
+      textNode.height(height);
+      return { computedHeight: null };
+    }
   }
 
   #updateEllipseNode(

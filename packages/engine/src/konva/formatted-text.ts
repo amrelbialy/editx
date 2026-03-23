@@ -10,6 +10,14 @@ const DEFAULT_STYLE: Required<TextRunStyle> = {
   fill: '#000000',
   letterSpacing: 0,
   textDecoration: '',
+  backgroundColor: '',
+  textTransform: 'none',
+  textShadowColor: '',
+  textShadowBlur: 0,
+  textShadowOffsetX: 0,
+  textShadowOffsetY: 0,
+  textStrokeColor: '',
+  textStrokeWidth: 0,
 };
 
 interface TextLine {
@@ -50,6 +58,16 @@ function formatFont(style: Required<TextRunStyle>): string {
   return `${style.fontStyle} ${style.fontWeight} ${style.fontSize}px ${normalizeFontFamily(style.fontFamily)}`;
 }
 
+/** Apply text-transform to a string. Original text is preserved in the data model. */
+function applyTextTransform(text: string, transform: string): string {
+  switch (transform) {
+    case 'uppercase': return text.toUpperCase();
+    case 'lowercase': return text.toLowerCase();
+    case 'capitalize': return text.replace(/\b\w/g, (c) => c.toUpperCase());
+    default: return text;
+  }
+}
+
 function resolveStyle(style: TextRunStyle): Required<TextRunStyle> {
   return {
     fontSize: style.fontSize ?? DEFAULT_STYLE.fontSize,
@@ -59,6 +77,14 @@ function resolveStyle(style: TextRunStyle): Required<TextRunStyle> {
     fill: style.fill ?? DEFAULT_STYLE.fill,
     letterSpacing: style.letterSpacing ?? DEFAULT_STYLE.letterSpacing,
     textDecoration: style.textDecoration ?? DEFAULT_STYLE.textDecoration,
+    backgroundColor: style.backgroundColor ?? DEFAULT_STYLE.backgroundColor,
+    textTransform: style.textTransform ?? DEFAULT_STYLE.textTransform,
+    textShadowColor: style.textShadowColor ?? DEFAULT_STYLE.textShadowColor,
+    textShadowBlur: style.textShadowBlur ?? DEFAULT_STYLE.textShadowBlur,
+    textShadowOffsetX: style.textShadowOffsetX ?? DEFAULT_STYLE.textShadowOffsetX,
+    textShadowOffsetY: style.textShadowOffsetY ?? DEFAULT_STYLE.textShadowOffsetY,
+    textStrokeColor: style.textStrokeColor ?? DEFAULT_STYLE.textStrokeColor,
+    textStrokeWidth: style.textStrokeWidth ?? DEFAULT_STYLE.textStrokeWidth,
   };
 }
 
@@ -175,17 +201,22 @@ export class FormattedText extends Konva.Shape {
 
   // ── Text layout computation ────────────────────────
 
-  private _measureText(ctx: CanvasRenderingContext2D, text: string, style: Required<TextRunStyle>): number {
+  private _measureText(ctx: CanvasRenderingContext2D, text: string, style: Required<TextRunStyle>, trailingSpacing = false): number {
     ctx.font = formatFont(style);
-    if (style.letterSpacing > 0 && text.length > 1) {
+    const displayText = applyTextTransform(text, style.textTransform);
+    if (style.letterSpacing !== 0 && displayText.length > 0) {
       // With letter spacing, measure char-by-char
       let w = 0;
-      for (let i = 0; i < text.length; i++) {
-        w += ctx.measureText(text[i]).width + (i < text.length - 1 ? style.letterSpacing : 0);
+      for (let i = 0; i < displayText.length; i++) {
+        w += ctx.measureText(displayText[i]).width;
+        // Add spacing after every char except the last (unless trailing is needed for a following part)
+        if (i < displayText.length - 1 || trailingSpacing) {
+          w += style.letterSpacing;
+        }
       }
       return w;
     }
-    return ctx.measureText(text).width;
+    return ctx.measureText(displayText).width;
   }
 
   private _computeTextLines(): TextLine[] {
@@ -247,7 +278,7 @@ export class FormattedText extends Konva.Shape {
 
         // Try to fit as much text as possible using binary search (IMP-1)
         const remaining = rawLine.slice(cursor);
-        const remainingStart = globalCharIdx + cursor;
+        const remainingStart = globalCharIdx;
 
         // Measure if the rest fits
         const fullParts = this._buildParts(ctx, remaining, remainingStart);
@@ -331,9 +362,7 @@ export class FormattedText extends Konva.Shape {
   ): LinePart[] {
     const runs = this.textRuns();
 
-    // Re-resolve styles — build style spans for this substring
     const parts: LinePart[] = [];
-    let offset = 0;
 
     // Find which run contains globalStartIdx
     let runCharStart = 0;
@@ -347,25 +376,21 @@ export class FormattedText extends Konva.Shape {
       runCharStart = runEnd;
     }
 
-    // Walk through characters, grouping by style
+    // Walk through characters, grouping by style — maintain run pointer (O(N) total)
     let currentStyle = resolveStyle(runs[runIdx]?.style ?? {});
     let currentText = '';
     let charGlobal = globalStartIdx;
+    let runEnd = runCharStart + (runs[runIdx]?.text.length ?? 0);
 
     for (let i = 0; i < text.length; i++) {
-      // Determine which run this character belongs to
-      let rcs = 0;
-      let ri = 0;
-      for (let r = 0; r < runs.length; r++) {
-        const rEnd = rcs + runs[r].text.length;
-        if (charGlobal < rEnd) {
-          ri = r;
-          break;
-        }
-        rcs = rEnd;
+      // Advance run pointer when we pass the current run's boundary
+      while (runIdx < runs.length - 1 && charGlobal >= runEnd) {
+        runIdx++;
+        runCharStart = runEnd;
+        runEnd = runCharStart + runs[runIdx].text.length;
       }
 
-      const charStyle = resolveStyle(runs[ri]?.style ?? {});
+      const charStyle = resolveStyle(runs[runIdx]?.style ?? {});
       const sameStyle =
         charStyle.fontSize === currentStyle.fontSize &&
         charStyle.fontFamily === currentStyle.fontFamily &&
@@ -373,10 +398,19 @@ export class FormattedText extends Konva.Shape {
         charStyle.fontStyle === currentStyle.fontStyle &&
         charStyle.fill === currentStyle.fill &&
         charStyle.letterSpacing === currentStyle.letterSpacing &&
-        charStyle.textDecoration === currentStyle.textDecoration;
+        charStyle.textDecoration === currentStyle.textDecoration &&
+        charStyle.backgroundColor === currentStyle.backgroundColor &&
+        charStyle.textTransform === currentStyle.textTransform &&
+        charStyle.textShadowColor === currentStyle.textShadowColor &&
+        charStyle.textShadowBlur === currentStyle.textShadowBlur &&
+        charStyle.textShadowOffsetX === currentStyle.textShadowOffsetX &&
+        charStyle.textShadowOffsetY === currentStyle.textShadowOffsetY &&
+        charStyle.textStrokeColor === currentStyle.textStrokeColor &&
+        charStyle.textStrokeWidth === currentStyle.textStrokeWidth;
 
       if (!sameStyle && currentText.length > 0) {
-        const w = this._measureText(ctx, currentText, currentStyle);
+        // Not the last part — add trailing spacing for the gap to the next part
+        const w = this._measureText(ctx, currentText, currentStyle, true);
         parts.push({ text: currentText, style: currentStyle, width: w });
         currentText = '';
         currentStyle = charStyle;
@@ -389,6 +423,7 @@ export class FormattedText extends Konva.Shape {
     }
 
     if (currentText.length > 0) {
+      // Last part — no trailing spacing
       const w = this._measureText(ctx, currentText, currentStyle);
       parts.push({ text: currentText, style: currentStyle, width: w });
     }
@@ -408,6 +443,13 @@ export class FormattedText extends Konva.Shape {
     const totalHeight = (this.height() || 0) - pad * 2;
     const align = this.align();
     const vAlign = this.verticalAlign();
+
+    // Block-level background fill
+    const bgFill = this.getAttr('backgroundFill') as string | undefined;
+    if (bgFill) {
+      ctx.fillStyle = bgFill;
+      ctx.fillRect(0, 0, this.width() || 0, this.height() || 0);
+    }
 
     // Compute total text height for vertical alignment
     const textHeight = textLines.reduce((sum, l) => sum + l.height, 0);
@@ -434,20 +476,64 @@ export class FormattedText extends Konva.Shape {
 
       for (const part of line.parts) {
         ctx.font = formatFont(part.style);
-        ctx.fillStyle = part.style.fill;
+        const displayText = applyTextTransform(part.text, part.style.textTransform);
 
         // Vertical alignment within line for mixed font sizes
         const partYOffset = yOffset + (maxFontSize - part.style.fontSize) * 0.8;
 
-        if (part.style.letterSpacing > 0 && part.text.length > 0) {
+        // Background highlight color
+        if (part.style.backgroundColor && displayText.length > 0) {
+          ctx.fillStyle = part.style.backgroundColor;
+          ctx.fillRect(xOffset, partYOffset, part.width, line.height);
+        }
+
+        // Text shadow setup
+        const hasShadow = !!part.style.textShadowColor && (
+          part.style.textShadowBlur > 0 || part.style.textShadowOffsetX !== 0 || part.style.textShadowOffsetY !== 0
+        );
+        if (hasShadow) {
+          ctx.shadowColor = part.style.textShadowColor;
+          ctx.shadowBlur = part.style.textShadowBlur;
+          ctx.shadowOffsetX = part.style.textShadowOffsetX;
+          ctx.shadowOffsetY = part.style.textShadowOffsetY;
+        }
+
+        // Text stroke (draw before fill so fill covers stroke center for cleaner look)
+        const hasStroke = !!part.style.textStrokeColor && part.style.textStrokeWidth > 0;
+        if (hasStroke) {
+          ctx.strokeStyle = part.style.textStrokeColor;
+          ctx.lineWidth = part.style.textStrokeWidth;
+          ctx.lineJoin = 'round';
+          if (part.style.letterSpacing !== 0 && displayText.length > 0) {
+            let charX = xOffset;
+            for (let i = 0; i < displayText.length; i++) {
+              ctx.strokeText(displayText[i], charX, partYOffset);
+              charX += ctx.measureText(displayText[i]).width + part.style.letterSpacing;
+            }
+          } else {
+            ctx.strokeText(displayText, xOffset, partYOffset);
+          }
+        }
+
+        // Fill text
+        ctx.fillStyle = part.style.fill;
+        if (part.style.letterSpacing !== 0 && displayText.length > 0) {
           // Character-by-character drawing for letter spacing
           let charX = xOffset;
-          for (let i = 0; i < part.text.length; i++) {
-            ctx.fillText(part.text[i], charX, partYOffset);
-            charX += ctx.measureText(part.text[i]).width + part.style.letterSpacing;
+          for (let i = 0; i < displayText.length; i++) {
+            ctx.fillText(displayText[i], charX, partYOffset);
+            charX += ctx.measureText(displayText[i]).width + part.style.letterSpacing;
           }
         } else {
-          ctx.fillText(part.text, xOffset, partYOffset);
+          ctx.fillText(displayText, xOffset, partYOffset);
+        }
+
+        // Reset shadow
+        if (hasShadow) {
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         }
 
         // IMP-7: Proportional text decoration
@@ -480,7 +566,7 @@ export class FormattedText extends Konva.Shape {
   _hitFunc(context: Konva.Context): void {
     const ctx = context._context;
     const w = this.width() || 0;
-    const h = this.height() || this._getComputedHeight();
+    const h = this.height() || this.getComputedHeight();
     ctx.beginPath();
     ctx.rect(0, 0, w, h);
     ctx.closePath();
@@ -488,10 +574,18 @@ export class FormattedText extends Konva.Shape {
   }
 
   /** Returns the computed height based on text layout. */
-  private _getComputedHeight(): number {
+  getComputedHeight(): number {
     const lines = this._computeTextLines();
     const pad = this.padding();
     return lines.reduce((sum, l) => sum + l.height, 0) + pad * 2;
+  }
+
+  /** Returns the computed width (widest line + padding). */
+  getComputedWidth(): number {
+    const lines = this._computeTextLines();
+    const pad = this.padding();
+    const maxLineWidth = lines.reduce((max, l) => Math.max(max, l.width), 0);
+    return maxLineWidth + pad * 2;
   }
 
   getClassName(): string {

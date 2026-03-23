@@ -19,7 +19,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@lexical/selection": "^0.42.0",
     "konva": "^10.0.12",
+    "lexical": "^0.42.0",
     "pixi.js": "^8.5.0"
   },
   "devDependencies": {

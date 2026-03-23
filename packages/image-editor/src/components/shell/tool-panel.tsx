@@ -23,6 +23,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
     <aside
       role="region"
       aria-label={title ?? 'Tool options'}
+      data-text-toolbar
       className={cn(
         'flex flex-col w-[280px] shrink-0',
         'bg-card border-r border-border',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heading, Type, AlignLeft } from 'lucide-react';
+import { Heading1, Heading, Type, AlignLeft } from 'lucide-react';
 import type { TextPreset } from '../../hooks/use-text-tool';
 
 export interface TextPanelProps {
@@ -7,6 +7,7 @@ export interface TextPanelProps {
 }
 
 const TEXT_PRESETS: Array<{ preset: TextPreset; label: string; icon: React.ReactNode }> = [
+  { preset: 'title',      label: 'Title',      icon: <Heading1 className="h-5 w-5" /> },
   { preset: 'heading',    label: 'Heading',    icon: <Heading className="h-5 w-5" /> },
   { preset: 'subheading', label: 'Subheading', icon: <Type className="h-5 w-5" /> },
   { preset: 'body',       label: 'Body Text',  icon: <AlignLeft className="h-5 w-5" /> },
@@ -16,7 +17,7 @@ export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
   return (
     <div className="flex flex-col gap-1">
       <div className="text-xs font-medium text-muted-foreground mb-1">Add Text</div>
-      <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
         {TEXT_PRESETS.map((item) => (
           <button
             key={item.preset}

@@ -8,6 +8,8 @@ import {
 import {
   Bold,
   Italic,
+  Underline,
+  Strikethrough,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -16,12 +18,14 @@ import {
   Sun,
   Grid2x2,
   Move,
-  MoreHorizontal,
   ChevronDown,
   Sparkles,
   SlidersHorizontal,
   Palette,
   ImageIcon,
+  MoreHorizontal,
+  RemoveFormatting,
+  TextCursorInput,
 } from 'lucide-react';
 import { Slider } from '../ui/slider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '../ui/dropdown-menu';
@@ -63,6 +67,7 @@ function readTextState(engine: CreativeEngine, blockId: number, selectionStart?:
     fontWeight: targetStyle.fontWeight ?? 'normal',
     fontStyle: targetStyle.fontStyle ?? 'normal',
     fill: targetStyle.fill ?? '#000000',
+    textDecoration: targetStyle.textDecoration ?? '',
     textAlign: align || 'left',
     opacity: engine.block.getOpacity(blockId),
   };
@@ -155,10 +160,78 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
     }
   }, [engine, blockId, getStyleRange, refresh]);
 
+  const handleFontSizePreset = useCallback((size: number) => {
+    const { start, end } = getStyleRange();
+    engine.block.setTextFontSize(blockId, start, end, size);
+    refresh();
+  }, [engine, blockId, getStyleRange, refresh]);
+
   const handleTextAlign = useCallback((align: string) => {
     engine.block.setTextAlign(blockId, align);
     refresh();
   }, [engine, blockId, refresh]);
+
+  const handleTextColor = useCallback((color: string) => {
+    const { start, end } = getStyleRange();
+    engine.block.setTextColor(blockId, start, end, color);
+    refresh();
+  }, [engine, blockId, getStyleRange, refresh]);
+
+  const handleUnderlineToggle = useCallback(() => {
+    const { start, end } = getStyleRange();
+    const runs = engine.block.getTextRuns(blockId);
+    let currentDeco = '';
+    let offset = 0;
+    for (const run of runs) {
+      if (offset + run.text.length > (textSelectionRange?.from ?? 0)) {
+        currentDeco = run.style.textDecoration ?? '';
+        break;
+      }
+      offset += run.text.length;
+    }
+    const hasUnderline = currentDeco.includes('underline');
+    const parts = currentDeco.split(' ').filter((d) => d && d !== 'underline');
+    if (!hasUnderline) parts.push('underline');
+    engine.block.setTextStyle(blockId, start, end, { textDecoration: parts.join(' ') || undefined });
+    refresh();
+  }, [engine, blockId, getStyleRange, textSelectionRange, refresh]);
+
+  const handleStrikethroughToggle = useCallback(() => {
+    const { start, end } = getStyleRange();
+    const runs = engine.block.getTextRuns(blockId);
+    let currentDeco = '';
+    let offset = 0;
+    for (const run of runs) {
+      if (offset + run.text.length > (textSelectionRange?.from ?? 0)) {
+        currentDeco = run.style.textDecoration ?? '';
+        break;
+      }
+      offset += run.text.length;
+    }
+    const hasStrikethrough = currentDeco.includes('line-through');
+    const parts = currentDeco.split(' ').filter((d) => d && d !== 'line-through');
+    if (!hasStrikethrough) parts.push('line-through');
+    engine.block.setTextStyle(blockId, start, end, { textDecoration: parts.join(' ') || undefined });
+    refresh();
+  }, [engine, blockId, getStyleRange, textSelectionRange, refresh]);
+
+  const handleClearFormatting = useCallback(() => {
+    const { start, end } = getStyleRange();
+    engine.block.setTextStyle(blockId, start, end, {
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textDecoration: undefined,
+      backgroundColor: undefined,
+      textTransform: 'none',
+      textShadowColor: undefined,
+      textShadowBlur: undefined,
+      textShadowOffsetX: undefined,
+      textShadowOffsetY: undefined,
+      textStrokeColor: undefined,
+      textStrokeWidth: undefined,
+    });
+    refresh();
+  }, [engine, blockId, getStyleRange, refresh]);
 
   // ── Shared handlers ──
   const handleOpacityChange = useCallback(([v]: number[]) => {
@@ -200,6 +273,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
         'animate-in fade-in-0 slide-in-from-top-1 duration-150',
         'overflow-x-auto scrollbar-none',
       )}
+      data-text-toolbar
     >
       {/* ── Text-specific controls ── */}
       {isText && textState && (
@@ -220,6 +294,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
 
           {/* Bold / Italic */}
           <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleBoldToggle}
             className={cn(
               'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
@@ -231,6 +306,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             <Bold className="h-3.5 w-3.5" />
           </button>
           <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleItalicToggle}
             className={cn(
               'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
@@ -244,15 +320,48 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
 
           <Separator orientation="vertical" className="h-5 mx-1" />
 
-          {/* Font size */}
-          <input
-            type="number"
-            value={Math.round(textState.fontSize)}
-            onChange={handleFontSize}
-            min={1}
-            max={500}
-            className="w-12 h-7 rounded-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
-          />
+          {/* Font size with preset dropdown */}
+          <DropdownMenu>
+            <div className="flex items-center">
+              <input
+                type="number"
+                value={Math.round(textState.fontSize)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={handleFontSize}
+                min={1}
+                max={500}
+                className="w-12 h-7 rounded-l-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
+                data-text-toolbar
+              />
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-7 px-0.5 rounded-r-md border border-l-0 border-border bg-background text-muted-foreground hover:bg-accent transition-colors flex items-center"
+                  data-text-toolbar
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+            </div>
+            <DropdownMenuContent className="w-auto p-1 min-w-[60px]" align="start" data-text-toolbar>
+              <div className="flex flex-col gap-0.5">
+                {[14, 16, 18, 21, 24, 28, 32, 36, 48, 54].map((size) => (
+                  <button
+                    key={size}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleFontSizePreset(size)}
+                    className={cn(
+                      'px-3 py-1 rounded-md text-xs tabular-nums text-left transition-colors',
+                      Math.round(textState.fontSize) === size
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <span className="text-xs text-muted-foreground">pt</span>
 
           <Separator orientation="vertical" className="h-5 mx-1" />
@@ -270,12 +379,13 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-auto p-1" align="start">
+            <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
               <div className="flex gap-0.5">
                 {([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(
                   ([align, Icon]) => (
                     <button
                       key={align}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleTextAlign(align)}
                       className={cn(
                         'h-8 w-8 rounded-md flex items-center justify-center transition-colors',
@@ -292,13 +402,60 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({ engine, 
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* More text options */}
-          <button
-            onClick={() => togglePanel('color')}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
-          >
-            <MoreHorizontal className="h-3.5 w-3.5" />
-          </button>
+          {/* Advanced text properties (≡A) */}
+          <PanelButton
+            panel="text-advanced"
+            icon={<TextCursorInput className="h-3.5 w-3.5" />}
+            label=""
+          />
+
+          {/* More text options (...) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors">
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
+              <div className="flex flex-col gap-0.5 min-w-[160px]">
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleUnderlineToggle}
+                  className={cn(
+                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
+                    textState.textDecoration.includes('underline')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  <Underline className="h-4 w-4" />
+                  Underline
+                </button>
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleStrikethroughToggle}
+                  className={cn(
+                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors',
+                    textState.textDecoration.includes('line-through')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  <Strikethrough className="h-4 w-4" />
+                  Strikethrough
+                </button>
+                <div className="h-px bg-border my-0.5" />
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleClearFormatting}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <RemoveFormatting className="h-4 w-4" />
+                  Clear Formatting
+                </button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Separator orientation="vertical" className="h-5 mx-1" />
         </>

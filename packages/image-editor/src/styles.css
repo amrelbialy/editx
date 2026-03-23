@@ -116,3 +116,23 @@
     border-color: var(--border);
   }
 }
+
+/* Text editor overlay: force all span text transparent so only the caret/selection shows.
+   Inline styles (color: #000) on spans would otherwise override the parent color. */
+[data-text-editor-overlay],
+[data-text-editor-overlay] *:not([data-text-toolbar] *):not([data-text-toolbar]) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Lexical renders <p> nodes — remove default paragraph margin for tight layout */
+[data-text-editor-overlay] p {
+  margin: 0;
+}
+
+[data-text-editor-overlay]::selection,
+[data-text-editor-overlay] *::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+}

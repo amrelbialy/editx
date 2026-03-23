@@ -190,6 +190,11 @@ export class EditorAPI {
     return this.#ctx.renderer?.getSelectedBlockScreenRect() ?? null;
   }
 
+  /** Returns the screen-pixel bounding rect of a specific block, independent of transformer. */
+  getBlockScreenRect(blockId: number): { x: number; y: number; width: number; height: number } | null {
+    return this.#ctx.renderer?.getBlockScreenRect(blockId) ?? null;
+  }
+
   // ─── Internal: crop sub-module access ──────────────────
   // Used by BlockAPI to route applyCropRatio through the active overlay.
 

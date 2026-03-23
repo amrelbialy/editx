@@ -27,6 +27,14 @@ export interface TextRunStyle {
   fill?: string;
   letterSpacing?: number;
   textDecoration?: string;
+  backgroundColor?: string;
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textShadowColor?: string;
+  textShadowBlur?: number;
+  textShadowOffsetX?: number;
+  textShadowOffsetY?: number;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
 }
 
 /** A contiguous segment of text with uniform styling. */

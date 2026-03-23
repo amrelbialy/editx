@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export type ImageEditorTool = 'select' | 'crop' | 'rotate' | 'adjust' | 'filter' | 'resize' | 'shapes' | 'text' | 'image' | 'pen';
 
-export type PropertySidePanel = 'color' | 'background' | 'shadow' | 'position' | 'stroke' | 'adjust' | 'filter' | 'imageFill' | null;
+export type PropertySidePanel = 'color' | 'background' | 'shadow' | 'position' | 'stroke' | 'adjust' | 'filter' | 'imageFill' | 'text-advanced' | null;
 
 export type CropPresetId = 'free' | 'original' | '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
 

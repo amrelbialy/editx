@@ -564,7 +564,7 @@ describe('BlockAPI', () => {
       const b = new BlockAPI(eng);
       const id = b.create('graphic');
       b.select(id);
-      expect(renderer.showTransformer).toHaveBeenCalledWith([id]);
+      expect(renderer.showTransformer).toHaveBeenCalledWith([id], 'graphic');
     });
 
     it('calls renderer.hideTransformer when deselecting all', () => {

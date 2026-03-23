@@ -48,6 +48,7 @@ import {
   getPlainText as utilGetPlainText,
   mergeAdjacentRuns,
 } from './text-run-utils';
+import { TextEditorSession } from './text-editor-session';
 
 /** Identifies one of the 12 adjustment parameters. */
 export type AdjustmentParam =
@@ -85,6 +86,8 @@ export const ADJUSTMENT_PARAMS: AdjustmentParam[] = Object.keys(ADJUSTMENT_CONFI
 export class BlockAPI {
   #engine: Engine;
   #selection = new Set<number>();
+  #transformerEnabled = true;
+  #textEditingSessions = new Map<number, TextEditorSession>();
 
   /** @internal — callback wired by CreativeEngine to route applyCropRatio through the active overlay. */
   #applyCropRatioHandler: ((ratio: number | null) => any) | null = null;
@@ -170,11 +173,21 @@ export class BlockAPI {
     const ids = [...this.#selection];
     this.#engine.emit('selection:changed', ids);
     const renderer = this.#engine.getRenderer();
-    if (ids.length > 0) {
-      renderer?.showTransformer(ids);
+    if (ids.length > 0 && this.#transformerEnabled) {
+      const blockType = ids.length === 1 ? this.getType(ids[0]) : undefined;
+      renderer?.showTransformer(ids, blockType);
     } else {
       renderer?.hideTransformer();
     }
+  }
+
+  /**
+   * Enable or disable the transformer overlay (selection handles).
+   * When disabled, the transformer is hidden even if blocks are selected.
+   */
+  setTransformerEnabled(enabled: boolean): void {
+    this.#transformerEnabled = enabled;
+    this.#syncTransformer();
   }
 
   // --- Lifecycle ---
@@ -1193,6 +1206,34 @@ export class BlockAPI {
     return newId;
   }
 
+  // ── Text editing session lifecycle ────────────────────
+
+  /** Start an editing session — creates a Lexical editor as single source of truth. */
+  beginTextEditing(blockId: number): TextEditorSession {
+    let session = this.#textEditingSessions.get(blockId);
+    if (session) return session;
+    const runs = this.getTextRuns(blockId);
+    session = new TextEditorSession(blockId, runs, (newRuns) => {
+      this.setProperty(blockId, TEXT_RUNS, newRuns);
+    });
+    this.#textEditingSessions.set(blockId, session);
+    return session;
+  }
+
+  /** Get an active editing session, or null. */
+  getTextEditingSession(blockId: number): TextEditorSession | null {
+    return this.#textEditingSessions.get(blockId) ?? null;
+  }
+
+  /** End an editing session — disposes the Lexical editor. */
+  endTextEditing(blockId: number): void {
+    const session = this.#textEditingSessions.get(blockId);
+    if (session) {
+      session.dispose();
+      this.#textEditingSessions.delete(blockId);
+    }
+  }
+
   // ── Range-based text editing ──────────────────────────
 
   /** Get the current TextRun[] for a text block. */
@@ -1229,9 +1270,14 @@ export class BlockAPI {
 
   /** Apply a partial style update to characters in [start, end). */
   setTextStyle(blockId: number, start: number, end: number, styleUpdate: Partial<TextRunStyle>): void {
-    const runs = this.getTextRuns(blockId);
-    const newRuns = utilSetStyleOnRange(runs, start, end, styleUpdate);
-    this.setProperty(blockId, TEXT_RUNS, newRuns);
+    const session = this.#textEditingSessions.get(blockId);
+    if (session) {
+      session.setTextStyle(start, end, styleUpdate);
+    } else {
+      const runs = this.getTextRuns(blockId);
+      const newRuns = utilSetStyleOnRange(runs, start, end, styleUpdate);
+      this.setProperty(blockId, TEXT_RUNS, newRuns);
+    }
   }
 
   /** Set text color for characters in [start, end). */
@@ -1254,37 +1300,46 @@ export class BlockAPI {
     this.setTextStyle(blockId, start, end, { fontWeight });
   }
 
-  /** Toggle bold on characters in [start, end). Toggles based on first character's style. */
+  /** Toggle bold on characters in [start, end). */
   toggleBoldText(blockId: number, start: number, end: number): void {
-    const runs = this.getTextRuns(blockId);
-    // Determine current state from the first character in range
-    let currentWeight = 'normal';
-    let offset = 0;
-    for (const run of runs) {
-      if (offset + run.text.length > start) {
-        currentWeight = run.style.fontWeight ?? 'normal';
-        break;
+    const session = this.#textEditingSessions.get(blockId);
+    if (session) {
+      session.toggleBold(start, end);
+    } else {
+      const runs = this.getTextRuns(blockId);
+      let currentWeight = 'normal';
+      let offset = 0;
+      for (const run of runs) {
+        if (offset + run.text.length > start) {
+          currentWeight = run.style.fontWeight ?? 'normal';
+          break;
+        }
+        offset += run.text.length;
       }
-      offset += run.text.length;
+      const newWeight = currentWeight === 'bold' ? 'normal' : 'bold';
+      this.setTextStyle(blockId, start, end, { fontWeight: newWeight });
     }
-    const newWeight = currentWeight === 'bold' ? 'normal' : 'bold';
-    this.setTextStyle(blockId, start, end, { fontWeight: newWeight });
   }
 
   /** Toggle italic on characters in [start, end). */
   toggleItalicText(blockId: number, start: number, end: number): void {
-    const runs = this.getTextRuns(blockId);
-    let currentStyle = 'normal';
-    let offset = 0;
-    for (const run of runs) {
-      if (offset + run.text.length > start) {
-        currentStyle = run.style.fontStyle ?? 'normal';
-        break;
+    const session = this.#textEditingSessions.get(blockId);
+    if (session) {
+      session.toggleItalic(start, end);
+    } else {
+      const runs = this.getTextRuns(blockId);
+      let currentStyle = 'normal';
+      let offset = 0;
+      for (const run of runs) {
+        if (offset + run.text.length > start) {
+          currentStyle = run.style.fontStyle ?? 'normal';
+          break;
+        }
+        offset += run.text.length;
       }
-      offset += run.text.length;
+      const newStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+      this.setTextStyle(blockId, start, end, { fontStyle: newStyle });
     }
-    const newStyle = currentStyle === 'italic' ? 'normal' : 'italic';
-    this.setTextStyle(blockId, start, end, { fontStyle: newStyle });
   }
 
   /** Set block-level text alignment. */
@@ -1300,5 +1355,33 @@ export class BlockAPI {
   /** Set block-level vertical alignment. */
   setTextVerticalAlign(blockId: number, align: string): void {
     this.setProperty(blockId, TEXT_VERTICAL_ALIGN, align);
+  }
+
+  /** Set text background/highlight color for characters in [start, end). */
+  setTextBackgroundColor(blockId: number, start: number, end: number, color: string | undefined): void {
+    this.setTextStyle(blockId, start, end, { backgroundColor: color });
+  }
+
+  /** Set text transform (uppercase/lowercase/capitalize) for characters in [start, end). */
+  setTextTransform(blockId: number, start: number, end: number, transform: 'none' | 'uppercase' | 'lowercase' | 'capitalize'): void {
+    this.setTextStyle(blockId, start, end, { textTransform: transform });
+  }
+
+  /** Set text shadow for characters in [start, end). */
+  setTextShadow(blockId: number, start: number, end: number, shadow: { color?: string; blur?: number; offsetX?: number; offsetY?: number }): void {
+    this.setTextStyle(blockId, start, end, {
+      textShadowColor: shadow.color,
+      textShadowBlur: shadow.blur,
+      textShadowOffsetX: shadow.offsetX,
+      textShadowOffsetY: shadow.offsetY,
+    });
+  }
+
+  /** Set text stroke/outline for characters in [start, end). */
+  setTextStroke(blockId: number, start: number, end: number, stroke: { color?: string; width?: number }): void {
+    this.setTextStyle(blockId, start, end, {
+      textStrokeColor: stroke.color,
+      textStrokeWidth: stroke.width,
+    });
   }
 }

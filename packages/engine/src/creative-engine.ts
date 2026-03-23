@@ -109,7 +109,24 @@ export class CreativeEngine {
       block.setPosition(blockId, transform.x, transform.y);
       block.setSize(blockId, transform.width, transform.height);
       block.setRotation(blockId, transform.rotation);
+      // If user manually resizes a text block, disable auto-height
+      if (block.getType(blockId) === 'text') {
+        block.setBool(blockId, 'text/autoHeight', false);
+      }
       core.endBatch();
+    };
+
+    // Auto-height: when the renderer computes a new text height, write it
+    // directly to the block store (silently — no undo step, no re-render loop).
+    adapter.onAutoSize = (blockId, computedHeight) => {
+      const store = core.getBlockStore();
+      const b = store.get(blockId);
+      if (b) {
+        const current = (b.properties['transform/size/height'] as number) ?? 0;
+        if (Math.abs(current - computedHeight) > 0.5) {
+          b.properties['transform/size/height'] = Math.max(computedHeight, 10);
+        }
+      }
     };
 
     // Let the renderer resolve effect blocks for filter pipeline

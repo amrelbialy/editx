@@ -4,6 +4,7 @@ import {
   colorToHex,
   hexToColor,
   FILL_SOLID_COLOR,
+  FILL_COLOR,
 } from '@creative-editor/engine';
 import { cn } from '../../utils/cn';
 
@@ -25,6 +26,10 @@ function readFillState(engine: CreativeEngine, blockId: number) {
   const fillId = engine.block.getFill(blockId);
   if (fillId != null) {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
+    if (c) color = colorToHex(c).substring(0, 7);
+  } else {
+    // Text blocks don't have fill sub-blocks; read FILL_COLOR directly
+    const c = engine.block.getColor(blockId, FILL_COLOR);
     if (c) color = colorToHex(c).substring(0, 7);
   }
   return { enabled: fillEnabled, color };
@@ -59,6 +64,9 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
     const fillId = engine.block.getFill(blockId);
     if (fillId != null) {
       engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
+    } else {
+      // Text blocks: set fill color directly on the block
+      engine.block.setColor(blockId, FILL_COLOR, hexToColor(newColor));
     }
     if (!state.enabled) {
       engine.block.setFillEnabled(blockId, true);

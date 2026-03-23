@@ -26,7 +26,9 @@ export function useBlockScreenRect(
     }
 
     function tick() {
-      const r = engine!.editor.getSelectedBlockScreenRect();
+      // Try transformer rect first; fall back to direct block rect
+      const r = engine!.editor.getSelectedBlockScreenRect()
+        ?? engine!.editor.getBlockScreenRect(selectedBlockId!);
       setRect((prev) => {
         if (!r) return prev ? null : prev;
         if (

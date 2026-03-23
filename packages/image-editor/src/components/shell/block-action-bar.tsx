@@ -13,6 +13,7 @@ import {
   AlignStartHorizontal,
   AlignCenterHorizontal,
   AlignEndHorizontal,
+  Pencil,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Separator } from '../ui/separator';
@@ -22,6 +23,7 @@ import type { AlignDirection } from '../../hooks/use-block-actions';
 export interface BlockActionBarProps {
   blockType: string;
   onReplace?: (file: File) => void;
+  onEdit?: () => void;
   onBringForward: () => void;
   onSendBackward: () => void;
   onBringToFront: () => void;
@@ -60,6 +62,7 @@ const ActionButton: React.FC<{
 export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   blockType,
   onReplace,
+  onEdit,
   onBringForward,
   onSendBackward,
   onDuplicate,
@@ -67,6 +70,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isImage = blockType === 'image';
+  const isText = blockType === 'text';
 
   return (
     <div
@@ -76,6 +80,18 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
         'animate-in fade-in-0 slide-in-from-bottom-1 duration-150',
       )}
     >
+      {/* Edit (text only) */}
+      {isText && onEdit && (
+        <>
+          <ActionButton
+            icon={<Pencil className="h-3.5 w-3.5" />}
+            label="Edit Text"
+            onClick={onEdit}
+          />
+          <Separator orientation="vertical" className="h-4 mx-0.5" />
+        </>
+      )}
+
       {/* Replace (image only) */}
       {isImage && onReplace && (
         <>

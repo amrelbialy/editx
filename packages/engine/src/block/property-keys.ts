@@ -29,6 +29,7 @@ export const TEXT_LINE_HEIGHT = 'text/lineHeight' as const;
 export const TEXT_VERTICAL_ALIGN = 'text/verticalAlign' as const;
 export const TEXT_PADDING = 'text/padding' as const;
 export const TEXT_WRAP = 'text/wrap' as const;
+export const TEXT_AUTO_HEIGHT = 'text/autoHeight' as const;
 
 // ── Image ────────────────────────────────────────────
 export const IMAGE_SRC = 'image/src' as const;

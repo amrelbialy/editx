@@ -39,6 +39,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
   onZoomChange?: (zoom: number) => void;
+  /** Called when a text block auto-sizes its height. */
+  onAutoSize?: (blockId: number, computedHeight: number) => void;
 
   /** Resolve a block by ID (set by CreativeEngine to read effect blocks). */
   resolveBlock?: (id: number) => BlockData | undefined;
@@ -148,8 +150,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
     }
 
-    this.#nodeFactory.updateNode(node, block, this.resolveBlock);
+    const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
     this.#transformer.moveToTop();
+
+    // Auto-height: write computed text height back so the engine block store stays in sync
+    if (result && result.autoHeight != null) {
+      this.onAutoSize?.(id, result.autoHeight);
+    }
 
     // Keep camera page size in sync for pan clamping
     if (block.type === 'page') {
@@ -184,11 +191,22 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   // --- Transformer ---
 
-  showTransformer(blockIds: number[]): void {
+  showTransformer(blockIds: number[], blockType?: string): void {
     const nodes = blockIds
       .map((id) => this.#nodeMap.get(id))
       .filter((n): n is Konva.Node => !!n);
     this.#transformer.nodes(nodes);
+
+    // Text blocks: corners only (no center pill handles)
+    if (blockType === 'text') {
+      this.#transformer.enabledAnchors(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
+    } else {
+      this.#transformer.enabledAnchors([
+        'top-left', 'top-right', 'bottom-left', 'bottom-right',
+        'middle-left', 'middle-right', 'top-center', 'bottom-center',
+      ]);
+    }
+
     // Bind hover events on anchors (deferred until Konva creates them)
     (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
@@ -202,6 +220,14 @@ export class KonvaRendererAdapter implements RendererAdapter {
   getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
     if (!this.#transformer || this.#transformer.nodes().length === 0) return null;
     const rect = this.#transformer.getClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }
+
+  /** Get the screen rect of a specific block node (independent of transformer). */
+  getBlockScreenRect(blockId: number): { x: number; y: number; width: number; height: number } | null {
+    const node = this.#nodeMap.get(blockId);
+    if (!node) return null;
+    const rect = node.getClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }
 

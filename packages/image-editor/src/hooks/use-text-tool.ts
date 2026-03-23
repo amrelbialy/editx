@@ -2,12 +2,13 @@ import { useCallback } from 'react';
 import type { CreativeEngine } from '@creative-editor/engine';
 import { useImageEditorStore } from '../store/image-editor-store';
 
-export type TextPreset = 'heading' | 'subheading' | 'body';
+export type TextPreset = 'title' | 'heading' | 'subheading' | 'body';
 
 const PRESET_CONFIG: Record<TextPreset, { fontSize: number; fontWeight: string; text: string }> = {
-  heading:    { fontSize: 48, fontWeight: 'bold',   text: 'Heading' },
-  subheading: { fontSize: 32, fontWeight: 'bold',   text: 'Subheading' },
-  body:       { fontSize: 18, fontWeight: 'normal', text: 'Body text' },
+  title:      { fontSize: 90, fontWeight: 'bold',   text: 'Title' },
+  heading:    { fontSize: 63, fontWeight: 'bold',   text: 'Heading' },
+  subheading: { fontSize: 42, fontWeight: 'bold',   text: 'Subheading' },
+  body:       { fontSize: 24, fontWeight: 'normal', text: 'Body text' },
 };
 
 export interface UseTextToolOptions {
