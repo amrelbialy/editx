@@ -16,6 +16,10 @@
     "test": {
       "outputs": ["coverage/**"]
     },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**"]
+    },
     "clean": {
       "cache": false
     }
