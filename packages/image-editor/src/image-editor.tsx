@@ -1,5 +1,6 @@
 import type React from "react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ExportDialog } from "./components/panels/export-dialog";
 import { ActiveToolContent } from "./components/shell/active-tool-content";
 import { CanvasSection } from "./components/shell/canvas-section";
 import { EditorShell } from "./components/shell/editor-shell";
@@ -132,6 +133,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     events,
   });
 
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const openExportDialog = useCallback(() => setExportDialogOpen(true), []);
+
   // --- Keyboard shortcuts ---
   useShortcuts({
     enabled: !isLoading && !error,
@@ -218,7 +222,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
                   canFitSelection={selectedShapeId !== null}
                   onZoomPreset={zoom.handleZoomPreset}
                   zoomLabel={zoom.zoomLabel}
-                  onExport={handleExport}
+                  onExport={openExportDialog}
                   isExporting={isExporting}
                   topbarRight={slots?.topbarRight}
                 />
@@ -287,6 +291,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
                   />
                 </div>
               </div>
+
+              <ExportDialog
+                open={exportDialogOpen}
+                onOpenChange={setExportDialogOpen}
+                onExport={handleExport}
+                isExporting={isExporting}
+              />
 
               {isLoading && !error && <LoadingOverlay />}
               {error && <ErrorPlaceholder error={error} onRetry={handleRetry} />}

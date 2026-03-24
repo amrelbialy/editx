@@ -312,7 +312,7 @@ Migrate existing components to this structure first:
 
 ---
 
-## Phase 5: Export Format Dialog
+## Phase 5: Export Format Dialog ✅ DONE
 
 25. **Create export dialog modal** with format/quality picker
     - New file: `packages/image-editor/src/components/panels/export-dialog.tsx`
