@@ -23,8 +23,10 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
       }
     }
 
+    ce.core.beginSilent();
     const eid = ce.block.createEffect("filter");
     ce.block.appendEffect(editableBlockId, eid);
+    ce.core.endSilent();
     filterEffectIdRef.current = eid;
     return eid;
   }, [engineRef, editableBlockId]);

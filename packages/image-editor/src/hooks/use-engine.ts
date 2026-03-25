@@ -219,8 +219,11 @@ export function useEngine({
         const pageId = ce.scene.getCurrentPage();
         if (pageId === null) return;
 
+        // Set image source silently so initial setup isn't undoable
+        ce.core.beginSilent();
         ce.block.setPageImageSrc(pageId, workingUrl);
         ce.block.setPageImageOriginalDimensions(pageId, workingWidth, workingHeight);
+        ce.core.endSilent();
 
         setEditableBlockId(pageId);
 

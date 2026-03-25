@@ -20,6 +20,7 @@ import type {
 } from "./config/config.types";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
+import { useHistory } from "./hooks/use-history";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
 import { useZoom } from "./hooks/use-zoom";
@@ -124,8 +125,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
 
   const handleCloseButton = useCallback(() => requestClose("close-button"), [requestClose]);
 
-  const handleUndo = useCallback(() => engineRef.current?.editor.undo(), [engineRef]);
-  const handleRedo = useCallback(() => engineRef.current?.editor.redo(), [engineRef]);
+  const { canUndo, canRedo, handleUndo, handleRedo } = useHistory(engine, engineRef);
 
   const handleEscape = useCallback(() => {
     if (tools.activeTool !== "select") {
@@ -192,8 +192,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
           <Topbar
             onUndo={handleUndo}
             onRedo={handleRedo}
-            canUndo={!!engine}
-            canRedo={!!engine}
+            canUndo={canUndo}
+            canRedo={canRedo}
             onZoomIn={zoom.handleZoomIn}
             onZoomOut={zoom.handleZoomOut}
             onAutoFitPage={zoom.handleAutoFitPage}

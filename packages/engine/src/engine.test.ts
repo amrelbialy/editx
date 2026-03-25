@@ -426,4 +426,69 @@ describe("Engine", () => {
       expect(cleanup).not.toHaveBeenCalled();
     });
   });
+
+  describe("silent mode", () => {
+    it("skips history for exec while silent", () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const id = store.create("graphic");
+      engine.clearHistory();
+
+      engine.beginSilent();
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 42));
+      engine.endSilent();
+
+      expect(engine.canUndo()).toBe(false);
+      expect(store.getFloat(id, "transform/position/x")).toBe(42);
+    });
+
+    it("skips history for batch while silent", () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const id = store.create("graphic");
+      engine.clearHistory();
+
+      engine.beginSilent();
+      engine.beginBatch();
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 10));
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/y", 20));
+      engine.endBatch();
+      engine.endSilent();
+
+      expect(engine.canUndo()).toBe(false);
+      expect(store.getFloat(id, "transform/position/x")).toBe(10);
+      expect(store.getFloat(id, "transform/position/y")).toBe(20);
+    });
+
+    it("records history again after endSilent", () => {
+      const engine = new Engine({});
+      const store = engine.getBlockStore();
+      const id = store.create("graphic");
+      engine.clearHistory();
+
+      engine.beginSilent();
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 42));
+      engine.endSilent();
+
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 99));
+      expect(engine.canUndo()).toBe(true);
+    });
+
+    it("still fires block events while silent", () => {
+      const renderer = createMockRenderer();
+      const engine = new Engine({ renderer });
+      const store = engine.getBlockStore();
+      const id = store.create("graphic");
+      engine.clearHistory();
+
+      const cb = vi.fn();
+      engine.event.subscribe([], cb);
+
+      engine.beginSilent();
+      engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 42));
+      engine.endSilent();
+
+      expect(cb).toHaveBeenCalled();
+    });
+  });
 });

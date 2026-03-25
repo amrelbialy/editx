@@ -49,8 +49,10 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
       }
     }
 
+    ce.core.beginSilent();
     const eid = ce.block.createEffect("adjustments");
     ce.block.appendEffect(editableBlockId, eid);
+    ce.core.endSilent();
     adjustEffectIdRef.current = eid;
     return eid;
   }, [engineRef, editableBlockId]);

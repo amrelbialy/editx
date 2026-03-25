@@ -53,6 +53,15 @@ export class EditorCrop {
     sourceHeight: number;
   } | null = null;
 
+  /** Snapshot of block crop properties when entering crop mode, used to detect no-op commits. */
+  #initialCropState: {
+    enabled: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null = null;
+
   constructor(ctx: EditorContext) {
     this.#ctx = ctx;
   }
@@ -126,6 +135,14 @@ export class EditorCrop {
     const transform = { rotation, flipH, flipV, sourceWidth: imgW, sourceHeight: imgH };
     this.#cropTransform = transform;
 
+    this.#initialCropState = {
+      enabled: cropEnabled,
+      x: cropX,
+      y: cropY,
+      width: cropW,
+      height: cropH,
+    };
+
     this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
 
     // Fit the camera to the crop area (or the full image when no crop exists)
@@ -159,6 +176,7 @@ export class EditorCrop {
     }
     this.#cropBlockId = null;
     this.#cropTransform = null;
+    this.#initialCropState = null;
   }
 
   // ─── Internal Commit ──────────────────────────────────
@@ -196,6 +214,29 @@ export class EditorCrop {
     const flipH = store.getBool(id, CROP_FLIP_HORIZONTAL);
     const flipV = store.getBool(id, CROP_FLIP_VERTICAL);
     const sourceRect = visualCropToSource(visualRect, imgW, imgH, rotation, flipH, flipV);
+
+    // Skip commit if crop hasn't changed from when we entered crop mode
+    const prev = this.#initialCropState;
+    if (prev) {
+      const EPS = 0.5;
+      if (prev.enabled) {
+        // Had an existing crop — check if values are the same
+        const same =
+          Math.abs(prev.x - sourceRect.x) < EPS &&
+          Math.abs(prev.y - sourceRect.y) < EPS &&
+          Math.abs(prev.width - sourceRect.width) < EPS &&
+          Math.abs(prev.height - sourceRect.height) < EPS;
+        if (same) return null;
+      } else {
+        // No prior crop — check if the overlay covers the full image (no-op)
+        const fullImage =
+          Math.abs(sourceRect.x) < EPS &&
+          Math.abs(sourceRect.y) < EPS &&
+          Math.abs(sourceRect.width - imgW) < EPS &&
+          Math.abs(sourceRect.height - imgH) < EPS;
+        if (fullImage) return null;
+      }
+    }
 
     engine.beginBatch();
     engine.exec(new SetPropertyCommand(store, id, CROP_X, sourceRect.x));

@@ -77,11 +77,19 @@ vi.mock("@creative-editor/engine", () => {
         fitToScreen: vi.fn(),
         undo: vi.fn(),
         redo: vi.fn(),
+        canUndo: vi.fn().mockReturnValue(false),
+        canRedo: vi.fn().mockReturnValue(false),
+        clearHistory: vi.fn(),
+      },
+      event: {
+        subscribe: vi.fn().mockReturnValue(() => {}),
       },
       core: {
         getRenderer: vi.fn().mockReturnValue(null),
         beginBatch: vi.fn(),
         endBatch: vi.fn(),
+        beginSilent: vi.fn(),
+        endSilent: vi.fn(),
       },
       dispose: vi.fn(),
       on: vi.fn(),
@@ -234,8 +242,8 @@ describe("ImageEditor", () => {
     const { container } = render(
       React.createElement(ImageEditor, { src: "https://example.com/img.png" }),
     );
-    // Component should render the editor shell with topbar content
-    expect(container.textContent).toContain("Photo Editor");
+    // Component should render the editor shell with topbar content (default config title)
+    expect(container.textContent).toContain("Image Editor");
   });
 
   it("shows loading overlay initially", () => {

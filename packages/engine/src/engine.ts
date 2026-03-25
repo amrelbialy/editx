@@ -19,6 +19,7 @@ export class Engine {
 
   #batchDepth = 0;
   #batchPatches: Patch[] = [];
+  #silent = false;
 
   constructor(opts: { renderer?: RendererAdapter; blockStore?: BlockStore }) {
     this.#blockStore = opts.blockStore ?? new BlockStore();
@@ -56,6 +57,16 @@ export class Engine {
     return this.#activePageId;
   }
 
+  // --- Silent mode (skip history recording) ---
+
+  beginSilent() {
+    this.#silent = true;
+  }
+
+  endSilent() {
+    this.#silent = false;
+  }
+
   // --- Batch ---
 
   beginBatch() {
@@ -70,7 +81,9 @@ export class Engine {
     this.#batchDepth--;
     if (this.#batchDepth === 0) {
       if (this.#batchPatches.length > 0) {
-        this.#history.push(this.#batchPatches);
+        if (!this.#silent) {
+          this.#history.push(this.#batchPatches);
+        }
         this.#enqueueBlockEvents(this.#batchPatches);
       }
       this.#batchPatches = [];
@@ -89,7 +102,9 @@ export class Engine {
       if (this.#batchDepth > 0) {
         this.#batchPatches.push(...patches);
       } else {
-        this.#history.push(patches);
+        if (!this.#silent) {
+          this.#history.push(patches);
+        }
         this.#enqueueBlockEvents(patches);
       }
     }
