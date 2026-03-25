@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -20,22 +21,21 @@ export const DiscardConfirmationDialog: React.FC<DiscardConfirmationDialogProps>
   onDiscard,
   onCancel,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Unsaved changes</DialogTitle>
-          <DialogDescription>
-            You have unsaved changes. Are you sure you want to close the editor? Your changes will
-            be lost.
-          </DialogDescription>
+          <DialogTitle>{t("dialog.unsavedTitle")}</DialogTitle>
+          <DialogDescription>{t("dialog.unsavedDescription")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            {t("dialog.cancel")}
           </Button>
           <Button variant="destructive" onClick={onDiscard}>
-            Discard
+            {t("dialog.discard")}
           </Button>
         </DialogFooter>
       </DialogContent>

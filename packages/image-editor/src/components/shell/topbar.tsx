@@ -1,6 +1,7 @@
 import { ArrowLeft, Download, Loader2, Redo2, Undo2, X, ZoomIn, ZoomOut } from "lucide-react";
 import type React from "react";
 import { useConfig } from "../../config/config-context";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
@@ -47,7 +48,9 @@ export const Topbar: React.FC<TopbarProps> = ({
   onClose,
 }) => {
   const config = useConfig();
-  const title = config.ui?.title ?? "Image Editor";
+  const { t } = useTranslation();
+
+  const title = config.ui?.title ?? t("topbar.title");
   const showTitle = config.ui?.showTitle ?? true;
   const showCloseButton = config.ui?.showCloseButton ?? !!onClose;
   const showBackButton = config.ui?.showBackButton ?? false;
@@ -67,8 +70,8 @@ export const Topbar: React.FC<TopbarProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              aria-label={showBackButton ? "Back" : "Close editor"}
-              title={showBackButton ? "Back" : "Close editor"}
+              aria-label={showBackButton ? t("topbar.back") : t("topbar.close")}
+              title={showBackButton ? t("topbar.back") : t("topbar.close")}
             >
               {showBackButton ? <ArrowLeft className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
@@ -80,9 +83,9 @@ export const Topbar: React.FC<TopbarProps> = ({
           size="icon"
           onClick={onUndo}
           disabled={!canUndo}
-          aria-label="Undo"
+          aria-label={t("topbar.undo")}
           aria-keyshortcuts="Control+Z"
-          title="Undo (Ctrl+Z)"
+          title={`${t("topbar.undo")} (Ctrl+Z)`}
         >
           <Undo2 className="h-4 w-4" />
         </Button>
@@ -91,9 +94,9 @@ export const Topbar: React.FC<TopbarProps> = ({
           size="icon"
           onClick={onRedo}
           disabled={!canRedo}
-          aria-label="Redo"
+          aria-label={t("topbar.redo")}
           aria-keyshortcuts="Control+Shift+Z"
-          title="Redo (Ctrl+Shift+Z)"
+          title={`${t("topbar.redo")} (Ctrl+Shift+Z)`}
         >
           <Redo2 className="h-4 w-4" />
         </Button>
@@ -108,8 +111,8 @@ export const Topbar: React.FC<TopbarProps> = ({
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
-          aria-label="Zoom out"
-          title="Zoom out (-)"
+          aria-label={t("topbar.zoomOut")}
+          title={`${t("topbar.zoomOut")} (-)`}
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
@@ -127,8 +130,8 @@ export const Topbar: React.FC<TopbarProps> = ({
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          aria-label="Zoom in"
-          title="Zoom in (+)"
+          aria-label={t("topbar.zoomIn")}
+          title={`${t("topbar.zoomIn")} (+)`}
         >
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -146,7 +149,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           ) : (
             <Download className="h-4 w-4" />
           )}
-          {isExporting ? "Exporting…" : "Export Image"}
+          {isExporting ? t("topbar.exporting") : t("topbar.export")}
         </Button>
       </div>
     </div>

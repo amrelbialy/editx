@@ -1,6 +1,7 @@
 import { ImagePlus, Upload } from "lucide-react";
 import type React from "react";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 
 export interface ImagePanelProps {
@@ -11,6 +12,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -18,10 +20,10 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       try {
         await onAddImage(file);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to add image");
+        setError(e instanceof Error ? e.message : t("image.addError"));
       }
     },
-    [onAddImage],
+    [onAddImage, t],
   );
 
   const handleFileChange = useCallback(
@@ -55,12 +57,12 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-base font-medium text-muted-foreground">Add Image</div>
+      <div className="text-base font-medium text-muted-foreground">{t("image.addImage")}</div>
 
       {/* Drop zone / upload button */}
       <button
         type="button"
-        aria-label="Drop image here or click to upload"
+        aria-label={t("image.dropHint")}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -74,8 +76,8 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         )}
       >
         <Upload className="h-8 w-8 text-muted-foreground" />
-        <span className="text-base text-muted-foreground">Drop image here or click to upload</span>
-        <span className="text-base text-muted-foreground/60">PNG, JPG, WebP — max 5 MB</span>
+        <span className="text-base text-muted-foreground">{t("image.dropHint")}</span>
+        <span className="text-base text-muted-foreground/60">{t("image.sizeHint")}</span>
       </button>
 
       <input
@@ -102,7 +104,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         )}
       >
         <ImagePlus className="h-4 w-4" />
-        Upload Image
+        {t("image.uploadButton")}
       </button>
     </div>
   );

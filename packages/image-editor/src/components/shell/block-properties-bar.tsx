@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import type { PropertySidePanel } from "../../store/image-editor-store";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
@@ -100,6 +101,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
 
   const isText = blockType === "text";
   const isImage = blockType === "image";
+  const { t } = useTranslation();
 
   // State
   const [textState, setTextState] = useState(() =>
@@ -335,7 +337,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleBoldToggle}
-            aria-label="Bold"
+            aria-label={t("block.bold")}
             aria-pressed={textState.fontWeight === "bold"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
@@ -350,7 +352,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleItalicToggle}
-            aria-label="Italic"
+            aria-label={t("block.italic")}
             aria-pressed={textState.fontStyle === "italic"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
@@ -422,7 +424,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               <button
                 type="button"
                 className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
-                aria-label="Text alignment"
+                aria-label={t("block.textAlignment")}
               >
                 {textState.textAlign === "center" ? (
                   <AlignCenter className="h-4 w-4" />
@@ -474,7 +476,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               <button
                 type="button"
                 className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
-                aria-label="More text options"
+                aria-label={t("block.moreTextOptions")}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
@@ -493,7 +495,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   )}
                 >
                   <Underline className="h-4 w-4" />
-                  Underline
+                  {t("block.underline")}
                 </button>
                 <button
                   type="button"
@@ -507,7 +509,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   )}
                 >
                   <Strikethrough className="h-4 w-4" />
-                  Strikethrough
+                  {t("block.strikethrough")}
                 </button>
                 <div className="h-px bg-border my-0.5" />
                 <button
@@ -517,7 +519,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                   <RemoveFormatting className="h-4 w-4" />
-                  Clear Formatting
+                  {t("block.clearFormatting")}
                 </button>
               </div>
             </DropdownMenuContent>
@@ -539,7 +541,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               style={{ backgroundColor: colorSwatch }}
             />
           }
-          label="Color"
+          label={t("block.color")}
         />
       )}
 
@@ -552,7 +554,9 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             engine.block.setFillEnabled(blockId, !enabled);
             refresh();
           }}
-          aria-label={engine.block.isFillEnabled(blockId) ? "Disable fill" : "Enable fill"}
+          aria-label={
+            engine.block.isFillEnabled(blockId) ? t("block.disableFill") : t("block.enableFill")
+          }
           aria-pressed={!engine.block.isFillEnabled(blockId)}
           className={cn(
             "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
@@ -560,7 +564,9 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               ? "bg-primary/20 text-primary"
               : "text-muted-foreground hover:bg-accent",
           )}
-          title={engine.block.isFillEnabled(blockId) ? "Disable fill" : "Enable fill"}
+          title={
+            engine.block.isFillEnabled(blockId) ? t("block.disableFill") : t("block.enableFill")
+          }
         >
           <CircleOff className="h-4 w-4" />
         </button>
@@ -571,18 +577,26 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         <PanelButton
           panel="background"
           icon={<Paintbrush className="h-4 w-4" />}
-          label="Background"
+          label={t("block.background")}
         />
       )}
 
       {/* Stroke (graphic only) */}
       {!isText && !isImage && (
-        <PanelButton panel="stroke" icon={<Paintbrush className="h-4 w-4" />} label="Stroke" />
+        <PanelButton
+          panel="stroke"
+          icon={<Paintbrush className="h-4 w-4" />}
+          label={t("block.stroke")}
+        />
       )}
 
       {/* Image fill panel button (image only) */}
       {isImage && (
-        <PanelButton panel="imageFill" icon={<ImageIcon className="h-4 w-4" />} label="Image" />
+        <PanelButton
+          panel="imageFill"
+          icon={<ImageIcon className="h-4 w-4" />}
+          label={t("block.image")}
+        />
       )}
 
       {/* Style dropdown (image only — Adjustments / Filters) */}
@@ -599,7 +613,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               )}
             >
               <Sparkles className="h-4 w-4" />
-              Style
+              {t("block.style")}
               <ChevronDown className="h-3 w-3" />
             </button>
           </DropdownMenuTrigger>
@@ -615,7 +629,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               )}
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Adjustments
+              {t("panel.adjustments")}
             </button>
             <button
               type="button"
@@ -628,14 +642,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               )}
             >
               <Palette className="h-4 w-4" />
-              Filters
+              {t("panel.filters")}
             </button>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
 
       {/* Shadow */}
-      <PanelButton panel="shadow" icon={<Sun className="h-4 w-4" />} label="Shadow" />
+      <PanelButton panel="shadow" icon={<Sun className="h-4 w-4" />} label={t("block.shadow")} />
 
       {/* Opacity (dropdown) */}
       <DropdownMenu>
@@ -648,7 +662,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             )}
           >
             <Grid2x2 className="h-4 w-4" />
-            Opacity
+            {t("block.opacity")}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -658,7 +672,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         >
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">Opacity</span>
+              <span className="text-xs font-medium">{t("block.opacity")}</span>
               <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
                 {Math.round(opacity * 100)}%
               </span>
@@ -676,7 +690,11 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       </DropdownMenu>
 
       {/* Position */}
-      <PanelButton panel="position" icon={<Move className="h-4 w-4" />} label="Position" />
+      <PanelButton
+        panel="position"
+        icon={<Move className="h-4 w-4" />}
+        label={t("block.position")}
+      />
     </div>
   );
 };

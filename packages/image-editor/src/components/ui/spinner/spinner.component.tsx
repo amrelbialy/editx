@@ -4,6 +4,7 @@ import { cn } from "../../../utils/cn";
 interface SpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  label?: string;
 }
 
 const sizeMap = {
@@ -12,11 +13,11 @@ const sizeMap = {
   lg: "h-12 w-12 border-3",
 };
 
-export const Spinner: React.FC<SpinnerProps> = ({ className, size = "md" }) => {
+export const Spinner: React.FC<SpinnerProps> = ({ className, size = "md", label = "Loading" }) => {
   return (
     <div
       role="status"
-      aria-label="Loading"
+      aria-label={label}
       className={cn(
         "animate-spin rounded-full",
         "border-muted-foreground/30",

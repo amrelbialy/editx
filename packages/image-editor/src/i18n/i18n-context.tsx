@@ -1,10 +1,13 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useMemo } from "react";
+import type { TranslationKey } from "./translations/en";
 import { en } from "./translations/en";
+
+type TranslateFn = (key: TranslationKey, fallback?: string) => string;
 
 interface I18nContextValue {
   locale: string;
-  t: (key: string, fallback?: string) => string;
+  t: TranslateFn;
 }
 
 const I18nContext = createContext<I18nContextValue>({
@@ -14,25 +17,29 @@ const I18nContext = createContext<I18nContextValue>({
 
 interface I18nProviderProps {
   locale?: string;
-  translations?: Record<string, string>;
+  translations?: Partial<Record<TranslationKey, string>> | Record<string, string>;
+  /** When provided, called instead of the built-in dictionary lookup. */
+  translateFn?: (key: string) => string;
   children: React.ReactNode;
 }
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({
   locale = "en",
   translations: userTranslations,
+  translateFn,
   children,
 }) => {
   const merged = useMemo(() => {
-    if (!userTranslations) return en;
-    return { ...en, ...userTranslations };
+    if (!userTranslations) return en as Record<string, string>;
+    return { ...(en as Record<string, string>), ...userTranslations };
   }, [userTranslations]);
 
   const t = useCallback(
-    (key: string, fallback?: string): string => {
+    (key: TranslationKey, fallback?: string): string => {
+      if (translateFn) return translateFn(key) || fallback || key;
       return merged[key] ?? fallback ?? key;
     },
-    [merged],
+    [merged, translateFn],
   );
 
   const value = useMemo<I18nContextValue>(() => ({ locale, t }), [locale, t]);

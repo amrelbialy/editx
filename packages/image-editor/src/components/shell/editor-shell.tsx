@@ -1,6 +1,7 @@
 import type React from "react";
 import { useCallback, useState } from "react";
 import { Toaster } from "sonner";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 import { PopoverContainerProvider } from "../ui/popover-container-context";
 import { LiveRegion } from "./announcer";
@@ -16,12 +17,13 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
   const shellRef = useCallback((node: HTMLDivElement | null) => {
     setContainer(node);
   }, []);
+  const { t } = useTranslation();
 
   return (
     <div
       ref={shellRef}
       role="application"
-      aria-label="Image editor"
+      aria-label={t("a11y.imageEditor")}
       style={style}
       className={cn(
         "@container/editor flex flex-col h-full w-full overflow-hidden",

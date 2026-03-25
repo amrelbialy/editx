@@ -7,6 +7,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
@@ -37,6 +38,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
   const isCrop = activeTool === "crop";
   const isRotate = activeTool === "rotate";
   const showRotateFlip = isCrop || isRotate;
+  const { t } = useTranslation();
 
   return (
     <div
@@ -54,8 +56,8 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onRotateCounterClockwise}
-            aria-label="Rotate 90° left"
-            title="Rotate 90° left"
+            aria-label={t("bar.rotateLeft")}
+            title={t("bar.rotateLeft")}
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -64,8 +66,8 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onRotateClockwise}
-            aria-label="Rotate 90° right"
-            title="Rotate 90° right"
+            aria-label={t("bar.rotateRight")}
+            title={t("bar.rotateRight")}
           >
             <RotateCw className="h-4 w-4" />
           </Button>
@@ -75,8 +77,8 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onFlipHorizontal}
-            aria-label="Flip horizontal"
-            title="Flip horizontal"
+            aria-label={t("bar.flipH")}
+            title={t("bar.flipH")}
           >
             <FlipHorizontal className="h-4 w-4" />
           </Button>
@@ -85,8 +87,8 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onFlipVertical}
-            aria-label="Flip vertical"
-            title="Flip vertical"
+            aria-label={t("bar.flipV")}
+            title={t("bar.flipV")}
           >
             <FlipVertical className="h-4 w-4" />
           </Button>
@@ -108,7 +110,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             className="gap-1 h-7 text-xs rounded-md"
           >
             <ResetIcon className="h-3.5 w-3.5" />
-            Reset
+            {t("bar.reset")}
           </Button>
         )}
         {onDone && (
@@ -119,7 +121,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             className="gap-1 h-7 text-xs rounded-full"
           >
             <Check className="h-3.5 w-3.5" />
-            Done
+            {t("bar.done")}
           </Button>
         )}
       </div>

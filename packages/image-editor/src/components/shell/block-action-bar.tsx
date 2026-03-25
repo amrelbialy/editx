@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Copy, Pencil, Replace, Trash2 } from "lucide-re
 import type React from "react";
 import { useRef } from "react";
 import type { AlignDirection } from "../../hooks/use-block-actions";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -57,10 +58,11 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isImage = blockType === "image";
   const isText = blockType === "text";
+  const { t } = useTranslation();
 
   return (
     <fieldset
-      aria-label="Block actions"
+      aria-label={t("a11y.blockActions")}
       className={cn(
         "inline-flex items-center gap-0.5 h-9 px-1.5",
         "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
@@ -70,7 +72,11 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       {/* Edit (text only) */}
       {isText && onEdit && (
         <>
-          <ActionButton icon={<Pencil className="h-4 w-4" />} label="Edit Text" onClick={onEdit} />
+          <ActionButton
+            icon={<Pencil className="h-4 w-4" />}
+            label={t("action.editText")}
+            onClick={onEdit}
+          />
           <Separator orientation="vertical" className="h-4 mx-0.5" />
         </>
       )}
@@ -80,7 +86,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
         <>
           <ActionButton
             icon={<Replace className="h-4 w-4" />}
-            label="Replace Image"
+            label={t("action.replaceImage")}
             onClick={() => fileInputRef.current?.click()}
           />
           <input
@@ -101,24 +107,28 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       {/* Z-order */}
       <ActionButton
         icon={<ChevronUp className="h-4 w-4" />}
-        label="Bring Forward"
+        label={t("action.bringForward")}
         onClick={onBringForward}
       />
       <ActionButton
         icon={<ChevronDown className="h-4 w-4" />}
-        label="Send Backward"
+        label={t("action.sendBackward")}
         onClick={onSendBackward}
       />
 
       <Separator orientation="vertical" className="h-4 mx-0.5" />
 
       {/* Duplicate */}
-      <ActionButton icon={<Copy className="h-4 w-4" />} label="Duplicate" onClick={onDuplicate} />
+      <ActionButton
+        icon={<Copy className="h-4 w-4" />}
+        label={t("action.duplicate")}
+        onClick={onDuplicate}
+      />
 
       {/* Delete */}
       <ActionButton
         icon={<Trash2 className="h-4 w-4" />}
-        label="Delete"
+        label={t("action.delete")}
         onClick={onDelete}
         variant="destructive"
       />

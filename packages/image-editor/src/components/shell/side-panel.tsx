@@ -3,6 +3,7 @@ import type React from "react";
 import { useCallback, useEffect, useMemo } from "react";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
 import type { TextPreset } from "../../hooks/use-text-tool";
+import { useTranslation } from "../../i18n/i18n-context";
 import type { CropPresetId, ImageEditorTool } from "../../store/image-editor-store";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import type { AdjustmentValues } from "../panels/adjust-panel";
@@ -14,7 +15,7 @@ import { RotatePanel } from "../panels/rotate-panel";
 import { ShapesPanel } from "../panels/shapes-panel";
 import { TextPanel } from "../panels/text-panel";
 import { BlockInspector } from "./block-inspector";
-import { getPropertyPanelTitle, getToolPanelTitle } from "./panel-titles";
+import { getPropertyPanelTitleKey, getToolPanelTitle, getToolPanelTitleKey } from "./panel-titles";
 import { ToolPanel } from "./tool-panel";
 
 interface SidePanelProps {
@@ -87,6 +88,7 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
+  const { t } = useTranslation();
 
   const hasSelectedBlock =
     selectedBlockType === "text" ||
@@ -102,13 +104,15 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
 
   const open = activeTool !== "select" || propertySidePanel !== null;
 
-  const title = useMemo(
-    () =>
-      propertySidePanel
-        ? getPropertyPanelTitle(propertySidePanel)
-        : getToolPanelTitle(activeTool, customTools),
-    [propertySidePanel, activeTool, customTools],
-  );
+  const title = useMemo(() => {
+    if (propertySidePanel) {
+      const key = getPropertyPanelTitleKey(propertySidePanel);
+      return key ? t(key) : undefined;
+    }
+    const key = getToolPanelTitleKey(activeTool);
+    if (key) return t(key);
+    return getToolPanelTitle(activeTool, customTools);
+  }, [propertySidePanel, activeTool, customTools, t]);
 
   const handleClose = useCallback(() => {
     if (propertySidePanel) {

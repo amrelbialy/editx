@@ -1,5 +1,6 @@
 import { ChevronUp, ZoomIn, ZoomOut } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -30,10 +31,17 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
   onZoomIn,
   onZoomOut,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-xs min-w-12 gap-0.5" title="Zoom options">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs min-w-12 gap-0.5"
+          title={t("zoom.options")}
+        >
           {zoomLabel}
           <ChevronUp className="h-3 w-3 opacity-60" />
         </Button>
@@ -41,10 +49,10 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
 
       <DropdownMenuContent align="end" className="w-48">
         {/* Fit modes */}
-        <DropdownMenuItem onClick={onAutoFitPage}>Auto-Fit Page</DropdownMenuItem>
-        <DropdownMenuItem onClick={onFitPage}>Fit Page</DropdownMenuItem>
+        <DropdownMenuItem onClick={onAutoFitPage}>{t("zoom.autoFit")}</DropdownMenuItem>
+        <DropdownMenuItem onClick={onFitPage}>{t("zoom.fitPage")}</DropdownMenuItem>
         <DropdownMenuItem onClick={onFitSelection} disabled={!canFitSelection}>
-          Fit
+          {t("zoom.fit")}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -62,12 +70,12 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
         {/* Zoom in/out */}
         <DropdownMenuItem onClick={onZoomIn}>
           <ZoomIn className="h-4 w-4 mr-2" />
-          <span className="flex-1">Zoom In</span>
+          <span className="flex-1">{t("zoom.in")}</span>
           <kbd className="ml-auto text-xs text-muted-foreground">+</kbd>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onZoomOut}>
           <ZoomOut className="h-4 w-4 mr-2" />
-          <span className="flex-1">Zoom Out</span>
+          <span className="flex-1">{t("zoom.out")}</span>
           <kbd className="ml-auto text-xs text-muted-foreground">-</kbd>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -10,25 +10,33 @@ import {
 import type React from "react";
 import type { ImageEditorToolId } from "../../config/config.types";
 import { useConfig } from "../../config/config-context";
+import { useTranslation } from "../../i18n/i18n-context";
+import type { TranslationKey } from "../../i18n/translations/en";
 import { cn } from "../../utils/cn";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface ToolDef {
   id: ImageEditorToolId;
-  label: string;
+  labelKey: TranslationKey;
   icon: LucideIcon;
   group: "editing" | "annotation";
   shortcut?: string;
 }
 
 const allTools: ToolDef[] = [
-  { id: "crop", label: "Crop", icon: Crop, group: "editing", shortcut: "C" },
-  { id: "adjust", label: "Adjust", icon: SlidersHorizontal, group: "editing", shortcut: "A" },
-  { id: "filter", label: "Filters", icon: Blend, group: "editing", shortcut: "F" },
-  { id: "text", label: "Text", icon: Type, group: "annotation", shortcut: "T" },
-  { id: "shapes", label: "Shapes", icon: Hexagon, group: "annotation", shortcut: "S" },
-  { id: "image", label: "Image", icon: ImagePlus, group: "annotation", shortcut: "I" },
+  { id: "crop", labelKey: "tools.crop", icon: Crop, group: "editing", shortcut: "C" },
+  {
+    id: "adjust",
+    labelKey: "tools.adjust",
+    icon: SlidersHorizontal,
+    group: "editing",
+    shortcut: "A",
+  },
+  { id: "filter", labelKey: "tools.filter", icon: Blend, group: "editing", shortcut: "F" },
+  { id: "text", labelKey: "tools.text", icon: Type, group: "annotation", shortcut: "T" },
+  { id: "shapes", labelKey: "tools.shapes", icon: Hexagon, group: "annotation", shortcut: "S" },
+  { id: "image", labelKey: "tools.image", icon: ImagePlus, group: "annotation", shortcut: "I" },
 ];
 
 interface ToolNavProps {
@@ -47,6 +55,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
   const { activeTool, onToolSelect, customTools: customToolDefs = [], sidebarBottom } = props;
 
   const config = useConfig();
+  const { t } = useTranslation();
   const enabledTools = config.tools;
   const showLabels = config.ui?.toolSidebar?.showLabels ?? true;
   const showSeparators = config.ui?.toolSidebar?.groupSeparators ?? true;
@@ -96,10 +105,17 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
     );
   };
 
+  const resolvedTools = visibleTools.map((td) => ({
+    ...td,
+    label: t(td.labelKey),
+  }));
+  const resolvedEditing = resolvedTools.filter((td) => td.group === "editing");
+  const resolvedAnnotation = resolvedTools.filter((td) => td.group === "annotation");
+
   return (
     <nav
       role="toolbar"
-      aria-label="Editor tools"
+      aria-label={t("a11y.editorTools")}
       aria-orientation="horizontal"
       className={cn(
         // Mobile (narrow): horizontal bottom bar
@@ -115,7 +131,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
     >
       {/* Editing tools */}
       <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
-        {editingTools.map(renderToolButton)}
+        {resolvedEditing.map(renderToolButton)}
       </div>
 
       {/* Separator between groups — desktop only */}
@@ -125,7 +141,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
 
       {/* Annotation tools */}
       <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
-        {annotationTools.map(renderToolButton)}
+        {resolvedAnnotation.map(renderToolButton)}
       </div>
 
       {/* Custom tools */}

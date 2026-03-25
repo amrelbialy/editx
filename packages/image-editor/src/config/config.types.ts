@@ -141,6 +141,8 @@ export interface ImageEditorConfig {
   ui?: UIConfig;
   locale?: string;
   translations?: Record<string, string>;
+  /** When provided, called instead of the built-in dictionary lookup. */
+  translateFn?: (key: string) => string;
   export?: ExportConfig;
   customTools?: CustomTool[];
 }

@@ -12,6 +12,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResizePreset } from "../../config/config.types";
 import { useConfig } from "../../config/config-context";
+import { useTranslation } from "../../i18n/i18n-context";
 import { type CropPresetId, useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
 import { ResizePresets } from "./resize-presets";
@@ -45,6 +46,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   const cropPreset = useImageEditorStore((s) => s.cropPreset);
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
   const config = useConfig();
+  const { t } = useTranslation();
 
   const [tab, setTab] = useState<CropTab>("aspectRatio");
   const [ratioLocked, setRatioLocked] = useState(true);
@@ -146,7 +148,11 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   return (
     <div className="flex flex-col gap-3">
       {/* Tab switcher */}
-      <div role="tablist" aria-label="Crop mode" className="flex bg-muted rounded-lg p-0.5">
+      <div
+        role="tablist"
+        aria-label={t("a11y.cropMode")}
+        className="flex bg-muted rounded-lg p-0.5"
+      >
         <button
           type="button"
           role="tab"
@@ -161,7 +167,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Aspect Ratio
+          {t("crop.aspectRatio")}
         </button>
         <button
           type="button"
@@ -177,7 +183,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Resize
+          {t("crop.resize")}
         </button>
       </div>
 
@@ -188,8 +194,10 @@ export const CropPanel: React.FC<CropPanelProps> = ({
           id="crop-tab-aspect-ratio"
           aria-labelledby="crop-tab-aspect-ratio-trigger"
         >
-          <div className="text-base font-medium text-muted-foreground mb-1">Aspect Ratio</div>
-          <fieldset className="grid grid-cols-2 gap-1.5" aria-label="Aspect ratio presets">
+          <div className="text-base font-medium text-muted-foreground mb-1">
+            {t("crop.aspectRatio")}
+          </div>
+          <fieldset className="grid grid-cols-2 gap-1.5" aria-label={t("a11y.aspectRatioPresets")}>
             {presets.map((preset) => (
               <button
                 key={preset.id}
@@ -228,7 +236,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                   htmlFor="crop-resize-width"
                   className="text-base text-muted-foreground w-12 shrink-0"
                 >
-                  Width
+                  {t("crop.width")}
                 </label>
                 <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
                   <input
@@ -254,9 +262,9 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                       ? "text-primary hover:text-primary/80"
                       : "text-muted-foreground hover:text-foreground",
                   )}
-                  aria-label={ratioLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  aria-label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
                   aria-pressed={ratioLocked}
-                  title={ratioLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  title={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
                   data-testid="resize-ratio-lock"
                 >
                   {ratioLocked ? <Link className="h-5 w-5" /> : <Unlink className="h-5 w-5" />}
@@ -269,7 +277,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                   htmlFor="crop-resize-height"
                   className="text-base text-muted-foreground w-12 shrink-0"
                 >
-                  Height
+                  {t("crop.height")}
                 </label>
                 <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
                   <input

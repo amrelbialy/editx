@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
@@ -16,6 +17,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
   const { open, title, onClose, children } = props;
   const panelRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<Element | null>(null);
+  const { t } = useTranslation();
 
   // Store the trigger element when panel opens; restore focus on close
   useEffect(() => {
@@ -58,7 +60,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title ?? "Tool options"}
+        aria-label={title ?? t("a11y.toolOptions")}
         data-text-toolbar
         className={cn(
           // Narrow: bottom sheet — slides up from bottom
@@ -86,7 +88,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
               size="icon"
               className="h-7 w-7"
               onClick={onClose}
-              aria-label="Close panel"
+              aria-label={t("panel.close")}
             >
               <X className="h-4 w-4" />
             </Button>

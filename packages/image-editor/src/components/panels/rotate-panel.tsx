@@ -1,5 +1,6 @@
 import { FlipHorizontal, FlipVertical, RotateCcw, RotateCw } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
@@ -27,11 +28,13 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
   onFlipVertical,
   onReset,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-4">
       {/* Straighten */}
       <SliderField
-        label="Straighten"
+        label={t("rotate.straighten")}
         value={rotation}
         min={-180}
         max={180}
@@ -45,7 +48,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* 90° rotation buttons */}
       <div>
-        <div className="text-base font-medium text-muted-foreground mb-2">Rotate</div>
+        <div className="text-base font-medium text-muted-foreground mb-2">{t("rotate.rotate")}</div>
         <div className="flex gap-1.5">
           <Button
             variant="secondary"
@@ -53,8 +56,8 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onRotateCounterClockwise}
             data-testid="rotate-ccw"
-            aria-label="Rotate 90° counter-clockwise"
-            title="Rotate 90° counter-clockwise"
+            aria-label={t("rotate.ccw")}
+            title={t("rotate.ccw")}
           >
             <RotateCcw className="h-4 w-4" />
             −90°
@@ -65,8 +68,8 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onRotateClockwise}
             data-testid="rotate-cw"
-            aria-label="Rotate 90° clockwise"
-            title="Rotate 90° clockwise"
+            aria-label={t("rotate.cw")}
+            title={t("rotate.cw")}
           >
             <RotateCw className="h-4 w-4" />
             +90°
@@ -78,7 +81,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* Flip buttons */}
       <div>
-        <div className="text-base font-medium text-muted-foreground mb-2">Flip</div>
+        <div className="text-base font-medium text-muted-foreground mb-2">{t("rotate.flip")}</div>
         <div className="flex gap-1.5">
           <Button
             variant={flipH ? "default" : "secondary"}
@@ -86,12 +89,12 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onFlipHorizontal}
             data-testid="flip-h"
-            aria-label="Flip horizontally"
+            aria-label={t("rotate.flipH")}
             aria-pressed={flipH}
-            title="Flip horizontally"
+            title={t("rotate.flipH")}
           >
             <FlipHorizontal className="h-4 w-4" />
-            Horizontal
+            {t("rotate.horizontal")}
           </Button>
           <Button
             variant={flipV ? "default" : "secondary"}
@@ -99,12 +102,12 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onFlipVertical}
             data-testid="flip-v"
-            aria-label="Flip vertically"
+            aria-label={t("rotate.flipV")}
             aria-pressed={flipV}
-            title="Flip vertically"
+            title={t("rotate.flipV")}
           >
             <FlipVertical className="h-4 w-4" />
-            Vertical
+            {t("rotate.vertical")}
           </Button>
         </div>
       </div>

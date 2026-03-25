@@ -16,7 +16,11 @@ export const Providers: React.FC<ProvidersProps> = (props) => {
   return (
     <ImageEditorProvider config={config}>
       <ThemeProvider theme={config?.theme}>
-        <I18nProvider locale={config?.locale} translations={config?.translations}>
+        <I18nProvider
+          locale={config?.locale}
+          translations={config?.translations}
+          translateFn={config?.translateFn}
+        >
           <TooltipProvider>{children}</TooltipProvider>
         </I18nProvider>
       </ThemeProvider>
