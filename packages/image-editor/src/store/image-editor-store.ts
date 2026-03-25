@@ -1,16 +1,7 @@
 import { create } from "zustand";
+import type { ImageEditorToolId } from "../config/config.types";
 
-export type ImageEditorTool =
-  | "select"
-  | "crop"
-  | "rotate"
-  | "adjust"
-  | "filter"
-  | "resize"
-  | "shapes"
-  | "text"
-  | "image"
-  | "pen";
+export type ImageEditorTool = ImageEditorToolId | "select" | "rotate" | "resize" | "pen";
 
 export type PropertySidePanel =
   | "color"

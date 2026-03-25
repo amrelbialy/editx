@@ -209,7 +209,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             min={0.5}
             max={4}
             step={0.1}
-            className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
+            className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-base text-center tabular-nums"
           />
           <SliderField
             label=""
@@ -232,7 +232,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
               key={opt.value}
               onClick={() => handleTextTransform(opt.value)}
               className={cn(
-                "h-8 px-3 rounded-md text-xs font-medium transition-colors",
+                "h-8 px-3 rounded-md text-base font-medium transition-colors",
                 state.textTransform === opt.value
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-accent",
@@ -259,7 +259,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
               }
             }}
             step={0.5}
-            className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
+            className="w-14 h-7 rounded-md border border-border bg-background px-1.5 text-base text-center tabular-nums"
           />
           <SliderField
             label=""
@@ -280,14 +280,14 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
       <Section label="Text Stroke">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground w-12">Color</span>
+            <span className="text-base text-muted-foreground w-12">Color</span>
             <input
               type="color"
               value={state.textStrokeColor}
               onChange={handleStrokeColor}
               className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
             />
-            <span className="text-xs font-mono text-muted-foreground">{state.textStrokeColor}</span>
+            <span className="text-base font-mono text-muted-foreground">{state.textStrokeColor}</span>
           </div>
           <SliderField
             label="Width"

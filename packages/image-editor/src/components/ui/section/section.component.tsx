@@ -10,7 +10,7 @@ export const Section: React.FC<SectionProps> = (props) => {
     <>
       {separator && <Separator className="my-1" />}
       <div className={cn("flex flex-col gap-1.5", className)}>
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-base font-medium text-muted-foreground">{label}</span>
         {children}
       </div>
     </>

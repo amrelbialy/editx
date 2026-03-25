@@ -1,36 +1,23 @@
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ExportDialog } from "./components/panels/export-dialog";
-import { ActiveToolContent } from "./components/shell/active-tool-content";
-import { CanvasSection } from "./components/shell/canvas-section";
+import { announce } from "./components/shell/announcer";
+import { CanvasPane } from "./components/shell/canvas-pane";
 import { EditorShell } from "./components/shell/editor-shell";
 import { ErrorPlaceholder } from "./components/shell/error-placeholder";
 import { LoadingOverlay } from "./components/shell/loading-overlay";
-import { getPropertyPanelTitle, getToolPanelTitle } from "./components/shell/panel-titles";
-import { PropertySubPanels } from "./components/shell/property-sub-panels";
+import { getToolPanelTitle } from "./components/shell/panel-titles";
+import { Providers } from "./components/shell/providers";
+import { SidePanel } from "./components/shell/side-panel";
 import { ToolNav } from "./components/shell/tool-nav";
-import { ToolPanel } from "./components/shell/tool-panel";
 import { Topbar } from "./components/shell/topbar";
-import { TooltipProvider } from "./components/ui/tooltip";
 import type { EditorEventCallbacks, EditorSlots, ImageEditorConfig } from "./config/config.types";
-import { ImageEditorProvider } from "./config/config-context";
-import { useAdjustmentsTool } from "./hooks/use-adjustments-tool";
-import { useBlockActions } from "./hooks/use-block-actions";
-import { useBlockEffects } from "./hooks/use-block-effects";
-import { useCropTool } from "./hooks/use-crop-tool";
-import { useEditorZoom } from "./hooks/use-editor-zoom";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
-import { useFilterTool } from "./hooks/use-filter-tool";
-import { useImageTool } from "./hooks/use-image-tool";
-import { useRotateFlipTool } from "./hooks/use-rotate-flip-tool";
-import { useShapesTool } from "./hooks/use-shapes-tool";
 import { useShortcuts } from "./hooks/use-shortcuts";
-import { useTextTool } from "./hooks/use-text-tool";
-import { useToolManager } from "./hooks/use-tool-manager";
-import { I18nProvider } from "./i18n/i18n-context";
+import { useTools } from "./hooks/use-tools";
+import { useZoom } from "./hooks/use-zoom";
 import { useImageEditorStore } from "./store/image-editor-store";
-import { ThemeProvider } from "./theme/theme-provider";
 import type { ImageValidationOptions } from "./utils/validate-image";
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -65,7 +52,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     slots,
     events,
   } = props;
-  // --- Engine lifecycle ---
+
+  // --- Refs & custom hooks ---
   const {
     containerRef,
     engine,
@@ -78,233 +66,156 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     setSelectedShapeId,
   } = useEngine({ src, validation, keepZoomOnSourceChange });
 
-  const isLoading = useImageEditorStore((s) => s.isLoading);
-  const error = useImageEditorStore((s) => s.error);
-  const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
-
-  // --- Zoom ---
-  const zoom = useEditorZoom({ engineRef, engine });
-
-  // --- Tool hooks ---
-  const crop = useCropTool({ engineRef });
-  const rotateFlip = useRotateFlipTool({ engineRef });
-  const adjustments = useAdjustmentsTool({ engineRef });
-  const filter = useFilterTool({ engineRef });
-  const shapes = useShapesTool({ engineRef });
-  const textTool = useTextTool({ engineRef });
-  const imageTool = useImageTool({ engineRef });
-  const blockActions = useBlockActions({
-    engineRef,
-    selectedBlockId: selectedShapeId,
-    onDeselect: () => setSelectedShapeId(null),
-  });
-
-  // Determine if a block is selected and its type
-  const selectedBlockType =
-    engine && selectedShapeId !== null
-      ? (engine.block.getType(selectedShapeId) as "text" | "graphic" | string)
-      : null;
-  const blockEffects = useBlockEffects({
-    engineRef,
-    blockId: selectedBlockType === "image" ? selectedShapeId : null,
-  });
-
-  const { activeTool, activeToolId, handleSidebarToolSelect, handleDone, handleContextualReset } =
-    useToolManager({
-      engineRef,
-      enterCropMode: crop.enterCropMode,
-      handleCropApply: crop.handleCropApply,
-      handleCropCancel: crop.handleCropCancel,
-      handleRotateReset: rotateFlip.handleRotateReset,
-      handleAdjustReset: adjustments.handleAdjustReset,
-      syncRotationState: rotateFlip.syncRotationState,
-      ensureAdjustEffect: adjustments.ensureAdjustEffect,
-      syncAdjustValues: adjustments.syncAdjustValues,
-      ensureFilterEffect: filter.ensureFilterEffect,
-      syncFilterState: filter.syncFilterState,
-      events,
-    });
-
-  // --- Export hook ---
+  const tools = useTools({ engineRef, engine, selectedShapeId, setSelectedShapeId, events });
+  const zoom = useZoom({ engineRef, engine });
   const { handleExport, isExporting } = useExport({
     engineRef,
     exportConfig: userConfig?.export,
     onSave,
     events,
+    notify: tools.notify,
   });
 
+  // --- Store selectors (grouped) ---
+  const isLoading = useImageEditorStore((s) => s.isLoading);
+  const error = useImageEditorStore((s) => s.error);
+
+  // --- useState ---
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
+  // --- useCallback ---
   const openExportDialog = useCallback(() => setExportDialogOpen(true), []);
 
-  // --- Keyboard shortcuts ---
+  const handleUndo = useCallback(() => engineRef.current?.editor.undo(), [engineRef]);
+  const handleRedo = useCallback(() => engineRef.current?.editor.redo(), [engineRef]);
+
+  const handleEscape = useCallback(() => {
+    if (tools.activeTool !== "select") {
+      if (tools.activeTool === "crop") {
+        tools.crop.handleCropCancel();
+      } else {
+        tools.setActiveTool("select");
+      }
+    }
+  }, [tools]);
+
+  // --- useEffect ---
   useShortcuts({
     enabled: !isLoading && !error,
-    onToolSelect: handleSidebarToolSelect,
-    onUndo: () => engineRef.current?.editor.undo(),
-    onRedo: () => engineRef.current?.editor.redo(),
+    onToolSelect: tools.handleSidebarToolSelect,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
     onZoomIn: zoom.handleZoomIn,
     onZoomOut: zoom.handleZoomOut,
     onZoomFit: zoom.handleAutoFitPage,
     onZoom100: zoom.handleZoom100,
-    onDuplicate: blockActions.duplicate,
-    onBringForward: blockActions.bringForward,
-    onSendBackward: blockActions.sendBackward,
-    onBringToFront: blockActions.bringToFront,
-    onSendToBack: blockActions.sendToBack,
-    onEscape: () => {
-      if (activeTool !== "select") {
-        if (activeTool === "crop") {
-          crop.handleCropCancel();
-        } else {
-          setActiveTool("select");
-        }
-      }
-    },
-    onDelete: () => {
-      if (selectedShapeId !== null) {
-        engineRef.current?.block.destroy(selectedShapeId);
-        setSelectedShapeId(null);
-      }
-    },
+    onDuplicate: tools.duplicate,
+    onBringForward: tools.blockActions.bringForward,
+    onSendBackward: tools.blockActions.sendBackward,
+    onBringToFront: tools.blockActions.bringToFront,
+    onSendToBack: tools.blockActions.sendToBack,
+    onEscape: handleEscape,
+    onDelete: tools.deleteBlock,
   });
 
-  const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
-  const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
+  useEffect(() => {
+    if (tools.activeTool !== "select") {
+      const title = getToolPanelTitle(tools.activeTool, userConfig?.customTools);
+      if (title) announce(`${title} tool selected`);
+    }
+  }, [tools.activeTool, userConfig?.customTools]);
 
-  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === activeTool);
+  // --- Derived state ---
+  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
 
   const hasSelectedBlock =
-    selectedBlockType === "text" ||
-    selectedBlockType === "graphic" ||
-    selectedBlockType === "image";
-
-  const toolPanelOpen = activeTool !== "select" || propertySidePanel !== null;
-  const effectivePanelTitle = useMemo(
-    () =>
-      propertySidePanel
-        ? getPropertyPanelTitle(propertySidePanel)
-        : getToolPanelTitle(activeTool, userConfig?.customTools),
-    [propertySidePanel, activeTool, userConfig?.customTools],
-  );
-
-  // Reset property side panel when block is deselected
-  useEffect(() => {
-    if (!hasSelectedBlock && propertySidePanel !== null) {
-      setPropertySidePanel(null);
-    }
-  }, [hasSelectedBlock, propertySidePanel, setPropertySidePanel]);
+    tools.selectedBlockType === "text" ||
+    tools.selectedBlockType === "graphic" ||
+    tools.selectedBlockType === "image";
 
   return (
-    <ImageEditorProvider config={userConfig}>
-      <ThemeProvider theme={userConfig?.theme}>
-        <I18nProvider locale={userConfig?.locale} translations={userConfig?.translations}>
-          <TooltipProvider>
-            <EditorShell style={{ width, height }} className="relative">
-              {/* Drag/drop + paste wrapper */}
-              <div
-                className="flex flex-col h-full w-full"
-                role="application"
-                tabIndex={0}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onPaste={handlePaste}
-              >
-                <Topbar
-                  onUndo={() => engineRef.current?.editor.undo()}
-                  onRedo={() => engineRef.current?.editor.redo()}
-                  canUndo={!!engine}
-                  canRedo={!!engine}
-                  onZoomIn={zoom.handleZoomIn}
-                  onZoomOut={zoom.handleZoomOut}
-                  onAutoFitPage={zoom.handleAutoFitPage}
-                  onFitPage={zoom.handleFitPage}
-                  onFitSelection={zoom.handleFitSelection}
-                  canFitSelection={selectedShapeId !== null}
-                  onZoomPreset={zoom.handleZoomPreset}
-                  zoomLabel={zoom.zoomLabel}
-                  onExport={openExportDialog}
-                  isExporting={isExporting}
-                  topbarRight={slots?.topbarRight}
-                />
+    <Providers config={userConfig}>
+      <EditorShell style={{ width, height }} className="relative">
+        <div
+          className="flex flex-col h-full w-full"
+          role="application"
+          tabIndex={0}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onPaste={handlePaste}
+        >
+          <Topbar
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={!!engine}
+            canRedo={!!engine}
+            onZoomIn={zoom.handleZoomIn}
+            onZoomOut={zoom.handleZoomOut}
+            onAutoFitPage={zoom.handleAutoFitPage}
+            onFitPage={zoom.handleFitPage}
+            onFitSelection={zoom.handleFitSelection}
+            canFitSelection={selectedShapeId !== null}
+            onZoomPreset={zoom.handleZoomPreset}
+            zoomLabel={zoom.zoomLabel}
+            onExport={openExportDialog}
+            isExporting={isExporting}
+            topbarRight={slots?.topbarRight}
+          />
 
-                <div className="flex flex-col-reverse @3xl/editor:flex-row flex-1 overflow-hidden">
-                  <ToolNav
-                    activeTool={activeToolId}
-                    onToolSelect={handleSidebarToolSelect}
-                    sidebarBottom={slots?.sidebarBottom}
-                  />
+          <div className="flex flex-col-reverse @3xl/editor:flex-row flex-1 overflow-hidden">
+            <ToolNav
+              activeTool={tools.activeToolId}
+              onToolSelect={tools.handleSidebarToolSelect}
+              sidebarBottom={slots?.sidebarBottom}
+            />
 
-                  <ToolPanel
-                    open={toolPanelOpen}
-                    title={effectivePanelTitle}
-                    onClose={() => {
-                      if (propertySidePanel) {
-                        setPropertySidePanel(null);
-                      } else if (activeTool === "crop") {
-                        crop.handleCropCancel();
-                      } else {
-                        setActiveTool("select");
-                      }
-                    }}
-                  >
-                    {propertySidePanel && engine && selectedShapeId !== null ? (
-                      <PropertySubPanels
-                        panel={propertySidePanel}
-                        engine={engine}
-                        blockId={selectedShapeId}
-                        blockType={selectedBlockType}
-                        blockEffects={blockEffects}
-                        blockActions={blockActions}
-                        onReplaceImage={(file: File) =>
-                          imageTool.handleReplaceImage(file, selectedShapeId)
-                        }
-                      />
-                    ) : (
-                      <ActiveToolContent
-                        activeTool={activeTool}
-                        crop={crop}
-                        rotateFlip={rotateFlip}
-                        adjustments={adjustments}
-                        filter={filter}
-                        shapes={shapes}
-                        textTool={textTool}
-                        imageTool={imageTool}
-                        activeCustomToolPanel={activeCustomTool?.panel}
-                      />
-                    )}
-                  </ToolPanel>
+            <SidePanel
+              engine={engine}
+              selectedShapeId={selectedShapeId}
+              selectedBlockType={tools.selectedBlockType}
+              activeTool={tools.activeTool}
+              crop={tools.crop}
+              rotateFlip={tools.rotateFlip}
+              adjustments={tools.adjustments}
+              filter={tools.filter}
+              addShape={tools.addShape}
+              addText={tools.addText}
+              addImage={tools.addImage}
+              replaceImage={tools.replaceImage}
+              blockEffects={tools.blockEffects}
+              blockActions={tools.blockActions}
+              activeCustomToolPanel={activeCustomTool?.panel}
+              customTools={userConfig?.customTools}
+            />
 
-                  <CanvasSection
-                    canvasRef={containerRef}
-                    engine={engine}
-                    activeTool={activeTool}
-                    selectedShapeId={selectedShapeId}
-                    selectedBlockType={selectedBlockType}
-                    hasSelectedBlock={hasSelectedBlock}
-                    blockActions={blockActions}
-                    rotateFlip={rotateFlip}
-                    imageTool={imageTool}
-                    activeCustomToolBar={activeCustomTool?.contextualBar}
-                    slots={slots}
-                    onContextualReset={handleContextualReset}
-                    onDone={handleDone}
-                  />
-                </div>
-              </div>
+            <CanvasPane
+              canvasRef={containerRef}
+              engine={engine}
+              activeTool={tools.activeTool}
+              selectedShapeId={selectedShapeId}
+              selectedBlockType={tools.selectedBlockType}
+              hasSelectedBlock={hasSelectedBlock}
+              blockActions={tools.blockActions}
+              rotateFlip={tools.rotateFlip}
+              replaceImage={tools.replaceImage}
+              activeCustomToolBar={activeCustomTool?.contextualBar}
+              slots={slots}
+              onContextualReset={tools.handleContextualReset}
+              onDone={tools.handleDone}
+            />
+          </div>
+        </div>
 
-              <ExportDialog
-                open={exportDialogOpen}
-                onOpenChange={setExportDialogOpen}
-                onExport={handleExport}
-                isExporting={isExporting}
-              />
+        <ExportDialog
+          open={exportDialogOpen}
+          onOpenChange={setExportDialogOpen}
+          onExport={handleExport}
+          isExporting={isExporting}
+        />
 
-              {isLoading && !error && <LoadingOverlay />}
-              {error && <ErrorPlaceholder error={error} onRetry={handleRetry} />}
-            </EditorShell>
-          </TooltipProvider>
-        </I18nProvider>
-      </ThemeProvider>
-    </ImageEditorProvider>
+        {isLoading && !error && <LoadingOverlay />}
+        {error && <ErrorPlaceholder error={error} onRetry={handleRetry} />}
+      </EditorShell>
+    </Providers>
   );
 };

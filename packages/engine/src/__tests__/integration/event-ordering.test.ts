@@ -7,8 +7,8 @@ import { CreateEffectCommand } from "../../controller/commands/create-effect-com
 import { DestroyBlockCommand } from "../../controller/commands/destroy-block-command";
 import { RemoveEffectCommand } from "../../controller/commands/remove-effect-command";
 import { SetPropertyCommand } from "../../controller/commands/set-property-command";
-import type { BlockEvent } from "../../event-api";
 import { Engine } from "../../engine";
+import type { BlockEvent } from "../../event-api";
 import { createMockRenderer } from "../mocks/mock-renderer";
 
 describe("Engine Integration: Event Ordering", () => {

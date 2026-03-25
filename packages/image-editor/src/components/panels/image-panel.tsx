@@ -55,10 +55,12 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-xs font-medium text-muted-foreground">Add Image</div>
+      <div className="text-base font-medium text-muted-foreground">Add Image</div>
 
       {/* Drop zone / upload button */}
-      <div
+      <button
+        type="button"
+        aria-label="Drop image here or click to upload"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -72,9 +74,9 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         )}
       >
         <Upload className="h-8 w-8 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Drop image here or click to upload</span>
-        <span className="text-xs text-muted-foreground/60">PNG, JPG, WebP — max 5 MB</span>
-      </div>
+        <span className="text-base text-muted-foreground">Drop image here or click to upload</span>
+        <span className="text-base text-muted-foreground/60">PNG, JPG, WebP — max 5 MB</span>
+      </button>
 
       <input
         ref={fileInputRef}
@@ -85,16 +87,17 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       />
 
       {error && (
-        <div className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2">
+        <div className="text-base text-destructive bg-destructive/10 rounded-md px-3 py-2">
           {error}
         </div>
       )}
 
       {/* Quick add button */}
       <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-sm",
+          "flex items-center gap-2 px-3 py-2 rounded-md text-base",
           "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
         )}
       >

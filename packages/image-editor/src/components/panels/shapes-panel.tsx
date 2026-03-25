@@ -54,7 +54,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({ onAddShape }) => {
 
   return (
     <Section label="Shapes">
-      <SelectionGrid items={SHAPES} onSelect={handleSelect} columns={3} />
+      <SelectionGrid items={SHAPES} onSelect={handleSelect} columns={3} ariaLabel="Shape types" />
     </Section>
   );
 };

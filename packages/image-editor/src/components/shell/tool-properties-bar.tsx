@@ -54,18 +54,20 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onRotateCounterClockwise}
+            aria-label="Rotate 90° left"
             title="Rotate 90° left"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7"
             onClick={onRotateClockwise}
+            aria-label="Rotate 90° right"
             title="Rotate 90° right"
           >
-            <RotateCw className="h-3.5 w-3.5" />
+            <RotateCw className="h-4 w-4" />
           </Button>
           <Separator orientation="vertical" className="h-5 mx-0.5" />
           <Button
@@ -73,18 +75,20 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             size="icon"
             className="h-7 w-7"
             onClick={onFlipHorizontal}
+            aria-label="Flip horizontal"
             title="Flip horizontal"
           >
-            <FlipHorizontal className="h-3.5 w-3.5" />
+            <FlipHorizontal className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7"
             onClick={onFlipVertical}
+            aria-label="Flip vertical"
             title="Flip vertical"
           >
-            <FlipVertical className="h-3.5 w-3.5" />
+            <FlipVertical className="h-4 w-4" />
           </Button>
 
           <Separator orientation="vertical" className="h-5 mx-1" />
@@ -103,7 +107,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             onClick={onReset}
             className="gap-1 h-7 text-xs rounded-md"
           >
-            <ResetIcon className="h-3 w-3" />
+            <ResetIcon className="h-3.5 w-3.5" />
             Reset
           </Button>
         )}
@@ -114,7 +118,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
             onClick={onDone}
             className="gap-1 h-7 text-xs rounded-full"
           >
-            <Check className="h-3 w-3" />
+            <Check className="h-3.5 w-3.5" />
             Done
           </Button>
         )}

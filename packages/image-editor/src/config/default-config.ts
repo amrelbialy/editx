@@ -1,4 +1,5 @@
 import type { ImageEditorConfig, ResizePresetGroup } from "./config.types";
+import { TOOL_IDS } from "./config.types";
 
 const defaultResizePresets: ResizePresetGroup[] = [
   {
@@ -51,7 +52,7 @@ export const defaultConfig: Required<
   Pick<ImageEditorConfig, "tools" | "defaultTool" | "theme" | "ui" | "export">
 > &
   ImageEditorConfig = {
-  tools: ["crop", "adjust", "filter", "text", "shapes", "image"],
+  tools: [...TOOL_IDS],
   defaultTool: null,
 
   theme: {
@@ -68,7 +69,7 @@ export const defaultConfig: Required<
     contextualBar: {
       show: true,
     },
-    title: "Photo Editor",
+    title: "Image Editor",
     showTitle: true,
   },
 

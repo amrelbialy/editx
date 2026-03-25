@@ -73,3 +73,5 @@ export function useBlockActions({
     alignToPage,
   };
 }
+
+export type UseBlockActionsReturn = ReturnType<typeof useBlockActions>;

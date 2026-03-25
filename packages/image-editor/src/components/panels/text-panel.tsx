@@ -29,7 +29,12 @@ export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
 
   return (
     <Section label="Add Text">
-      <SelectionGrid items={TEXT_PRESETS} onSelect={handleSelect} columns={2} />
+      <SelectionGrid
+        items={TEXT_PRESETS}
+        onSelect={handleSelect}
+        columns={2}
+        ariaLabel="Text presets"
+      />
     </Section>
   );
 };

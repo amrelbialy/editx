@@ -5,31 +5,34 @@ import { type ImageEditorTool, useImageEditorStore } from "../store/image-editor
 
 export interface UseToolManagerOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
-  enterCropMode: () => void;
-  handleCropApply: () => void;
-  handleCropCancel: () => void;
-  handleRotateReset: () => void;
-  handleAdjustReset: () => void;
-  syncRotationState: () => void;
-  ensureAdjustEffect: () => number | null;
-  syncAdjustValues: () => void;
-  ensureFilterEffect: () => number | null;
-  syncFilterState: () => void;
+  crop: {
+    enterCropMode: () => void;
+    handleCropApply: () => void;
+    handleCropCancel: () => void;
+  };
+  rotateFlip: {
+    handleRotateReset: () => void;
+    syncRotationState: () => void;
+  };
+  adjustments: {
+    handleAdjustReset: () => void;
+    ensureAdjustEffect: () => number | null;
+    syncAdjustValues: () => void;
+  };
+  filter: {
+    ensureFilterEffect: () => number | null;
+    syncFilterState: () => void;
+    handleFilterSelect: (name: string) => void;
+  };
   events?: EditorEventCallbacks;
 }
 
 export function useToolManager({
   engineRef,
-  enterCropMode,
-  handleCropApply,
-  handleCropCancel,
-  handleRotateReset,
-  handleAdjustReset,
-  syncRotationState,
-  ensureAdjustEffect,
-  syncAdjustValues,
-  ensureFilterEffect,
-  syncFilterState,
+  crop,
+  rotateFlip,
+  adjustments,
+  filter,
   events,
 }: UseToolManagerOptions) {
   const activeTool = useImageEditorStore((s) => s.activeTool);
@@ -46,7 +49,7 @@ export function useToolManager({
   const handleToolChange = useCallback(
     (tool: ImageEditorTool) => {
       if (tool === "crop") {
-        enterCropMode();
+        crop.enterCropMode();
       } else {
         if (activeTool === "crop") {
           const ce = engineRef.current;
@@ -57,30 +60,19 @@ export function useToolManager({
         }
         setActiveTool(tool);
 
-        if (tool === "rotate") syncRotationState();
+        if (tool === "rotate") rotateFlip.syncRotationState();
         if (tool === "adjust") {
-          ensureAdjustEffect();
-          syncAdjustValues();
+          adjustments.ensureAdjustEffect();
+          adjustments.syncAdjustValues();
         }
         if (tool === "filter") {
-          ensureFilterEffect();
-          syncFilterState();
+          filter.ensureFilterEffect();
+          filter.syncFilterState();
         }
       }
       events?.onToolChange?.(tool === "select" ? null : tool);
     },
-    [
-      activeTool,
-      engineRef,
-      enterCropMode,
-      setActiveTool,
-      syncRotationState,
-      ensureAdjustEffect,
-      syncAdjustValues,
-      ensureFilterEffect,
-      syncFilterState,
-      events,
-    ],
+    [activeTool, engineRef, crop, setActiveTool, rotateFlip, adjustments, filter, events],
   );
 
   const handleSidebarToolSelect = useCallback(
@@ -101,17 +93,18 @@ export function useToolManager({
 
   const handleDone = useCallback(() => {
     if (activeTool === "crop") {
-      handleCropApply();
+      crop.handleCropApply();
     } else {
       setActiveTool("select");
     }
-  }, [activeTool, handleCropApply, setActiveTool]);
+  }, [activeTool, crop, setActiveTool]);
 
   const handleContextualReset = useCallback(() => {
-    if (activeTool === "crop") handleCropCancel();
-    else if (activeTool === "rotate") handleRotateReset();
-    else if (activeTool === "adjust") handleAdjustReset();
-  }, [activeTool, handleCropCancel, handleRotateReset, handleAdjustReset]);
+    if (activeTool === "crop") crop.handleCropCancel();
+    else if (activeTool === "rotate") rotateFlip.handleRotateReset();
+    else if (activeTool === "adjust") adjustments.handleAdjustReset();
+    else if (activeTool === "filter") filter.handleFilterSelect("");
+  }, [activeTool, crop, rotateFlip, adjustments, filter]);
 
   return {
     activeTool,

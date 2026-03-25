@@ -45,7 +45,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* 90° rotation buttons */}
       <div>
-        <div className="text-xs font-medium text-muted-foreground mb-2">Rotate</div>
+        <div className="text-base font-medium text-muted-foreground mb-2">Rotate</div>
         <div className="flex gap-1.5">
           <Button
             variant="secondary"
@@ -53,9 +53,10 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onRotateCounterClockwise}
             data-testid="rotate-ccw"
+            aria-label="Rotate 90° counter-clockwise"
             title="Rotate 90° counter-clockwise"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-4 w-4" />
             −90°
           </Button>
           <Button
@@ -64,9 +65,10 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onRotateClockwise}
             data-testid="rotate-cw"
+            aria-label="Rotate 90° clockwise"
             title="Rotate 90° clockwise"
           >
-            <RotateCw className="h-3.5 w-3.5" />
+            <RotateCw className="h-4 w-4" />
             +90°
           </Button>
         </div>
@@ -76,7 +78,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* Flip buttons */}
       <div>
-        <div className="text-xs font-medium text-muted-foreground mb-2">Flip</div>
+        <div className="text-base font-medium text-muted-foreground mb-2">Flip</div>
         <div className="flex gap-1.5">
           <Button
             variant={flipH ? "default" : "secondary"}
@@ -84,9 +86,11 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onFlipHorizontal}
             data-testid="flip-h"
+            aria-label="Flip horizontally"
+            aria-pressed={flipH}
             title="Flip horizontally"
           >
-            <FlipHorizontal className="h-3.5 w-3.5" />
+            <FlipHorizontal className="h-4 w-4" />
             Horizontal
           </Button>
           <Button
@@ -95,9 +99,11 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             className="flex-1 gap-1.5"
             onClick={onFlipVertical}
             data-testid="flip-v"
+            aria-label="Flip vertically"
+            aria-pressed={flipV}
             title="Flip vertically"
           >
-            <FlipVertical className="h-3.5 w-3.5" />
+            <FlipVertical className="h-4 w-4" />
             Vertical
           </Button>
         </div>

@@ -1,10 +1,8 @@
 import type { CreativeEngine } from "@creative-editor/engine";
 import React, { useCallback, useEffect } from "react";
 import type { EditorSlots } from "../../config/config.types";
-import type { useBlockActions } from "../../hooks/use-block-actions";
+import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
 import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
-import type { useImageTool } from "../../hooks/use-image-tool";
-import type { useRotateFlipTool } from "../../hooks/use-rotate-flip-tool";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { TextEditorOverlay } from "../text-editor-overlay";
 import { BlockPropertiesBar } from "./block-properties-bar";
@@ -12,23 +10,28 @@ import { CanvasArea } from "./canvas-area";
 import { CanvasBlockOverlay } from "./canvas-block-overlay";
 import { ToolPropertiesBar } from "./tool-properties-bar";
 
-interface CanvasSectionProps {
+interface CanvasPaneProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   engine: CreativeEngine | null;
   activeTool: string;
   selectedShapeId: number | null;
   selectedBlockType: string | null;
   hasSelectedBlock: boolean;
-  blockActions: ReturnType<typeof useBlockActions>;
-  rotateFlip: ReturnType<typeof useRotateFlipTool>;
-  imageTool: ReturnType<typeof useImageTool>;
+  blockActions: UseBlockActionsReturn;
+  rotateFlip: {
+    handleRotateClockwise: () => void;
+    handleRotateCounterClockwise: () => void;
+    handleFlipHorizontal: () => void;
+    handleFlipVertical: () => void;
+  };
+  replaceImage: (file: File, blockId: number) => Promise<void>;
   activeCustomToolBar?: React.ComponentType;
   slots?: EditorSlots;
   onContextualReset: () => void;
   onDone: () => void;
 }
 
-export const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
+export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const {
     canvasRef,
     engine,
@@ -38,7 +41,7 @@ export const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
     hasSelectedBlock,
     blockActions,
     rotateFlip,
-    imageTool,
+    replaceImage,
     activeCustomToolBar,
     slots,
     onContextualReset,
@@ -96,7 +99,7 @@ export const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
         screenRect={blockScreenRect}
         isEditingText={editingTextBlockId !== null}
         onEditText={() => setEditingTextBlockId(selectedShapeId)}
-        onReplaceImage={(file: File) => imageTool.handleReplaceImage(file, selectedShapeId)}
+        onReplaceImage={(file: File) => replaceImage(file, selectedShapeId)}
         blockActions={blockActions}
       />
     ) : undefined;

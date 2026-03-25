@@ -10,4 +10,6 @@ export interface SelectionGridProps {
   onSelect: (id: string) => void;
   columns?: number;
   className?: string;
+  /** Accessible label for the group */
+  ariaLabel?: string;
 }

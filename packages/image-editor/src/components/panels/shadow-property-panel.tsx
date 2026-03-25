@@ -91,7 +91,7 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
     <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
       {/* Color */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-muted-foreground">Color</span>
+        <span className="text-base text-muted-foreground">Color</span>
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -99,13 +99,13 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
             onChange={handleColor}
             className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
           />
-          <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
+          <span className="text-base font-mono text-muted-foreground">{state.color}</span>
         </div>
       </div>
 
       {/* Offset */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-muted-foreground">Offset</span>
+        <span className="text-base text-muted-foreground">Offset</span>
         <div className="grid grid-cols-2 gap-2">
           <InputGroup label="X" value={Math.round(state.offsetX)} onChange={handleOffsetX} />
           <InputGroup label="Y" value={Math.round(state.offsetY)} onChange={handleOffsetY} />

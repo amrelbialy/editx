@@ -24,11 +24,11 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
         return (
           <div key={group.label}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-foreground">{group.label}</span>
+              <span className="text-base font-medium text-foreground">{group.label}</span>
               {hasMore && (
                 <button
                   onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
-                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {isExpanded ? "Less" : `More (${group.presets.length - VISIBLE_COUNT})`}
                 </button>
@@ -43,7 +43,7 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
                     key={`${preset.width}x${preset.height}-${preset.label}`}
                     onClick={() => onSelect(preset)}
                     className={cn(
-                      "flex flex-col items-center gap-1 rounded-md px-1.5 py-2 text-[11px] transition-colors min-w-0",
+                      "flex flex-col items-center gap-1 rounded-md px-1.5 py-2 text-base transition-colors min-w-0",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",

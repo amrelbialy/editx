@@ -106,7 +106,7 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({
         onClick={onReset}
         data-testid="adjust-reset"
       >
-        <RotateCcw className="h-3.5 w-3.5" />
+        <RotateCcw className="h-4 w-4" />
         Reset All
       </Button>
     </div>

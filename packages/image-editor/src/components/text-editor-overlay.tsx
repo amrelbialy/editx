@@ -324,7 +324,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
             isBold ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
           )}
         >
-          <Bold className="h-3.5 w-3.5" />
+          <Bold className="h-4 w-4" />
         </button>
 
         {/* Italic */}
@@ -338,7 +338,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
               : "text-muted-foreground hover:bg-accent",
           )}
         >
-          <Italic className="h-3.5 w-3.5" />
+          <Italic className="h-4 w-4" />
         </button>
 
         {/* Underline */}
@@ -352,7 +352,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
               : "text-muted-foreground hover:bg-accent",
           )}
         >
-          <Underline className="h-3.5 w-3.5" />
+          <Underline className="h-4 w-4" />
         </button>
 
         {/* Strikethrough */}
@@ -366,7 +366,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
               : "text-muted-foreground hover:bg-accent",
           )}
         >
-          <Strikethrough className="h-3.5 w-3.5" />
+          <Strikethrough className="h-4 w-4" />
         </button>
       </div>
     </div>

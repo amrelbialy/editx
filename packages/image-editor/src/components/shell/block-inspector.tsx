@@ -13,7 +13,7 @@ import { ShadowPropertyPanel } from "../panels/shadow-property-panel";
 import { StrokePropertyPanel } from "../panels/stroke-property-panel";
 import { TextAdvancedPanel } from "../panels/text-advanced-panel";
 
-interface PropertySubPanelsProps {
+interface BlockInspectorProps {
   panel: PropertySidePanel;
   engine: CreativeEngine;
   blockId: number;
@@ -36,7 +36,7 @@ interface PropertySubPanelsProps {
   onReplaceImage: (file: File) => void;
 }
 
-export const PropertySubPanels: React.FC<PropertySubPanelsProps> = (props) => {
+export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
   const { panel, engine, blockId, blockType, blockEffects, blockActions, onReplaceImage } = props;
 
   if (!panel) return null;

@@ -72,7 +72,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
       {/* Preview thumbnail */}
       {imageSrc && (
         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden border border-border">
-          <img src={imageSrc} alt="Image preview" className="w-full h-full object-contain" />
+          <img src={imageSrc} alt="Fill preview" className="w-full h-full object-contain" />
         </div>
       )}
 
@@ -80,7 +80,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
       <button
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "flex items-center justify-center gap-2 w-full h-9 rounded-md text-sm font-medium transition-colors",
+          "flex items-center justify-center gap-2 w-full h-9 rounded-md text-base font-medium transition-colors",
           "bg-accent hover:bg-accent/80 text-accent-foreground",
         )}
       >
@@ -98,18 +98,18 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
 
       {/* Dimensions info */}
       <div className="flex flex-col gap-2">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <h4 className="text-base font-medium text-muted-foreground uppercase tracking-wide">
           Dimensions
         </h4>
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="grid grid-cols-2 gap-2 text-base">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-muted-foreground">Display</span>
+            <span className="text-base text-muted-foreground">Display</span>
             <span className="tabular-nums">
               {blockWidth} × {blockHeight}
             </span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-muted-foreground">Original</span>
+            <span className="text-base text-muted-foreground">Original</span>
             <span className="tabular-nums">
               {Math.round(originalWidth)} × {Math.round(originalHeight)}
             </span>

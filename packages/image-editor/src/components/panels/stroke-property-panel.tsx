@@ -69,7 +69,7 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
     <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
       {/* Color */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-muted-foreground">Color</span>
+        <span className="text-base text-muted-foreground">Color</span>
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -77,7 +77,7 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
             onChange={handleColor}
             className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
           />
-          <span className="text-xs font-mono text-muted-foreground">{state.color}</span>
+          <span className="text-base font-mono text-muted-foreground">{state.color}</span>
         </div>
       </div>
 

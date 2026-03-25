@@ -33,12 +33,7 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs min-w-[48px] gap-0.5"
-          title="Zoom options"
-        >
+        <Button variant="ghost" size="sm" className="text-xs min-w-12 gap-0.5" title="Zoom options">
           {zoomLabel}
           <ChevronUp className="h-3 w-3 opacity-60" />
         </Button>
@@ -58,7 +53,7 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
         <DropdownMenuItem onClick={() => onZoomPreset?.(2)}>200% Zoom</DropdownMenuItem>
         <DropdownMenuItem onClick={() => onZoomPreset?.(1)}>
           <span className="flex-1">100% Zoom</span>
-          <kbd className="ml-auto text-[10px] text-muted-foreground">⇧2</kbd>
+          <kbd className="ml-auto text-xs text-muted-foreground">⇧2</kbd>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onZoomPreset?.(0.5)}>50% Zoom</DropdownMenuItem>
 
@@ -68,12 +63,12 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
         <DropdownMenuItem onClick={onZoomIn}>
           <ZoomIn className="h-4 w-4 mr-2" />
           <span className="flex-1">Zoom In</span>
-          <kbd className="ml-auto text-[10px] text-muted-foreground">+</kbd>
+          <kbd className="ml-auto text-xs text-muted-foreground">+</kbd>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onZoomOut}>
           <ZoomOut className="h-4 w-4 mr-2" />
           <span className="flex-1">Zoom Out</span>
-          <kbd className="ml-auto text-[10px] text-muted-foreground">-</kbd>
+          <kbd className="ml-auto text-xs text-muted-foreground">-</kbd>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -33,13 +33,13 @@ export const ContextualBar: React.FC<ContextualBarProps> = ({
       <div className="flex items-center gap-1.5">
         {onReset && (
           <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5">
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
         )}
         {onDone && (
           <Button variant="default" size="sm" onClick={onDone} className="gap-1.5">
-            <Check className="h-3.5 w-3.5" />
+            <Check className="h-4 w-4" />
             Done
           </Button>
         )}

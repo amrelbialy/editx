@@ -33,6 +33,7 @@ export type {
   ThemeColorKey,
   ThemeConfig,
   ThemePreset,
+  TOOL_IDS,
   UIConfig,
 } from "./config/config.types";
 export { useConfig } from "./config/config-context";

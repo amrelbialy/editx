@@ -5,7 +5,8 @@ export type { ThemeColorKey } from "../theme/presets";
 
 import type { ThemeColorKey } from "../theme/presets";
 
-export type ImageEditorToolId = "crop" | "adjust" | "filter" | "text" | "shapes" | "image";
+export const TOOL_IDS = ["crop", "adjust", "filter", "text", "shapes", "image"] as const;
+export type ImageEditorToolId = (typeof TOOL_IDS)[number];
 
 export type ThemePreset = BuiltInPreset | "custom";
 

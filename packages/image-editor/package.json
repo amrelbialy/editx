@@ -46,6 +46,7 @@
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.0"
   },

@@ -243,7 +243,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="text-base font-medium text-muted-foreground uppercase tracking-wider">
         Shape Properties
       </div>
 
@@ -256,7 +256,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
             onChange={handleFillColor}
             className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
           />
-          <span className="text-xs font-mono text-muted-foreground">{state.fillColor}</span>
+          <span className="text-base font-mono text-muted-foreground">{state.fillColor}</span>
         </div>
       </Section>
 
@@ -317,7 +317,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
               onChange={handleStrokeColor}
               className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
             />
-            <span className="text-xs font-mono text-muted-foreground">{state.strokeColor}</span>
+            <span className="text-base font-mono text-muted-foreground">{state.strokeColor}</span>
           </div>
           <SliderField
             label="Width"
@@ -347,7 +347,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
               onChange={handleShadowColor}
               className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
             />
-            <span className="text-xs font-mono text-muted-foreground">{state.shadowColor}</span>
+            <span className="text-base font-mono text-muted-foreground">{state.shadowColor}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <InputGroup label="X" value={state.shadowOffsetX} onChange={handleShadowOffsetX} />

@@ -1,7 +1,9 @@
 import type React from "react";
 import { useCallback, useState } from "react";
+import { Toaster } from "sonner";
 import { cn } from "../../utils/cn";
 import { PopoverContainerProvider } from "../ui/popover-container-context";
+import { LiveRegion } from "./announcer";
 
 interface EditorShellProps {
   children: React.ReactNode;
@@ -27,7 +29,16 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
         className,
       )}
     >
-      <PopoverContainerProvider value={container ?? undefined}>{children}</PopoverContainerProvider>
+      <PopoverContainerProvider value={container ?? undefined}>
+        {children}
+        <LiveRegion />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            className: "!bg-card !text-foreground !border-border !shadow-lg",
+          }}
+        />
+      </PopoverContainerProvider>
     </div>
   );
 };

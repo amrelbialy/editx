@@ -28,7 +28,9 @@ const ActionButton: React.FC<{
   <Tooltip>
     <TooltipTrigger asChild>
       <button
+        type="button"
         onClick={onClick}
+        aria-label={label}
         className={cn(
           "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
           variant === "destructive"
@@ -57,7 +59,8 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   const isText = blockType === "text";
 
   return (
-    <div
+    <fieldset
+      aria-label="Block actions"
       className={cn(
         "inline-flex items-center gap-0.5 h-9 px-1.5",
         "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
@@ -67,11 +70,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       {/* Edit (text only) */}
       {isText && onEdit && (
         <>
-          <ActionButton
-            icon={<Pencil className="h-3.5 w-3.5" />}
-            label="Edit Text"
-            onClick={onEdit}
-          />
+          <ActionButton icon={<Pencil className="h-4 w-4" />} label="Edit Text" onClick={onEdit} />
           <Separator orientation="vertical" className="h-4 mx-0.5" />
         </>
       )}
@@ -80,7 +79,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       {isImage && onReplace && (
         <>
           <ActionButton
-            icon={<Replace className="h-3.5 w-3.5" />}
+            icon={<Replace className="h-4 w-4" />}
             label="Replace Image"
             onClick={() => fileInputRef.current?.click()}
           />
@@ -101,12 +100,12 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
 
       {/* Z-order */}
       <ActionButton
-        icon={<ChevronUp className="h-3.5 w-3.5" />}
+        icon={<ChevronUp className="h-4 w-4" />}
         label="Bring Forward"
         onClick={onBringForward}
       />
       <ActionButton
-        icon={<ChevronDown className="h-3.5 w-3.5" />}
+        icon={<ChevronDown className="h-4 w-4" />}
         label="Send Backward"
         onClick={onSendBackward}
       />
@@ -114,19 +113,15 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       <Separator orientation="vertical" className="h-4 mx-0.5" />
 
       {/* Duplicate */}
-      <ActionButton
-        icon={<Copy className="h-3.5 w-3.5" />}
-        label="Duplicate"
-        onClick={onDuplicate}
-      />
+      <ActionButton icon={<Copy className="h-4 w-4" />} label="Duplicate" onClick={onDuplicate} />
 
       {/* Delete */}
       <ActionButton
-        icon={<Trash2 className="h-3.5 w-3.5" />}
+        icon={<Trash2 className="h-4 w-4" />}
         label="Delete"
         onClick={onDelete}
         variant="destructive"
       />
-    </div>
+    </fieldset>
   );
 };

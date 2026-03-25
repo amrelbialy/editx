@@ -77,6 +77,9 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
+  /* Spacing */
+  --spacing: var(--spacing, 0.27rem);
+
   /* Letter-spacing scale */
   --tracking-tighter: calc(var(--tracking-normal, -0.01em) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal, -0.01em) - 0.025em);
@@ -97,19 +100,20 @@
     letter-spacing: var(--tracking-normal);
 
     /* Default shadow & font variables (light mode) */
-    --font-sans: Inter, sans-serif;
-    --font-serif: Georgia, serif;
-    --font-mono: monospace;
+    --font-sans: "Inter", sans-serif;
+    --font-serif: "Georgia", serif;
+    --font-mono: "JetBrains Mono", monospace;
     --radius: 0.5rem;
+    --spacing: 0.27rem;
     --tracking-normal: -0.01em;
-    --shadow-2xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0px 2px 4px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0px 2px 4px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0px 2px 4px 0px hsl(0 0% 0% / 0.1), 0px 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0px 2px 4px 0px hsl(0 0% 0% / 0.1), 0px 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0px 2px 4px 0px hsl(0 0% 0% / 0.1), 0px 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0px 2px 4px 0px hsl(0 0% 0% / 0.25);
+    --shadow-2xs: 0px 4px 10px 0px hsl(0 0 0 / 0.03);
+    --shadow-xs: 0px 4px 10px 0px hsl(0 0 0 / 0.03);
+    --shadow-sm: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 1px 2px -1px hsl(0 0 0 / 0.05);
+    --shadow: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 1px 2px -1px hsl(0 0 0 / 0.05);
+    --shadow-md: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 2px 4px -1px hsl(0 0 0 / 0.05);
+    --shadow-lg: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 4px 6px -1px hsl(0 0 0 / 0.05);
+    --shadow-xl: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 8px 10px -1px hsl(0 0 0 / 0.05);
+    --shadow-2xl: 0px 4px 10px 0px hsl(0 0 0 / 0.13);
   }
 
   .ie-theme * {
@@ -128,6 +132,14 @@
 /* Lexical renders <p> nodes — remove default paragraph margin for tight layout */
 [data-text-editor-overlay] p {
   margin: 0;
+}
+
+/* Hide native scrollbar on the floating toolbar while keeping scroll */
+[data-text-toolbar] {
+  scrollbar-width: none; /* Firefox */
+}
+[data-text-toolbar]::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Edge */
 }
 
 [data-text-editor-overlay]::selection,

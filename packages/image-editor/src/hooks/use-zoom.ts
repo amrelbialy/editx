@@ -1,12 +1,12 @@
 import type { CreativeEngine } from "@creative-editor/engine";
 import { useCallback, useEffect, useState } from "react";
 
-interface UseEditorZoomOptions {
+interface UseZoomOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
   engine: CreativeEngine | null;
 }
 
-export function useEditorZoom({ engineRef, engine }: UseEditorZoomOptions) {
+export function useZoom({ engineRef, engine }: UseZoomOptions) {
   const [zoomPercent, setZoomPercent] = useState<number | null>(null);
 
   const updateZoomLabel = useCallback(() => {

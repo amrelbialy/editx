@@ -1,6 +1,7 @@
 import type { CreativeEngine } from "@creative-editor/engine";
 import { useCallback, useRef, useState } from "react";
 import type { EditorEventCallbacks, ExportConfig } from "../config/config.types";
+import type { EditorNotifications } from "./use-notifications";
 
 export type ExportFormat = "png" | "jpeg" | "webp";
 
@@ -14,9 +15,16 @@ export interface UseExportOptions {
   exportConfig?: ExportConfig;
   onSave?: (blob: Blob) => void;
   events?: EditorEventCallbacks;
+  notify?: EditorNotifications;
 }
 
-export function useExport({ engineRef, exportConfig, onSave, events }: UseExportOptions) {
+const FORMAT_NAMES: Record<ExportFormat, string> = {
+  png: "PNG",
+  jpeg: "JPEG",
+  webp: "WebP",
+};
+
+export function useExport({ engineRef, exportConfig, onSave, events, notify }: UseExportOptions) {
   const [isExporting, setIsExporting] = useState(false);
   // Guard against double-click while an export is in progress
   const exportingRef = useRef(false);
@@ -44,14 +52,17 @@ export function useExport({ engineRef, exportConfig, onSave, events }: UseExport
         if (onSave) {
           onSave(blob);
         }
+
+        notify?.success(`Exported as ${FORMAT_NAMES[format]}`);
       } catch (err) {
-        console.error("[useExport] Export failed:", err);
+        const message = err instanceof Error ? err.message : "Export failed";
+        notify?.error(message);
       } finally {
         exportingRef.current = false;
         setIsExporting(false);
       }
     },
-    [engineRef, exportConfig, onSave, events],
+    [engineRef, exportConfig, onSave, events, notify],
   );
 
   return { handleExport, isExporting };

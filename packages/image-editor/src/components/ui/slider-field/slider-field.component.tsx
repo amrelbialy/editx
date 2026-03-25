@@ -22,8 +22,8 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
   return (
     <div className={cn("mb-1", className)}>
       <div className="flex justify-between items-center mb-1.5">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">
+        <span className="text-base text-muted-foreground">{label}</span>
+        <span className="text-base tabular-nums text-muted-foreground w-10 text-right">
           {formatValue(value)}
         </span>
       </div>

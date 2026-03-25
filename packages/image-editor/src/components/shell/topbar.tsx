@@ -44,7 +44,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   topbarRight,
 }) => {
   const config = useConfig();
-  const title = config.ui?.title ?? "Photo Editor";
+  const title = config.ui?.title ?? "Image Editor";
   const showTitle = config.ui?.showTitle ?? true;
 
   return (
@@ -56,10 +56,26 @@ export const Topbar: React.FC<TopbarProps> = ({
     >
       {/* Left: Undo / Redo */}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} title="Undo">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onUndo}
+          disabled={!canUndo}
+          aria-label="Undo"
+          aria-keyshortcuts="Control+Z"
+          title="Undo (Ctrl+Z)"
+        >
           <Undo2 className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onRedo} disabled={!canRedo} title="Redo">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRedo}
+          disabled={!canRedo}
+          aria-label="Redo"
+          aria-keyshortcuts="Control+Shift+Z"
+          title="Redo (Ctrl+Shift+Z)"
+        >
           <Redo2 className="h-4 w-4" />
         </Button>
       </div>
@@ -69,7 +85,13 @@ export const Topbar: React.FC<TopbarProps> = ({
 
       {/* Right: Zoom + Export */}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomOut}
+          aria-label="Zoom out"
+          title="Zoom out (-)"
+        >
           <ZoomOut className="h-4 w-4" />
         </Button>
         <ZoomMenu
@@ -82,12 +104,24 @@ export const Topbar: React.FC<TopbarProps> = ({
           onZoomIn={onZoomIn}
           onZoomOut={onZoomOut}
         />
-        <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomIn}
+          aria-label="Zoom in"
+          title="Zoom in (+)"
+        >
           <ZoomIn className="h-4 w-4" />
         </Button>
         <Separator orientation="vertical" className="mx-1 h-6" />
         {topbarRight}
-        <Button variant="default" size="sm" onClick={onExport} disabled={isExporting}>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onExport}
+          disabled={isExporting}
+          aria-busy={isExporting}
+        >
           {isExporting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

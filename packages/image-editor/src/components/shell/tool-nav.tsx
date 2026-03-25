@@ -3,7 +3,6 @@ import {
   Crop,
   Hexagon,
   ImagePlus,
-  LayoutGrid,
   type LucideIcon,
   SlidersHorizontal,
   Type,
@@ -20,15 +19,16 @@ interface ToolDef {
   label: string;
   icon: LucideIcon;
   group: "editing" | "annotation";
+  shortcut?: string;
 }
 
 const allTools: ToolDef[] = [
-  { id: "crop", label: "Crop", icon: Crop, group: "editing" },
-  { id: "adjust", label: "Adjust", icon: SlidersHorizontal, group: "editing" },
-  { id: "filter", label: "Filters", icon: Blend, group: "editing" },
-  { id: "text", label: "Text", icon: Type, group: "annotation" },
-  { id: "shapes", label: "Shapes", icon: Hexagon, group: "annotation" },
-  { id: "image", label: "Image", icon: ImagePlus, group: "annotation" },
+  { id: "crop", label: "Crop", icon: Crop, group: "editing", shortcut: "C" },
+  { id: "adjust", label: "Adjust", icon: SlidersHorizontal, group: "editing", shortcut: "A" },
+  { id: "filter", label: "Filters", icon: Blend, group: "editing", shortcut: "F" },
+  { id: "text", label: "Text", icon: Type, group: "annotation", shortcut: "T" },
+  { id: "shapes", label: "Shapes", icon: Hexagon, group: "annotation", shortcut: "S" },
+  { id: "image", label: "Image", icon: ImagePlus, group: "annotation", shortcut: "I" },
 ];
 
 interface ToolNavProps {
@@ -55,7 +55,12 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
   const editingTools = visibleTools.filter((t) => t.group === "editing");
   const annotationTools = visibleTools.filter((t) => t.group === "annotation");
 
-  const renderToolButton = (tool: ToolDef) => {
+  const renderToolButton = (tool: {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    shortcut?: string;
+  }) => {
     const Icon = tool.icon;
     const isActive = activeTool === tool.id;
 
@@ -64,23 +69,28 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         <TooltipTrigger asChild>
           <button
             type="button"
-            onClick={() => onToolSelect(tool.id)}
+            onClick={() => onToolSelect(tool.id as ImageEditorToolId)}
             aria-pressed={isActive}
+            aria-label={tool.label}
+            aria-keyshortcuts={tool.shortcut}
             className={cn(
-              "flex flex-col items-center justify-center py-1.5 px-2 rounded-md transition-colors",
-              "min-w-[48px] @3xl/editor:w-full @3xl/editor:py-2.5 @3xl/editor:px-1",
+              "flex flex-col items-center justify-center py-2 px-2 rounded-md transition-colors",
+              "min-w-12 @3xl/editor:w-full @3xl/editor:py-2 @3xl/editor:px-1",
               "text-muted-foreground hover:text-foreground hover:bg-accent",
               isActive && "bg-accent text-accent-foreground",
             )}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-6 w-6" />
             {showLabels && (
-              <span className="text-[10px] mt-0.5 leading-none @3xl/editor:mt-1">{tool.label}</span>
+              <span className="text-xs mt-0.5 leading-none @3xl/editor:mt-1">{tool.label}</span>
             )}
           </button>
         </TooltipTrigger>
         <TooltipContent side="right" className="hidden @3xl/editor:block">
           {tool.label}
+          {tool.shortcut && (
+            <kbd className="ml-1.5 text-xs opacity-60 font-mono">{tool.shortcut}</kbd>
+          )}
         </TooltipContent>
       </Tooltip>
     );
@@ -98,7 +108,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         "px-1 py-1 overflow-x-auto order-last",
         // Desktop (wide @md = 28rem / 448px): vertical left sidebar
         "@3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:justify-start",
-        "@3xl/editor:w-[72px] @3xl/editor:py-2 @3xl/editor:px-0",
+        "@3xl/editor:w-18 @3xl/editor:py-2 @3xl/editor:px-0",
         "@3xl/editor:bg-sidebar @3xl/editor:border-t-0 @3xl/editor:border-r @3xl/editor:border-sidebar-border",
         "@3xl/editor:overflow-x-visible @3xl/editor:overflow-y-auto @3xl/editor:order-first",
       )}
@@ -123,37 +133,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         <>
           {showSeparators && <Separator className="hidden @3xl/editor:block my-2 w-10" />}
           <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
-            {customToolDefs.map((ct) => {
-              const Icon = ct.icon;
-              const isActive = activeTool === ct.id;
-              return (
-                <Tooltip key={ct.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => onToolSelect(ct.id as ImageEditorToolId)}
-                      aria-pressed={isActive}
-                      className={cn(
-                        "flex flex-col items-center justify-center py-1.5 px-2 rounded-md transition-colors",
-                        "min-w-[48px] @3xl/editor:w-full @3xl/editor:py-2.5 @3xl/editor:px-1",
-                        "text-muted-foreground hover:text-foreground hover:bg-accent",
-                        isActive && "bg-accent text-accent-foreground",
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {showLabels && (
-                        <span className="text-[10px] mt-0.5 leading-none @3xl/editor:mt-1">
-                          {ct.label}
-                        </span>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="hidden @3xl/editor:block">
-                    {ct.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
+            {customToolDefs.map(renderToolButton)}
           </div>
         </>
       )}
@@ -161,24 +141,6 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
       {/* Desktop-only: sidebar bottom slot + spacer + Apps */}
       <div className="hidden @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:flex-1 @3xl/editor:w-full">
         {sidebarBottom}
-        <div className="flex-1" />
-        <div className="px-1.5 w-full">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-md transition-colors",
-                  "text-muted-foreground hover:text-foreground hover:bg-accent",
-                )}
-              >
-                <LayoutGrid className="h-5 w-5" />
-                {showLabels && <span className="text-[10px] mt-1 leading-none">Apps</span>}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Apps</TooltipContent>
-          </Tooltip>
-        </div>
       </div>
     </nav>
   );

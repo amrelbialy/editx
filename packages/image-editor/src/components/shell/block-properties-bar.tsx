@@ -285,6 +285,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     label: string;
   }> = ({ panel, icon, label }) => (
     <button
+      type="button"
       onClick={() => togglePanel(panel)}
       className={cn(
         "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
@@ -331,8 +332,11 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
 
           {/* Bold / Italic */}
           <button
+            type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleBoldToggle}
+            aria-label="Bold"
+            aria-pressed={textState.fontWeight === "bold"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
               textState.fontWeight === "bold"
@@ -340,11 +344,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                 : "text-muted-foreground hover:bg-accent",
             )}
           >
-            <Bold className="h-3.5 w-3.5" />
+            <Bold className="h-4 w-4" />
           </button>
           <button
+            type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleItalicToggle}
+            aria-label="Italic"
+            aria-pressed={textState.fontStyle === "italic"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
               textState.fontStyle === "italic"
@@ -352,7 +359,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                 : "text-muted-foreground hover:bg-accent",
             )}
           >
-            <Italic className="h-3.5 w-3.5" />
+            <Italic className="h-4 w-4" />
           </button>
 
           <Separator orientation="vertical" className="h-5 mx-1" />
@@ -372,6 +379,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               />
               <DropdownMenuTrigger asChild>
                 <button
+                  type="button"
                   className="h-7 px-0.5 rounded-r-md border border-l-0 border-border bg-background text-muted-foreground hover:bg-accent transition-colors flex items-center"
                   data-text-toolbar
                 >
@@ -387,6 +395,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               <div className="flex flex-col gap-0.5">
                 {[14, 16, 18, 21, 24, 28, 32, 36, 48, 54].map((size) => (
                   <button
+                    type="button"
                     key={size}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleFontSizePreset(size)}
@@ -410,13 +419,17 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
           {/* Alignment */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors">
+              <button
+                type="button"
+                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+                aria-label="Text alignment"
+              >
                 {textState.textAlign === "center" ? (
-                  <AlignCenter className="h-3.5 w-3.5" />
+                  <AlignCenter className="h-4 w-4" />
                 ) : textState.textAlign === "right" ? (
-                  <AlignRight className="h-3.5 w-3.5" />
+                  <AlignRight className="h-4 w-4" />
                 ) : (
-                  <AlignLeft className="h-3.5 w-3.5" />
+                  <AlignLeft className="h-4 w-4" />
                 )}
               </button>
             </DropdownMenuTrigger>
@@ -430,6 +443,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   ] as const
                 ).map(([align, Icon]) => (
                   <button
+                    type="button"
                     key={align}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleTextAlign(align)}
@@ -450,20 +464,25 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
           {/* Advanced text properties (≡A) */}
           <PanelButton
             panel="text-advanced"
-            icon={<TextCursorInput className="h-3.5 w-3.5" />}
+            icon={<TextCursorInput className="h-4 w-4" />}
             label=""
           />
 
           {/* More text options (...) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors">
-                <MoreHorizontal className="h-3.5 w-3.5" />
+              <button
+                type="button"
+                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+                aria-label="More text options"
+              >
+                <MoreHorizontal className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
               <div className="flex flex-col gap-0.5 min-w-[160px]">
                 <button
+                  type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleUnderlineToggle}
                   className={cn(
@@ -477,6 +496,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   Underline
                 </button>
                 <button
+                  type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleStrikethroughToggle}
                   className={cn(
@@ -491,6 +511,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                 </button>
                 <div className="h-px bg-border my-0.5" />
                 <button
+                  type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleClearFormatting}
                   className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -525,11 +546,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       {/* No-fill toggle (graphic only) */}
       {!isText && !isImage && (
         <button
+          type="button"
           onClick={() => {
             const enabled = engine.block.isFillEnabled(blockId);
             engine.block.setFillEnabled(blockId, !enabled);
             refresh();
           }}
+          aria-label={engine.block.isFillEnabled(blockId) ? "Disable fill" : "Enable fill"}
+          aria-pressed={!engine.block.isFillEnabled(blockId)}
           className={cn(
             "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
             !engine.block.isFillEnabled(blockId)
@@ -538,7 +562,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
           )}
           title={engine.block.isFillEnabled(blockId) ? "Disable fill" : "Enable fill"}
         >
-          <CircleOff className="h-3.5 w-3.5" />
+          <CircleOff className="h-4 w-4" />
         </button>
       )}
 
@@ -546,19 +570,19 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       {isText && (
         <PanelButton
           panel="background"
-          icon={<Paintbrush className="h-3.5 w-3.5" />}
+          icon={<Paintbrush className="h-4 w-4" />}
           label="Background"
         />
       )}
 
       {/* Stroke (graphic only) */}
       {!isText && !isImage && (
-        <PanelButton panel="stroke" icon={<Paintbrush className="h-3.5 w-3.5" />} label="Stroke" />
+        <PanelButton panel="stroke" icon={<Paintbrush className="h-4 w-4" />} label="Stroke" />
       )}
 
       {/* Image fill panel button (image only) */}
       {isImage && (
-        <PanelButton panel="imageFill" icon={<ImageIcon className="h-3.5 w-3.5" />} label="Image" />
+        <PanelButton panel="imageFill" icon={<ImageIcon className="h-4 w-4" />} label="Image" />
       )}
 
       {/* Style dropdown (image only — Adjustments / Filters) */}
@@ -566,6 +590,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              type="button"
               className={cn(
                 "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
                 propertySidePanel === "adjust" || propertySidePanel === "filter"
@@ -573,13 +598,14 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-4 w-4" />
               Style
               <ChevronDown className="h-3 w-3" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-auto p-1" align="center">
             <button
+              type="button"
               onClick={() => togglePanel("adjust")}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
@@ -592,6 +618,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               Adjustments
             </button>
             <button
+              type="button"
               onClick={() => togglePanel("filter")}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
@@ -608,18 +635,19 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       )}
 
       {/* Shadow */}
-      <PanelButton panel="shadow" icon={<Sun className="h-3.5 w-3.5" />} label="Shadow" />
+      <PanelButton panel="shadow" icon={<Sun className="h-4 w-4" />} label="Shadow" />
 
       {/* Opacity (dropdown) */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
+            type="button"
             className={cn(
               "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
               "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
-            <Grid2x2 className="h-3.5 w-3.5" />
+            <Grid2x2 className="h-4 w-4" />
             Opacity
           </button>
         </DropdownMenuTrigger>
@@ -648,7 +676,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       </DropdownMenu>
 
       {/* Position */}
-      <PanelButton panel="position" icon={<Move className="h-3.5 w-3.5" />} label="Position" />
+      <PanelButton panel="position" icon={<Move className="h-4 w-4" />} label="Position" />
     </div>
   );
 };
