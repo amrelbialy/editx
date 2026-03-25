@@ -5,6 +5,8 @@ export type { ThemeColorKey } from "../theme/presets";
 
 import type { ThemeColorKey } from "../theme/presets";
 
+export type CloseReason = "save" | "close-button" | "back-button" | "escape";
+
 export const TOOL_IDS = ["crop", "adjust", "filter", "text", "shapes", "image"] as const;
 export type ImageEditorToolId = (typeof TOOL_IDS)[number];
 
@@ -27,6 +29,12 @@ export interface UIConfig {
   };
   title?: string;
   showTitle?: boolean;
+  /** Show close button (X) in topbar. Default: true when onClose is provided. */
+  showCloseButton?: boolean;
+  /** Show back arrow instead of X for close. Default: false. */
+  showBackButton?: boolean;
+  /** Show a confirmation dialog when closing with unsaved changes. Default: true. */
+  unsavedChangesWarning?: boolean;
 }
 
 export interface CropToolConfig {
@@ -61,6 +69,7 @@ export interface FilterToolConfig {
 
 export interface TextToolConfig {
   fonts?: string[];
+  defaultFontFamily?: string;
   defaultFontSize?: number;
   defaultColor?: string;
 }
@@ -82,6 +91,8 @@ export interface ExportConfig {
   formats?: ("png" | "jpeg" | "webp")[];
   defaultFormat?: "png" | "jpeg" | "webp";
   quality?: number;
+  /** Automatically close the editor after a successful save. Default: false. */
+  closeAfterSave?: boolean;
 }
 
 // ── Custom tool registration ──

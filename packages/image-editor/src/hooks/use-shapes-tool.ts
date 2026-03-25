@@ -1,5 +1,6 @@
 import type { CreativeEngine, ShapeType } from "@creative-editor/engine";
 import { useCallback } from "react";
+import { useConfig } from "../config/config-context";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseShapesToolOptions {
@@ -8,11 +9,15 @@ export interface UseShapesToolOptions {
 
 export function useShapesTool({ engineRef }: UseShapesToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
+  const config = useConfig();
 
   const handleAddShape = useCallback(
     (shapeType: ShapeType, sides?: number) => {
       const ce = engineRef.current;
       if (!ce || editableBlockId === null) return;
+
+      const fillMode = config.shapes?.defaultFillMode ?? "filled";
+      const defaultColor = config.shapes?.defaultColor ?? "#3b82f6";
 
       const pageW = ce.block.getFloat(editableBlockId, "page/width") ?? 1080;
       const pageH = ce.block.getFloat(editableBlockId, "page/height") ?? 1080;
@@ -34,9 +39,16 @@ export function useShapesTool({ engineRef }: UseShapesToolOptions) {
         { sides },
       );
 
+      ce.block.setString(graphicId, "fill/color", defaultColor);
+      if (fillMode === "outlined") {
+        ce.block.setFillEnabled(graphicId, false);
+        ce.block.setStrokeEnabled(graphicId, true);
+        ce.block.setString(graphicId, "stroke/color", defaultColor);
+      }
+
       ce.block.select(graphicId);
     },
-    [engineRef, editableBlockId],
+    [engineRef, editableBlockId, config.shapes],
   );
 
   return { handleAddShape };

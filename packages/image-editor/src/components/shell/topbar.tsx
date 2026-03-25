@@ -1,4 +1,4 @@
-import { Download, Loader2, Redo2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Redo2, Undo2, X, ZoomIn, ZoomOut } from "lucide-react";
 import type React from "react";
 import { useConfig } from "../../config/config-context";
 import { cn } from "../../utils/cn";
@@ -24,6 +24,8 @@ interface TopbarProps {
   isExporting?: boolean;
   /** Slot: extra content rendered on the right side before export. */
   topbarRight?: React.ReactNode;
+  /** Called when the close/back button is clicked. */
+  onClose?: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -42,10 +44,13 @@ export const Topbar: React.FC<TopbarProps> = ({
   onExport,
   isExporting = false,
   topbarRight,
+  onClose,
 }) => {
   const config = useConfig();
   const title = config.ui?.title ?? "Image Editor";
   const showTitle = config.ui?.showTitle ?? true;
+  const showCloseButton = config.ui?.showCloseButton ?? !!onClose;
+  const showBackButton = config.ui?.showBackButton ?? false;
 
   return (
     <div
@@ -54,8 +59,22 @@ export const Topbar: React.FC<TopbarProps> = ({
         "bg-card border-b border-border",
       )}
     >
-      {/* Left: Undo / Redo */}
+      {/* Left: Close + Undo / Redo */}
       <div className="flex items-center gap-1">
+        {onClose && showCloseButton && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              aria-label={showBackButton ? "Back" : "Close editor"}
+              title={showBackButton ? "Back" : "Close editor"}
+            >
+              {showBackButton ? <ArrowLeft className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            </Button>
+            <Separator orientation="vertical" className="mx-1 h-6" />
+          </>
+        )}
         <Button
           variant="ghost"
           size="icon"

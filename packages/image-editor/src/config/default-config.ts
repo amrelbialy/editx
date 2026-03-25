@@ -71,6 +71,7 @@ export const defaultConfig: Required<
     },
     title: "Image Editor",
     showTitle: true,
+    unsavedChangesWarning: true,
   },
 
   crop: {

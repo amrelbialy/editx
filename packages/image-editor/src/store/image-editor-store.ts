@@ -54,6 +54,9 @@ interface ImageEditorState {
   /** Which property sub-panel is shown in the side panel (overrides tool panel content). */
   propertySidePanel: PropertySidePanel;
 
+  /** Whether the document has been modified since the last save. */
+  hasUnsavedChanges: boolean;
+
   setActiveTool: (tool: ImageEditorTool) => void;
   setOriginalImage: (info: OriginalImageInfo) => void;
   setLoading: (loading: boolean) => void;
@@ -65,6 +68,8 @@ interface ImageEditorState {
   setEditingTextBlockId: (id: number | null) => void;
   setTextSelectionRange: (range: { from: number; to: number } | null) => void;
   setPropertySidePanel: (panel: PropertySidePanel) => void;
+  markDirty: () => void;
+  markClean: () => void;
 }
 
 export const useImageEditorStore = create<ImageEditorState>((set) => ({
@@ -79,6 +84,7 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   editingTextBlockId: null,
   textSelectionRange: null,
   propertySidePanel: null,
+  hasUnsavedChanges: false,
 
   setActiveTool: (tool) => set({ activeTool: tool, propertySidePanel: null }),
   setOriginalImage: (info) => set({ originalImage: info }),
@@ -91,4 +97,6 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   setEditingTextBlockId: (id) => set({ editingTextBlockId: id }),
   setTextSelectionRange: (range) => set({ textSelectionRange: range }),
   setPropertySidePanel: (panel) => set({ propertySidePanel: panel }),
+  markDirty: () => set({ hasUnsavedChanges: true }),
+  markClean: () => set({ hasUnsavedChanges: false }),
 }));

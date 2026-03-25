@@ -1,6 +1,7 @@
 import type { CreativeEngine } from "@creative-editor/engine";
 import { useCallback, useRef, useState } from "react";
-import type { EditorEventCallbacks, ExportConfig } from "../config/config.types";
+import type { CloseReason, EditorEventCallbacks, ExportConfig } from "../config/config.types";
+import { useImageEditorStore } from "../store/image-editor-store";
 import type { EditorNotifications } from "./use-notifications";
 
 export type ExportFormat = "png" | "jpeg" | "webp";
@@ -14,6 +15,7 @@ export interface UseExportOptions {
   engineRef: React.RefObject<CreativeEngine | null>;
   exportConfig?: ExportConfig;
   onSave?: (blob: Blob) => void;
+  onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
   events?: EditorEventCallbacks;
   notify?: EditorNotifications;
 }
@@ -24,10 +26,18 @@ const FORMAT_NAMES: Record<ExportFormat, string> = {
   webp: "WebP",
 };
 
-export function useExport({ engineRef, exportConfig, onSave, events, notify }: UseExportOptions) {
+export function useExport({
+  engineRef,
+  exportConfig,
+  onSave,
+  onClose,
+  events,
+  notify,
+}: UseExportOptions) {
   const [isExporting, setIsExporting] = useState(false);
   // Guard against double-click while an export is in progress
   const exportingRef = useRef(false);
+  const markClean = useImageEditorStore((s) => s.markClean);
 
   const handleExport = useCallback(
     async (overrides?: ExportOverrides) => {
@@ -53,7 +63,12 @@ export function useExport({ engineRef, exportConfig, onSave, events, notify }: U
           onSave(blob);
         }
 
+        markClean();
         notify?.success(`Exported as ${FORMAT_NAMES[format]}`);
+
+        if (exportConfig?.closeAfterSave) {
+          onClose?.("save", false);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Export failed";
         notify?.error(message);
@@ -62,7 +77,7 @@ export function useExport({ engineRef, exportConfig, onSave, events, notify }: U
         setIsExporting(false);
       }
     },
-    [engineRef, exportConfig, onSave, events, notify],
+    [engineRef, exportConfig, onSave, onClose, events, notify, markClean],
   );
 
   return { handleExport, isExporting };

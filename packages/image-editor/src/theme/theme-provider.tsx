@@ -57,7 +57,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, childr
   }, [theme.preset, theme.borderRadius, theme.fontFamily, theme]);
 
   return (
-    <div ref={refCallback} style={style} className="ie-theme">
+    <div ref={refCallback} style={style} className="ie-theme h-full w-full">
       <PopoverContainerProvider value={container}>{children}</PopoverContainerProvider>
     </div>
   );

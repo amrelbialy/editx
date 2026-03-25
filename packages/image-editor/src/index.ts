@@ -20,6 +20,7 @@ export { SliderField } from "./components/ui/slider-field";
 export { SwitchField } from "./components/ui/switch-field";
 export type {
   AdjustToolConfig,
+  CloseReason,
   CropToolConfig,
   CustomTool,
   EditorEventCallbacks,
@@ -44,6 +45,8 @@ export { I18nProvider, useTranslation } from "./i18n/i18n-context";
 export { en as defaultTranslations } from "./i18n/translations/en";
 export type { ImageEditorProps, ImageSource } from "./image-editor";
 export { ImageEditor } from "./image-editor";
+export type { ImageEditorModalProps } from "./image-editor-modal";
+export { ImageEditorModal } from "./image-editor-modal";
 export type {
   ImageEditorTool,
   OriginalImageInfo,

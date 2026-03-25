@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ExportDialog } from "./components/panels/export-dialog";
 import { announce } from "./components/shell/announcer";
 import { CanvasPane } from "./components/shell/canvas-pane";
+import { DiscardConfirmationDialog } from "./components/shell/discard-confirmation-dialog";
 import { EditorShell } from "./components/shell/editor-shell";
 import { ErrorPlaceholder } from "./components/shell/error-placeholder";
 import { LoadingOverlay } from "./components/shell/loading-overlay";
@@ -11,7 +12,12 @@ import { Providers } from "./components/shell/providers";
 import { SidePanel } from "./components/shell/side-panel";
 import { ToolNav } from "./components/shell/tool-nav";
 import { Topbar } from "./components/shell/topbar";
-import type { EditorEventCallbacks, EditorSlots, ImageEditorConfig } from "./config/config.types";
+import type {
+  CloseReason,
+  EditorEventCallbacks,
+  EditorSlots,
+  ImageEditorConfig,
+} from "./config/config.types";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
 import { useShortcuts } from "./hooks/use-shortcuts";
@@ -25,7 +31,7 @@ export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasEl
 export interface ImageEditorProps {
   src: ImageSource;
   onSave?: (blob: Blob) => void;
-  onClose?: () => void;
+  onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
   width?: string | number;
   height?: string | number;
   /** Validation options for file type, size, and dimension limits. */
@@ -44,6 +50,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   const {
     src,
     onSave,
+    onClose,
     width = "100%",
     height = "100vh",
     validation,
@@ -72,6 +79,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     engineRef,
     exportConfig: userConfig?.export,
     onSave,
+    onClose,
     events,
     notify: tools.notify,
   });
@@ -79,12 +87,42 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   // --- Store selectors (grouped) ---
   const isLoading = useImageEditorStore((s) => s.isLoading);
   const error = useImageEditorStore((s) => s.error);
+  const markDirty = useImageEditorStore((s) => s.markDirty);
+  const hasUnsavedChanges = useImageEditorStore((s) => s.hasUnsavedChanges);
 
   // --- useState ---
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [pendingCloseReason, setPendingCloseReason] = useState<CloseReason>("close-button");
 
   // --- useCallback ---
   const openExportDialog = useCallback(() => setExportDialogOpen(true), []);
+
+  const unsavedChangesWarning = userConfig?.ui?.unsavedChangesWarning ?? true;
+
+  const requestClose = useCallback(
+    (reason: CloseReason) => {
+      if (!onClose) return;
+      if (hasUnsavedChanges && unsavedChangesWarning) {
+        setPendingCloseReason(reason);
+        setDiscardDialogOpen(true);
+      } else {
+        onClose(reason, false);
+      }
+    },
+    [onClose, hasUnsavedChanges, unsavedChangesWarning],
+  );
+
+  const handleDiscardConfirm = useCallback(() => {
+    setDiscardDialogOpen(false);
+    onClose?.(pendingCloseReason, true);
+  }, [onClose, pendingCloseReason]);
+
+  const handleDiscardCancel = useCallback(() => {
+    setDiscardDialogOpen(false);
+  }, []);
+
+  const handleCloseButton = useCallback(() => requestClose("close-button"), [requestClose]);
 
   const handleUndo = useCallback(() => engineRef.current?.editor.undo(), [engineRef]);
   const handleRedo = useCallback(() => engineRef.current?.editor.redo(), [engineRef]);
@@ -125,6 +163,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     }
   }, [tools.activeTool, userConfig?.customTools]);
 
+  // Track unsaved changes via engine block events
+  useEffect(() => {
+    const ce = engineRef.current;
+    if (!ce) return;
+    return ce.event.subscribe([], () => markDirty());
+  }, [engine, engineRef, markDirty]);
+
   // --- Derived state ---
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
 
@@ -160,6 +205,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
             onExport={openExportDialog}
             isExporting={isExporting}
             topbarRight={slots?.topbarRight}
+            onClose={onClose ? handleCloseButton : undefined}
           />
 
           <div className="flex flex-col-reverse @3xl/editor:flex-row flex-1 overflow-hidden">
@@ -211,6 +257,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
           onOpenChange={setExportDialogOpen}
           onExport={handleExport}
           isExporting={isExporting}
+        />
+
+        <DiscardConfirmationDialog
+          open={discardDialogOpen}
+          onDiscard={handleDiscardConfirm}
+          onCancel={handleDiscardCancel}
         />
 
         {isLoading && !error && <LoadingOverlay />}

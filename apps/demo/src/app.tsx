@@ -1,6 +1,6 @@
 import {
   Button,
-  ImageEditor,
+  ImageEditorModal,
   Select,
   SelectContent,
   SelectItem,
@@ -21,7 +21,7 @@ const ALL_PRESETS = ["dark", "light", ...Object.keys(demoPresets)] as const;
 type PresetName = (typeof ALL_PRESETS)[number];
 
 function App() {
-  const [mode, setMode] = useState<"image-editor" | "pick">("pick");
+  const [editorOpen, setEditorOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | File | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -31,20 +31,20 @@ function App() {
     const file = e.target.files?.[0];
     if (file) {
       setImageSrc(file);
-      setMode("image-editor");
+      setEditorOpen(true);
     }
   };
 
   const handleUseSample = () => {
     setImageSrc(SAMPLE_IMAGE);
-    setMode("image-editor");
+    setEditorOpen(true);
   };
 
   const handleLoadUrl = () => {
     const trimmed = urlInput.trim();
     if (trimmed) {
       setImageSrc(trimmed);
-      setMode("image-editor");
+      setEditorOpen(true);
     }
   };
 
@@ -69,13 +69,13 @@ function App() {
     const file = e.dataTransfer.files?.[0];
     if (file?.type.startsWith("image/")) {
       setImageSrc(file);
-      setMode("image-editor");
+      setEditorOpen(true);
       return;
     }
     const url = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
     if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
       setImageSrc(url);
-      setMode("image-editor");
+      setEditorOpen(true);
     }
   }, []);
 
@@ -89,7 +89,7 @@ function App() {
         if (blob) {
           e.preventDefault();
           setImageSrc(blob);
-          setMode("image-editor");
+          setEditorOpen(true);
           return;
         }
       }
@@ -124,11 +124,18 @@ function App() {
     URL.revokeObjectURL(url);
   }, []);
 
-  if (mode === "image-editor" && imageSrc) {
+  const handleClose = useCallback(() => {
+    setEditorOpen(false);
+  }, []);
+
+  if (editorOpen && imageSrc) {
     return (
-      <ImageEditor
+      <ImageEditorModal
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
         src={imageSrc}
         onSave={handleSave}
+        onClose={handleClose}
         config={config}
         slots={{
           topbarRight: (
