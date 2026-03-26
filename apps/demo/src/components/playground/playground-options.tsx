@@ -94,7 +94,7 @@ export function PlaygroundOptions(props: Props) {
             label="Sample Landscape"
             onClick={() =>
               onImageChange(
-                "https://images.unsplash.com/photo-1470071459604-3b5ab0b2c088?w=2000&q=90",
+                "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=2000&q=90",
               )
             }
           />

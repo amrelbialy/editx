@@ -1,0 +1,83 @@
+# Engine API
+
+The `CreativeEngine` class is the main entry point for the engine.
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `block` | `BlockAPI` | Block manipulation API |
+| `editor` | `EditorAPI` | Editor state, viewport, and edit mode |
+| `event` | `EventAPI` | Block lifecycle event subscriptions |
+| `scene` | `SceneAPI` | Scene and page management |
+
+## History
+
+All mutations are automatically tracked for undo/redo.
+
+```ts
+engine.undo();
+engine.redo();
+engine.canUndo(); // boolean
+engine.canRedo(); // boolean
+engine.clearHistory();
+```
+
+## Batching
+
+Batch multiple mutations into a single undo step:
+
+```ts
+engine.beginBatch();
+engine.block.setPosition(id, 10, 20);
+engine.block.setRotation(id, 45);
+engine.endBatch(); // single undo step
+```
+
+## Silent Mode
+
+Suppress history tracking temporarily:
+
+```ts
+engine.beginSilent();
+// ... mutations won't be recorded in history
+engine.endSilent();
+```
+
+## Active Scene & Page
+
+```ts
+engine.setActiveScene(sceneId);
+engine.getActiveScene(); // number | null
+engine.setActivePage(pageId);
+engine.getActivePage(); // number | null
+```
+
+## Events
+
+```ts
+// Generic event bus
+engine.on("history:undo", () => { /* ... */ });
+engine.off("history:undo", handler);
+
+// Typed subscriptions (return unsubscribe function)
+const unsub = engine.onHistoryChanged(() => { /* ... */ });
+const unsub = engine.onZoomChanged((zoom) => { /* ... */ });
+const unsub = engine.onEditModeChanged(({ mode, previousMode }) => { /* ... */ });
+```
+
+## Export
+
+```ts
+const blob = await engine.exportScene({
+  format: "png",   // "png" | "jpeg" | "webp"
+  quality: 0.92,   // 0–1, for jpeg/webp
+  pixelRatio: 2,   // DPR multiplier
+});
+```
+
+## Lifecycle
+
+```ts
+engine.dispose(); // clean up renderer and image cache
+```

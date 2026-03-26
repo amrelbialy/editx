@@ -10,11 +10,11 @@ The main editor component. Renders inline at the given dimensions.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `src` | `string \| File` | — | **Required.** Image source URL or File object |
+| `src` | `string \| File \| Blob \| HTMLImageElement \| HTMLCanvasElement` | — | **Required.** Image source |
 | `onSave` | `(blob: Blob) => void` | — | Called when the user exports the image |
 | `onClose` | `(reason?, hasUnsavedChanges?) => void` | — | Called when the editor closes |
 | `width` | `string \| number` | `"100%"` | Editor width |
-| `height` | `string \| number` | `"100%"` | Editor height |
+| `height` | `string \| number` | `"100vh"` | Editor height |
 | `config` | `ImageEditorConfig` | `{}` | Editor configuration |
 | `slots` | `EditorSlots` | — | Custom UI slots |
 | `events` | `EditorEventCallbacks` | — | Event callbacks |
@@ -38,6 +38,6 @@ All `ImageEditor` props, plus:
 
 | Slot | Type | Description |
 |---|---|---|
-| `topbarLeft` | `ReactNode` | Content in the top bar, left side |
-| `topbarCenter` | `ReactNode` | Content in the top bar, center |
 | `topbarRight` | `ReactNode` | Content in the top bar, right side |
+| `sidebarBottom` | `ReactNode` | Content at the bottom of the tool sidebar |
+| `contextualBarExtra` | `ReactNode` | Extra content in the contextual bar |

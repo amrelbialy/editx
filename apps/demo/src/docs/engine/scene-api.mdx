@@ -1,0 +1,80 @@
+# Scene API
+
+The `engine.scene` API manages scene creation, pages, layout, and serialization.
+
+## Creating a Scene
+
+```ts
+await engine.scene.create({ width: 1920, height: 1080 });
+```
+
+This creates a scene block, a first page, and sets up the renderer. History is cleared after creation so it isn't undoable.
+
+## Active Scene & Page
+
+```ts
+engine.scene.getScene();       // number | null
+engine.scene.getCurrentPage(); // number | null
+engine.scene.getPages();       // number[]
+engine.scene.setActivePage(pageId);
+```
+
+## Page Management
+
+```ts
+const pageId = engine.scene.addPage({ width: 1080, height: 1080 });
+engine.scene.removePage(pageId); // throws if last page
+```
+
+## Page Dimensions
+
+```ts
+engine.scene.setDefaultPageDimensions(1920, 1080);
+engine.scene.getDefaultPageDimensions(); // { width, height }
+```
+
+## Aspect Ratio Lock
+
+```ts
+engine.scene.setAspectRatioLock(true);
+engine.scene.isAspectRatioLocked();
+```
+
+## Page Layout
+
+```ts
+engine.scene.setPageLayout("Free"); // PageLayoutMode
+engine.scene.getPageLayout();
+```
+
+## Serialization
+
+Save and restore the entire scene:
+
+```ts
+const json = engine.scene.saveToString();
+await engine.scene.loadFromString(json);
+```
+
+## Event API
+
+Subscribe to block lifecycle events:
+
+```ts
+// Subscribe to specific blocks
+const unsub = engine.event.subscribe([blockId], (events) => {
+  for (const e of events) {
+    console.log(e.type, e.block); // "created" | "updated" | "destroyed"
+  }
+});
+
+// Subscribe to ALL block events
+const unsub = engine.event.subscribe([], (events) => {
+  // ...
+});
+
+// Unsubscribe
+unsub();
+```
+
+Events are deduplicated and delivered at the end of each engine update cycle.

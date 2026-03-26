@@ -31,10 +31,10 @@ Graphic blocks own sub-blocks for their visual properties:
 Blocks store typed key-value properties. Access them through the BlockAPI:
 
 ```ts
-engine.block.getFloat(blockId, "position/x");
+engine.block.getFloat(blockId, "transform/position/x");
 engine.block.getString(blockId, "text/fontFamily");
-engine.block.getBool(blockId, "opacity/enabled");
-engine.block.getColor(blockId, "fill/solid/color");
+engine.block.getBool(blockId, "appearance/visible");
+engine.block.getColor(blockId, "fill/color");
 ```
 
 Full property reference coming soon.

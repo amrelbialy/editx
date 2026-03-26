@@ -1,0 +1,74 @@
+# Editor API
+
+The `engine.editor` API controls the viewport, edit modes, cursor, and coordinate transformations.
+
+## Edit Mode
+
+```ts
+engine.editor.setEditMode("Transform");
+engine.editor.setEditMode("Crop", { blockId: id });
+engine.editor.getEditMode(); // "Transform" | "Crop" | ...
+engine.editor.getEditModeConfig();
+```
+
+## Viewport & Zoom
+
+```ts
+engine.editor.setZoom(1.5);
+engine.editor.getZoom();
+engine.editor.zoomIn(0.1);   // optional step
+engine.editor.zoomOut(0.1);
+engine.editor.resetZoom();
+engine.editor.fitToScreen(24);    // padding in px
+engine.editor.fitToSelection(24);
+```
+
+## Pan
+
+```ts
+engine.editor.panTo(x, y);     // absolute position
+engine.editor.panBy(dx, dy);   // relative offset
+engine.editor.getPan();         // { x, y }
+```
+
+## Coordinate Transforms
+
+Convert between screen pixels and world (canvas) coordinates:
+
+```ts
+const worldPt = engine.editor.screenToWorld({ x: 100, y: 200 });
+const screenPt = engine.editor.worldToScreen({ x: 50, y: 100 });
+```
+
+## Block Screen Rects
+
+Get a block's bounding rectangle in screen coordinates (useful for overlays):
+
+```ts
+engine.editor.getSelectedBlockScreenRect();
+// { x, y, width, height } | null
+
+engine.editor.getBlockScreenRect(blockId);
+// { x, y, width, height } | null
+```
+
+## Cursor
+
+```ts
+engine.editor.setCursorType("default");
+engine.editor.getCursorType();
+engine.editor.setCursorRotation(45);
+engine.editor.getCursorRotation();
+```
+
+## History (via Editor)
+
+```ts
+engine.editor.undo();
+engine.editor.redo();
+engine.editor.canUndo();
+engine.editor.canRedo();
+engine.editor.clearHistory();
+```
+
+> These delegate to the same history the engine uses. You can call either `engine.undo()` or `engine.editor.undo()`.

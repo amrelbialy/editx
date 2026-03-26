@@ -4,9 +4,12 @@ import App from "./app";
 import { EditorPlayground } from "./components/editor-playground";
 import { Navbar } from "./components/navbar";
 
+import EngineBlockApi from "./docs/engine/block-api.mdx";
 import EngineBlocks from "./docs/engine/blocks.mdx";
-import EngineCommands from "./docs/engine/commands.mdx";
+import EngineEditorApi from "./docs/engine/editor-api.mdx";
+import EngineApi from "./docs/engine/engine-api.mdx";
 import EngineOverview from "./docs/engine/overview.mdx";
+import EngineSceneApi from "./docs/engine/scene-api.mdx";
 import IeApi from "./docs/image-editor/api.mdx";
 import IeConfiguration from "./docs/image-editor/configuration.mdx";
 import IeGettingStarted from "./docs/image-editor/getting-started.mdx";
@@ -40,7 +43,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Route path="/docs/image-editor/theming" element={<DocsPage component={IeTheming} />} />
       <Route path="/docs/engine/overview" element={<DocsPage component={EngineOverview} />} />
       <Route path="/docs/engine/blocks" element={<DocsPage component={EngineBlocks} />} />
-      <Route path="/docs/engine/commands" element={<DocsPage component={EngineCommands} />} />
+      <Route path="/docs/engine/engine-api" element={<DocsPage component={EngineApi} />} />
+      <Route path="/docs/engine/block-api" element={<DocsPage component={EngineBlockApi} />} />
+      <Route path="/docs/engine/editor-api" element={<DocsPage component={EngineEditorApi} />} />
+      <Route path="/docs/engine/scene-api" element={<DocsPage component={EngineSceneApi} />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />

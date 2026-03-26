@@ -15,7 +15,10 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
     links: [
       { label: "Overview", href: "/docs/engine/overview" },
       { label: "Blocks", href: "/docs/engine/blocks" },
-      { label: "Commands", href: "/docs/engine/commands" },
+      { label: "Engine API", href: "/docs/engine/engine-api" },
+      { label: "Block API", href: "/docs/engine/block-api" },
+      { label: "Editor API", href: "/docs/engine/editor-api" },
+      { label: "Scene & Events", href: "/docs/engine/scene-api" },
     ],
   },
 ];

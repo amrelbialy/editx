@@ -1,0 +1,225 @@
+# Block API
+
+The `engine.block` API provides all block manipulation methods — CRUD, properties, layout, hierarchy, and more.
+
+## Lifecycle
+
+```ts
+const id = engine.block.create("graphic"); // BlockType
+engine.block.destroy(id);
+engine.block.duplicate(id); // returns new block id
+engine.block.exists(id); // boolean
+```
+
+## Type & Kind
+
+```ts
+engine.block.getType(id);       // "graphic" | "text" | "image" | "page" | ...
+engine.block.getKind(id);       // e.g. "circle", "arrow"
+engine.block.setKind(id, "rect");
+```
+
+## Hierarchy
+
+```ts
+engine.block.appendChild(parentId, childId);
+engine.block.removeChild(parentId, childId);
+engine.block.getParent(id);     // number | null
+engine.block.getChildren(id);   // number[]
+```
+
+## Selection
+
+```ts
+engine.block.select(id);
+engine.block.setSelected(id, true);
+engine.block.isSelected(id);
+engine.block.findAllSelected(); // number[]
+engine.block.deselectAll();
+
+const unsub = engine.block.onSelectionChanged((ids) => { /* ... */ });
+const unsub = engine.block.onBlockDoubleClick((blockId) => { /* ... */ });
+```
+
+## Query
+
+```ts
+engine.block.findAll();             // all top-level blocks
+engine.block.findByType("graphic"); // by BlockType
+engine.block.findByKind("circle");  // by kind string
+engine.block.findAllProperties(id); // all property keys
+engine.block.getName(id);
+engine.block.setName(id, "My Shape");
+```
+
+## Properties
+
+Typed getters and setters for block properties:
+
+```ts
+// Getters
+engine.block.getFloat(id, "transform/position/x");
+engine.block.getString(id, "text/fontFamily");
+engine.block.getBool(id, "appearance/visible");
+engine.block.getColor(id, "fill/color");
+engine.block.getProperty(id, key); // generic
+
+// Setters
+engine.block.setFloat(id, "transform/position/x", 100);
+engine.block.setString(id, "text/fontFamily", "Inter");
+engine.block.setBool(id, "appearance/visible", true);
+engine.block.setColor(id, "fill/color", { r: 1, g: 0, b: 0, a: 1 });
+engine.block.setProperty(id, key, value);
+```
+
+## Layout
+
+```ts
+engine.block.setPosition(id, x, y);
+engine.block.getPosition(id); // { x, y }
+engine.block.setSize(id, w, h);
+engine.block.getSize(id);     // { width, height }
+engine.block.setRotation(id, 45);
+engine.block.getRotation(id);
+engine.block.setOpacity(id, 0.5);
+engine.block.getOpacity(id);
+engine.block.setVisible(id, false);
+engine.block.isVisible(id);
+```
+
+### Z-ordering
+
+```ts
+engine.block.bringForward(id);
+engine.block.sendBackward(id);
+engine.block.bringToFront(id);
+engine.block.sendToBack(id);
+```
+
+### Alignment
+
+```ts
+engine.block.alignToPage(id, "center"); // "left" | "center" | "right" | "top" | "middle" | "bottom"
+```
+
+## Fill
+
+```ts
+engine.block.supportsFill(id);
+engine.block.hasFill(id);
+engine.block.setFillEnabled(id, true);
+engine.block.isFillEnabled(id);
+engine.block.setFillSolidColor(id, { r: 1, g: 0, b: 0, a: 1 });
+engine.block.getFillSolidColor(id);
+
+// Sub-block level
+const fillId = engine.block.createFill("solid-color");
+engine.block.setFill(id, fillId);
+engine.block.getFill(id); // number | null
+```
+
+## Stroke
+
+```ts
+engine.block.supportsStroke(id);
+engine.block.setStrokeEnabled(id, true);
+engine.block.isStrokeEnabled(id);
+engine.block.setStrokeColor(id, { r: 0, g: 0, b: 0, a: 1 });
+engine.block.getStrokeColor(id);
+engine.block.setStrokeWidth(id, 2);
+engine.block.getStrokeWidth(id);
+```
+
+## Shadow
+
+```ts
+engine.block.supportsShadow(id);
+engine.block.setShadowEnabled(id, true);
+engine.block.isShadowEnabled(id);
+engine.block.setShadowColor(id, { r: 0, g: 0, b: 0, a: 0.3 });
+engine.block.setShadowOffsetX(id, 4);
+engine.block.setShadowOffsetY(id, 4);
+engine.block.setShadowBlur(id, 8);
+```
+
+## Shapes
+
+```ts
+const shapeId = engine.block.createShape("rect");
+engine.block.setShape(graphicId, shapeId);
+engine.block.getShape(graphicId);
+engine.block.supportsShape(graphicId);
+engine.block.hasShape(graphicId);
+
+// Convenience: create a graphic with shape + fill in one call
+engine.block.addShape(pageId, "ellipse", "solid-color", x, y, w, h);
+```
+
+## Effects
+
+```ts
+const effectId = engine.block.createEffect("adjustments");
+engine.block.appendEffect(blockId, effectId);
+engine.block.getEffects(blockId);     // number[]
+engine.block.removeEffect(blockId, 0); // by index
+engine.block.setEffectEnabled(effectId, true);
+engine.block.isEffectEnabled(effectId);
+
+// Adjustments
+engine.block.setAdjustmentValue(effectId, "brightness", 0.2);
+engine.block.getAdjustmentValue(effectId, "brightness");
+engine.block.getAdjustmentValues(effectId); // all params
+```
+
+## Text
+
+```ts
+// Add text block
+const textId = engine.block.addText(pageId, x, y, w, h, "Hello");
+
+// Content
+engine.block.getTextContent(textId);
+engine.block.getTextRuns(textId);
+
+// Editing session (Lexical-powered)
+const session = engine.block.beginTextEditing(textId);
+engine.block.endTextEditing(textId);
+
+// Inline style mutations
+engine.block.setTextColor(textId, 0, 5, "#ff0000");
+engine.block.setTextFontSize(textId, 0, 5, 24);
+engine.block.setTextFontFamily(textId, 0, 5, "Inter");
+engine.block.toggleBoldText(textId, 0, 5);
+engine.block.toggleItalicText(textId, 0, 5);
+engine.block.setTextAlign(textId, "center");
+engine.block.setTextLineHeight(textId, 1.5);
+```
+
+## Image
+
+```ts
+engine.block.addImage(pageId, src, x, y, w, h, origW, origH);
+```
+
+## Crop
+
+```ts
+engine.block.supportsCrop(id);
+engine.block.hasCrop(id);
+engine.block.resetCrop(id);
+engine.block.applyCropRatio(id, 16 / 9);
+engine.block.flipCropHorizontal(id);
+engine.block.flipCropVertical(id);
+engine.block.setCropAspectRatioLocked(id, true);
+```
+
+## Page
+
+```ts
+engine.block.setPageDimensions(pageId, 1920, 1080);
+engine.block.getPageDimensions(pageId);
+engine.block.setPageFillColor(pageId, { r: 1, g: 1, b: 1, a: 1 });
+engine.block.setPageImageSrc(pageId, "/photo.jpg");
+engine.block.setPageMarginsEnabled(pageId, true);
+engine.block.setPageMargins(pageId, 20, 20, 20, 20);
+```

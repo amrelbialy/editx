@@ -14,13 +14,13 @@ All document mutations go through the **command system**. This ensures every cha
 
 ```ts
 // Commands are executed through the engine
-engine.execute(someCommand);
+engine.exec(someCommand);
 
 // Undo / Redo
-engine.history.undo();
-engine.history.redo();
-engine.history.canUndo(); // boolean
-engine.history.canRedo(); // boolean
+engine.undo();
+engine.redo();
+engine.canUndo(); // boolean
+engine.canRedo(); // boolean
 ```
 
 ## Built-in Commands
@@ -35,13 +35,14 @@ The engine ships commands for all standard operations:
 
 ## Custom Commands
 
-Extend the editor by creating your own commands. Each command implements `execute()` and `undo()`:
+Extend the editor by creating your own commands. Each command implements `do()` and returns patches:
 
 ```ts
 class MyCommand implements Command {
-  execute(engine: Engine): void { /* apply change */ }
-  undo(engine: Engine): void { /* revert change */ }
+  do(): Patch[] { /* return patches */ }
 }
 ```
+
+Undo is handled automatically by patch reversal — no separate `undo()` method needed.
 
 Detailed command authoring guide coming soon.

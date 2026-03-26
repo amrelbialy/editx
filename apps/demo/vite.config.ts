@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [
     mdx({
+      providerImportSource: "@mdx-js/react",
       remarkPlugins: [remarkGfm],
       rehypePlugins: [rehypeSlug, [rehypeAutolink, { behavior: "wrap" }]],
     }),

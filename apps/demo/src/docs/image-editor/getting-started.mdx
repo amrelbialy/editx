@@ -5,7 +5,7 @@ Install and set up the Creative Image Editor in your React project.
 ## Installation
 
 ```bash
-pnpm add @creative-editor/image-editor @creative-editor/engine
+pnpm add @creative-editor/image-editor
 ```
 
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
@@ -36,6 +36,7 @@ function App() {
 Wrap the editor in a modal for overlay-style editing:
 
 ```tsx
+import { useState } from "react";
 import { ImageEditorModal } from "@creative-editor/image-editor";
 
 function App() {
