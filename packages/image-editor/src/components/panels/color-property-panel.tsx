@@ -60,16 +60,10 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
 
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
-    const handler = () => {
+    return engine.onHistoryChanged(() => {
       setColor(readColor());
       setOpacity(engine.block.getOpacity(blockId));
-    };
-    engine.on("history:undo", handler);
-    engine.on("history:redo", handler);
-    return () => {
-      engine.off("history:undo", handler);
-      engine.off("history:redo", handler);
-    };
+    });
   }, [readColor, engine, blockId]);
 
   const getStyleRange = useCallback((): { start: number; end: number } => {

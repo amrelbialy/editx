@@ -2,41 +2,41 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockRenderer } from "./__tests__/mocks/mock-renderer";
 import { BlockStore } from "./block/block-store";
 import { CreateBlockCommand, DestroyBlockCommand, SetPropertyCommand } from "./controller/commands";
-import { Engine } from "./engine";
+import { CreativeEngine } from "./creative-engine";
 import type { RendererAdapter } from "./render-adapter";
 
-describe("Engine", () => {
+describe("CreativeEngine", () => {
   describe("construction", () => {
     it("creates with default BlockStore when none provided", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       expect(engine.getBlockStore()).toBeInstanceOf(BlockStore);
     });
 
     it("uses provided BlockStore", () => {
       const store = new BlockStore();
-      const engine = new Engine({ blockStore: store });
+      const engine = new CreativeEngine({ blockStore: store });
       expect(engine.getBlockStore()).toBe(store);
     });
 
     it("renderer is null when not provided", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       expect(engine.getRenderer()).toBeNull();
     });
 
     it("uses provided renderer", () => {
       const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
+      const engine = new CreativeEngine({ renderer });
       expect(engine.getRenderer()).toBe(renderer);
     });
   });
 
   describe("exec", () => {
-    let engine: Engine;
+    let engine: CreativeEngine;
     let renderer: RendererAdapter;
 
     beforeEach(() => {
       renderer = createMockRenderer();
-      engine = new Engine({ renderer });
+      engine = new CreativeEngine({ renderer });
     });
 
     it("executes a command and syncs to renderer", () => {
@@ -67,12 +67,12 @@ describe("Engine", () => {
   });
 
   describe("undo / redo", () => {
-    let engine: Engine;
+    let engine: CreativeEngine;
     let renderer: RendererAdapter;
 
     beforeEach(() => {
       renderer = createMockRenderer();
-      engine = new Engine({ renderer });
+      engine = new CreativeEngine({ renderer });
     });
 
     it("undo reverses a command", () => {
@@ -97,7 +97,7 @@ describe("Engine", () => {
     });
 
     it("canUndo / canRedo track state", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       expect(engine.canUndo()).toBe(false);
       expect(engine.canRedo()).toBe(false);
 
@@ -163,7 +163,7 @@ describe("Engine", () => {
 
   describe("clearHistory", () => {
     it("clears undo/redo state", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       engine.clearHistory();
@@ -173,7 +173,7 @@ describe("Engine", () => {
     });
 
     it("emits history:clear event", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const handler = vi.fn();
       engine.on("history:clear", handler);
       engine.clearHistory();
@@ -183,7 +183,7 @@ describe("Engine", () => {
 
   describe("batch", () => {
     it("groups multiple commands into one undo step", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
 
       const id = store.create("graphic");
@@ -205,7 +205,7 @@ describe("Engine", () => {
 
     it("does not flush renderer during batch", () => {
       const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
+      const engine = new CreativeEngine({ renderer });
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -221,7 +221,7 @@ describe("Engine", () => {
     });
 
     it("fires block events after endBatch", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -244,19 +244,19 @@ describe("Engine", () => {
 
   describe("active scene / page", () => {
     it("setActiveScene / getActiveScene", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       engine.setActiveScene(10);
       expect(engine.getActiveScene()).toBe(10);
     });
 
     it("setActivePage / getActivePage", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       engine.setActivePage(20);
       expect(engine.getActivePage()).toBe(20);
     });
 
     it("defaults to null", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       expect(engine.getActiveScene()).toBeNull();
       expect(engine.getActivePage()).toBeNull();
     });
@@ -264,7 +264,7 @@ describe("Engine", () => {
 
   describe("legacy event bus", () => {
     it("on / off / emit", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const handler = vi.fn();
       engine.on("custom", handler);
       engine.emit("custom", "data");
@@ -278,14 +278,14 @@ describe("Engine", () => {
 
   describe("headless (no renderer)", () => {
     it("exec works without renderer", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       expect(engine.canUndo()).toBe(true);
     });
 
     it("undo works without renderer", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
@@ -297,7 +297,7 @@ describe("Engine", () => {
 
   describe("nested batch", () => {
     it("nested beginBatch/endBatch produces exactly one undo step", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -332,7 +332,7 @@ describe("Engine", () => {
 
     it("inner endBatch does not flush the renderer", () => {
       const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
+      const engine = new CreativeEngine({ renderer });
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -352,7 +352,7 @@ describe("Engine", () => {
     });
 
     it("triple-nested batch still produces one undo step", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -373,7 +373,7 @@ describe("Engine", () => {
 
   describe("destroy with sub-blocks", () => {
     it("undo of destroy restores sub-blocks (shape, fill)", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
 
       const graphicId = store.create("graphic");
@@ -398,38 +398,40 @@ describe("Engine", () => {
   });
 
   describe("selection cleanup on undo", () => {
-    it("calls selection cleanup callback when undo destroys a block", () => {
-      const engine = new Engine({});
+    it("removes destroyed blocks from selection on undo", () => {
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
-      const cleanup = vi.fn();
-      engine._setSelectionCleanup(cleanup);
 
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
       const id = cmd.getCreatedId()!;
 
+      engine.block.select(id);
+      expect(engine.block.findAllSelected()).toContain(id);
+
       engine.undo(); // undo create → destroy
-      expect(cleanup).toHaveBeenCalledWith([id]);
+      expect(engine.block.findAllSelected()).not.toContain(id);
     });
 
-    it("does not call cleanup when undo only updates blocks", () => {
-      const engine = new Engine({});
+    it("does not change selection when undo only updates blocks", () => {
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
-      const cleanup = vi.fn();
-      engine._setSelectionCleanup(cleanup);
 
-      const id = store.create("graphic");
-      engine.clearHistory();
+      const cmd = new CreateBlockCommand(store, "graphic");
+      engine.exec(cmd);
+      const id = cmd.getCreatedId()!;
+
+      engine.block.select(id);
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 50));
 
       engine.undo(); // undo property change — no destroy
-      expect(cleanup).not.toHaveBeenCalled();
+      expect(engine.block.findAllSelected()).toContain(id);
     });
   });
 
   describe("silent mode", () => {
     it("skips history for exec while silent", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -443,7 +445,7 @@ describe("Engine", () => {
     });
 
     it("skips history for batch while silent", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -461,7 +463,7 @@ describe("Engine", () => {
     });
 
     it("records history again after endSilent", () => {
-      const engine = new Engine({});
+      const engine = new CreativeEngine({});
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
@@ -476,7 +478,7 @@ describe("Engine", () => {
 
     it("still fires block events while silent", () => {
       const renderer = createMockRenderer();
-      const engine = new Engine({ renderer });
+      const engine = new CreativeEngine({ renderer });
       const store = engine.getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();

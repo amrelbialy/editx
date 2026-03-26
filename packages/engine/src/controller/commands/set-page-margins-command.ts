@@ -7,7 +7,7 @@ import {
   PAGE_MARGIN_TOP,
 } from "../../block/property-keys";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export interface PageMargins {
   top: number;
@@ -41,6 +41,6 @@ export class SetPageMarginsCommand extends PatchCommand {
     this.#store.setProperty(this.#pageId, PAGE_MARGIN_LEFT, this.#margins.left);
 
     const after = this.#store.snapshot(this.#pageId);
-    return [{ id: String(this.#pageId), before, after }];
+    return [{ id: this.#pageId, before, after }];
   }
 }

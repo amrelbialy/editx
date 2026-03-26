@@ -1,6 +1,6 @@
 import type { BlockStore } from "../../block/block-store";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export class SetKindCommand extends PatchCommand {
   #store: BlockStore;
@@ -20,7 +20,7 @@ export class SetKindCommand extends PatchCommand {
     const after = this.#store.snapshot(this.#blockId);
     return [
       {
-        id: String(this.#blockId),
+        id: this.#blockId,
         before,
         after,
       },

@@ -111,7 +111,7 @@ export {
 export { CreativeEngine } from "./creative-engine";
 export type { CursorType, EditMode, EditModeConfig, ExportOptions } from "./editor-types";
 export { EDIT_MODE_DEFAULTS } from "./editor-types";
-export { Engine } from "./engine";
+export type { EngineCore } from "./engine-core";
 export type { BlockEvent, BlockEventType } from "./event-api";
 export { EventAPI } from "./event-api";
 export type { FilterPresetInfo } from "./konva/filters/presets";

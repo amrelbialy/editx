@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockRenderer } from "../__tests__/mocks/mock-renderer";
-import { Engine } from "../engine";
+import { CreativeEngine } from "../creative-engine";
 import type { Color } from "./block.types";
 import { BlockAPI } from "./block-api";
 import {
@@ -25,11 +25,11 @@ import {
 } from "./property-keys";
 
 describe("BlockAPI", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let block: BlockAPI;
 
   beforeEach(() => {
-    engine = new Engine({ renderer: undefined });
+    engine = new CreativeEngine({ renderer: undefined });
     block = new BlockAPI(engine);
   });
 
@@ -579,7 +579,7 @@ describe("BlockAPI", () => {
 
     it("calls renderer.showTransformer when selecting", () => {
       const renderer = createMockRenderer();
-      const eng = new Engine({ renderer });
+      const eng = new CreativeEngine({ renderer });
       const b = new BlockAPI(eng);
       const id = b.create("graphic");
       b.select(id);
@@ -588,7 +588,7 @@ describe("BlockAPI", () => {
 
     it("calls renderer.hideTransformer when deselecting all", () => {
       const renderer = createMockRenderer();
-      const eng = new Engine({ renderer });
+      const eng = new CreativeEngine({ renderer });
       const b = new BlockAPI(eng);
       const id = b.create("graphic");
       b.select(id);

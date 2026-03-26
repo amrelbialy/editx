@@ -1,6 +1,6 @@
 import type { BlockStore } from "../../block/block-store";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export class SetShapeCommand extends PatchCommand {
   #store: BlockStore;
@@ -21,6 +21,6 @@ export class SetShapeCommand extends PatchCommand {
 
     const blockAfter = this.#store.snapshot(this.#blockId);
 
-    return [{ id: String(this.#blockId), before: blockBefore, after: blockAfter }];
+    return [{ id: this.#blockId, before: blockBefore, after: blockAfter }];
   }
 }

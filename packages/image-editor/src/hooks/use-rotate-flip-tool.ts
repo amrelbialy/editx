@@ -91,19 +91,13 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce || editableBlockId === null) return;
-    const handler = () => {
+    return ce.onHistoryChanged(() => {
       setRotationState({
         rotation: ce.block.getImageRotation(editableBlockId),
         flipH: ce.block.isCropFlippedHorizontal(editableBlockId),
         flipV: ce.block.isCropFlippedVertical(editableBlockId),
       });
-    };
-    ce.on("history:undo", handler);
-    ce.on("history:redo", handler);
-    return () => {
-      ce.off("history:undo", handler);
-      ce.off("history:redo", handler);
-    };
+    });
   }, [engineRef, editableBlockId]);
 
   return {

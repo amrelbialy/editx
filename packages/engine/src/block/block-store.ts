@@ -16,11 +16,8 @@ import {
 import { BlockHierarchy } from "./block-hierarchy";
 import { BlockProperties } from "./block-properties";
 import { BlockSnapshot } from "./block-snapshot";
+import { createBlockData, destroyBlock } from "./block-store-crud";
 
-/**
- * Central block registry. Owns the blocks Map and delegates domain logic
- * to focused sub-modules (hierarchy, properties, snapshots).
- */
 export class BlockStore {
   #blocks = new Map<number, BlockData>();
   #nextId = 1;
@@ -39,73 +36,46 @@ export class BlockStore {
 
   create(type: BlockType, kind = ""): number {
     const id = this.#nextId++;
-    const block: BlockData = {
-      id,
-      type,
-      kind,
-      name: `${type}-${id}`,
-      parentId: null,
-      children: [],
-      effectIds: [],
-      shapeId: null,
-      fillId: null,
-      properties: getBlockDefaults(type),
-    };
-    this.#blocks.set(id, block);
+    this.#blocks.set(id, createBlockData(id, type, kind, `${type}-${id}`, getBlockDefaults(type)));
     return id;
   }
 
   createEffect(effectType: EffectType): number {
     const id = this.#nextId++;
-    const block: BlockData = {
+    this.#blocks.set(
       id,
-      type: "effect",
-      kind: effectType,
-      name: `effect-${effectType}-${id}`,
-      parentId: null,
-      children: [],
-      effectIds: [],
-      shapeId: null,
-      fillId: null,
-      properties: getEffectDefaults(effectType),
-    };
-    this.#blocks.set(id, block);
+      createBlockData(
+        id,
+        "effect",
+        effectType,
+        `effect-${effectType}-${id}`,
+        getEffectDefaults(effectType),
+      ),
+    );
     return id;
   }
 
   createShape(shapeType: ShapeType): number {
     const id = this.#nextId++;
-    const block: BlockData = {
+    this.#blocks.set(
       id,
-      type: "shape",
-      kind: shapeType,
-      name: `shape-${shapeType}-${id}`,
-      parentId: null,
-      children: [],
-      effectIds: [],
-      shapeId: null,
-      fillId: null,
-      properties: getShapeDefaults(shapeType),
-    };
-    this.#blocks.set(id, block);
+      createBlockData(
+        id,
+        "shape",
+        shapeType,
+        `shape-${shapeType}-${id}`,
+        getShapeDefaults(shapeType),
+      ),
+    );
     return id;
   }
 
   createFill(fillType: FillType): number {
     const id = this.#nextId++;
-    const block: BlockData = {
+    this.#blocks.set(
       id,
-      type: "fill",
-      kind: fillType,
-      name: `fill-${fillType}-${id}`,
-      parentId: null,
-      children: [],
-      effectIds: [],
-      shapeId: null,
-      fillId: null,
-      properties: getFillDefaults(fillType),
-    };
-    this.#blocks.set(id, block);
+      createBlockData(id, "fill", fillType, `fill-${fillType}-${id}`, getFillDefaults(fillType)),
+    );
     return id;
   }
 
@@ -118,61 +88,7 @@ export class BlockStore {
   }
 
   destroy(id: number): void {
-    const block = this.#blocks.get(id);
-    if (!block) return;
-
-    this.#hierarchy.unparent(id);
-
-    // Remove from any parent's effectIds list
-    if (block.type === "effect") {
-      for (const [, b] of this.#blocks) {
-        const idx = b.effectIds.indexOf(id);
-        if (idx !== -1) {
-          b.effectIds.splice(idx, 1);
-          break;
-        }
-      }
-    }
-
-    // Remove from any owner's shapeId / fillId reference
-    if (block.type === "shape") {
-      for (const [, b] of this.#blocks) {
-        if (b.shapeId === id) {
-          b.shapeId = null;
-          break;
-        }
-      }
-    }
-    if (block.type === "fill") {
-      for (const [, b] of this.#blocks) {
-        if (b.fillId === id) {
-          b.fillId = null;
-          break;
-        }
-      }
-    }
-
-    // Recursively destroy attached effects
-    for (const effectId of [...block.effectIds]) {
-      this.destroy(effectId);
-    }
-
-    // Recursively destroy attached shape sub-block
-    if (block.shapeId != null) {
-      this.destroy(block.shapeId);
-    }
-
-    // Recursively destroy attached fill sub-block
-    if (block.fillId != null) {
-      this.destroy(block.fillId);
-    }
-
-    // Recursively destroy children
-    for (const childId of [...block.children]) {
-      this.destroy(childId);
-    }
-
-    this.#blocks.delete(id);
+    destroyBlock(this.#blocks, this.#hierarchy, id, (childId) => this.destroy(childId));
   }
 
   // --- Type / Kind / Name ---
@@ -197,6 +113,21 @@ export class BlockStore {
 
   getName(id: number): string {
     return this.#blocks.get(id)?.name ?? "";
+  }
+
+  // --- Bulk operations ---
+
+  getAllBlockIds(): number[] {
+    return [...this.#blocks.keys()];
+  }
+
+  clear(): void {
+    this.#blocks.clear();
+    this.#nextId = 1;
+  }
+
+  resetNextId(nextId: number): void {
+    this.#nextId = nextId;
   }
 
   // --- Query ---
@@ -279,9 +210,8 @@ export class BlockStore {
   /** Find the owner of any sub-block (fill, shape, or effect). */
   findSubBlockOwner(subId: number): number | null {
     for (const [id, block] of this.#blocks) {
-      if (block.fillId === subId || block.shapeId === subId || block.effectIds.includes(subId)) {
+      if (block.fillId === subId || block.shapeId === subId || block.effectIds.includes(subId))
         return id;
-      }
     }
     return null;
   }

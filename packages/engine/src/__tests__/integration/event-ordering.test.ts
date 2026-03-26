@@ -7,15 +7,15 @@ import { CreateEffectCommand } from "../../controller/commands/create-effect-com
 import { DestroyBlockCommand } from "../../controller/commands/destroy-block-command";
 import { RemoveEffectCommand } from "../../controller/commands/remove-effect-command";
 import { SetPropertyCommand } from "../../controller/commands/set-property-command";
-import { Engine } from "../../engine";
+import { CreativeEngine } from "../../creative-engine";
 import type { BlockEvent } from "../../event-api";
 import { createMockRenderer } from "../mocks/mock-renderer";
 
 describe("Engine Integration: Event Ordering", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
 
   beforeEach(() => {
-    engine = new Engine({ renderer: createMockRenderer() });
+    engine = new CreativeEngine({ renderer: createMockRenderer() });
   });
 
   it("delivers 'created' event after command exec", () => {
@@ -148,10 +148,10 @@ describe("Engine Integration: Event Ordering", () => {
 });
 
 describe("Engine Integration: Effect Chains", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
 
   beforeEach(() => {
-    engine = new Engine({ renderer: createMockRenderer() });
+    engine = new CreativeEngine({ renderer: createMockRenderer() });
   });
 
   it("creates effect, appends to block, sets properties, and undoes all", () => {
@@ -214,12 +214,12 @@ describe("Engine Integration: Effect Chains", () => {
 });
 
 describe("Engine Integration: Renderer Sync", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let renderer: ReturnType<typeof createMockRenderer>;
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
   });
 
   it("syncs blocks to renderer after each command", () => {

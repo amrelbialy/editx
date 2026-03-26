@@ -1,4 +1,4 @@
-import type { PageLayoutMode } from "./block/block.types";
+import type { BlockData, PageLayoutMode } from "./block/block.types";
 import type { BlockAPI } from "./block/block-api";
 import {
   PAGE_HEIGHT,
@@ -8,13 +8,20 @@ import {
   SCENE_PAGE_DIMS_HEIGHT,
   SCENE_PAGE_DIMS_WIDTH,
 } from "./block/property-keys";
-import type { Engine } from "./engine";
+import type { EngineCore } from "./engine-core";
+
+interface SerializedScene {
+  version: number;
+  blocks: BlockData[];
+  activeSceneId: number | null;
+  activePageId: number | null;
+}
 
 export class SceneAPI {
-  #engine: Engine;
+  #engine: EngineCore;
   #block: BlockAPI;
 
-  constructor(engine: Engine, block: BlockAPI) {
+  constructor(engine: EngineCore, block: BlockAPI) {
     this.#engine = engine;
     this.#block = block;
   }
@@ -89,6 +96,22 @@ export class SceneAPI {
     this.#engine.setActivePage(pageId);
   }
 
+  removePage(pageId: number): void {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error("No active scene");
+    const pages = this.getPages();
+    if (pages.length <= 1) throw new Error("Cannot remove the last page");
+    if (!pages.includes(pageId)) throw new Error(`Page ${pageId} not found in scene`);
+
+    this.#block.removeChild(sceneId, pageId);
+    this.#block.destroy(pageId);
+
+    if (this.#engine.getActivePage() === pageId) {
+      const remaining = this.getPages();
+      this.#engine.setActivePage(remaining[0]);
+    }
+  }
+
   // ── Scene-level page dimensions ──────────────────────
 
   /**
@@ -138,5 +161,75 @@ export class SceneAPI {
     const sceneId = this.#engine.getActiveScene();
     if (sceneId === null) return "Free";
     return (this.#block.getString(sceneId, SCENE_LAYOUT) || "Free") as PageLayoutMode;
+  }
+
+  // ── Serialization ──────────────────────────────────────
+
+  /** Serialize the entire scene (all blocks) to a JSON string. */
+  saveToString(): string {
+    const store = this.#engine.getBlockStore();
+    const blocks: BlockData[] = [];
+
+    for (const id of store.getAllBlockIds()) {
+      const snapshot = store.snapshot(id);
+      if (snapshot) blocks.push(snapshot);
+    }
+
+    const payload: SerializedScene = {
+      version: 1,
+      blocks,
+      activeSceneId: this.#engine.getActiveScene(),
+      activePageId: this.#engine.getActivePage(),
+    };
+    return JSON.stringify(payload);
+  }
+
+  /** Deserialize a JSON string and restore the full scene. */
+  async loadFromString(json: string): Promise<void> {
+    const payload = JSON.parse(json) as SerializedScene;
+    if (payload.version !== 1) {
+      throw new Error(`Unsupported scene version: ${payload.version}`);
+    }
+    if (!Array.isArray(payload.blocks)) {
+      throw new Error("Invalid scene data: missing blocks array");
+    }
+
+    const store = this.#engine.getBlockStore();
+    store.clear();
+
+    // Restore all blocks
+    let maxId = 0;
+    for (const blockData of payload.blocks) {
+      store.restore(blockData);
+      if (blockData.id > maxId) maxId = blockData.id;
+    }
+    store.resetNextId(maxId + 1);
+
+    // Restore active scene/page
+    if (payload.activeSceneId !== null) {
+      this.#engine.setActiveScene(payload.activeSceneId);
+    }
+    if (payload.activePageId !== null) {
+      this.#engine.setActivePage(payload.activePageId);
+    }
+
+    // Rebuild renderer
+    const sceneId = this.#engine.getActiveScene();
+    const pageId = this.#engine.getActivePage();
+    if (sceneId !== null && pageId !== null) {
+      const sceneBlock = store.get(sceneId);
+      const pageBlock = store.get(pageId);
+      if (sceneBlock && pageBlock) {
+        const renderer = this.#engine.getRenderer();
+        await renderer?.createScene(sceneBlock, pageBlock);
+        // Sync all blocks so the renderer is up to date
+        for (const id of store.getAllBlockIds()) {
+          const block = store.get(id);
+          if (block) renderer?.syncBlock(id, block);
+        }
+      }
+    }
+
+    this.#engine.clearHistory();
   }
 }

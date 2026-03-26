@@ -1,14 +1,19 @@
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { Color } from "./block.types";
 import * as H from "./block-api-helpers";
 import { STROKE_COLOR, STROKE_ENABLED, STROKE_WIDTH } from "./property-keys";
 
 /** Stroke convenience — enable/disable, color, width on graphic blocks. */
 export class BlockStrokeAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
+  }
+
+  supportsStroke(blockId: number): boolean {
+    const type = this.#engine.getBlockStore().getType(blockId);
+    return type === "graphic" || type === "text";
   }
 
   setStrokeEnabled(blockId: number, enabled: boolean): void {

@@ -19,19 +19,19 @@ import {
   SIZE_WIDTH,
 } from "./block/property-keys";
 import { CreateBlockCommand } from "./controller/commands";
+import { CreativeEngine } from "./creative-engine";
 import { EditorAPI } from "./editor/editor-api";
-import { Engine } from "./engine";
 import type { RendererAdapter } from "./render-adapter";
 
 describe("EditorAPI — Edit Mode Management", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
   let renderer: RendererAdapter;
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
     block = new BlockAPI(engine);
     editor = new EditorAPI(engine);
     editor._setBlockAPI(block);
@@ -323,13 +323,13 @@ describe("EditorAPI — Edit Mode Management", () => {
 });
 
 describe("EditorAPI — existing API still works", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let editor: EditorAPI;
   let renderer: RendererAdapter;
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
     editor = new EditorAPI(engine);
   });
 
@@ -354,7 +354,7 @@ describe("EditorAPI — existing API still works", () => {
 // ── Crop improvement: img.ly-style crop ─────────────────────
 
 describe("EditorAPI — img.ly-style crop (page resize)", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
   let renderer: RendererAdapter;
@@ -375,7 +375,7 @@ describe("EditorAPI — img.ly-style crop (page resize)", () => {
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
     block = new BlockAPI(engine);
     editor = new EditorAPI(engine);
     editor._setBlockAPI(block);
@@ -622,7 +622,7 @@ describe("EditorAPI — img.ly-style crop (page resize)", () => {
 });
 
 describe("BlockAPI — Image Rotation & Flip", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let block: BlockAPI;
   let editor: EditorAPI;
   let renderer: RendererAdapter;
@@ -630,7 +630,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
     block = new BlockAPI(engine);
     editor = new EditorAPI(engine);
     editor._setBlockAPI(block);
@@ -766,7 +766,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 // ── applyCropDimensions / getCropVisualDimensions ────────────────
 
 describe("EditorCrop — applyCropDimensions & getCropVisualDimensions", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
   let renderer: RendererAdapter;
@@ -786,7 +786,7 @@ describe("EditorCrop — applyCropDimensions & getCropVisualDimensions", () => {
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new Engine({ renderer });
+    engine = new CreativeEngine({ renderer });
     block = new BlockAPI(engine);
     editor = new EditorAPI(engine);
     editor._setBlockAPI(block);

@@ -1,7 +1,7 @@
 import type { BlockStore } from "../../block/block-store";
 import { IMAGE_SRC, PAGE_HEIGHT, PAGE_WIDTH } from "../../block/property-keys";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 /**
  * Sets the page IMAGE_SRC and optionally auto-adjusts PAGE_WIDTH/HEIGHT
@@ -48,6 +48,6 @@ export class SetPageImageCommand extends PatchCommand {
     }
 
     const after = this.#store.snapshot(this.#pageId);
-    return [{ id: String(this.#pageId), before, after }];
+    return [{ id: this.#pageId, before, after }];
   }
 }

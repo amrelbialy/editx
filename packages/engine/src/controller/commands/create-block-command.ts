@@ -1,7 +1,7 @@
 import type { BlockType } from "../../block/block.types";
 import type { BlockStore } from "../../block/block-store";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export class CreateBlockCommand extends PatchCommand {
   #store: BlockStore;
@@ -21,7 +21,7 @@ export class CreateBlockCommand extends PatchCommand {
     this.#createdId = id;
     return [
       {
-        id: String(id),
+        id: id,
         before: null,
         after: this.#store.snapshot(id),
       },

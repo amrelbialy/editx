@@ -16,12 +16,7 @@ export function useHistoryVersion(engine: CreativeEngine | null): number {
         versionRef.current++;
         onStoreChange();
       };
-      engine.on("history:undo", handler);
-      engine.on("history:redo", handler);
-      return () => {
-        engine.off("history:undo", handler);
-        engine.off("history:redo", handler);
-      };
+      return engine.onHistoryChanged(handler);
     },
     [engine],
   );

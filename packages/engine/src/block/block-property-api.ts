@@ -1,12 +1,12 @@
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { Color, PropertyValue } from "./block.types";
 import * as H from "./block-api-helpers";
 
 /** Generic property CRUD on blocks — getFloat/setFloat, getString/setString, etc. */
 export class BlockPropertyAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 

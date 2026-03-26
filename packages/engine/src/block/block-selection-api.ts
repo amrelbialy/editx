@@ -1,14 +1,37 @@
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { BlockType } from "./block.types";
 
 /** Selection state management and transformer overlay control. */
 export class BlockSelectionAPI {
-  #engine: Engine;
+  #engine: EngineCore;
   #selection = new Set<number>();
   #transformerEnabled = true;
+  #selectionListeners = new Set<(ids: number[]) => void>();
+  #dblClickListeners = new Set<(blockId: number) => void>();
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
+  }
+
+  /** Subscribe to selection changes. Returns an unsubscribe function. */
+  onSelectionChanged(cb: (ids: number[]) => void): () => void {
+    this.#selectionListeners.add(cb);
+    return () => {
+      this.#selectionListeners.delete(cb);
+    };
+  }
+
+  /** Subscribe to block double-click events. Returns an unsubscribe function. */
+  onBlockDoubleClick(cb: (blockId: number) => void): () => void {
+    this.#dblClickListeners.add(cb);
+    return () => {
+      this.#dblClickListeners.delete(cb);
+    };
+  }
+
+  /** @internal — fire double-click listeners (called by CreativeEngine). */
+  _notifyBlockDoubleClick(blockId: number): void {
+    for (const cb of this.#dblClickListeners) cb(blockId);
   }
 
   select(id: number): void {
@@ -56,6 +79,7 @@ export class BlockSelectionAPI {
   #syncTransformer(): void {
     const ids = [...this.#selection];
     this.#engine.emit("selection:changed", ids);
+    for (const cb of this.#selectionListeners) cb(ids);
     const renderer = this.#engine.getRenderer();
     if (ids.length > 0 && this.#transformerEnabled) {
       const blockType: BlockType | undefined =

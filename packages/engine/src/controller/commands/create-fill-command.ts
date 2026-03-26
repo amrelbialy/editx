@@ -1,7 +1,7 @@
 import type { FillType } from "../../block/block.types";
 import type { BlockStore } from "../../block/block-store";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export class CreateFillCommand extends PatchCommand {
   #store: BlockStore;
@@ -19,7 +19,7 @@ export class CreateFillCommand extends PatchCommand {
     this.#createdId = id;
     return [
       {
-        id: String(id),
+        id: id,
         before: null,
         after: this.#store.snapshot(id),
       },

@@ -1,5 +1,4 @@
 import {
-  ADJUSTMENT_CONFIG,
   ADJUSTMENT_PARAMS,
   type AdjustmentParam,
   type CreativeEngine,
@@ -64,7 +63,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
         adjustEffectIdRef.current = eid;
         const vals = {} as AdjustmentValues;
         for (const param of ADJUSTMENT_PARAMS) {
-          vals[param] = ce.block.getFloat(eid, ADJUSTMENT_CONFIG[param].key);
+          vals[param] = ce.block.getAdjustmentValue(eid, param);
         }
         setAdjustValues(vals);
         foundAdjust = true;
@@ -108,8 +107,8 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     const ce = engineRef.current;
     const eid = adjustEffectIdRef.current;
     if (!ce || eid === null) return;
-    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[pending.param].key, pending.value);
-    ce.core.renderDirty();
+    ce.block.setAdjustmentValue(eid, pending.param, pending.value);
+    ce.renderDirty();
   }, [engineRef]);
 
   const handleAdjustChange = useCallback(
@@ -127,7 +126,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
 
       // Start a batch on first change of this drag
       if (!inBatchRef.current) {
-        ce.core.beginBatch();
+        ce.beginBatch();
         inBatchRef.current = true;
       }
 
@@ -142,8 +141,8 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
           const engine = engineRef.current;
           const effectId = adjustEffectIdRef.current;
           if (!engine || effectId === null) return;
-          engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
-          engine.core.renderDirty();
+          engine.block.setAdjustmentValue(effectId, p.param, p.value);
+          engine.renderDirty();
         });
       }
     },
@@ -153,7 +152,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   const handleAdjustCommit = useCallback(() => {
     flushPending();
     if (inBatchRef.current) {
-      engineRef.current?.core.endBatch();
+      engineRef.current?.endBatch();
       inBatchRef.current = false;
     }
   }, [engineRef, flushPending]);
@@ -214,7 +213,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce || blockId === null) return;
-    const handler = () => {
+    return ce.onHistoryChanged(() => {
       const effects = ce.block.getEffects(blockId);
       let foundAdjust = false;
       let foundFilter = false;
@@ -224,7 +223,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
           adjustEffectIdRef.current = eid;
           const vals = {} as AdjustmentValues;
           for (const param of ADJUSTMENT_PARAMS) {
-            vals[param] = ce.block.getFloat(eid, ADJUSTMENT_CONFIG[param].key);
+            vals[param] = ce.block.getAdjustmentValue(eid, param);
           }
           setAdjustValues(vals);
           foundAdjust = true;
@@ -242,13 +241,7 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
         filterEffectIdRef.current = null;
         setActiveFilter("");
       }
-    };
-    ce.on("history:undo", handler);
-    ce.on("history:redo", handler);
-    return () => {
-      ce.off("history:undo", handler);
-      ce.off("history:redo", handler);
-    };
+    });
   }, [engineRef, blockId]);
 
   return {

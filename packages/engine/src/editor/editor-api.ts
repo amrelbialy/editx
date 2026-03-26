@@ -1,7 +1,7 @@
 import type { BlockAPI } from "../block/block-api";
 import type { CursorType, EditMode, EditModeConfig } from "../editor-types";
 import { EDIT_MODE_DEFAULTS } from "../editor-types";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { CropRect } from "../utils/crop-math";
 import type { EditorContext } from "./editor-context";
 import { EditorCrop } from "./editor-crop";
@@ -9,19 +9,6 @@ import { EditorCursor } from "./editor-cursor";
 import { EditorHistory } from "./editor-history";
 import { EditorViewport } from "./editor-viewport";
 
-/**
- * Public editor API — the single entry-point for UI-level operations
- * (mode management, cursor, viewport, history).
- *
- * Owns the shared {@link EditorContext} and delegates domain logic to
- * focused sub-modules following the same pattern as BlockStore.
- *
- * **Crop** is handled entirely through mode transitions:
- *   - `setEditMode('Crop')` — enters crop mode (overlay shown internally)
- *   - `setEditMode('Transform')` — exits crop mode (auto-commits)
- *   - Cancel = exit + `undo()`
- *   - Ratio/reset = `BlockAPI` methods
- */
 export class EditorAPI {
   #ctx: EditorContext;
 
@@ -35,7 +22,7 @@ export class EditorAPI {
   #editMode: EditMode = "Transform";
   #editModeConfig: EditModeConfig = EDIT_MODE_DEFAULTS.Transform;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#ctx = {
       engine,
       renderer: engine.getRenderer(),
@@ -53,28 +40,6 @@ export class EditorAPI {
     this.#ctx.block = block;
   }
 
-  // ─── Edit Mode Management ─────────────────────────────
-
-  /**
-   * Set the editor's current edit mode.
-   *
-   * This is the single entry point for mode transitions. When switching
-   * into a tool mode (e.g. "Crop"), the editor automatically sets up the
-   * required state (overlay, cursor, selection behaviour) using the
-   * current selection. When leaving a tool mode, the editor tears it down.
-   *
-   * @param mode — "Transform", "Crop", "Text", "Playback", "Trim", or a custom value.
-   * @param opts — Optional settings for mode entry.
-   * @param opts.baseMode — Base mode from which a custom mode inherits config.
-   * @param opts.blockId — Explicit block to target (e.g. for Crop mode).
-   *   When omitted, the current selection is used.
-   *
-   * @example
-   *   engine.editor.setEditMode('Crop');               // crops the selected block
-   *   engine.editor.setEditMode('Crop', { blockId: 5 }); // crops block 5 directly
-   *   engine.editor.setEditMode('Transform');           // back to default
-   *   engine.editor.setEditMode('CustomMode', { baseMode: 'Crop' });
-   */
   setEditMode(mode: EditMode, opts?: { baseMode?: string; blockId?: number }): void {
     const prev = this.#editMode;
 
@@ -99,13 +64,6 @@ export class EditorAPI {
     this.#ctx.engine.emit("editMode:changed", { mode, previousMode: prev });
   }
 
-  /**
-   * Handle mode-specific setup when entering a mode.
-   *
-   * When an explicit `blockId` is provided (e.g. image-editor passing the
-   * base image block), it is used directly. Otherwise the current selection
-   * is used — the standard multi-block editor workflow.
-   */
   #enterMode(mode: EditMode, blockId?: number): void {
     if (mode === "Crop") {
       const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
@@ -114,32 +72,19 @@ export class EditorAPI {
     }
   }
 
-  /**
-   * Handle mode-specific teardown when leaving a mode.
-   */
   #exitMode(mode: EditMode): void {
     if (mode === "Crop") {
       this.#crop.teardownCropOverlay();
     }
   }
 
-  /**
-   * Get the editor's current edit mode.
-   *
-   * @returns "Transform", "Crop", "Text", "Playback", "Trim", or a custom value.
-   */
   getEditMode(): EditMode {
     return this.#editMode;
   }
 
-  /**
-   * Get the configuration for the current edit mode.
-   */
   getEditModeConfig(): Readonly<EditModeConfig> {
     return this.#editModeConfig;
   }
-
-  // ─── Cursor (delegated) ───────────────────────────────
 
   setCursorType(type: CursorType): void {
     this.#cursor.setCursorType(type);
@@ -164,8 +109,6 @@ export class EditorAPI {
     return this.#cursor.getTextCursorPositionInScreenSpaceY();
   }
 
-  // ─── History (delegated) ──────────────────────────────
-
   undo(): void {
     this.#history.undo();
   }
@@ -181,8 +124,6 @@ export class EditorAPI {
   clearHistory(): void {
     this.#history.clearHistory();
   }
-
-  // ─── Viewport / Camera (delegated) ────────────────────
 
   setZoom(zoom: number, animate = false): void {
     this.#viewport.setZoom(zoom, animate);
@@ -224,32 +165,21 @@ export class EditorAPI {
     return this.#viewport.worldToScreen(pt);
   }
 
-  /** Returns the screen-pixel bounding rect of the current transformer selection, relative to the canvas root. */
   getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
     return this.#ctx.renderer?.getSelectedBlockScreenRect() ?? null;
   }
 
-  /** Returns the screen-pixel bounding rect of a specific block, independent of transformer. */
   getBlockScreenRect(
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null {
     return this.#ctx.renderer?.getBlockScreenRect(blockId) ?? null;
   }
 
-  // ─── Internal: crop sub-module access ──────────────────
-  // Used by BlockAPI to route applyCropRatio through the active overlay.
-
   /** @internal */
   _getCrop(): EditorCrop {
     return this.#crop;
   }
 
-  // ─── Crop (high-level) ────────────────────────────────
-
-  /**
-   * Commit the current crop to the block's properties and exit crop mode.
-   * Returns the committed rect, or null if no crop was active.
-   */
   commitCrop(): CropRect | null {
     if (this.#crop.getCropBlockId() === null) return null;
     const rect = this.#ctx.renderer?.getCropRect() ?? null;
@@ -257,37 +187,22 @@ export class EditorAPI {
     return rect;
   }
 
-  /**
-   * Reset the crop for the given block (or the currently-cropped block).
-   * Restores page dimensions to the original image size, clears all crop
-   * properties, and re-fits the camera. Single undo batch.
-   */
   resetCrop(blockId?: number): void {
     this.#crop.resetCrop(blockId);
     this.fitToScreen();
   }
 
-  /** Get the block ID currently being cropped, or null. */
   getCropBlockId(): number | null {
     return this.#crop.getCropBlockId();
   }
 
-  /**
-   * Apply an aspect ratio to the current crop overlay.
-   */
   applyCropRatio(ratio: number | null): CropRect | null {
     return this.#crop.applyCropRatio(ratio);
   }
 
-  /**
-   * Refresh the crop overlay after a rotation/flip change during crop mode.
-   * Re-maps the current visual crop to the updated visual space.
-   */
   refreshCropOverlay(): void {
     this.#crop.refreshCropOverlay();
   }
-
-  // ─── Crop overlay (low-level) ─────────────────────────
 
   showCropOverlay(
     blockId: number,

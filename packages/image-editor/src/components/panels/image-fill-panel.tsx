@@ -30,20 +30,14 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
 
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
-    const handler = () => {
+    return engine.onHistoryChanged(() => {
       setImageSrc(engine.block.getString(blockId, IMAGE_SRC));
       setOriginalWidth(engine.block.getFloat(blockId, IMAGE_ORIGINAL_WIDTH));
       setOriginalHeight(engine.block.getFloat(blockId, IMAGE_ORIGINAL_HEIGHT));
       const { width: w, height: h } = engine.block.getSize(blockId);
       setBlockWidth(Math.round(w));
       setBlockHeight(Math.round(h));
-    };
-    engine.on("history:undo", handler);
-    engine.on("history:redo", handler);
-    return () => {
-      engine.off("history:undo", handler);
-      engine.off("history:redo", handler);
-    };
+    });
   }, [engine, blockId]);
 
   const handleFileChange = useCallback(

@@ -4,14 +4,14 @@ import { AppendChildCommand } from "../../controller/commands/append-child-comma
 import { CreateBlockCommand } from "../../controller/commands/create-block-command";
 import { DestroyBlockCommand } from "../../controller/commands/destroy-block-command";
 import { SetPropertyCommand } from "../../controller/commands/set-property-command";
-import { Engine } from "../../engine";
+import { CreativeEngine } from "../../creative-engine";
 import { createMockRenderer } from "../mocks/mock-renderer";
 
 describe("Engine Integration: Command Chains", () => {
-  let engine: Engine;
+  let engine: CreativeEngine;
 
   beforeEach(() => {
-    engine = new Engine({ renderer: createMockRenderer() });
+    engine = new CreativeEngine({ renderer: createMockRenderer() });
   });
 
   describe("create → set properties → undo → redo → destroy → undo", () => {
@@ -179,6 +179,68 @@ describe("Engine Integration: Command Chains", () => {
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 99));
       expect(store.getFloat(id, "transform/position/x")).toBe(99);
       expect(engine.canRedo()).toBe(false);
+    });
+  });
+
+  describe("destroy child restores parent references", () => {
+    it("undoing destroy of a child restores parent's children array", () => {
+      const store = engine.getBlockStore();
+
+      const pageCmd = new CreateBlockCommand(store, "page");
+      engine.exec(pageCmd);
+      const pageId = pageCmd.getCreatedId()!;
+
+      const child1Cmd = new CreateBlockCommand(store, "graphic");
+      engine.exec(child1Cmd);
+      const child1 = child1Cmd.getCreatedId()!;
+
+      const child2Cmd = new CreateBlockCommand(store, "graphic");
+      engine.exec(child2Cmd);
+      const child2 = child2Cmd.getCreatedId()!;
+
+      engine.exec(new AppendChildCommand(store, pageId, child1));
+      engine.exec(new AppendChildCommand(store, pageId, child2));
+      expect(store.getChildren(pageId)).toEqual([child1, child2]);
+
+      // Destroy just child1 (not the page)
+      engine.exec(new DestroyBlockCommand(store, child1));
+      expect(store.exists(child1)).toBe(false);
+      expect(store.getChildren(pageId)).toEqual([child2]);
+
+      // Undo → child1 restored AND parent's children array restored
+      engine.undo();
+      expect(store.exists(child1)).toBe(true);
+      expect(store.getChildren(pageId)).toEqual([child1, child2]);
+      expect(store.getParent(child1)).toBe(pageId);
+
+      // Redo → child1 destroyed again, parent updated
+      engine.redo();
+      expect(store.exists(child1)).toBe(false);
+      expect(store.getChildren(pageId)).toEqual([child2]);
+    });
+
+    it("undoing destroy of an effect restores owner's effectIds", () => {
+      const store = engine.getBlockStore();
+
+      const blockCmd = new CreateBlockCommand(store, "graphic");
+      engine.exec(blockCmd);
+      const blockId = blockCmd.getCreatedId()!;
+
+      const effectId = store.createEffect("filter");
+      store.appendEffect(blockId, effectId);
+      engine.clearHistory();
+
+      expect(store.getEffects(blockId)).toEqual([effectId]);
+
+      // Destroy the effect
+      engine.exec(new DestroyBlockCommand(store, effectId));
+      expect(store.exists(effectId)).toBe(false);
+      expect(store.getEffects(blockId)).toEqual([]);
+
+      // Undo → effect restored AND owner's effectIds restored
+      engine.undo();
+      expect(store.exists(effectId)).toBe(true);
+      expect(store.getEffects(blockId)).toEqual([effectId]);
     });
   });
 });

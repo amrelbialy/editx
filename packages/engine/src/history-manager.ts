@@ -1,7 +1,7 @@
 import type { BlockData } from "./block/block.types";
 
 export interface Patch {
-  id: string;
+  id: number;
   before: BlockData | null;
   after: BlockData | null;
 }

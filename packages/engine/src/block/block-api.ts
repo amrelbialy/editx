@@ -5,7 +5,7 @@ import {
   RemoveChildCommand,
   SetKindCommand,
 } from "../controller/commands";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type {
   BlockType,
   Color,
@@ -16,34 +16,37 @@ import type {
   TextRun,
   TextRunStyle,
 } from "./block.types";
-import * as H from "./block-api-helpers";
+import { addImageBlock, duplicateBlock } from "./block-api-convenience";
 import { BlockCropAPI } from "./block-crop-api";
 import { BlockEffectAPI } from "./block-effect-api";
 import { BlockFillAPI } from "./block-fill-api";
 import { BlockLayoutAPI } from "./block-layout-api";
+import { BlockPageAPI } from "./block-page-api";
 import { BlockPropertyAPI } from "./block-property-api";
 import { BlockSelectionAPI } from "./block-selection-api";
 import { BlockShadowAPI } from "./block-shadow-api";
 import { BlockShapeAPI } from "./block-shape-api";
 import { BlockStrokeAPI } from "./block-stroke-api";
 import { BlockTextAPI } from "./block-text-api";
-import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "./property-keys";
 import type { TextEditorSession } from "./text-editor-session";
 
 // Re-export adjustment types/constants from effect sub-API
 export type { AdjustmentConfig, AdjustmentParam } from "./block-effect-api";
 export { ADJUSTMENT_CONFIG, ADJUSTMENT_PARAMS } from "./block-effect-api";
 
+import type { AdjustmentParam } from "./block-effect-api";
+
 /**
  * Facade over all block sub-APIs — preserves the flat `engine.block.*` surface.
  * Delegates to focused sub-API modules for each concern.
  */
 export class BlockAPI {
-  #engine: Engine;
+  #engine: EngineCore;
   #property: BlockPropertyAPI;
   #selection: BlockSelectionAPI;
   #layout: BlockLayoutAPI;
   #crop: BlockCropAPI;
+  #page: BlockPageAPI;
   #effect: BlockEffectAPI;
   #shape: BlockShapeAPI;
   #fill: BlockFillAPI;
@@ -51,12 +54,13 @@ export class BlockAPI {
   #shadow: BlockShadowAPI;
   #text: BlockTextAPI;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
     this.#property = new BlockPropertyAPI(engine);
     this.#selection = new BlockSelectionAPI(engine);
     this.#layout = new BlockLayoutAPI(engine);
     this.#crop = new BlockCropAPI(engine);
+    this.#page = new BlockPageAPI(engine);
     this.#effect = new BlockEffectAPI(engine);
     this.#shape = new BlockShapeAPI(engine);
     this.#fill = new BlockFillAPI(engine);
@@ -95,6 +99,16 @@ export class BlockAPI {
   }
   deselectAll(): void {
     this.#selection.deselectAll();
+  }
+  onSelectionChanged(cb: (ids: number[]) => void): () => void {
+    return this.#selection.onSelectionChanged(cb);
+  }
+  onBlockDoubleClick(cb: (blockId: number) => void): () => void {
+    return this.#selection.onBlockDoubleClick(cb);
+  }
+  /** @internal */
+  _notifyBlockDoubleClick(blockId: number): void {
+    this.#selection._notifyBlockDoubleClick(blockId);
   }
   _removeFromSelection(ids: number[]): void {
     this.#selection._removeFromSelection(ids);
@@ -183,8 +197,20 @@ export class BlockAPI {
 
   // ── Query ─────────────────────────────────────────
 
+  isValid(id: number): boolean {
+    return this.#engine.getBlockStore().exists(id);
+  }
   exists(id: number): boolean {
     return this.#engine.getBlockStore().exists(id);
+  }
+  findAll(): number[] {
+    return this.#engine
+      .getBlockStore()
+      .findByType("page")
+      .concat(this.#engine.getBlockStore().findByType("graphic"))
+      .concat(this.#engine.getBlockStore().findByType("text"))
+      .concat(this.#engine.getBlockStore().findByType("image"))
+      .concat(this.#engine.getBlockStore().findByType("scene"));
   }
   findByType(type: BlockType): number[] {
     return this.#engine.getBlockStore().findByType(type);
@@ -194,6 +220,12 @@ export class BlockAPI {
   }
   findAllProperties(id: number): string[] {
     return this.#property.findAllProperties(id);
+  }
+  getName(id: number): string {
+    return this.#engine.getBlockStore().getName(id);
+  }
+  setName(id: number, name: string): void {
+    this.#engine.getBlockStore().setName(id, name);
   }
 
   // ── Layout ────────────────────────────────────────
@@ -213,6 +245,9 @@ export class BlockAPI {
   setRotation(id: number, degrees: number): void {
     this.#layout.setRotation(id, degrees);
   }
+  getRotation(id: number): number {
+    return this.#layout.getRotation(id);
+  }
   setOpacity(id: number, opacity: number): void {
     this.#layout.setOpacity(id, opacity);
   }
@@ -221,6 +256,9 @@ export class BlockAPI {
   }
   setVisible(id: number, visible: boolean): void {
     this.#layout.setVisible(id, visible);
+  }
+  isVisible(id: number): boolean {
+    return this.#layout.isVisible(id);
   }
   bringForward(blockId: number): void {
     this.#layout.bringForward(blockId);
@@ -322,58 +360,58 @@ export class BlockAPI {
   // ── Page convenience ──────────────────────────────
 
   setPageDimensions(id: number, w: number, h: number): void {
-    this.#crop.setPageDimensions(id, w, h);
+    this.#page.setPageDimensions(id, w, h);
   }
   getPageDimensions(id: number) {
-    return this.#crop.getPageDimensions(id);
+    return this.#page.getPageDimensions(id);
   }
   setPageImageSrc(id: number, src: string): void {
-    this.#crop.setPageImageSrc(id, src);
+    this.#page.setPageImageSrc(id, src);
   }
   getPageImageSrc(id: number): string {
-    return this.#crop.getPageImageSrc(id);
+    return this.#page.getPageImageSrc(id);
   }
   setPageImageOriginalDimensions(id: number, w: number, h: number): void {
-    this.#crop.setPageImageOriginalDimensions(id, w, h);
+    this.#page.setPageImageOriginalDimensions(id, w, h);
   }
   getPageImageOriginalDimensions(id: number) {
-    return this.#crop.getPageImageOriginalDimensions(id);
+    return this.#page.getPageImageOriginalDimensions(id);
   }
   setPageFillColor(id: number, color: Color): void {
-    this.#crop.setPageFillColor(id, color);
+    this.#page.setPageFillColor(id, color);
   }
   getPageFillColor(id: number): Color {
-    return this.#crop.getPageFillColor(id);
+    return this.#page.getPageFillColor(id);
   }
   setPageMarginsEnabled(id: number, enabled: boolean): void {
-    this.#crop.setPageMarginsEnabled(id, enabled);
+    this.#page.setPageMarginsEnabled(id, enabled);
   }
   isPageMarginsEnabled(id: number): boolean {
-    return this.#crop.isPageMarginsEnabled(id);
+    return this.#page.isPageMarginsEnabled(id);
   }
   setPageMargins(id: number, top: number, right: number, bottom: number, left: number): void {
-    this.#crop.setPageMargins(id, top, right, bottom, left);
+    this.#page.setPageMargins(id, top, right, bottom, left);
   }
   getPageMargins(id: number) {
-    return this.#crop.getPageMargins(id);
+    return this.#page.getPageMargins(id);
   }
 
   // ── Image rotation & flip ─────────────────────────
 
   setImageRotation(id: number, angleDeg: number): void {
-    this.#crop.setImageRotation(id, angleDeg);
+    this.#page.setImageRotation(id, angleDeg);
   }
   getImageRotation(id: number): number {
-    return this.#crop.getImageRotation(id);
+    return this.#page.getImageRotation(id);
   }
   rotateClockwise(id: number): void {
-    this.#crop.rotateClockwise(id);
+    this.#page.rotateClockwise(id);
   }
   rotateCounterClockwise(id: number): void {
-    this.#crop.rotateCounterClockwise(id);
+    this.#page.rotateCounterClockwise(id);
   }
   resetRotationAndFlip(id: number): void {
-    this.#crop.resetRotationAndFlip(id);
+    this.#page.resetRotationAndFlip(id);
   }
 
   // ── Effects ───────────────────────────────────────
@@ -404,6 +442,15 @@ export class BlockAPI {
   }
   isEffectEnabled(effectId: number): boolean {
     return this.#effect.isEffectEnabled(effectId);
+  }
+  getAdjustmentValue(effectId: number, param: AdjustmentParam): number {
+    return this.#effect.getAdjustmentValue(effectId, param);
+  }
+  setAdjustmentValue(effectId: number, param: AdjustmentParam, value: number): void {
+    this.#effect.setAdjustmentValue(effectId, param, value);
+  }
+  getAdjustmentValues(effectId: number): Record<AdjustmentParam, number> {
+    return this.#effect.getAdjustmentValues(effectId);
   }
 
   // ── Shape sub-blocks ──────────────────────────────
@@ -459,9 +506,18 @@ export class BlockAPI {
   isFillEnabled(blockId: number): boolean {
     return this.#fill.isFillEnabled(blockId);
   }
+  setFillSolidColor(blockId: number, color: Color): void {
+    this.#fill.setFillSolidColor(blockId, color);
+  }
+  getFillSolidColor(blockId: number): Color | null {
+    return this.#fill.getFillSolidColor(blockId);
+  }
 
   // ── Stroke ────────────────────────────────────────
 
+  supportsStroke(blockId: number): boolean {
+    return this.#stroke.supportsStroke(blockId);
+  }
   setStrokeEnabled(blockId: number, enabled: boolean): void {
     this.#stroke.setStrokeEnabled(blockId, enabled);
   }
@@ -483,6 +539,9 @@ export class BlockAPI {
 
   // ── Shadow ────────────────────────────────────────
 
+  supportsShadow(blockId: number): boolean {
+    return this.#shadow.supportsShadow(blockId);
+  }
   setShadowEnabled(blockId: number, enabled: boolean): void {
     this.#shadow.setShadowEnabled(blockId, enabled);
   }
@@ -631,82 +690,23 @@ export class BlockAPI {
     originalWidth: number,
     originalHeight: number,
   ): number {
-    this.#engine.beginBatch();
-    const imageId = this.create("image");
-    this.setPosition(imageId, x, y);
-    this.setSize(imageId, width, height);
-    H.setString(this.#engine, imageId, IMAGE_SRC, src);
-    H.setFloat(this.#engine, imageId, IMAGE_ORIGINAL_WIDTH, originalWidth);
-    H.setFloat(this.#engine, imageId, IMAGE_ORIGINAL_HEIGHT, originalHeight);
-    this.appendChild(parentId, imageId);
-    this.#engine.endBatch();
-    return imageId;
+    return addImageBlock(
+      this,
+      this.#engine,
+      parentId,
+      src,
+      x,
+      y,
+      width,
+      height,
+      originalWidth,
+      originalHeight,
+    );
   }
 
   // ── Duplicate ─────────────────────────────────────
 
   duplicate(blockId: number): number {
-    const parentId = this.getParent(blockId);
-    if (parentId === null) throw new Error(`Block ${blockId} has no parent`);
-    const store = this.#engine.getBlockStore();
-    const sourceBlock = store.get(blockId);
-    if (!sourceBlock) throw new Error(`Block ${blockId} not found`);
-
-    this.#engine.beginBatch();
-    const newId = this.create(sourceBlock.type);
-    this.setKind(newId, sourceBlock.kind);
-
-    const allKeys = store.findAllProperties(blockId);
-    for (const key of allKeys) {
-      const val = this.getProperty(blockId, key);
-      if (val !== undefined) this.setProperty(newId, key, val);
-    }
-
-    const pos = this.getPosition(blockId);
-    this.setPosition(newId, pos.x + 20, pos.y + 20);
-
-    if (sourceBlock.shapeId != null) {
-      const srcShape = store.get(sourceBlock.shapeId);
-      if (srcShape) {
-        const newShapeId = this.createShape(srcShape.kind as ShapeType);
-        const shapeKeys = store.findAllProperties(sourceBlock.shapeId);
-        for (const key of shapeKeys) {
-          const val = this.getProperty(sourceBlock.shapeId, key);
-          if (val !== undefined) this.setProperty(newShapeId, key, val);
-        }
-        this.setShape(newId, newShapeId);
-      }
-    }
-
-    if (sourceBlock.fillId != null) {
-      const srcFill = store.get(sourceBlock.fillId);
-      if (srcFill) {
-        const newFillId = this.createFill(srcFill.kind as FillType);
-        const fillKeys = store.findAllProperties(sourceBlock.fillId);
-        for (const key of fillKeys) {
-          const val = this.getProperty(sourceBlock.fillId, key);
-          if (val !== undefined) this.setProperty(newFillId, key, val);
-        }
-        this.setFill(newId, newFillId);
-      }
-    }
-
-    for (const effectId of sourceBlock.effectIds) {
-      const srcEffect = store.get(effectId);
-      if (srcEffect) {
-        const newEffectId = this.createEffect(srcEffect.kind as EffectType);
-        const effectKeys = store.findAllProperties(effectId);
-        for (const key of effectKeys) {
-          const val = this.getProperty(effectId, key);
-          if (val !== undefined) this.setProperty(newEffectId, key, val);
-        }
-        this.appendEffect(newId, newEffectId);
-      }
-    }
-
-    this.appendChild(parentId, newId);
-    this.select(newId);
-    this.#engine.endBatch();
-    return newId;
+    return duplicateBlock(this, this.#engine, blockId);
   }
 }

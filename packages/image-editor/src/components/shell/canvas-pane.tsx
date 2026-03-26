@@ -57,12 +57,11 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   // Subscribe to dblclick on text blocks to enter inline editing
   useEffect(() => {
     if (!engine) return;
-    const unsub = engine.on("block:dblclick", (blockId: number) => {
+    return engine.block.onBlockDoubleClick((blockId: number) => {
       if (engine.block.getType(blockId) === "text") {
         setEditingTextBlockId(blockId);
       }
     });
-    return unsub;
   }, [engine, setEditingTextBlockId]);
 
   const handleCloseTextEditor = useCallback(() => {

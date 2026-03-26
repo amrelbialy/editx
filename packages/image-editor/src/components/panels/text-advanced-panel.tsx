@@ -88,13 +88,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
 
   // Re-sync on undo/redo
   useEffect(() => {
-    const handler = () => refresh();
-    engine.on("history:undo", handler);
-    engine.on("history:redo", handler);
-    return () => {
-      engine.off("history:undo", handler);
-      engine.off("history:redo", handler);
-    };
+    return engine.onHistoryChanged(() => refresh());
   }, [engine, refresh]);
 
   // ── Handlers ──
@@ -287,7 +281,9 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
               onChange={handleStrokeColor}
               className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
             />
-            <span className="text-base font-mono text-muted-foreground">{state.textStrokeColor}</span>
+            <span className="text-base font-mono text-muted-foreground">
+              {state.textStrokeColor}
+            </span>
           </div>
           <SliderField
             label="Width"

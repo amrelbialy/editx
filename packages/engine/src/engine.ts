@@ -115,12 +115,12 @@ export class Engine {
   }
 
   #markDirty(patches: Patch[]) {
-    patches.forEach((p) => this.#dirty.add(Number(p.id)));
+    patches.forEach((p) => this.#dirty.add(p.id));
   }
 
   #enqueueBlockEvents(patches: Patch[]) {
     for (const p of patches) {
-      const blockId = Number(p.id);
+      const blockId = p.id;
       let type: BlockEvent["type"];
       if (p.before === null) {
         type = "created";
@@ -165,7 +165,7 @@ export class Engine {
 
   #cleanupSelections(patches: Patch[]) {
     if (!this.#onSelectionCleanup) return;
-    const destroyed = patches.filter((p) => p.after === null).map((p) => Number(p.id));
+    const destroyed = patches.filter((p) => p.after === null).map((p) => p.id);
     if (destroyed.length > 0) {
       this.#onSelectionCleanup(destroyed);
     }
@@ -193,13 +193,12 @@ export class Engine {
 
   #applyPatches(patches: Patch[]) {
     for (const p of patches) {
-      const numId = Number(p.id);
       if (p.after === null) {
-        this.#blockStore.destroy(numId);
+        this.#blockStore.destroy(p.id);
       } else {
         this.#blockStore.restore(p.after as BlockData);
       }
-      this.#dirty.add(numId);
+      this.#dirty.add(p.id);
     }
 
     this.#enqueueBlockEvents(patches);
@@ -257,15 +256,15 @@ export class Engine {
 
   // --- Events (selection, stage:click, history) ---
 
-  on(event: string, cb: (...args: any[]) => void) {
+  on(event: string, cb: (...args: unknown[]) => void) {
     return this.#events.on(event, cb);
   }
 
-  off(event: string, cb: (...args: any[]) => void) {
+  off(event: string, cb: (...args: unknown[]) => void) {
     return this.#events.off(event, cb);
   }
 
-  emit(event: string, ...args: any[]) {
+  emit(event: string, ...args: unknown[]) {
     this.#events.emit(event, ...args);
   }
 }

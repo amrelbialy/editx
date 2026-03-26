@@ -7,98 +7,113 @@ import { useImageEditorStore } from "./store/image-editor-store";
 // Track mock engine instances for assertions
 let latestMockEngine: any = null;
 
+// Shared factory — used by both @creative-editor/engine and @creative-editor/engine/konva mocks
+const createMockEngine = () => {
+  const eng = {
+    scene: {
+      create: vi.fn().mockResolvedValue(undefined),
+      getCurrentPage: vi.fn().mockReturnValue(1),
+    },
+    block: {
+      create: vi.fn().mockReturnValue(2),
+      setString: vi.fn(),
+      setSize: vi.fn(),
+      setPosition: vi.fn(),
+      appendChild: vi.fn(),
+      setFloat: vi.fn(),
+      getFloat: vi.fn().mockReturnValue(0),
+      getString: vi.fn().mockReturnValue(""),
+      setBool: vi.fn(),
+      getBool: vi.fn().mockReturnValue(false),
+      getEffects: vi.fn().mockReturnValue([]),
+      getKind: vi.fn().mockReturnValue(""),
+      createEffect: vi.fn().mockReturnValue(100),
+      appendEffect: vi.fn(),
+      removeEffect: vi.fn(),
+      onSelectionChanged: vi.fn().mockReturnValue(() => {}),
+      onBlockDoubleClick: vi.fn().mockReturnValue(() => {}),
+      exists: vi.fn().mockReturnValue(true),
+      setFillSolidColor: vi.fn(),
+      getFillSolidColor: vi.fn().mockReturnValue(null),
+      setStrokeColor: vi.fn(),
+      getStrokeColor: vi.fn().mockReturnValue({ r: 0, g: 0, b: 0, a: 1 }),
+      setFillEnabled: vi.fn(),
+      setStrokeEnabled: vi.fn(),
+      getAdjustmentValue: vi.fn().mockReturnValue(0),
+      setAdjustmentValue: vi.fn(),
+      getAdjustmentValues: vi.fn().mockReturnValue({}),
+      // CESDK-style crop methods
+      hasCrop: vi.fn().mockReturnValue(true),
+      supportsCrop: vi.fn().mockReturnValue(true),
+      setCropScaleX: vi.fn(),
+      getCropScaleX: vi.fn().mockReturnValue(0),
+      setCropScaleY: vi.fn(),
+      getCropScaleY: vi.fn().mockReturnValue(0),
+      setCropRotation: vi.fn(),
+      getCropRotation: vi.fn().mockReturnValue(0),
+      setCropScaleRatio: vi.fn(),
+      getCropScaleRatio: vi.fn().mockReturnValue(1),
+      setCropTranslationX: vi.fn(),
+      getCropTranslationX: vi.fn().mockReturnValue(0),
+      setCropTranslationY: vi.fn(),
+      getCropTranslationY: vi.fn().mockReturnValue(0),
+      resetCrop: vi.fn(),
+      adjustCropToFillFrame: vi.fn(),
+      flipCropHorizontal: vi.fn(),
+      flipCropVertical: vi.fn(),
+      isCropAspectRatioLocked: vi.fn().mockReturnValue(false),
+      setCropAspectRatioLocked: vi.fn(),
+      applyCropRatio: vi.fn(),
+      // Page convenience methods
+      setPageImageSrc: vi.fn(),
+      getPageImageSrc: vi.fn().mockReturnValue(""),
+      setPageImageOriginalDimensions: vi.fn(),
+      getPageImageOriginalDimensions: vi.fn().mockReturnValue({ width: 0, height: 0 }),
+      setPageDimensions: vi.fn(),
+      getPageDimensions: vi.fn().mockReturnValue({ width: 1080, height: 1080 }),
+      setPageFillColor: vi.fn(),
+      getPageFillColor: vi.fn().mockReturnValue({ r: 1, g: 1, b: 1, a: 1 }),
+      setPageMarginsEnabled: vi.fn(),
+      isPageMarginsEnabled: vi.fn().mockReturnValue(false),
+      setPageMargins: vi.fn(),
+      getPageMargins: vi.fn().mockReturnValue({ top: 0, right: 0, bottom: 0, left: 0 }),
+    },
+    editor: {
+      getZoom: vi.fn().mockReturnValue(0.5),
+      getPan: vi.fn().mockReturnValue({ x: 10, y: 20 }),
+      setZoom: vi.fn(),
+      panTo: vi.fn(),
+      setEditMode: vi.fn(),
+      getEditMode: vi.fn().mockReturnValue("Transform"),
+      fitToScreen: vi.fn(),
+      undo: vi.fn(),
+      redo: vi.fn(),
+      canUndo: vi.fn().mockReturnValue(false),
+      canRedo: vi.fn().mockReturnValue(false),
+      clearHistory: vi.fn(),
+    },
+    event: {
+      subscribe: vi.fn().mockReturnValue(() => {}),
+    },
+    dispose: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    beginSilent: vi.fn(),
+    endSilent: vi.fn(),
+    beginBatch: vi.fn(),
+    endBatch: vi.fn(),
+    renderDirty: vi.fn(),
+    getBlockStore: vi.fn().mockReturnValue({ exists: vi.fn().mockReturnValue(true) }),
+    onHistoryChanged: vi.fn().mockReturnValue(() => {}),
+    onZoomChanged: vi.fn().mockReturnValue(() => {}),
+    onEditModeChanged: vi.fn().mockReturnValue(() => {}),
+  };
+  latestMockEngine = eng;
+  return eng;
+};
+
 // Mock the engine and image loading dependencies
 vi.mock("@creative-editor/engine", () => {
-  const createMockEngine = () => {
-    const eng = {
-      scene: {
-        create: vi.fn().mockResolvedValue(undefined),
-        getCurrentPage: vi.fn().mockReturnValue(1),
-      },
-      block: {
-        create: vi.fn().mockReturnValue(2),
-        setString: vi.fn(),
-        setSize: vi.fn(),
-        setPosition: vi.fn(),
-        appendChild: vi.fn(),
-        setFloat: vi.fn(),
-        getFloat: vi.fn().mockReturnValue(0),
-        getString: vi.fn().mockReturnValue(""),
-        setBool: vi.fn(),
-        getBool: vi.fn().mockReturnValue(false),
-        getEffects: vi.fn().mockReturnValue([]),
-        getKind: vi.fn().mockReturnValue(""),
-        createEffect: vi.fn().mockReturnValue(100),
-        appendEffect: vi.fn(),
-        removeEffect: vi.fn(),
-        // CESDK-style crop methods
-        hasCrop: vi.fn().mockReturnValue(true),
-        supportsCrop: vi.fn().mockReturnValue(true),
-        setCropScaleX: vi.fn(),
-        getCropScaleX: vi.fn().mockReturnValue(0),
-        setCropScaleY: vi.fn(),
-        getCropScaleY: vi.fn().mockReturnValue(0),
-        setCropRotation: vi.fn(),
-        getCropRotation: vi.fn().mockReturnValue(0),
-        setCropScaleRatio: vi.fn(),
-        getCropScaleRatio: vi.fn().mockReturnValue(1),
-        setCropTranslationX: vi.fn(),
-        getCropTranslationX: vi.fn().mockReturnValue(0),
-        setCropTranslationY: vi.fn(),
-        getCropTranslationY: vi.fn().mockReturnValue(0),
-        resetCrop: vi.fn(),
-        adjustCropToFillFrame: vi.fn(),
-        flipCropHorizontal: vi.fn(),
-        flipCropVertical: vi.fn(),
-        isCropAspectRatioLocked: vi.fn().mockReturnValue(false),
-        setCropAspectRatioLocked: vi.fn(),
-        applyCropRatio: vi.fn(),
-        // Page convenience methods
-        setPageImageSrc: vi.fn(),
-        getPageImageSrc: vi.fn().mockReturnValue(""),
-        setPageImageOriginalDimensions: vi.fn(),
-        getPageImageOriginalDimensions: vi.fn().mockReturnValue({ width: 0, height: 0 }),
-        setPageDimensions: vi.fn(),
-        getPageDimensions: vi.fn().mockReturnValue({ width: 1080, height: 1080 }),
-        setPageFillColor: vi.fn(),
-        getPageFillColor: vi.fn().mockReturnValue({ r: 1, g: 1, b: 1, a: 1 }),
-        setPageMarginsEnabled: vi.fn(),
-        isPageMarginsEnabled: vi.fn().mockReturnValue(false),
-        setPageMargins: vi.fn(),
-        getPageMargins: vi.fn().mockReturnValue({ top: 0, right: 0, bottom: 0, left: 0 }),
-      },
-      editor: {
-        getZoom: vi.fn().mockReturnValue(0.5),
-        getPan: vi.fn().mockReturnValue({ x: 10, y: 20 }),
-        setZoom: vi.fn(),
-        panTo: vi.fn(),
-        setEditMode: vi.fn(),
-        getEditMode: vi.fn().mockReturnValue("Transform"),
-        fitToScreen: vi.fn(),
-        undo: vi.fn(),
-        redo: vi.fn(),
-        canUndo: vi.fn().mockReturnValue(false),
-        canRedo: vi.fn().mockReturnValue(false),
-        clearHistory: vi.fn(),
-      },
-      event: {
-        subscribe: vi.fn().mockReturnValue(() => {}),
-      },
-      core: {
-        getRenderer: vi.fn().mockReturnValue(null),
-        beginBatch: vi.fn(),
-        endBatch: vi.fn(),
-        beginSilent: vi.fn(),
-        endSilent: vi.fn(),
-      },
-      dispose: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    };
-    latestMockEngine = eng;
-    return eng;
-  };
-
   return {
     CreativeEngine: {
       create: vi.fn().mockImplementation(() => Promise.resolve(createMockEngine())),
@@ -157,6 +172,10 @@ vi.mock("@creative-editor/engine", () => {
     ],
   };
 });
+
+vi.mock("@creative-editor/engine/konva", () => ({
+  createEngine: vi.fn().mockImplementation(() => Promise.resolve(createMockEngine())),
+}));
 
 const mockLoadImage = vi.fn().mockResolvedValue({
   naturalWidth: 800,

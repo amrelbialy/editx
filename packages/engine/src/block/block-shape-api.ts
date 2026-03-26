@@ -7,16 +7,16 @@ import {
   SetKindCommand,
   SetShapeCommand,
 } from "../controller/commands";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { FillType, ShapeType } from "./block.types";
 import * as H from "./block-api-helpers";
 import { SHAPE_POLYGON_SIDES, STROKE_COLOR, STROKE_ENABLED, STROKE_WIDTH } from "./property-keys";
 
 /** Shape sub-block CRUD and shape placement convenience. */
 export class BlockShapeAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 

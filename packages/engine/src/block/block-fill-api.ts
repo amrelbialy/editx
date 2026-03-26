@@ -1,14 +1,14 @@
 import { CreateFillCommand, SetFillCommand } from "../controller/commands";
-import type { Engine } from "../engine";
-import type { FillType } from "./block.types";
+import type { EngineCore } from "../engine-core";
+import type { Color, FillType } from "./block.types";
 import * as H from "./block-api-helpers";
-import { FILL_ENABLED } from "./property-keys";
+import { FILL_ENABLED, FILL_SOLID_COLOR } from "./property-keys";
 
 /** Fill sub-block CRUD — create, attach, enable/disable fills on graphic blocks. */
 export class BlockFillAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 
@@ -42,5 +42,17 @@ export class BlockFillAPI {
 
   isFillEnabled(blockId: number): boolean {
     return H.getBool(this.#engine, blockId, FILL_ENABLED);
+  }
+
+  setFillSolidColor(blockId: number, color: Color): void {
+    const fillId = this.getFill(blockId);
+    if (fillId == null) return;
+    H.setColor(this.#engine, fillId, FILL_SOLID_COLOR, color);
+  }
+
+  getFillSolidColor(blockId: number): Color | null {
+    const fillId = this.getFill(blockId);
+    if (fillId == null) return null;
+    return H.getColor(this.#engine, fillId, FILL_SOLID_COLOR);
   }
 }

@@ -23,10 +23,10 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
       }
     }
 
-    ce.core.beginSilent();
+    ce.beginSilent();
     const eid = ce.block.createEffect("filter");
     ce.block.appendEffect(editableBlockId, eid);
-    ce.core.endSilent();
+    ce.endSilent();
     filterEffectIdRef.current = eid;
     return eid;
   }, [engineRef, editableBlockId]);
@@ -58,9 +58,9 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    const handler = () => {
+    return ce.onHistoryChanged(() => {
       const eid = filterEffectIdRef.current;
-      if (eid === null || !ce.core.getBlockStore().exists(eid)) {
+      if (eid === null || !ce.block.exists(eid)) {
         // Effect was destroyed by undo — re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
@@ -71,18 +71,12 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
         }
       }
       const eid2 = filterEffectIdRef.current;
-      if (!eid2 || !ce.core.getBlockStore().exists(eid2)) {
+      if (!eid2 || !ce.block.exists(eid2)) {
         setActiveFilter("");
       } else {
         setActiveFilter(ce.block.getString(eid2, EFFECT_FILTER_NAME));
       }
-    };
-    ce.on("history:undo", handler);
-    ce.on("history:redo", handler);
-    return () => {
-      ce.off("history:undo", handler);
-      ce.off("history:redo", handler);
-    };
+    });
   }, [engineRef, editableBlockId]);
 
   return {

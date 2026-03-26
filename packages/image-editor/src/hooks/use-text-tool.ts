@@ -34,8 +34,7 @@ export function useTextTool({ engineRef }: UseTextToolOptions) {
       const fontFamily = config.text?.defaultFontFamily ?? config.text?.fonts?.[0] ?? "Arial";
       const fill = config.text?.defaultColor ?? "#ffffff";
 
-      const pageW = ce.block.getFloat(editableBlockId, "page/width") ?? 1080;
-      const pageH = ce.block.getFloat(editableBlockId, "page/height") ?? 1080;
+      const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
 
       const width = Math.min(pageW * 0.35, 400);
       const height = fontSize * 1.5;

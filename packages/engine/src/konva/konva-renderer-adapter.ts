@@ -1,16 +1,17 @@
-import Konva from "konva";
+import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { ExportOptions } from "../editor-types";
 import type { RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
-import { KonvaCamera } from "./konva-camera";
-import { KonvaCropOverlay } from "./konva-crop-overlay";
-import { setupInteraction } from "./konva-interaction-handler";
-import { KonvaNodeFactory } from "./konva-node-factory";
-import { createStyledTransformer } from "./konva-transformer-style";
-import { WebGLFilterRenderer } from "./webgl-filter-renderer";
+import type { KonvaCamera } from "./konva-camera";
+import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
+import type { KonvaCropOverlay } from "./konva-crop-overlay";
+import { exportScene } from "./konva-export";
+import type { KonvaNodeFactory } from "./konva-node-factory";
+import { createKonvaScene } from "./konva-scene-setup";
+import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export class KonvaRendererAdapter implements RendererAdapter {
   #stage!: Konva.Stage;
@@ -28,7 +29,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #lastPageSize?: { width: number; height: number };
   #webgl: WebGLFilterRenderer | null = null;
 
-  // Interaction callbacks (set by CreativeEngine after construction)
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
   onBlockDblClick?: (blockId: number) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
@@ -39,10 +39,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
   onZoomChange?: (zoom: number) => void;
-  /** Called when a text block auto-sizes its height. */
   onAutoSize?: (blockId: number, computedHeight: number) => void;
-
-  /** Resolve a block by ID (set by CreativeEngine to read effect blocks). */
   resolveBlock?: (id: number) => BlockData | undefined;
 
   async init(root: HTMLElement): Promise<void> {
@@ -53,68 +50,24 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const pageW = (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080;
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
 
-    this.#stage = new Konva.Stage({
-      container: this.#rootEl as HTMLDivElement,
-      width: this.#rootEl.clientWidth,
-      height: this.#rootEl.clientHeight,
+    const scene = createKonvaScene(this.#rootEl, pageW, pageH, this.#nodeMap, {
+      onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
+      onBlockDblClick: (blockId) => this.onBlockDblClick?.(blockId),
+      onStageClick: (worldPos) => this.onStageClick?.(worldPos),
+      onZoomChange: (zoom) => this.onZoomChange?.(zoom),
+      onCropChange: (rect) => this.onCropChange?.(rect),
     });
 
-    // Content layer: page background + design blocks
-    this.#contentLayer = new Konva.Layer();
-    this.#stage.add(this.#contentLayer);
-
-    // UI layer: transformer + selection rect
-    this.#uiLayer = new Konva.Layer();
-    this.#stage.add(this.#uiLayer);
-
-    this.#transformer = createStyledTransformer(this.#uiLayer);
-    this.#uiLayer.add(this.#transformer);
-
-    this.#selectionRect = new Konva.Rect({
-      fill: "rgba(0,120,215,0.15)",
-      stroke: "rgba(0,120,215,0.6)",
-      strokeWidth: 1,
-      visible: false,
-    });
-    this.#uiLayer.add(this.#selectionRect);
-
-    this.#camera = new KonvaCamera(this.#stage, this.#contentLayer, this.#uiLayer);
-    // Initialise WebGL filter renderer (falls back to CPU if not supported)
-    try {
-      if (WebGLFilterRenderer.isSupported()) {
-        this.#webgl = new WebGLFilterRenderer();
-      }
-    } catch {
-      this.#webgl = null;
-    }
-    this.#nodeFactory = new KonvaNodeFactory(this.#stage, this.#webgl);
-    this.#cropOverlay = new KonvaCropOverlay(
-      this.#uiLayer,
-      (rect) => {
-        this.onCropChange?.(rect);
-      },
-      (rect) => {
-        this.#camera.fitToRect(rect, 24);
-      },
-    );
-
-    setupInteraction({
-      stage: this.#stage,
-      selectionRect: this.#selectionRect,
-      uiLayer: this.#uiLayer,
-      nodeMap: this.#nodeMap,
-      camera: this.#camera,
-      callbacks: {
-        onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
-        onBlockDblClick: (blockId) => this.onBlockDblClick?.(blockId),
-        onStageClick: (worldPos) => this.onStageClick?.(worldPos),
-        onZoomChange: (zoom) => this.onZoomChange?.(zoom),
-      },
-    });
-
+    this.#stage = scene.stage;
+    this.#contentLayer = scene.contentLayer;
+    this.#uiLayer = scene.uiLayer;
+    this.#transformer = scene.transformer;
+    this.#selectionRect = scene.selectionRect;
+    this.#camera = scene.camera;
+    this.#nodeFactory = scene.nodeFactory;
+    this.#cropOverlay = scene.cropOverlay;
+    this.#webgl = scene.webgl;
     this.#lastPageSize = { width: pageW, height: pageH };
-    this.#camera.setPageSize(pageW, pageH);
-    this.#camera.fitToScreen({ width: pageW, height: pageH, padding: 48 });
 
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = new ResizeObserver(() => {
@@ -130,15 +83,14 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#resizeObserver.observe(this.#rootEl);
   }
 
-  // --- Block lifecycle ---
-
   syncBlock(id: number, block: BlockData): void {
-    if (block.type === "scene") return;
-    // Effect blocks are not rendered directly; they are resolved by their owner.
-    if (block.type === "effect") return;
-    // Shape and fill sub-blocks are resolved by their owner graphic block.
-    if (block.type === "shape" || block.type === "fill") return;
-    // Guard: renderer not yet initialised (createScene hasn't run)
+    if (
+      block.type === "scene" ||
+      block.type === "effect" ||
+      block.type === "shape" ||
+      block.type === "fill"
+    )
+      return;
     if (!this.#nodeFactory) return;
 
     let node = this.#nodeMap.get(id);
@@ -161,13 +113,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
     this.#transformer.moveToTop();
-
-    // Auto-height: write computed text height back so the engine block store stays in sync
     if (result && result.autoHeight != null) {
       this.onAutoSize?.(id, result.autoHeight);
     }
-
-    // Keep camera page size in sync for pan clamping
     if (block.type === "page") {
       const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
       const ph = (block.properties[PAGE_HEIGHT] as number) ?? 1080;
@@ -198,29 +146,23 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
-  // --- Transformer ---
-
   showTransformer(blockIds: number[], blockType?: string): void {
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
     this.#transformer.nodes(nodes);
-
-    // Text blocks: corners only (no center pill handles)
-    if (blockType === "text") {
-      this.#transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
-    } else {
-      this.#transformer.enabledAnchors([
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-        "middle-left",
-        "middle-right",
-        "top-center",
-        "bottom-center",
-      ]);
-    }
-
-    // Bind hover events on anchors (deferred until Konva creates them)
+    this.#transformer.enabledAnchors(
+      blockType === "text"
+        ? ["top-left", "top-right", "bottom-left", "bottom-right"]
+        : [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+            "middle-left",
+            "middle-right",
+            "top-center",
+            "bottom-center",
+          ],
+    );
     (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
   }
@@ -236,7 +178,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }
 
-  /** Get the screen rect of a specific block node (independent of transformer). */
   getBlockScreenRect(
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null {
@@ -245,8 +186,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const rect = node.getClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }
-
-  // --- Camera (delegated) ---
 
   setZoom(zoom: number, animate = false): void {
     this.#camera.setZoom(zoom, animate);
@@ -286,8 +225,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return this.#camera.worldToScreen(pt);
   }
 
-  // --- Crop overlay ---
-
   showCropOverlay(
     blockId: number,
     imageRect: CropRect,
@@ -300,146 +237,41 @@ export class KonvaRendererAdapter implements RendererAdapter {
       sourceHeight: number;
     },
   ): void {
-    // Hide the normal transformer while crop mode is active
     this.hideTransformer();
-
-    // Expand the page node to show the full original image while keeping
-    // rotation/flip intact — the crop overlay works in visual (rotated) space.
-    const pageNode = this.#nodeMap.get(blockId);
-    if (pageNode?.getAttr("isPage")) {
-      const group = pageNode as Konva.Group;
-      const bgRect = group.children[0] as Konva.Rect;
-      const imgNode = group.children[1] as Konva.Image;
-
-      if (imgNode.visible()) {
-        // Use explicit rotation from block store (always up-to-date)
-        const rotation = transform?.rotation ?? 0;
-        const flipH = transform?.flipH ?? false;
-        const flipV = transform?.flipV ?? false;
-
-        // Source (pre-rotation) image dimensions — passed explicitly from the editor
-        const sourceW = transform?.sourceWidth ?? imageRect.width;
-        const sourceH = transform?.sourceHeight ?? imageRect.height;
-
-        // Apply rotation and flip from block state
-        imgNode.rotation(rotation);
-        imgNode.scaleX(flipH ? -1 : 1);
-        imgNode.scaleY(flipV ? -1 : 1);
-
-        // Render full source image (clear any previous Konva crop)
-        imgNode.width(sourceW);
-        imgNode.height(sourceH);
-        imgNode.crop({ x: 0, y: 0, width: 0, height: 0 });
-
-        // Re-center rotation/flip within the visual bounds
-        imgNode.offsetX(sourceW / 2);
-        imgNode.offsetY(sourceH / 2);
-        imgNode.x(imageRect.width / 2);
-        imgNode.y(imageRect.height / 2);
-      }
-      bgRect.width(imageRect.width);
-      bgRect.height(imageRect.height);
-    }
-
-    // Mark the page node as being in crop-overlay mode so that any re-sync
-    // (e.g. triggered by a flip during crop mode) doesn't shrink the image
-    // back to crop dimensions.
-    if (pageNode) pageNode.setAttr("_cropOverlayActive", true);
-
+    expandPageNodeForCrop(this.#nodeMap, blockId, imageRect, transform);
     this.#cropOverlay.show(imageRect, initialCrop);
-    // Redraw both content and UI layers
     this.#stage.batchDraw();
   }
 
   hideCropOverlay(): void {
     this.#cropOverlay.hide();
-    // Clear the crop-overlay flag on all page nodes
-    this.#nodeMap.forEach((node) => {
-      if (node.getAttr("_cropOverlayActive")) {
-        node.setAttr("_cropOverlayActive", false);
-      }
-    });
+    clearCropOverlayFlags(this.#nodeMap);
   }
 
   setCropRect(rect: CropRect): void {
     this.#cropOverlay.setCropRect(rect);
   }
-
   setCropRatio(ratio: number | null): void {
     this.#cropOverlay.setRatio(ratio);
   }
-
   getCropRect(): CropRect | null {
     return this.#cropOverlay.isVisible() ? this.#cropOverlay.getCropRect() : null;
   }
-
   getCropImageRect(): CropRect | null {
     return this.#cropOverlay.isVisible() ? this.#cropOverlay.getImageRect() : null;
   }
 
-  // --- Render ---
-
   renderFrame(): void {
-    // Synchronous draw — avoids the extra rAF delay from batchDraw(),
-    // which matters during slider drag where we're already in a rAF callback.
     this.#contentLayer?.draw();
     this.#uiLayer?.draw();
   }
-
-  // --- Export ---
 
   async exportScene(options: ExportOptions): Promise<Blob> {
     if (!this.#stage || !this.#lastPageSize) {
       throw new Error("Cannot export: scene not initialised");
     }
-
-    const format = options.format ?? "png";
-    const quality = options.quality ?? 0.92;
-    const pixelRatio = options.pixelRatio ?? 1;
-    const { width: pageW, height: pageH } = this.#lastPageSize;
-    const mimeType = `image/${format}`;
-
-    // Save current content layer transform (camera pan/zoom)
-    const savedScaleX = this.#contentLayer.scaleX();
-    const savedScaleY = this.#contentLayer.scaleY();
-    const savedX = this.#contentLayer.x();
-    const savedY = this.#contentLayer.y();
-
-    // Reset to identity so the page fills the export canvas exactly
-    this.#contentLayer.scaleX(1);
-    this.#contentLayer.scaleY(1);
-    this.#contentLayer.x(0);
-    this.#contentLayer.y(0);
-
-    // Hide UI layer (transformer, crop overlay, selection rect)
-    const uiWasVisible = this.#uiLayer.visible();
-    this.#uiLayer.visible(false);
-
-    try {
-      const dataUrl = this.#stage.toDataURL({
-        x: 0,
-        y: 0,
-        width: pageW,
-        height: pageH,
-        pixelRatio,
-        mimeType,
-        quality: format === "png" ? undefined : quality,
-      });
-
-      return await dataUrlToBlob(dataUrl, mimeType);
-    } finally {
-      // Restore content layer transform
-      this.#contentLayer.scaleX(savedScaleX);
-      this.#contentLayer.scaleY(savedScaleY);
-      this.#contentLayer.x(savedX);
-      this.#contentLayer.y(savedY);
-
-      // Restore UI layer
-      this.#uiLayer.visible(uiWasVisible);
-    }
+    return exportScene(this.#stage, this.#contentLayer, this.#uiLayer, this.#lastPageSize, options);
   }
-
-  // --- Cleanup ---
 
   dispose(): void {
     this.#resizeObserver?.disconnect();
@@ -450,21 +282,4 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#nodeMap.clear();
     clearImageCache();
   }
-}
-
-/** Convert a data URL string to a Blob without using fetch(). */
-function dataUrlToBlob(dataUrl: string, mimeType: string): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    try {
-      const base64 = dataUrl.split(",")[1];
-      const binaryStr = atob(base64);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
-      }
-      resolve(new Blob([bytes], { type: mimeType }));
-    } catch (err) {
-      reject(err);
-    }
-  });
 }

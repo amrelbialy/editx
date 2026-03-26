@@ -1,4 +1,4 @@
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { Color } from "./block.types";
 import * as H from "./block-api-helpers";
 import {
@@ -11,10 +11,15 @@ import {
 
 /** Shadow convenience — enable/disable, color, offset, blur on graphic blocks. */
 export class BlockShadowAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
+  }
+
+  supportsShadow(blockId: number): boolean {
+    const type = this.#engine.getBlockStore().getType(blockId);
+    return type === "graphic" || type === "text";
   }
 
   setShadowEnabled(blockId: number, enabled: boolean): void {

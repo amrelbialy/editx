@@ -12,24 +12,27 @@ type EventName = keyof EventMap;
 type EventHandler<E extends EventName> = EventMap[E];
 
 export class EventBus {
-  private listeners = new Map<string, Set<(...args: any[]) => void>>();
+  #listeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
   on<E extends EventName>(event: E, handler: EventHandler<E>): void;
-  on(event: string, handler: (...args: any[]) => void): void;
-  on(event: string, handler: (...args: any[]) => void): void {
-    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event)!.add(handler);
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  on(event: string, handler: (...args: unknown[]) => void): void {
+    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
+    this.#listeners.get(event)!.add(handler as (...args: unknown[]) => void);
   }
 
   off<E extends EventName>(event: E, handler: EventHandler<E>): void;
-  off(event: string, handler: (...args: any[]) => void): void;
-  off(event: string, handler: (...args: any[]) => void): void {
-    this.listeners.get(event)?.delete(handler);
+  off(event: string, handler: (...args: unknown[]) => void): void;
+  off(event: string, handler: (...args: unknown[]) => void): void {
+    this.#listeners.get(event)?.delete(handler as (...args: unknown[]) => void);
   }
 
   emit<E extends EventName>(event: E, ...args: Parameters<EventHandler<E>>): void;
-  emit(event: string, ...args: any[]): void;
-  emit(event: string, ...args: any[]): void {
-    this.listeners.get(event)?.forEach((handler) => handler(...args));
+  emit(event: string, ...args: unknown[]): void;
+  emit(event: string, ...args: unknown[]): void {
+    const handlers = this.#listeners.get(event);
+    if (handlers) {
+      for (const handler of handlers) handler(...args);
+    }
   }
 }

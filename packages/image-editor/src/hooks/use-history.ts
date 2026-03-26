@@ -34,16 +34,7 @@ export function useHistory(
   useEffect(() => {
     if (!engine) return;
     syncHistoryState();
-    const unsub = engine.event.subscribe([], syncHistoryState);
-    engine.on("history:undo", syncHistoryState);
-    engine.on("history:redo", syncHistoryState);
-    engine.on("history:clear", syncHistoryState);
-    return () => {
-      unsub();
-      engine.off("history:undo", syncHistoryState);
-      engine.off("history:redo", syncHistoryState);
-      engine.off("history:clear", syncHistoryState);
-    };
+    return engine.onHistoryChanged(syncHistoryState);
   }, [engine, syncHistoryState]);
 
   return { canUndo, canRedo, handleUndo, handleRedo };

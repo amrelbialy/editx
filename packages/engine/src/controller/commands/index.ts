@@ -8,7 +8,7 @@ export { CreateShapeCommand } from "./create-shape-command";
 export { DestroyBlockCommand } from "./destroy-block-command";
 export { InsertEffectCommand } from "./insert-effect-command";
 export { MoveChildCommand } from "./move-child-command";
-export { default as PatchCommand } from "./patch-command";
+export { PatchCommand } from "./patch-command";
 export { RemoveChildCommand } from "./remove-child-command";
 export { RemoveEffectCommand } from "./remove-effect-command";
 export { SetFillCommand } from "./set-fill-command";

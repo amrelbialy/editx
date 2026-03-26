@@ -1,5 +1,4 @@
 import {
-  ADJUSTMENT_CONFIG,
   ADJUSTMENT_PARAMS,
   type AdjustmentParam,
   type CreativeEngine,
@@ -49,10 +48,10 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
       }
     }
 
-    ce.core.beginSilent();
+    ce.beginSilent();
     const eid = ce.block.createEffect("adjustments");
     ce.block.appendEffect(editableBlockId, eid);
-    ce.core.endSilent();
+    ce.endSilent();
     adjustEffectIdRef.current = eid;
     return eid;
   }, [engineRef, editableBlockId]);
@@ -67,7 +66,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
 
     const vals = {} as AdjustmentValues;
     for (const param of ADJUSTMENT_PARAMS) {
-      vals[param] = ce.block.getFloat(eid, ADJUSTMENT_CONFIG[param].key);
+      vals[param] = ce.block.getAdjustmentValue(eid, param);
     }
     setAdjustValues(vals);
   }, [engineRef]);
@@ -83,8 +82,8 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     const ce = engineRef.current;
     const eid = adjustEffectIdRef.current;
     if (!ce || eid === null) return;
-    ce.block.setFloat(eid, ADJUSTMENT_CONFIG[pending.param].key, pending.value);
-    ce.core.renderDirty();
+    ce.block.setAdjustmentValue(eid, pending.param, pending.value);
+    ce.renderDirty();
   }, [engineRef]);
 
   const handleAdjustChange = useCallback(
@@ -98,7 +97,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
 
       // Start a batch on first change of this drag (groups into one undo entry)
       if (!inBatchRef.current) {
-        ce.core.beginBatch();
+        ce.beginBatch();
         inBatchRef.current = true;
       }
 
@@ -113,8 +112,8 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
           const engine = engineRef.current;
           const effectId = adjustEffectIdRef.current;
           if (!engine || effectId === null) return;
-          engine.block.setFloat(effectId, ADJUSTMENT_CONFIG[p.param].key, p.value);
-          engine.core.renderDirty();
+          engine.block.setAdjustmentValue(effectId, p.param, p.value);
+          engine.renderDirty();
         });
       }
     },
@@ -125,7 +124,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     // Flush any pending RAF to ensure the final value is written
     flushPending();
     if (inBatchRef.current) {
-      engineRef.current?.core.endBatch();
+      engineRef.current?.endBatch();
       inBatchRef.current = false;
     }
   }, [engineRef, flushPending]);
@@ -161,9 +160,9 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    const handler = () => {
+    return ce.onHistoryChanged(() => {
       const eid = adjustEffectIdRef.current;
-      if (eid === null || !ce.core.getBlockStore().exists(eid)) {
+      if (eid === null || !ce.block.exists(eid)) {
         // Effect was destroyed by undo — re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
@@ -174,22 +173,16 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
         }
       }
       const eid2 = adjustEffectIdRef.current;
-      if (!eid2 || !ce.core.getBlockStore().exists(eid2)) {
+      if (!eid2 || !ce.block.exists(eid2)) {
         setAdjustValues(DEFAULT_ADJUSTMENTS);
       } else {
         const vals = {} as AdjustmentValues;
         for (const param of ADJUSTMENT_PARAMS) {
-          vals[param] = ce.block.getFloat(eid2, ADJUSTMENT_CONFIG[param].key);
+          vals[param] = ce.block.getAdjustmentValue(eid2, param);
         }
         setAdjustValues(vals);
       }
-    };
-    ce.on("history:undo", handler);
-    ce.on("history:redo", handler);
-    return () => {
-      ce.off("history:undo", handler);
-      ce.off("history:redo", handler);
-    };
+    });
   }, [engineRef, editableBlockId]);
 
   return {

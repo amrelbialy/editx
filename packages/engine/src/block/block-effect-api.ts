@@ -4,7 +4,7 @@ import {
   InsertEffectCommand,
   RemoveEffectCommand,
 } from "../controller/commands";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { EffectType } from "./block.types";
 import * as H from "./block-api-helpers";
 import {
@@ -69,9 +69,9 @@ export const ADJUSTMENT_PARAMS: AdjustmentParam[] = Object.keys(
 
 /** Effects CRUD — create, append, insert, remove, enable/disable effect sub-blocks. */
 export class BlockEffectAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 
@@ -118,5 +118,23 @@ export class BlockEffectAPI {
 
   isEffectEnabled(effectId: number): boolean {
     return H.getBool(this.#engine, effectId, EFFECT_ENABLED);
+  }
+
+  // ── Adjustment convenience ────────────────────────────
+
+  getAdjustmentValue(effectId: number, param: AdjustmentParam): number {
+    return H.getFloat(this.#engine, effectId, ADJUSTMENT_CONFIG[param].key);
+  }
+
+  setAdjustmentValue(effectId: number, param: AdjustmentParam, value: number): void {
+    H.setFloat(this.#engine, effectId, ADJUSTMENT_CONFIG[param].key, value);
+  }
+
+  getAdjustmentValues(effectId: number): Record<AdjustmentParam, number> {
+    const vals = {} as Record<AdjustmentParam, number>;
+    for (const param of ADJUSTMENT_PARAMS) {
+      vals[param] = H.getFloat(this.#engine, effectId, ADJUSTMENT_CONFIG[param].key);
+    }
+    return vals;
   }
 }

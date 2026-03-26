@@ -48,7 +48,7 @@ describe("Commands", () => {
     it("patch id matches the created block id", () => {
       const cmd = new CreateBlockCommand(store, "graphic");
       const patches = cmd.do();
-      expect(patches[0].id).toBe(String(cmd.getCreatedId()));
+      expect(patches[0].id).toBe(cmd.getCreatedId());
     });
   });
 
@@ -69,7 +69,7 @@ describe("Commands", () => {
       const id = store.create("text");
       const cmd = new DestroyBlockCommand(store, id);
       const patches = cmd.do();
-      expect(patches[0].id).toBe(String(id));
+      expect(patches[0].id).toBe(id);
     });
   });
 
@@ -90,7 +90,7 @@ describe("Commands", () => {
       const id = store.create("graphic");
       const cmd = new SetPropertyCommand(store, id, "transform/position/x", 50);
       const patches = cmd.do();
-      expect(patches[0].id).toBe(String(id));
+      expect(patches[0].id).toBe(id);
     });
   });
 
@@ -114,8 +114,8 @@ describe("Commands", () => {
       const patches = cmd.do();
 
       expect(patches).toHaveLength(2);
-      expect(patches[0].id).toBe(String(parent));
-      expect(patches[1].id).toBe(String(child));
+      expect(patches[0].id).toBe(parent);
+      expect(patches[1].id).toBe(child);
 
       // Parent after should have child in children
       expect(patches[0].after!.children).toContain(child);
@@ -144,8 +144,8 @@ describe("Commands", () => {
       const patches = cmd.do();
 
       expect(patches).toHaveLength(2);
-      expect(patches[0].id).toBe(String(parent));
-      expect(patches[1].id).toBe(String(child));
+      expect(patches[0].id).toBe(parent);
+      expect(patches[1].id).toBe(child);
 
       // Before should have the relationship
       expect(patches[0].before!.children).toContain(child);

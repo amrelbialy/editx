@@ -33,13 +33,7 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
 
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
-    const handler = () => setState(readStroke(engine, blockId));
-    engine.on("history:undo", handler);
-    engine.on("history:redo", handler);
-    return () => {
-      engine.off("history:undo", handler);
-      engine.off("history:redo", handler);
-    };
+    return engine.onHistoryChanged(() => setState(readStroke(engine, blockId)));
   }, [engine, blockId]);
 
   const update = useCallback(() => setState(readStroke(engine, blockId)), [engine, blockId]);

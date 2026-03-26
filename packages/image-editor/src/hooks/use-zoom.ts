@@ -66,9 +66,7 @@ export function useZoom({ engineRef, engine }: UseZoomOptions) {
 
   useEffect(() => {
     if (!engine) return;
-    const handler = () => updateZoomLabel();
-    engine.on("zoom:changed", handler);
-    return () => engine.off("zoom:changed", handler);
+    return engine.onZoomChanged(() => updateZoomLabel());
   }, [engine, updateZoomLabel]);
 
   const zoomLabel = zoomPercent !== null ? `${zoomPercent}%` : "Auto";

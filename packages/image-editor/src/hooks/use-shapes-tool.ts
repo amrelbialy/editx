@@ -1,4 +1,5 @@
 import type { CreativeEngine, ShapeType } from "@creative-editor/engine";
+import { hexToColor } from "@creative-editor/engine";
 import { useCallback } from "react";
 import { useConfig } from "../config/config-context";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -19,8 +20,7 @@ export function useShapesTool({ engineRef }: UseShapesToolOptions) {
       const fillMode = config.shapes?.defaultFillMode ?? "filled";
       const defaultColor = config.shapes?.defaultColor ?? "#3b82f6";
 
-      const pageW = ce.block.getFloat(editableBlockId, "page/width") ?? 1080;
-      const pageH = ce.block.getFloat(editableBlockId, "page/height") ?? 1080;
+      const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
       const size = Math.min(pageW, pageH) * 0.25;
 
       const shapeW = shapeType === "line" ? pageW * 0.5 : size;
@@ -39,11 +39,11 @@ export function useShapesTool({ engineRef }: UseShapesToolOptions) {
         { sides },
       );
 
-      ce.block.setString(graphicId, "fill/color", defaultColor);
+      ce.block.setFillSolidColor(graphicId, hexToColor(defaultColor));
       if (fillMode === "outlined") {
         ce.block.setFillEnabled(graphicId, false);
         ce.block.setStrokeEnabled(graphicId, true);
-        ce.block.setString(graphicId, "stroke/color", defaultColor);
+        ce.block.setStrokeColor(graphicId, hexToColor(defaultColor));
       }
 
       ce.block.select(graphicId);

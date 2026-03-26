@@ -91,8 +91,7 @@ export function useImageTool({ engineRef }: UseImageToolOptions) {
       const naturalH = finalImg.naturalHeight;
 
       // Place on page at ~40% of the shortest side
-      const pageW = ce.block.getFloat(editableBlockId, "page/width") ?? 1080;
-      const pageH = ce.block.getFloat(editableBlockId, "page/height") ?? 1080;
+      const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
 
       const targetSize = Math.min(pageW, pageH) * 0.4;
       const aspect = naturalW / naturalH;

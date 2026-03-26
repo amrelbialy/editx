@@ -1,5 +1,5 @@
 import { AppendChildCommand, CreateBlockCommand } from "../controller/commands";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { TextRun, TextRunStyle } from "./block.types";
 import * as H from "./block-api-helpers";
 import { TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_RUNS, TEXT_VERTICAL_ALIGN } from "./property-keys";
@@ -14,10 +14,10 @@ import {
 
 /** Text editing sessions, range-based text editing, and text block placement. */
 export class BlockTextAPI {
-  #engine: Engine;
+  #engine: EngineCore;
   #textEditingSessions = new Map<number, TextEditorSession>();
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 

@@ -37,13 +37,7 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
 
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
-    const handler = () => setState(readFillState(engine, blockId));
-    engine.on("history:undo", handler);
-    engine.on("history:redo", handler);
-    return () => {
-      engine.off("history:undo", handler);
-      engine.off("history:redo", handler);
-    };
+    return engine.onHistoryChanged(() => setState(readFillState(engine, blockId)));
   }, [engine, blockId]);
 
   const refresh = useCallback(() => setState(readFillState(engine, blockId)), [engine, blockId]);

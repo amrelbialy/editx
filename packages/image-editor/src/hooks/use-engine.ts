@@ -1,4 +1,5 @@
-import { CreativeEngine, evictImage } from "@creative-editor/engine";
+import { type CreativeEngine, evictImage } from "@creative-editor/engine";
+import { createEngine } from "@creative-editor/engine/konva";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ImageSource } from "../image-editor";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -207,7 +208,7 @@ export function useEngine({
           name,
         });
 
-        const ce = await CreativeEngine.create({
+        const ce = await createEngine({
           container: containerRef.current!,
         });
         if (signal?.disposed) return;
@@ -220,10 +221,10 @@ export function useEngine({
         if (pageId === null) return;
 
         // Set image source silently so initial setup isn't undoable
-        ce.core.beginSilent();
+        ce.beginSilent();
         ce.block.setPageImageSrc(pageId, workingUrl);
         ce.block.setPageImageOriginalDimensions(pageId, workingWidth, workingHeight);
-        ce.core.endSilent();
+        ce.endSilent();
 
         setEditableBlockId(pageId);
 
@@ -245,7 +246,7 @@ export function useEngine({
         setLoading(false);
         setEngine(ce);
 
-        ce.on("selection:changed", (ids: number[]) => {
+        ce.block.onSelectionChanged((ids: number[]) => {
           if (ids.length === 1) {
             const blockType = ce.block.getType(ids[0]);
             if (blockType === "graphic" || blockType === "text" || blockType === "image") {

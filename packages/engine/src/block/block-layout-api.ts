@@ -1,13 +1,13 @@
 import { MoveChildCommand } from "../controller/commands";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import * as H from "./block-api-helpers";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "./property-keys";
 
 /** Position, size, rotation, z-order, and alignment operations. */
 export class BlockLayoutAPI {
-  #engine: Engine;
+  #engine: EngineCore;
 
-  constructor(engine: Engine) {
+  constructor(engine: EngineCore) {
     this.#engine = engine;
   }
 
@@ -45,6 +45,10 @@ export class BlockLayoutAPI {
     H.setFloat(this.#engine, id, "transform/rotation", degrees);
   }
 
+  getRotation(id: number): number {
+    return H.getFloat(this.#engine, id, "transform/rotation");
+  }
+
   setOpacity(id: number, opacity: number): void {
     H.setFloat(this.#engine, id, "appearance/opacity", opacity);
   }
@@ -55,6 +59,10 @@ export class BlockLayoutAPI {
 
   setVisible(id: number, visible: boolean): void {
     H.setBool(this.#engine, id, "appearance/visible", visible);
+  }
+
+  isVisible(id: number): boolean {
+    return H.getBool(this.#engine, id, "appearance/visible");
   }
 
   // ── Z-order (layer ordering) ──────────────────────

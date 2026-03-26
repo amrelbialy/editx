@@ -6,38 +6,23 @@ import {
   CROP_WIDTH,
   CROP_X,
   CROP_Y,
-  IMAGE_ORIGINAL_HEIGHT,
-  IMAGE_ORIGINAL_WIDTH,
   IMAGE_ROTATION,
-  PAGE_HEIGHT,
-  PAGE_WIDTH,
-  SIZE_HEIGHT,
-  SIZE_WIDTH,
 } from "../block/property-keys";
-import { SetPropertyCommand } from "../controller/commands";
 import type { CropRect } from "../utils/crop-math";
 import {
   getSizeAfterRotation,
-  normalizeRotation,
   sourceCropToVisual,
   visualCropToSource,
 } from "../utils/rotation-math";
 import type { EditorContext } from "./editor-context";
+import { commitCropToBlock, getBlockImageDimensions, resetCropBlock } from "./editor-crop-commit";
+import {
+  applyCropDimensionsToOverlay,
+  applyCropRatioToOverlay,
+  getCropVisualDims,
+} from "./editor-crop-operations";
 
-/**
- * Internal crop module — manages the crop overlay lifecycle and auto-commit.
- *
- * This class is **not** exposed on the public EditorAPI. Consumers interact
- * with crop exclusively through:
- *   - `editor.setEditMode('Crop')` — enters crop mode (overlay shown)
- *   - `editor.setEditMode('Transform')` — exits crop mode (auto-commits)
- *   - `block.resetCrop(id)` — resets crop properties via BlockAPI
- *   - `block.applyCropRatio(id, ratio)` — applies ratio via BlockAPI (reacts internally)
- *
- * Exiting crop mode always commits the current overlay rect to block
- * properties as a single undo batch. Cancel is achieved by the consumer
- * calling `editor.undo()` immediately after exiting.
- */
+/** Internal crop module — manages the crop overlay lifecycle and auto-commit. */
 export class EditorCrop {
   #ctx: EditorContext;
 
@@ -82,34 +67,12 @@ export class EditorCrop {
     if (!block) return null;
 
     this.#cropBlockId = blockId;
-
-    const blockType = store.getType(blockId);
-
-    // Source (pre-rotation) image dimensions
-    const origW = store.getFloat(blockId, IMAGE_ORIGINAL_WIDTH);
-    const origH = store.getFloat(blockId, IMAGE_ORIGINAL_HEIGHT);
-
-    let imgW: number;
-    let imgH: number;
-
-    if (origW > 0 && origH > 0) {
-      imgW = origW;
-      imgH = origH;
-    } else if (blockType === "page") {
-      imgW = store.getFloat(blockId, PAGE_WIDTH);
-      imgH = store.getFloat(blockId, PAGE_HEIGHT);
-    } else {
-      imgW = store.getFloat(blockId, SIZE_WIDTH);
-      imgH = store.getFloat(blockId, SIZE_HEIGHT);
-    }
-
-    // Current rotation & flip
+    const { imgW, imgH } = getBlockImageDimensions(store, blockId);
     const rotation = store.getFloat(blockId, IMAGE_ROTATION);
     const flipH = store.getBool(blockId, CROP_FLIP_HORIZONTAL);
     const flipV = store.getBool(blockId, CROP_FLIP_VERTICAL);
 
-    // Compute visual (post-rotation) full-image bounds for the overlay.
-    // For exact 90°/270°, swap W↔H. For arbitrary angles, compute the AABB.
+    // Compute visual (post-rotation) full-image bounds
     const { width: visualW, height: visualH } = getSizeAfterRotation(imgW, imgH, rotation);
     const imageRect: CropRect = { x: 0, y: 0, width: visualW, height: visualH };
 
@@ -152,15 +115,8 @@ export class EditorCrop {
     return initialCrop ?? imageRect;
   }
 
-  /**
-   * Tear down the crop overlay — auto-commits the current crop rect
-   * to block properties before hiding the overlay.
-   *
-   * The commit is written as a single undo batch. If the consumer wants
-   * to discard the crop, they call `editor.undo()` after exiting.
-   */
+  /** Tear down the crop overlay — auto-commits before hiding. */
   teardownCropOverlay(): void {
-    // Auto-commit the current overlay rect
     this.#commitCropToBlock();
 
     const blockId = this.#cropBlockId;
@@ -181,77 +137,13 @@ export class EditorCrop {
 
   // ─── Internal Commit ──────────────────────────────────
 
-  /**
-   * Commit the current crop overlay rect to block properties.
-   * Single undo batch. For page blocks, also resizes the page to match.
-   */
   #commitCropToBlock(): CropRect | null {
     const id = this.#cropBlockId;
     if (id === null) return null;
     const visualRect = this.#ctx.renderer?.getCropRect() ?? null;
     if (!visualRect) return null;
     const store = this.#ctx.engine.getBlockStore();
-    const engine = this.#ctx.engine;
-
-    // Source image dimensions
-    const origW = store.getFloat(id, IMAGE_ORIGINAL_WIDTH);
-    const origH = store.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
-    const blockType = store.getType(id);
-    let imgW: number, imgH: number;
-    if (origW > 0 && origH > 0) {
-      imgW = origW;
-      imgH = origH;
-    } else if (blockType === "page") {
-      imgW = store.getFloat(id, PAGE_WIDTH);
-      imgH = store.getFloat(id, PAGE_HEIGHT);
-    } else {
-      imgW = store.getFloat(id, SIZE_WIDTH);
-      imgH = store.getFloat(id, SIZE_HEIGHT);
-    }
-
-    // Transform visual crop rect back to source-image space for Konva .crop()
-    const rotation = store.getFloat(id, IMAGE_ROTATION);
-    const flipH = store.getBool(id, CROP_FLIP_HORIZONTAL);
-    const flipV = store.getBool(id, CROP_FLIP_VERTICAL);
-    const sourceRect = visualCropToSource(visualRect, imgW, imgH, rotation, flipH, flipV);
-
-    // Skip commit if crop hasn't changed from when we entered crop mode
-    const prev = this.#initialCropState;
-    if (prev) {
-      const EPS = 0.5;
-      if (prev.enabled) {
-        // Had an existing crop — check if values are the same
-        const same =
-          Math.abs(prev.x - sourceRect.x) < EPS &&
-          Math.abs(prev.y - sourceRect.y) < EPS &&
-          Math.abs(prev.width - sourceRect.width) < EPS &&
-          Math.abs(prev.height - sourceRect.height) < EPS;
-        if (same) return null;
-      } else {
-        // No prior crop — check if the overlay covers the full image (no-op)
-        const fullImage =
-          Math.abs(sourceRect.x) < EPS &&
-          Math.abs(sourceRect.y) < EPS &&
-          Math.abs(sourceRect.width - imgW) < EPS &&
-          Math.abs(sourceRect.height - imgH) < EPS;
-        if (fullImage) return null;
-      }
-    }
-
-    engine.beginBatch();
-    engine.exec(new SetPropertyCommand(store, id, CROP_X, sourceRect.x));
-    engine.exec(new SetPropertyCommand(store, id, CROP_Y, sourceRect.y));
-    engine.exec(new SetPropertyCommand(store, id, CROP_WIDTH, sourceRect.width));
-    engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, sourceRect.height));
-    engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, true));
-    // Page dimensions = visual crop dimensions (what the user sees)
-    if (blockType === "page") {
-      engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, visualRect.width));
-      engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, visualRect.height));
-    }
-    engine.endBatch();
-
-    return visualRect;
+    return commitCropToBlock(this.#ctx.engine, store, id, visualRect, this.#initialCropState);
   }
 
   /** Get the block ID currently being cropped, or null. */
@@ -259,14 +151,7 @@ export class EditorCrop {
     return this.#cropBlockId;
   }
 
-  /**
-   * Refresh the crop overlay after a rotation or flip change during crop mode.
-   *
-   * Converts the current visual crop rect from the old visual space (pre-change)
-   * to source space, then re-maps it to the new visual space using the updated
-   * rotation/flip from the block store. The overlay is re-shown with new visual
-   * bounds and the camera fits to the updated crop.
-   */
+  /** Refresh the crop overlay after a rotation or flip change during crop mode. */
   refreshCropOverlay(): void {
     const blockId = this.#cropBlockId;
     if (blockId === null || !this.#cropTransform) return;
@@ -320,173 +205,24 @@ export class EditorCrop {
     renderer.fitToRect(newVisualCrop, 24);
   }
 
-  /**
-   * Reset the crop for the given block (or the currently-cropped block).
-   * Restores page dimensions to the original image size, clears all crop
-   * properties. Single undo batch.
-   *
-   * Does NOT call fitToScreen — the caller (EditorAPI) handles that.
-   */
   resetCrop(blockId?: number): void {
     const id = blockId ?? this.#cropBlockId;
     if (id === null) return;
-
-    const store = this.#ctx.engine.getBlockStore();
-    const engine = this.#ctx.engine;
-    const origW = store.getFloat(id, IMAGE_ORIGINAL_WIDTH);
-    const origH = store.getFloat(id, IMAGE_ORIGINAL_HEIGHT);
-    if (origW <= 0 || origH <= 0) return;
-
-    engine.beginBatch();
-    engine.exec(new SetPropertyCommand(store, id, CROP_X, 0));
-    engine.exec(new SetPropertyCommand(store, id, CROP_Y, 0));
-    engine.exec(new SetPropertyCommand(store, id, CROP_WIDTH, 0));
-    engine.exec(new SetPropertyCommand(store, id, CROP_HEIGHT, 0));
-    engine.exec(new SetPropertyCommand(store, id, CROP_ENABLED, false));
-    // Restore page dimensions accounting for current rotation
-    const blockType = store.getType(id);
-    if (blockType === "page") {
-      const rotation = store.getFloat(id, IMAGE_ROTATION);
-      const isSwap = Math.abs(Math.round(normalizeRotation(rotation) / 90)) % 2 === 1;
-      engine.exec(new SetPropertyCommand(store, id, PAGE_WIDTH, isSwap ? origH : origW));
-      engine.exec(new SetPropertyCommand(store, id, PAGE_HEIGHT, isSwap ? origW : origH));
-    }
-    engine.endBatch();
+    resetCropBlock(this.#ctx.engine, this.#ctx.engine.getBlockStore(), id);
   }
 
-  /**
-   * Apply an aspect ratio to the current crop overlay.
-   *
-   * Called internally by BlockAPI.applyCropRatio() via the engine event bus.
-   * Computes the largest rect with the given ratio that fits within the image
-   * bounds, centered on the current crop center, and updates the overlay.
-   */
   applyCropRatio(ratio: number | null): CropRect | null {
     const renderer = this.#ctx.renderer;
-    if (!renderer) return null;
-
-    const imageRect = renderer.getCropImageRect();
-    if (!imageRect) return null;
-
-    // Set ratio on the overlay (controls keepRatio + enabled anchors)
-    renderer.setCropRatio(ratio);
-
-    // Free mode: no rect change needed
-    if (ratio === null) return renderer.getCropRect();
-
-    const currentCrop = renderer.getCropRect();
-    if (!currentCrop) return null;
-
-    // Compute the largest rect with this ratio that fits within the image.
-    // Always uses the full image bounds so switching presets doesn't shrink.
-    let newWidth: number;
-    let newHeight: number;
-
-    if (imageRect.width / imageRect.height > ratio) {
-      // Image is wider than target ratio → height-limited
-      newHeight = imageRect.height;
-      newWidth = newHeight * ratio;
-    } else {
-      // Image is taller than target ratio → width-limited
-      newWidth = imageRect.width;
-      newHeight = newWidth / ratio;
-    }
-
-    // Center the new crop rect on the current crop's center
-    const currentCenterX = currentCrop.x + currentCrop.width / 2;
-    const currentCenterY = currentCrop.y + currentCrop.height / 2;
-
-    let newX = currentCenterX - newWidth / 2;
-    let newY = currentCenterY - newHeight / 2;
-
-    // Clamp to image bounds
-    if (newX < imageRect.x) newX = imageRect.x;
-    if (newY < imageRect.y) newY = imageRect.y;
-    if (newX + newWidth > imageRect.x + imageRect.width) {
-      newX = imageRect.x + imageRect.width - newWidth;
-    }
-    if (newY + newHeight > imageRect.y + imageRect.height) {
-      newY = imageRect.y + imageRect.height - newHeight;
-    }
-
-    const newCrop: CropRect = { x: newX, y: newY, width: newWidth, height: newHeight };
-    renderer.setCropRect(newCrop);
-
-    // Zoom camera to the crop area so it fills the viewport.
-    renderer.fitToRect(newCrop, 24);
-
-    return newCrop;
+    return renderer ? applyCropRatioToOverlay(renderer, ratio) : null;
   }
 
-  /**
-   * Apply exact pixel dimensions to the current crop overlay.
-   *
-   * Computes the largest crop rect with those exact dimensions that fits
-   * within the image, centered on the current crop center.  If the requested
-   * dimensions exceed the image bounds they are clamped while preserving
-   * the requested aspect ratio.
-   */
   applyCropDimensions(width: number, height: number): CropRect | null {
     const renderer = this.#ctx.renderer;
-    if (!renderer) return null;
-
-    const imageRect = renderer.getCropImageRect();
-    if (!imageRect) return null;
-
-    // Clamp to image bounds while preserving the requested ratio
-    let w = Math.max(1, Math.round(width));
-    let h = Math.max(1, Math.round(height));
-
-    if (w > imageRect.width || h > imageRect.height) {
-      const ratio = w / h;
-      if (imageRect.width / imageRect.height > ratio) {
-        // Image is wider than requested ratio → height-limited
-        h = Math.round(Math.min(h, imageRect.height));
-        w = Math.round(h * ratio);
-      } else {
-        // Image is taller than requested ratio → width-limited
-        w = Math.round(Math.min(w, imageRect.width));
-        h = Math.round(w / ratio);
-      }
-    }
-
-    // Lock overlay ratio to the requested dimensions
-    renderer.setCropRatio(w / h);
-
-    const currentCrop = renderer.getCropRect();
-    if (!currentCrop) return null;
-
-    // Center on current crop center
-    const cx = currentCrop.x + currentCrop.width / 2;
-    const cy = currentCrop.y + currentCrop.height / 2;
-    let newX = cx - w / 2;
-    let newY = cy - h / 2;
-
-    // Clamp to image bounds
-    if (newX < imageRect.x) newX = imageRect.x;
-    if (newY < imageRect.y) newY = imageRect.y;
-    if (newX + w > imageRect.x + imageRect.width) {
-      newX = imageRect.x + imageRect.width - w;
-    }
-    if (newY + h > imageRect.y + imageRect.height) {
-      newY = imageRect.y + imageRect.height - h;
-    }
-
-    const newCrop: CropRect = { x: newX, y: newY, width: w, height: h };
-    renderer.setCropRect(newCrop);
-    renderer.fitToRect(newCrop, 24);
-    return newCrop;
+    return renderer ? applyCropDimensionsToOverlay(renderer, width, height) : null;
   }
 
-  /**
-   * Returns the current crop overlay dimensions in visual (post-rotation)
-   * pixels, rounded to integers.  Returns null when no overlay is active.
-   */
   getCropVisualDimensions(): { width: number; height: number } | null {
     const renderer = this.#ctx.renderer;
-    if (!renderer) return null;
-    const rect = renderer.getCropRect();
-    if (!rect) return null;
-    return { width: Math.round(rect.width), height: Math.round(rect.height) };
+    return renderer ? getCropVisualDims(renderer) : null;
   }
 }

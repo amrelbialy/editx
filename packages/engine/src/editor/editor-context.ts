@@ -1,5 +1,5 @@
 import type { BlockAPI } from "../block/block-api";
-import type { Engine } from "../engine";
+import type { EngineCore } from "../engine-core";
 import type { RendererAdapter } from "../render-adapter";
 
 /**
@@ -9,7 +9,7 @@ import type { RendererAdapter } from "../render-adapter";
  * The `block` field is set lazily (after construction) via `setBlock()`.
  */
 export interface EditorContext {
-  readonly engine: Engine;
+  readonly engine: EngineCore;
   readonly renderer: RendererAdapter | null;
   block: BlockAPI | null;
 }

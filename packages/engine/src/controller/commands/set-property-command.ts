@@ -1,7 +1,7 @@
 import type { PropertyValue } from "../../block/block.types";
 import type { BlockStore } from "../../block/block-store";
 import type { Patch } from "../../history-manager";
-import PatchCommand from "./patch-command";
+import { PatchCommand } from "./patch-command";
 
 export class SetPropertyCommand extends PatchCommand {
   #store: BlockStore;
@@ -23,7 +23,7 @@ export class SetPropertyCommand extends PatchCommand {
     const after = this.#store.snapshot(this.#blockId);
     return [
       {
-        id: String(this.#blockId),
+        id: this.#blockId,
         before,
         after,
       },
