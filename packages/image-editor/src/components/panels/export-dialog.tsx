@@ -62,7 +62,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
         <div className="flex flex-col gap-4 py-4">
           {/* Format selector */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-base font-medium text-muted-foreground">Format</span>
+            <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
+              Format
+            </span>
             <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)}>
               <SelectTrigger>
                 <SelectValue />

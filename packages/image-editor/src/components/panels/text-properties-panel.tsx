@@ -3,6 +3,7 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { Section } from "../ui/section";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
 
@@ -112,9 +113,9 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
   );
 
   const handleFontFamily = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
+    (value: string) => {
       const { start, end } = getStyleRange();
-      engine.block.setTextFontFamily(blockId, start, end, e.target.value);
+      engine.block.setTextFontFamily(blockId, start, end, value);
       update();
     },
     [engine, blockId, getStyleRange, update],
@@ -183,17 +184,18 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
 
       {/* Font Family */}
       <Section label="Font">
-        <select
-          value={state.fontFamily}
-          onChange={handleFontFamily}
-          className="w-full h-8 rounded-md border border-border bg-background px-2 text-base"
-        >
-          {FONT_FAMILIES.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
+        <Select value={state.fontFamily} onValueChange={handleFontFamily}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_FAMILIES.map((f) => (
+              <SelectItem key={f} value={f}>
+                {f}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Section>
 
       {/* Font Size */}

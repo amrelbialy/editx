@@ -1,0 +1,64 @@
+# Getting Started
+
+Install and set up the Creative Image Editor in your React project.
+
+## Installation
+
+```bash
+pnpm add @creative-editor/image-editor @creative-editor/engine
+```
+
+Peer dependencies: `react >= 19`, `react-dom >= 19`.
+
+## Basic Usage
+
+```tsx
+import { ImageEditor } from "@creative-editor/image-editor";
+
+function App() {
+  return (
+    <ImageEditor
+      src="/photo.jpg"
+      onSave={(blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "edited.png";
+        a.click();
+      }}
+    />
+  );
+}
+```
+
+## Modal Usage
+
+Wrap the editor in a modal for overlay-style editing:
+
+```tsx
+import { ImageEditorModal } from "@creative-editor/image-editor";
+
+function App() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Edit Image</button>
+      <ImageEditorModal
+        open={open}
+        onOpenChange={setOpen}
+        src="/photo.jpg"
+        onSave={(blob) => console.log("Saved:", blob)}
+        onClose={() => setOpen(false)}
+      />
+    </>
+  );
+}
+```
+
+## Next Steps
+
+- [Configuration](/docs/image-editor/configuration) — customize tools, export settings, and more
+- [Theming](/docs/image-editor/theming) — built-in presets and custom color palettes
+- [API Reference](/docs/image-editor/api) — full props reference
+- [Playground](/playground) — try it live with interactive config

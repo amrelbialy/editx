@@ -57,7 +57,9 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-base font-medium text-muted-foreground">{t("image.addImage")}</div>
+      <div className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
+        {t("image.addImage")}
+      </div>
 
       {/* Drop zone / upload button */}
       <button
@@ -75,9 +77,13 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
             : "border-border hover:border-muted-foreground hover:bg-accent/50",
         )}
       >
-        <Upload className="h-8 w-8 text-muted-foreground" />
-        <span className="text-base text-muted-foreground">{t("image.dropHint")}</span>
-        <span className="text-base text-muted-foreground/60">{t("image.sizeHint")}</span>
+        <Upload className="h-6 w-6 text-muted-foreground @5xl/editor:h-8 @5xl/editor:w-8" />
+        <span className="text-sm text-muted-foreground @5xl/editor:text-base">
+          {t("image.dropHint")}
+        </span>
+        <span className="text-sm text-muted-foreground/60 @5xl/editor:text-base">
+          {t("image.sizeHint")}
+        </span>
       </button>
 
       <input
@@ -89,7 +95,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       />
 
       {error && (
-        <div className="text-base text-destructive bg-destructive/10 rounded-md px-3 py-2">
+        <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2 @5xl/editor:text-base">
           {error}
         </div>
       )}
@@ -99,7 +105,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-base",
+          "flex items-center gap-2 px-3 py-2 rounded-md text-sm @5xl/editor:text-base",
           "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
         )}
       >

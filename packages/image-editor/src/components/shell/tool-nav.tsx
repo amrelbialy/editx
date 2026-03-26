@@ -83,19 +83,22 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
             aria-label={tool.label}
             aria-keyshortcuts={tool.shortcut}
             className={cn(
-              "flex flex-col items-center justify-center py-2 px-2 rounded-md transition-colors",
-              "min-w-12 @3xl/editor:w-full @3xl/editor:py-2 @3xl/editor:px-1",
+              "flex flex-col items-center justify-center py-1.5 px-1.5 rounded-md transition-colors",
+              "min-w-10 @xl/editor:w-full @xl/editor:py-2 @xl/editor:px-1",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               "text-muted-foreground hover:text-foreground hover:bg-accent",
-              isActive && "bg-accent text-accent-foreground",
+              isActive && "bg-primary text-primary-foreground",
             )}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-4.5 w-4.5 @5xl/editor:h-6 @5xl/editor:w-6" />
             {showLabels && (
-              <span className="text-xs mt-0.5 leading-none @3xl/editor:mt-1">{tool.label}</span>
+              <span className="text-[10px] mt-0.5 leading-none @5xl/editor:text-xs @xl/editor:mt-1">
+                {tool.label}
+              </span>
             )}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="right" className="hidden @3xl/editor:block">
+        <TooltipContent side="right" className="hidden @xl/editor:block">
           {tool.label}
           {tool.shortcut && (
             <kbd className="ml-1.5 text-xs opacity-60 font-mono">{tool.shortcut}</kbd>
@@ -122,40 +125,40 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         "flex items-center justify-around",
         "bg-card border-t border-border",
         "px-1 py-1 overflow-x-auto order-last",
-        // Desktop (wide @md = 28rem / 448px): vertical left sidebar
-        "@3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:justify-start",
-        "@3xl/editor:w-18 @3xl/editor:py-2 @3xl/editor:px-0",
-        "@3xl/editor:bg-sidebar @3xl/editor:border-t-0 @3xl/editor:border-r @3xl/editor:border-sidebar-border",
-        "@3xl/editor:overflow-x-visible @3xl/editor:overflow-y-auto @3xl/editor:order-first",
+        // Desktop (wide): vertical left sidebar
+        "@xl/editor:flex-col @xl/editor:items-center @xl/editor:justify-start",
+        "@xl/editor:w-18 @xl/editor:py-2 @xl/editor:px-0",
+        "@xl/editor:bg-sidebar @xl/editor:border-t-0 @xl/editor:border-r @xl/editor:border-sidebar-border",
+        "@xl/editor:overflow-x-visible @xl/editor:overflow-y-auto @xl/editor:order-first",
       )}
     >
       {/* Editing tools */}
-      <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
+      <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
         {resolvedEditing.map(renderToolButton)}
       </div>
 
       {/* Separator between groups — desktop only */}
       {showSeparators && editingTools.length > 0 && annotationTools.length > 0 && (
-        <Separator className="hidden @3xl/editor:block my-2 w-10" />
+        <Separator className="hidden @xl/editor:block my-2 w-10" />
       )}
 
       {/* Annotation tools */}
-      <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
+      <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
         {resolvedAnnotation.map(renderToolButton)}
       </div>
 
       {/* Custom tools */}
       {customToolDefs.length > 0 && (
         <>
-          {showSeparators && <Separator className="hidden @3xl/editor:block my-2 w-10" />}
-          <div className="contents @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:items-center @3xl/editor:w-full @3xl/editor:gap-0.5 @3xl/editor:px-1.5">
+          {showSeparators && <Separator className="hidden @xl/editor:block my-2 w-10" />}
+          <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
             {customToolDefs.map(renderToolButton)}
           </div>
         </>
       )}
 
       {/* Desktop-only: sidebar bottom slot + spacer + Apps */}
-      <div className="hidden @3xl/editor:flex @3xl/editor:flex-col @3xl/editor:flex-1 @3xl/editor:w-full">
+      <div className="hidden @xl/editor:flex @xl/editor:flex-col @xl/editor:flex-1 @xl/editor:w-full">
         {sidebarBottom}
       </div>
     </nav>

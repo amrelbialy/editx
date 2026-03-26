@@ -1,0 +1,36 @@
+# Engine Overview
+
+The block-based core engine powering Creative Editor.
+
+## What is the Engine?
+
+`@creative-editor/engine` is the headless core that powers the Creative Image Editor. It provides:
+
+- **Block system** — everything is a block (pages, graphics, text, images)
+- **Command pattern** — all mutations are undoable/redoable
+- **Konva renderer** — GPU-accelerated canvas rendering
+- **EventAPI** — observable state changes
+
+The engine has **zero React dependency** and can be used standalone.
+
+## Installation
+
+```bash
+pnpm add @creative-editor/engine
+```
+
+## Architecture
+
+```
+Scene
+├── Page (block)
+│   ├── Graphic (block) — with Shape + Fill sub-blocks
+│   ├── Text (block)
+│   └── Image (block)
+└── Stack (optional grouping)
+```
+
+## Next Steps
+
+- [Blocks](/docs/engine/blocks) — the block type system
+- [Commands](/docs/engine/commands) — the undo/redo command pattern

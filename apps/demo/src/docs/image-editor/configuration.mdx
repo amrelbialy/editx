@@ -1,0 +1,38 @@
+# Configuration
+
+Customize the Creative Image Editor with tools, export settings, and more.
+
+## Overview
+
+Pass a `config` prop to `<ImageEditor>` or `<ImageEditorModal>` to customize behavior.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    tools: ["crop", "adjust", "filter", "text", "shapes"],
+    defaultTool: "crop",
+    export: {
+      formats: ["png", "jpeg", "webp"],
+      defaultFormat: "png",
+      quality: 0.92,
+    },
+  }}
+  onSave={handleSave}
+/>
+```
+
+## Available Tools
+
+| Tool | ID | Description |
+|---|---|---|
+| Crop | `"crop"` | Crop, rotate, flip, resize with presets |
+| Adjust | `"adjust"` | Brightness, contrast, saturation, etc. |
+| Filter | `"filter"` | Instagram-style photo filters |
+| Text | `"text"` | Rich text annotations with fonts |
+| Shapes | `"shapes"` | Rectangles, circles, lines, arrows |
+| Image | `"image"` | Image overlay annotations |
+
+## ImageEditorConfig
+
+Full reference coming soon. See the [Playground](/playground) to experiment with all config options live.

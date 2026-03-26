@@ -18,13 +18,33 @@ import { cn } from "../../utils/cn";
 import { ResizePresets } from "./resize-presets";
 
 const presets: { id: CropPresetId; label: string; icon: React.ReactNode }[] = [
-  { id: "free", label: "Free", icon: <Scan className="h-5 w-5" /> },
-  { id: "original", label: "Original", icon: <RectangleHorizontal className="h-5 w-5" /> },
-  { id: "1:1", label: "1:1", icon: <Square className="h-5 w-5" /> },
-  { id: "4:3", label: "4:3", icon: <RectangleHorizontal className="h-5 w-5" /> },
-  { id: "3:4", label: "3:4", icon: <RectangleVertical className="h-5 w-5" /> },
-  { id: "16:9", label: "16:9", icon: <Monitor className="h-5 w-5" /> },
-  { id: "9:16", label: "9:16", icon: <Smartphone className="h-5 w-5" /> },
+  { id: "free", label: "Free", icon: <Scan className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" /> },
+  {
+    id: "original",
+    label: "Original",
+    icon: <RectangleHorizontal className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
+  { id: "1:1", label: "1:1", icon: <Square className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" /> },
+  {
+    id: "4:3",
+    label: "4:3",
+    icon: <RectangleHorizontal className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
+  {
+    id: "3:4",
+    label: "3:4",
+    icon: <RectangleVertical className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
+  {
+    id: "16:9",
+    label: "16:9",
+    icon: <Monitor className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
+  {
+    id: "9:16",
+    label: "9:16",
+    icon: <Smartphone className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
 ];
 
 type CropTab = "aspectRatio" | "resize";
@@ -161,7 +181,8 @@ export const CropPanel: React.FC<CropPanelProps> = ({
           id="crop-tab-aspect-ratio-trigger"
           onClick={() => setTab("aspectRatio")}
           className={cn(
-            "flex-1 text-base font-medium py-1.5 rounded-md transition-colors",
+            "flex-1 text-sm font-medium py-1.5 rounded-md transition-colors @5xl/editor:text-base",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
             tab === "aspectRatio"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
@@ -177,7 +198,8 @@ export const CropPanel: React.FC<CropPanelProps> = ({
           id="crop-tab-resize-trigger"
           onClick={() => setTab("resize")}
           className={cn(
-            "flex-1 text-base font-medium py-1.5 rounded-md transition-colors",
+            "flex-1 text-sm font-medium py-1.5 rounded-md transition-colors @5xl/editor:text-base",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
             tab === "resize"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
@@ -194,7 +216,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
           id="crop-tab-aspect-ratio"
           aria-labelledby="crop-tab-aspect-ratio-trigger"
         >
-          <div className="text-base font-medium text-muted-foreground mb-1">
+          <div className="text-sm font-medium text-muted-foreground mb-1 @5xl/editor:text-base">
             {t("crop.aspectRatio")}
           </div>
           <fieldset className="grid grid-cols-2 gap-1.5" aria-label={t("a11y.aspectRatioPresets")}>
@@ -204,7 +226,8 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                 onClick={() => handleSelect(preset.id)}
                 data-testid={`crop-preset-${preset.id}`}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-md px-2 py-2.5 text-base transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-md px-1.5 py-2 text-sm transition-colors @5xl/editor:gap-1 @5xl/editor:px-2 @5xl/editor:py-2.5 @5xl/editor:text-base",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                   cropPreset === preset.id
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -228,13 +251,15 @@ export const CropPanel: React.FC<CropPanelProps> = ({
         >
           {/* Crop Area dimensions */}
           <div>
-            <div className="text-base font-medium text-muted-foreground mb-2">Crop Area</div>
+            <div className="text-sm font-medium text-muted-foreground mb-2 @5xl/editor:text-base">
+              Crop Area
+            </div>
             <div className="flex flex-col gap-2">
               {/* Width */}
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="crop-resize-width"
-                  className="text-base text-muted-foreground w-12 shrink-0"
+                  className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
                 >
                   {t("crop.width")}
                 </label>
@@ -245,10 +270,10 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                     value={resizeWidth || ""}
                     onChange={(e) => handleWidthChange(Number(e.target.value))}
                     min={1}
-                    className="flex-1 bg-transparent text-base text-foreground outline-none tabular-nums w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
                     data-testid="resize-width-input"
                   />
-                  <span className="text-base text-muted-foreground">px</span>
+                  <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
                 </div>
               </div>
 
@@ -258,6 +283,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                   onClick={() => setRatioLocked((v) => !v)}
                   className={cn(
                     "p-1 rounded transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     ratioLocked
                       ? "text-primary hover:text-primary/80"
                       : "text-muted-foreground hover:text-foreground",
@@ -267,7 +293,11 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                   title={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
                   data-testid="resize-ratio-lock"
                 >
-                  {ratioLocked ? <Link className="h-5 w-5" /> : <Unlink className="h-5 w-5" />}
+                  {ratioLocked ? (
+                    <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+                  ) : (
+                    <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+                  )}
                 </button>
               </div>
 
@@ -275,7 +305,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="crop-resize-height"
-                  className="text-base text-muted-foreground w-12 shrink-0"
+                  className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
                 >
                   {t("crop.height")}
                 </label>
@@ -286,10 +316,10 @@ export const CropPanel: React.FC<CropPanelProps> = ({
                     value={resizeHeight || ""}
                     onChange={(e) => handleHeightChange(Number(e.target.value))}
                     min={1}
-                    className="flex-1 bg-transparent text-base text-foreground outline-none tabular-nums w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
                     data-testid="resize-height-input"
                   />
-                  <span className="text-base text-muted-foreground">px</span>
+                  <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
                 </div>
               </div>
             </div>

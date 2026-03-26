@@ -3,7 +3,10 @@ import * as React from "react";
 import { cn } from "../../../utils/cn";
 import { usePopoverContainer } from "../popover-container-context";
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+const DropdownMenu: React.FC<React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>> = ({
+  modal = false,
+  ...props
+}) => <DropdownMenuPrimitive.Root modal={modal} {...props} />;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
@@ -12,11 +15,17 @@ const DropdownMenuContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => {
   const container = usePopoverContainer();
+  const preventScrollFocus = (e: Event) => {
+    e.preventDefault();
+    (e.target as HTMLElement | null)?.focus?.({ preventScroll: true });
+  };
   return (
     <DropdownMenuPrimitive.Portal container={container}>
       <DropdownMenuPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}
+        collisionBoundary={container ?? null}
+        onCloseAutoFocus={preventScrollFocus}
         className={cn(
           "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",

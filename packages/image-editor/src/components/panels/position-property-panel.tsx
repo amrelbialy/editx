@@ -166,7 +166,9 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
       {/* Move (z-order) */}
       {(onBringForward || onSendBackward || onBringToFront || onSendToBack) && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-base font-medium text-muted-foreground">Move</span>
+          <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
+            Move
+          </span>
           <div className="flex gap-1">
             <ZOrderButton
               icon={<ChevronsUp className="h-4 w-4" />}
@@ -195,7 +197,9 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
       {/* Align to Page */}
       {onAlign && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-base font-medium text-muted-foreground">Align to Page</span>
+          <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
+            Align to Page
+          </span>
           <div className="grid grid-cols-3 gap-1">
             <ZOrderButton
               icon={<AlignStartVertical className="h-4 w-4" />}

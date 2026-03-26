@@ -1,0 +1,40 @@
+# Blocks
+
+Understanding the block system in Creative Editor Engine.
+
+## Block Types
+
+Every element in the scene is a **block**. Each block has a type, optional kind, properties, and can participate in a parent-child hierarchy.
+
+| Type | Description |
+|---|---|
+| `scene` | Root container |
+| `page` | Canvas page |
+| `graphic` | Shape with fill (rect, ellipse, line, etc.) |
+| `text` | Rich text annotation |
+| `image` | Image layer |
+| `stack` | Grouping container |
+| `effect` | Effect sub-block (adjustments, filter) |
+| `shape` | Shape sub-block (rect, ellipse, polygon, etc.) |
+| `fill` | Fill sub-block (solid color, image fill) |
+
+## Sub-blocks
+
+Graphic blocks own sub-blocks for their visual properties:
+
+- **Shape** — defines geometry (`rect`, `ellipse`, `line`, `arrow`, `polygon`, `star`)
+- **Fill** — defines appearance (`solid-color`, `image`)
+- **Effects** — stackable effects (`adjustments`, `filter`)
+
+## Properties
+
+Blocks store typed key-value properties. Access them through the BlockAPI:
+
+```ts
+engine.block.getFloat(blockId, "position/x");
+engine.block.getString(blockId, "text/fontFamily");
+engine.block.getBool(blockId, "opacity/enabled");
+engine.block.getColor(blockId, "fill/solid/color");
+```
+
+Full property reference coming soon.

@@ -3,5 +3,8 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "apps/demo/dist",
   "installCommand": "pnpm install",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
 }

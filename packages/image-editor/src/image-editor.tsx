@@ -208,7 +208,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
             onClose={onClose ? handleCloseButton : undefined}
           />
 
-          <div className="flex flex-col-reverse @3xl/editor:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col-reverse @xl/editor:flex-row flex-1 overflow-hidden">
             <ToolNav
               activeTool={tools.activeToolId}
               onToolSelect={tools.handleSidebarToolSelect}

@@ -109,7 +109,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         <DropdownMenuTrigger asChild>
           <button
             onMouseDown={(e) => e.preventDefault()}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
             <div
               className="w-4 h-4 rounded-full border border-border"
@@ -127,6 +127,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
                   onClick={() => handleTextColor(c)}
                   className={cn(
                     "w-6 h-6 rounded-full border transition-transform hover:scale-110",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     state.fill === c ? "border-primary ring-2 ring-primary/30" : "border-border",
                   )}
                   style={{ backgroundColor: c }}
@@ -142,7 +143,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
                   const v = e.target.value;
                   if (/^#[0-9a-fA-F]{6}$/.test(v)) handleTextColor(v);
                 }}
-                className="flex-1 h-7 px-2 text-xs bg-background border border-border rounded-md font-mono"
+                className="flex-1 h-7 px-2 text-xs bg-background border border-border rounded-md font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 maxLength={7}
                 data-text-toolbar
               />
@@ -157,6 +158,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onClick={handleBoldToggle}
         className={cn(
           "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           state.fontWeight === "bold"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",
@@ -171,6 +173,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onClick={handleItalicToggle}
         className={cn(
           "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           state.fontStyle === "italic"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",

@@ -10,15 +10,30 @@ export interface TextPanelProps {
 }
 
 const TEXT_PRESETS: Array<SelectionGridItem & { preset: TextPreset }> = [
-  { id: "title", preset: "title", label: "Title", icon: <Heading1 className="h-5 w-5" /> },
-  { id: "heading", preset: "heading", label: "Heading", icon: <Heading className="h-5 w-5" /> },
+  {
+    id: "title",
+    preset: "title",
+    label: "Title",
+    icon: <Heading1 className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
+  {
+    id: "heading",
+    preset: "heading",
+    label: "Heading",
+    icon: <Heading className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
   {
     id: "subheading",
     preset: "subheading",
     label: "Subheading",
-    icon: <Type className="h-5 w-5" />,
+    icon: <Type className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
   },
-  { id: "body", preset: "body", label: "Body Text", icon: <AlignLeft className="h-5 w-5" /> },
+  {
+    id: "body",
+    preset: "body",
+    label: "Body Text",
+    icon: <AlignLeft className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
+  },
 ];
 
 export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {

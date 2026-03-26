@@ -40,6 +40,7 @@ interface BlockPropertiesBarProps {
 }
 
 const FONT_FAMILIES = [
+  "Inter",
   "Arial",
   "Helvetica",
   "Times New Roman",
@@ -107,6 +108,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
   const [textState, setTextState] = useState(() =>
     isText ? readTextState(engine, blockId, textSelectionRange?.from) : null,
   );
+
   const [fillColor, setFillColor] = useState(() =>
     !isText && !isImage ? readBlockColor(engine, blockId) : "#000000",
   );
@@ -291,6 +293,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       onClick={() => togglePanel(panel)}
       className={cn(
         "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         propertySidePanel === panel
           ? "bg-primary/20 text-primary ring-1 ring-primary/30"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -341,6 +344,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             aria-pressed={textState.fontWeight === "bold"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               textState.fontWeight === "bold"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent",
@@ -356,6 +360,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             aria-pressed={textState.fontStyle === "italic"}
             className={cn(
               "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               textState.fontStyle === "italic"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent",
@@ -376,13 +381,13 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                 onChange={handleFontSize}
                 min={1}
                 max={500}
-                className="w-12 h-7 rounded-l-md border border-border bg-background px-1.5 text-xs text-center tabular-nums"
+                className="w-12 h-7 rounded-l-md border border-border bg-background px-1.5 text-xs text-center tabular-nums focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 data-text-toolbar
               />
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="h-7 px-0.5 rounded-r-md border border-l-0 border-border bg-background text-muted-foreground hover:bg-accent transition-colors flex items-center"
+                  className="h-7 px-0.5 rounded-r-md border border-l-0 border-border bg-background text-muted-foreground hover:bg-accent transition-colors flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                   data-text-toolbar
                 >
                   <ChevronDown className="h-3 w-3" />
@@ -403,6 +408,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                     onClick={() => handleFontSizePreset(size)}
                     className={cn(
                       "px-3 py-1 rounded-md text-xs tabular-nums text-left transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       Math.round(textState.fontSize) === size
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -423,7 +429,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 aria-label={t("block.textAlignment")}
               >
                 {textState.textAlign === "center" ? (
@@ -451,6 +457,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                     onClick={() => handleTextAlign(align)}
                     className={cn(
                       "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       textState.textAlign === align
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent",
@@ -475,7 +482,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 aria-label={t("block.moreTextOptions")}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -489,6 +496,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   onClick={handleUnderlineToggle}
                   className={cn(
                     "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     textState.textDecoration.includes("underline")
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -503,6 +511,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   onClick={handleStrikethroughToggle}
                   className={cn(
                     "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     textState.textDecoration.includes("line-through")
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -516,7 +525,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleClearFormatting}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 >
                   <RemoveFormatting className="h-4 w-4" />
                   {t("block.clearFormatting")}
@@ -560,6 +569,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
           aria-pressed={!engine.block.isFillEnabled(blockId)}
           className={cn(
             "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
             !engine.block.isFillEnabled(blockId)
               ? "bg-primary/20 text-primary"
               : "text-muted-foreground hover:bg-accent",
@@ -607,6 +617,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               type="button"
               className={cn(
                 "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 propertySidePanel === "adjust" || propertySidePanel === "filter"
                   ? "bg-primary/20 text-primary ring-1 ring-primary/30"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -623,6 +634,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               onClick={() => togglePanel("adjust")}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 propertySidePanel === "adjust"
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -636,6 +648,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               onClick={() => togglePanel("filter")}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-sm transition-colors",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 propertySidePanel === "filter"
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -658,6 +671,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             type="button"
             className={cn(
               "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >

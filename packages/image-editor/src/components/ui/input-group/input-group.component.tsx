@@ -19,8 +19,14 @@ export const InputGroup: React.FC<InputGroupProps> = (props) => {
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      {label && <span className="text-base text-muted-foreground w-4 shrink-0">{label}</span>}
-      {prefix && <span className="text-base text-muted-foreground">{prefix}</span>}
+      {label && (
+        <span className="text-sm text-muted-foreground w-4 shrink-0 @5xl/editor:text-base">
+          {label}
+        </span>
+      )}
+      {prefix && (
+        <span className="text-sm text-muted-foreground @5xl/editor:text-base">{prefix}</span>
+      )}
       <input
         type={type}
         value={type === "number" && typeof value === "number" ? Math.round(value) : value}
@@ -28,10 +34,12 @@ export const InputGroup: React.FC<InputGroupProps> = (props) => {
         min={min}
         max={max}
         step={step}
-        className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full px-1.5 py-1 bg-muted border border-border rounded-md text-foreground text-sm @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         data-testid={rest["data-testid"]}
       />
-      {suffix && <span className="text-base text-muted-foreground">{suffix}</span>}
+      {suffix && (
+        <span className="text-sm text-muted-foreground @5xl/editor:text-base">{suffix}</span>
+      )}
     </div>
   );
 };

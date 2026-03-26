@@ -16,7 +16,7 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "flex h-7 items-center justify-between gap-1 rounded-md border border-border bg-background px-2 text-xs",
-      "placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+      "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
       "[&>span]:line-clamp-1",
       className,
     )}
@@ -61,12 +61,14 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 const SelectContent = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => {
+>(({ className, children, position = "item-aligned", ...props }, ref) => {
   const container = usePopoverContainer();
+
   return (
     <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         ref={ref}
+        // collisionBoundary={container ?? null}
         className={cn(
           "relative z-50 max-h-60 min-w-[8rem] overflow-hidden rounded-lg border border-border bg-card shadow-lg",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",

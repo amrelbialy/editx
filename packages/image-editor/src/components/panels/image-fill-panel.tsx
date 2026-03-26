@@ -74,7 +74,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
       <button
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "flex items-center justify-center gap-2 w-full h-9 rounded-md text-base font-medium transition-colors",
+          "flex items-center justify-center gap-2 w-full h-8 rounded-md text-sm font-medium transition-colors @5xl/editor:h-9 @5xl/editor:text-base",
           "bg-accent hover:bg-accent/80 text-accent-foreground",
         )}
       >
@@ -92,18 +92,18 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
 
       {/* Dimensions info */}
       <div className="flex flex-col gap-2">
-        <h4 className="text-base font-medium text-muted-foreground uppercase tracking-wide">
+        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide @5xl/editor:text-base">
           Dimensions
         </h4>
-        <div className="grid grid-cols-2 gap-2 text-base">
+        <div className="grid grid-cols-2 gap-2 text-sm @5xl/editor:text-base">
           <div className="flex flex-col gap-0.5">
-            <span className="text-base text-muted-foreground">Display</span>
+            <span className="text-sm text-muted-foreground @5xl/editor:text-base">Display</span>
             <span className="tabular-nums">
               {blockWidth} × {blockHeight}
             </span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-base text-muted-foreground">Original</span>
+            <span className="text-sm text-muted-foreground @5xl/editor:text-base">Original</span>
             <span className="tabular-nums">
               {Math.round(originalWidth)} × {Math.round(originalHeight)}
             </span>

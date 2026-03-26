@@ -26,7 +26,7 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
       aria-label={t("a11y.imageEditor")}
       style={style}
       className={cn(
-        "@container/editor flex flex-col h-full w-full overflow-hidden",
+        "@container/editor flex flex-col h-full w-full overflow-clip",
         "bg-background text-foreground",
         className,
       )}

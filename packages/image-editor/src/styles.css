@@ -13,10 +13,10 @@
 
 @theme inline {
   /* Border radius scale (used by rounded-sm / rounded-md / rounded-lg / rounded-xl) */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius, 0.5rem) - 4px);
+  --radius-md: calc(var(--radius, 0.5rem) - 2px);
+  --radius-lg: var(--radius, 0.5rem);
+  --radius-xl: calc(var(--radius, 0.5rem) + 4px);
 
   /* Semantic colors – Tailwind will generate bg-*, text-*, border-* utilities */
   --color-background: var(--background);

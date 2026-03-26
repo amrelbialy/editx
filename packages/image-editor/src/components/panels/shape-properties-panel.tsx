@@ -248,7 +248,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
             type="color"
             value={state.fillColor}
             onChange={handleFillColor}
-            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           />
           <span className="text-base font-mono text-muted-foreground">{state.fillColor}</span>
         </div>
@@ -309,7 +309,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
               type="color"
               value={state.strokeColor}
               onChange={handleStrokeColor}
-              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
             />
             <span className="text-base font-mono text-muted-foreground">{state.strokeColor}</span>
           </div>
@@ -339,7 +339,7 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
               type="color"
               value={state.shadowColor}
               onChange={handleShadowColor}
-              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
+              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
             />
             <span className="text-base font-mono text-muted-foreground">{state.shadowColor}</span>
           </div>

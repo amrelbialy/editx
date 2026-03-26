@@ -1,0 +1,43 @@
+# API Reference
+
+Complete props reference for ImageEditor and ImageEditorModal components.
+
+## ImageEditor
+
+The main editor component. Renders inline at the given dimensions.
+
+### Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `src` | `string \| File` | — | **Required.** Image source URL or File object |
+| `onSave` | `(blob: Blob) => void` | — | Called when the user exports the image |
+| `onClose` | `(reason?, hasUnsavedChanges?) => void` | — | Called when the editor closes |
+| `width` | `string \| number` | `"100%"` | Editor width |
+| `height` | `string \| number` | `"100%"` | Editor height |
+| `config` | `ImageEditorConfig` | `{}` | Editor configuration |
+| `slots` | `EditorSlots` | — | Custom UI slots |
+| `events` | `EditorEventCallbacks` | — | Event callbacks |
+| `validation` | `ImageValidationOptions` | — | File validation rules |
+| `keepZoomOnSourceChange` | `boolean` | `false` | Preserve zoom when `src` changes |
+
+## ImageEditorModal
+
+Wraps `ImageEditor` in a Radix Dialog for modal usage.
+
+### Props
+
+All `ImageEditor` props, plus:
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | — | **Required.** Control modal visibility |
+| `onOpenChange` | `(open: boolean) => void` | — | Called when visibility changes |
+
+## EditorSlots
+
+| Slot | Type | Description |
+|---|---|---|
+| `topbarLeft` | `ReactNode` | Content in the top bar, left side |
+| `topbarCenter` | `ReactNode` | Content in the top bar, center |
+| `topbarRight` | `ReactNode` | Content in the top bar, right side |

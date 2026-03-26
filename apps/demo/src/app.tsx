@@ -14,7 +14,7 @@ import { GripVertical, ImageIcon, Link, Upload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { demoPresets } from "./theme/presets";
 
-const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200";
+const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=2000&q=90";
 
 /** Built-in presets (shipped with the package) + demo-only showcase presets. */
 const ALL_PRESETS = ["dark", "light", ...Object.keys(demoPresets)] as const;

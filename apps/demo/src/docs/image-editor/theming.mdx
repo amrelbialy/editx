@@ -1,0 +1,54 @@
+# Theming
+
+Customize the look and feel of the Creative Image Editor with themes.
+
+## Built-in Presets
+
+Two presets ship out of the box:
+
+```tsx
+// Dark theme (default)
+<ImageEditor src="/photo.jpg" config={{ theme: { preset: "dark" } }} />
+
+// Light theme
+<ImageEditor src="/photo.jpg" config={{ theme: { preset: "light" } }} />
+```
+
+## Custom Colors
+
+Override any color token with the `colors` property:
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    theme: {
+      preset: "custom",
+      colors: {
+        background: "240 10% 4%",
+        foreground: "0 0% 95%",
+        primary: "262 83% 58%",
+        "primary-foreground": "0 0% 100%",
+        accent: "262 83% 58%",
+      },
+    },
+  }}
+/>
+```
+
+Color values use HSL format without the `hsl()` wrapper (e.g., `"262 83% 58%"`).
+
+## ThemeConfig Reference
+
+| Property | Type | Description |
+|---|---|---|
+| `preset` | `"dark" \| "light" \| "custom"` | Base preset |
+| `colors` | `Partial<Record<ThemeColorKey, string>>` | Override individual color tokens |
+| `borderRadius` | `string` | Global border radius |
+| `fontFamily` | `string` | Global font family |
+
+## Available Color Keys
+
+`background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `primary`, `primary-foreground`, `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `destructive`, `destructive-foreground`, `border`, `input`, `ring`
+
+See the [Playground](/playground) to preview themes live.

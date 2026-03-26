@@ -27,8 +27,9 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
               <span className="text-base font-medium text-foreground">{group.label}</span>
               {hasMore && (
                 <button
+                  type="button"
                   onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
-                  className="text-base text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-base text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background rounded-sm"
                 >
                   {isExpanded ? "Less" : `More (${group.presets.length - VISIBLE_COUNT})`}
                 </button>
@@ -40,17 +41,23 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
                   activePreset?.width === preset.width && activePreset?.height === preset.height;
                 return (
                   <button
+                    type="button"
                     key={`${preset.width}x${preset.height}-${preset.label}`}
                     onClick={() => onSelect(preset)}
                     className={cn(
-                      "flex flex-col items-center gap-1 rounded-md px-1.5 py-2 text-base transition-colors min-w-0",
+                      "flex flex-col items-center justify-start rounded-md px-1.5 py-2 text-base transition-colors min-w-0",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
-                    <PresetIcon width={preset.width} height={preset.height} active={isActive} />
-                    <span className="text-center leading-tight line-clamp-2">{preset.label}</span>
+                    <div className="flex items-center justify-center h-7">
+                      <PresetIcon width={preset.width} height={preset.height} active={isActive} />
+                    </div>
+                    <span className="text-center leading-tight line-clamp-2 mt-1">
+                      {preset.label}
+                    </span>
                   </button>
                 );
               })}

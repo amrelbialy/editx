@@ -174,7 +174,13 @@ function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    editor.focus();
+    editor.focus(
+      () => {
+        const root = editor.getRootElement();
+        root?.focus({ preventScroll: true });
+      },
+      { defaultSelection: "rootStart" },
+    );
   }, [editor]);
 
   return null;

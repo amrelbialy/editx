@@ -1,0 +1,47 @@
+# Commands
+
+The command pattern for undo/redo in Creative Editor Engine.
+
+## Command Pattern
+
+All document mutations go through the **command system**. This ensures every change is:
+
+- **Undoable** — `Ctrl+Z` reverts the last change
+- **Redoable** — `Ctrl+Shift+Z` re-applies it
+- **Atomic** — multiple property changes can be batched into one undo step
+
+## Usage
+
+```ts
+// Commands are executed through the engine
+engine.execute(someCommand);
+
+// Undo / Redo
+engine.history.undo();
+engine.history.redo();
+engine.history.canUndo(); // boolean
+engine.history.canRedo(); // boolean
+```
+
+## Built-in Commands
+
+The engine ships commands for all standard operations:
+
+- Block CRUD (create, destroy)
+- Property changes (position, size, rotation, opacity, color)
+- Hierarchy mutations (append, remove, reorder children)
+- Effect management (add, remove, reorder effects)
+- Crop & transform operations
+
+## Custom Commands
+
+Extend the editor by creating your own commands. Each command implements `execute()` and `undo()`:
+
+```ts
+class MyCommand implements Command {
+  execute(engine: Engine): void { /* apply change */ }
+  undo(engine: Engine): void { /* revert change */ }
+}
+```
+
+Detailed command authoring guide coming soon.
