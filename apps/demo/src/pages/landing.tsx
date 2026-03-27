@@ -138,7 +138,7 @@ function HeroSection() {
           style={{ animationDelay: "0.1s" }}
         >
           A block-based image editor component for React 19. Crop, adjust, filter, add text & shapes
-          â€” fully themeable and extensible.
+          — fully themeable and extensible.
         </p>
 
         <div
