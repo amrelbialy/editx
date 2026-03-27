@@ -15,6 +15,8 @@ const PRESET_CONFIG: Record<
   body: { fontSizeScale: 1, fontWeight: "normal", text: "Body text" },
 };
 
+const REFERENCE_DIM = 1080;
+
 export interface UseTextToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
 }
@@ -30,13 +32,14 @@ export function useTextTool({ engineRef }: UseTextToolOptions) {
 
       const presetConfig = PRESET_CONFIG[preset];
       const baseFontSize = config.text?.defaultFontSize ?? 24;
-      const fontSize = Math.round(baseFontSize * presetConfig.fontSizeScale);
       const fontFamily = config.text?.defaultFontFamily ?? config.text?.fonts?.[0] ?? "Arial";
       const fill = config.text?.defaultColor ?? "#ffffff";
 
       const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
+      const scaleFactor = Math.min(pageW, pageH) / REFERENCE_DIM;
+      const fontSize = Math.round(baseFontSize * presetConfig.fontSizeScale * scaleFactor);
 
-      const width = Math.min(pageW * 0.35, 400);
+      const width = Math.min(pageW * 0.35, 400 * scaleFactor);
       const height = fontSize * 1.5;
       const x = (pageW - width) / 2;
       const y = (pageH - height) / 2;
