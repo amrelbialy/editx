@@ -173,13 +173,13 @@ function HeroSection() {
         </div>
         <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-zinc-400">
           <span>React 19</span>
-          <span>Â·</span>
+          <span>&middot;</span>
           <span>TypeScript</span>
-          <span>Â·</span>
+          <span>&middot;</span>
           <span>Konva 10</span>
-          <span>Â·</span>
+          <span>&middot;</span>
           <span>Tailwind CSS 4</span>
-          <span>Â·</span>
+          <span>&middot;</span>
           <span>Fully Themeable</span>
         </div>
       </div>
