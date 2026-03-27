@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: "Playground", href: "/playground" },
 ];
 
-const GITHUB_URL = "https://github.com/nicholasgriffintn/editx";
+const GITHUB_URL = "https://github.com/amrelbialy/editx";
 const NPM_URL = "https://www.npmjs.com/package/@editx/image-editor";
 
 function isActive(pathname: string, href: string) {
