@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockRenderer } from "../__tests__/mocks/mock-renderer";
-import { CreativeEngine } from "../creative-engine";
+import { EditxEngine } from "../editx-engine";
 import type { Color } from "./block.types";
 import { BlockAPI } from "./block-api";
 import {
@@ -25,11 +25,11 @@ import {
 } from "./property-keys";
 
 describe("BlockAPI", () => {
-  let engine: CreativeEngine;
+  let engine: EditxEngine;
   let block: BlockAPI;
 
   beforeEach(() => {
-    engine = new CreativeEngine({ renderer: undefined });
+    engine = new EditxEngine({ renderer: undefined });
     block = new BlockAPI(engine);
   });
 
@@ -295,7 +295,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── CESDK-style Block Crop API ─────────────────────
+  // â”€â”€ CESDK-style Block Crop API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("CESDK-style crop API", () => {
     it("supportsCrop returns true for image and page blocks", () => {
@@ -503,7 +503,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── Selection ──────────────────────────────────────────
+  // â”€â”€ Selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("selection", () => {
     it("select() selects a single block", () => {
@@ -579,7 +579,7 @@ describe("BlockAPI", () => {
 
     it("calls renderer.showTransformer when selecting", () => {
       const renderer = createMockRenderer();
-      const eng = new CreativeEngine({ renderer });
+      const eng = new EditxEngine({ renderer });
       const b = new BlockAPI(eng);
       const id = b.create("graphic");
       b.select(id);
@@ -588,7 +588,7 @@ describe("BlockAPI", () => {
 
     it("calls renderer.hideTransformer when deselecting all", () => {
       const renderer = createMockRenderer();
-      const eng = new CreativeEngine({ renderer });
+      const eng = new EditxEngine({ renderer });
       const b = new BlockAPI(eng);
       const id = b.create("graphic");
       b.select(id);
@@ -597,7 +597,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── addImage ─────────────────────────────────────────
+  // â”€â”€ addImage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("addImage", () => {
     it("creates an image block with correct properties", () => {
@@ -626,7 +626,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── Z-order ──────────────────────────────────────────
+  // â”€â”€ Z-order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("z-order", () => {
     let page: number;
@@ -683,7 +683,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── Alignment ────────────────────────────────────────
+  // â”€â”€ Alignment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("alignToPage", () => {
     let page: number;
@@ -730,7 +730,7 @@ describe("BlockAPI", () => {
     });
   });
 
-  // ── Duplicate ────────────────────────────────────────
+  // â”€â”€ Duplicate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("duplicate", () => {
     it("creates a copy with offset position", () => {

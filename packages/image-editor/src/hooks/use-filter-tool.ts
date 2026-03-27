@@ -1,9 +1,9 @@
-import { type CreativeEngine, EFFECT_FILTER_NAME } from "@creative-editor/engine";
+import { type EditxEngine, EFFECT_FILTER_NAME } from "@editx/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseFilterToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useFilterTool({ engineRef }: UseFilterToolOptions) {
@@ -61,7 +61,7 @@ export function useFilterTool({ engineRef }: UseFilterToolOptions) {
     return ce.onHistoryChanged(() => {
       const eid = filterEffectIdRef.current;
       if (eid === null || !ce.block.exists(eid)) {
-        // Effect was destroyed by undo — re-discover it
+        // Effect was destroyed by undo â€” re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
           const found = effects.find((id) => ce.block.getKind(id) === "filter");

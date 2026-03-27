@@ -1,9 +1,9 @@
-import { type CreativeEngine, toPrecisedFloat } from "@creative-editor/engine";
+import { type EditxEngine, toPrecisedFloat } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
 import { type CropPresetId, useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseCropToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useCropTool({ engineRef }: UseCropToolOptions) {
@@ -91,7 +91,7 @@ export function useCropTool({ engineRef }: UseCropToolOptions) {
     setCropDimensions(null);
   }, [engineRef, setActiveTool]);
 
-  // ── Resize-tab handlers ──
+  // â”€â”€ Resize-tab handlers â”€â”€
 
   /** Set the crop overlay to exact pixel dimensions. */
   const handleResizeDimensions = useCallback(

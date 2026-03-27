@@ -1,5 +1,5 @@
 {
-  "name": "@creative-editor/image-editor",
+  "name": "@editx/image-editor",
   "version": "0.0.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-rc.0",
-    "@creative-editor/engine": "workspace:*",
+    "@editx/engine": "workspace:*",
     "@lexical/react": "^0.42.0",
     "@lexical/selection": "^0.42.0",
     "@radix-ui/react-dialog": "^1.1.15",

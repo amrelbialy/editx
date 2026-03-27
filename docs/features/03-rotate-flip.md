@@ -41,7 +41,7 @@ As a user, I click the Rotate tool in the toolbar. A side panel appears with a r
 
 ## Architecture Decision
 
-In filerobot, rotation and flip are stored as separate global `adjustments` properties (not under crop). In the creative engine's block model, we use the existing `CROP_ROTATION`, `CROP_FLIP_HORIZONTAL`, and `CROP_FLIP_VERTICAL` properties — these are already on the block and wired into the Konva node factory's flip rendering. However, rotation via `CROP_ROTATION` is NOT currently rendered by the node factory.
+In filerobot, rotation and flip are stored as separate global `adjustments` properties (not under crop). In the editx engine's block model, we use the existing `CROP_ROTATION`, `CROP_FLIP_HORIZONTAL`, and `CROP_FLIP_VERTICAL` properties — these are already on the block and wired into the Konva node factory's flip rendering. However, rotation via `CROP_ROTATION` is NOT currently rendered by the node factory.
 
 **Decision:** Add a new `IMAGE_ROTATION` property for the rotate tool's continuous rotation (degrees). Keep `CROP_FLIP_HORIZONTAL/VERTICAL` for flip (already rendered). This separation allows:
 

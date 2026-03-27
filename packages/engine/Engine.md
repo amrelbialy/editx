@@ -1,7 +1,7 @@
 ---
 ## title: Engine Design & Implementation
 
-# Engine Design — Creative Editor
+# Engine Design â€” Editx
 
 This document contains: 1) a concise design spec for the Engine (replacing Controller), and 2) a ready-to-drop TypeScript implementation skeleton (Engine, Command pattern, HistoryManager, SelectionManager, RendererAdapter interface) you can iterate on.
 ---
@@ -104,7 +104,7 @@ interface EngineNode {
 
 ## Implementation skeleton
 
-The following TypeScript skeleton is intentionally small and focused — it gives you a working Engine with commands, history, selection, event bus, and a renderer adapter hook. Extend it to your needs.
+The following TypeScript skeleton is intentionally small and focused â€” it gives you a working Engine with commands, history, selection, event bus, and a renderer adapter hook. Extend it to your needs.
 
 ```ts
 // packages/engine/src/types.ts

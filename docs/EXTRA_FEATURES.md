@@ -1,4 +1,4 @@
-# Extra Features — Post-Master-Plan Additions
+# Extra Features â€” Post-Master-Plan Additions
 
 This document tracks features, improvements, and fixes added after the [Master Plan](MASTER_PLAN.md) feature set was completed. Each entry references the same architecture and codebase conventions established in the master plan.
 
@@ -10,7 +10,7 @@ This document tracks features, improvements, and fixes added after the [Master P
   - **Block API:** https://img.ly/docs/cesdk/js/api/engine/classes/blockapi/
   - **Editor API:** https://img.ly/docs/cesdk/js/api/cesdk-js/classes/editorapi/
   - **Scene API:** https://img.ly/docs/cesdk/js/api/cesdk-js/classes/sceneapi/
-  - **Creative Engine:** https://img.ly/docs/cesdk/js/api/engine/classes/creativeengine/
+  - **editx engine:** https://img.ly/docs/cesdk/js/api/engine/classes/EditxEngine/
 
 ---
 
@@ -19,16 +19,16 @@ This document tracks features, improvements, and fixes added after the [Master P
 | #   | Feature / Fix          | Status   | Engine Changes                                    | UI Changes                                            |
 | --- | ---------------------- | -------- | ------------------------------------------------- | ----------------------------------------------------- |
 | E1  | Zoom Dropdown Menu     | **done** | `fitToSelection()` on EditorViewport & EditorAPI  | Zoom dropdown with presets, fit modes, keyboard hints |
-| E2  | Zoom Center Anchor Fix | **done** | `KonvaCamera.setZoom()` preserves viewport center | — (behavioral fix, no UI change)                      |
+| E2  | Zoom Center Anchor Fix | **done** | `KonvaCamera.setZoom()` preserves viewport center | â€” (behavioral fix, no UI change)                      |
 | E3  | Animated Zoom          | **done** | `animate` param on setZoom/fitToScreen/fitToRect  | All zoom actions animate with 200ms ease-out cubic    |
 
 ---
 
-## E2 — Zoom Center Anchor Fix
+## E2 â€” Zoom Center Anchor Fix
 
 ### Problem
 
-`KonvaCamera.setZoom()` only set the zoom level without adjusting the pan offset. This meant the zoom anchor was at world origin (0,0) — zooming in/out caused the viewport to drift toward the top-left corner instead of staying centered on the content.
+`KonvaCamera.setZoom()` only set the zoom level without adjusting the pan offset. This meant the zoom anchor was at world origin (0,0) â€” zooming in/out caused the viewport to drift toward the top-left corner instead of staying centered on the content.
 
 **Reference:** img.ly CE.SDK zooms around the viewport center, keeping the content visually stable.
 
@@ -51,7 +51,7 @@ newPan.y = viewportCenterY - worldY * newZoom
 
 ---
 
-## E3 — Animated Zoom
+## E3 â€” Animated Zoom
 
 ### Problem
 
@@ -59,7 +59,7 @@ All zoom operations (zoom in/out, fit to screen, fit to selection, presets) appl
 
 ### Solution
 
-Added an `animate` parameter (default `false`) throughout the zoom API chain: `KonvaCamera` → `KonvaRendererAdapter` → `RenderAdapter` interface → `EditorViewport` → `EditorAPI`.
+Added an `animate` parameter (default `false`) throughout the zoom API chain: `KonvaCamera` â†’ `KonvaRendererAdapter` â†’ `RenderAdapter` interface â†’ `EditorViewport` â†’ `EditorAPI`.
 
 **Animation implementation** in `KonvaCamera.#animateTo()`:
 
@@ -82,15 +82,15 @@ All UI zoom callbacks in `image-editor.tsx` now pass `animate = true`.
 
 ---
 
-## E1 — Zoom Dropdown Menu
+## E1 â€” Zoom Dropdown Menu
 
 ### Problem
 
-The original zoom UI had only three bare controls: a zoom-out icon button, a label button (showing "Auto"), and a zoom-in icon button. Clicking the label just called `fitToScreen()`. There were no preset zoom levels, no "Fit Selection" option, and no visual cue for the current zoom percentage — the label always showed "Auto".
+The original zoom UI had only three bare controls: a zoom-out icon button, a label button (showing "Auto"), and a zoom-in icon button. Clicking the label just called `fitToScreen()`. There were no preset zoom levels, no "Fit Selection" option, and no visual cue for the current zoom percentage â€” the label always showed "Auto".
 
 ### Reference
 
-- **Filerobot:** `temp/filerobot-image-editor/packages/react-filerobot-image-editor/src/components/buttons/ZoomButtons/` — dropdown menu with 10 presets (Fit, 100%, 25%–1000%).
+- **Filerobot:** `temp/filerobot-image-editor/packages/react-filerobot-image-editor/src/components/buttons/ZoomButtons/` â€” dropdown menu with 10 presets (Fit, 100%, 25%â€“1000%).
 - **Filerobot useZoom hook:** `temp/filerobot-image-editor/packages/react-filerobot-image-editor/src/hooks/useZoom.js`
 
 ### Solution
@@ -101,9 +101,9 @@ Added `fitToSelection(padding?)` to `EditorViewport` and `EditorAPI`:
 
 - Computes the union bounding box of all currently-selected blocks (position + size).
 - Delegates to the existing `renderer.fitToRect(bbox, padding)`.
-- `KonvaCamera.fitToRect()` was already implemented — no camera changes needed.
+- `KonvaCamera.fitToRect()` was already implemented â€” no camera changes needed.
 
-#### UI — ZoomMenu component
+#### UI â€” ZoomMenu component
 
 Replaced the plain zoom label button with a `<ZoomMenu>` dropdown (Radix `DropdownMenu` primitives). The zoom-in and zoom-out icon buttons remain flanking the dropdown.
 
@@ -111,27 +111,27 @@ Replaced the plain zoom label button with a `<ZoomMenu>` dropdown (Radix `Dropdo
 
 | Item          | Action                                     | Shortcut |
 | ------------- | ------------------------------------------ | -------- |
-| Auto-Fit Page | `fitToScreen(24)` — fit with 24px padding  |          |
-| Fit Page      | `fitToScreen(0)` — fit with no padding     |          |
-| Fit Selection | `fitToSelection()` — fit selected block(s) |          |
+| Auto-Fit Page | `fitToScreen(24)` â€” fit with 24px padding  |          |
+| Fit Page      | `fitToScreen(0)` â€” fit with no padding     |          |
+| Fit Selection | `fitToSelection()` â€” fit selected block(s) |          |
 | _(separator)_ |                                            |          |
 | 200% Zoom     | `setZoom(2.0 * fitScale)`                  |          |
-| 100% Zoom     | `setZoom(fitScale)` (1:1 pixel mapping)    | ⇧2       |
+| 100% Zoom     | `setZoom(fitScale)` (1:1 pixel mapping)    | â‡§2       |
 | 50% Zoom      | `setZoom(0.5 * fitScale)`                  |          |
 | _(separator)_ |                                            |          |
-| Zoom In       | Multiply zoom by 1.25×                     | +        |
-| Zoom Out      | Multiply zoom by 0.8×                      | -        |
+| Zoom In       | Multiply zoom by 1.25Ã—                     | +        |
+| Zoom Out      | Multiply zoom by 0.8Ã—                      | -        |
 
-**Zoom label:** Shows the current zoom percentage (e.g. "41%") next to a chevron icon. The percentage is computed relative to the image's natural size — 100% means each image pixel maps to one screen pixel.
+**Zoom label:** Shows the current zoom percentage (e.g. "41%") next to a chevron icon. The percentage is computed relative to the image's natural size â€” 100% means each image pixel maps to one screen pixel.
 
 **Fit Selection** is disabled when no block is selected.
 
 #### Keyboard Shortcuts
 
-- `+` / `=` — Zoom in (existing)
-- `-` — Zoom out (existing)
-- `0` — Fit to screen (existing)
-- `Shift+2` — 100% zoom (actual pixel size) — **new**
+- `+` / `=` â€” Zoom in (existing)
+- `-` â€” Zoom out (existing)
+- `0` â€” Fit to screen (existing)
+- `Shift+2` â€” 100% zoom (actual pixel size) â€” **new**
 
 ### Files Changed
 
@@ -139,7 +139,7 @@ Replaced the plain zoom label button with a `<ZoomMenu>` dropdown (Radix `Dropdo
 | ---------------------------------------------------------- | ----------------------------------------------- |
 | `packages/engine/src/editor/editor-viewport.ts`            | Added `fitToSelection()` method                 |
 | `packages/engine/src/editor/editor-api.ts`                 | Exposed `fitToSelection()` (one-liner delegate) |
-| `packages/image-editor/src/components/shell/zoom-menu.tsx` | **New** — ZoomMenu dropdown component           |
+| `packages/image-editor/src/components/shell/zoom-menu.tsx` | **New** â€” ZoomMenu dropdown component           |
 | `packages/image-editor/src/components/shell/topbar.tsx`    | Integrated ZoomMenu, updated props              |
 | `packages/image-editor/src/image-editor.tsx`               | Wired zoom callbacks, zoom mode tracking        |
 | `packages/image-editor/src/hooks/use-shortcuts.ts`         | Added `onZoom100` action + `Shift+2` shortcut   |

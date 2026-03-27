@@ -9,7 +9,7 @@ import {
   Separator,
   type ThemeConfig,
   ThemeProvider,
-} from "@creative-editor/image-editor";
+} from "@editx/image-editor";
 import { GripVertical, ImageIcon, Link, Upload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { demoPresets } from "./theme/presets";
@@ -102,11 +102,11 @@ function App() {
 
   /** Resolve preset name to a ThemeConfig object. */
   const themeConfig = useMemo((): ThemeConfig => {
-    // Built-in presets (dark / light) — pass by name
+    // Built-in presets (dark / light) â€” pass by name
     if (themePreset === "dark" || themePreset === "light") {
       return { preset: themePreset };
     }
-    // Demo presets — pass colors directly
+    // Demo presets â€” pass colors directly
     const colors = demoPresets[themePreset];
     return colors ? { preset: "custom", colors } : { preset: "dark" };
   }, [themePreset]);
@@ -163,7 +163,7 @@ function App() {
         {/* Card */}
         <div className="w-full max-w-md bg-card text-card-foreground border border-border rounded-xl shadow-lg p-8 flex flex-col items-center gap-6">
           <div className="text-center space-y-1.5">
-            <h1 className="text-2xl font-semibold tracking-tight">Creative Image Editor</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Editx Image Editor</h1>
             <p className="text-sm text-muted-foreground">Choose an image to get started</p>
           </div>
 

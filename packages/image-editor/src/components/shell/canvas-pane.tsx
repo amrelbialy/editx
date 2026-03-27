@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import React, { useCallback, useEffect } from "react";
 import type { EditorSlots } from "../../config/config.types";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
@@ -12,7 +12,7 @@ import { ToolPropertiesBar } from "./tool-properties-bar";
 
 interface CanvasPaneProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
-  engine: CreativeEngine | null;
+  engine: EditxEngine | null;
   activeTool: string;
   selectedShapeId: number | null;
   selectedBlockType: string | null;

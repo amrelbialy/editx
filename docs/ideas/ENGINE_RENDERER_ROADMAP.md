@@ -1,16 +1,16 @@
 ---
 
-## title: Scalability Roadmap & Renderer‑ready Folder Structure
+## title: Scalability Roadmap & Rendererâ€‘ready Folder Structure
 
-# Scalability Roadmap — Creative Editor
+# Scalability Roadmap â€” Editx
 
-This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Konva/Pixi-based prototype to a production-grade, WebGL/Custom‑renderer engine (img.ly style) while keeping the engine pure and swap‑friendly.
+This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Konva/Pixi-based prototype to a production-grade, WebGL/Customâ€‘renderer engine (img.ly style) while keeping the engine pure and swapâ€‘friendly.
 
-> **Principle:** keep the **Engine (document + commands)** pure and renderer‑agnostic. Upgrade renderers independently.
+> **Principle:** keep the **Engine (document + commands)** pure and rendererâ€‘agnostic. Upgrade renderers independently.
 
 ## Quick overview (phases)
 
-* **Phase 0 — Stable Engine** (now)
+* **Phase 0 â€” Stable Engine** (now)
 
   * Clean document schema (scene graph JSON)
   * Commands & Event bus
@@ -18,7 +18,7 @@ This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Ko
   * Renderer adapters (Konva, Pixi)
   * React UI driving the engine via commands
 
-* **Phase 1 — Performance & UX** (3–6 months)
+* **Phase 1 â€” Performance & UX** (3â€“6 months)
 
   * Profile hotspots (rendering, text shaping, large images)
   * Add renderer adapter improvements (batch updates, virtualized layers)
@@ -26,21 +26,21 @@ This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Ko
   * Better asset streaming + lazy load
   * Advanced caching (GPU textures / image bitmaps)
 
-* **Phase 2 — Effect Pipeline & Text Engine** (6–12 months)
+* **Phase 2 â€” Effect Pipeline & Text Engine** (6â€“12 months)
 
-  * Implement non‑destructive adjustment layers (engine model)
+  * Implement nonâ€‘destructive adjustment layers (engine model)
   * Design GPU effect pipeline API (passes, shaders)
   * Adopt/implement advanced text shaping (shaping libs, HarfBuzz or use platform text atlas)
   * Add mask & blend group primitives in the engine
 
-* **Phase 3 — Custom WebGL Renderer (or WebGPU)** (12–24 months)
+* **Phase 3 â€” Custom WebGL Renderer (or WebGPU)** (12â€“24 months)
 
   * Implement a standalone renderer service that consumes the engine's scene graph
   * Build shader-based filter stack and multi-pass compositor
-  * Support high‑quality export (print/PDF/bitmap at arbitrary resolution)
-  * Add multi‑renderer testing harness (compare outputs)
+  * Support highâ€‘quality export (print/PDF/bitmap at arbitrary resolution)
+  * Add multiâ€‘renderer testing harness (compare outputs)
 
-* **Phase 4 — Server & Offline Rendering** (18–36 months)
+* **Phase 4 â€” Server & Offline Rendering** (18â€“36 months)
 
   * Headless renderer for server side / thumbnails / batch export (WASM or NodeGL/Skia)
   * Deterministic rendering for CI/tests (pixel comparison)
@@ -48,16 +48,16 @@ This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Ko
 
 ## Priorities & signals to move phases
 
-1. **When you hit unacceptable editor lag** (20%+ users complain on 1080p with 100 layers) → push Phase 1
-2. **When users request non‑destructive filters & mask layers** → push Phase 2
-3. **When export quality vs performance tradeoffs become unacceptable** → start Phase 3
-4. **When you need reliable server exports or batch rendering** → Phase 4
+1. **When you hit unacceptable editor lag** (20%+ users complain on 1080p with 100 layers) â†’ push Phase 1
+2. **When users request nonâ€‘destructive filters & mask layers** â†’ push Phase 2
+3. **When export quality vs performance tradeoffs become unacceptable** â†’ start Phase 3
+4. **When you need reliable server exports or batch rendering** â†’ Phase 4
 
-## Migration principles (non‑breaking)
+## Migration principles (nonâ€‘breaking)
 
 * Keep document JSON backwards compatible (schema versioning)
 * Feature flags for rendering features (enable/disable new compositor)
-* Adapter pattern: keep old and new renderer side‑by‑side during rollout
+* Adapter pattern: keep old and new renderer sideâ€‘byâ€‘side during rollout
 * Automated visual regression tests for render parity
 * Expose a render spec and a test harness that both renderers implement
 
@@ -77,7 +77,7 @@ This MDX doc explains a pragmatic, staged roadmap to scale your editor from a Ko
 
 ---
 
-# Recommended Renderer Adapter interface (pseudo‑TS)
+# Recommended Renderer Adapter interface (pseudoâ€‘TS)
 
 ```ts
 export interface RendererAdapter {
@@ -95,9 +95,9 @@ Adapters implement this contract for Konva/Pixi/custom WebGL. The engine only ca
 
 ---
 
-# Folder structure — monorepo (renderer‑ready)
+# Folder structure â€” monorepo (rendererâ€‘ready)
 
-This layout is designed to make adding a new renderer a non‑breaking, incremental step.
+This layout is designed to make adding a new renderer a nonâ€‘breaking, incremental step.
 
 ```text
 /apps
@@ -127,17 +127,17 @@ This layout is designed to make adding a new renderer a non‑breaking, incremen
 
 ## Notes on important packages
 
-- **/packages/engine** — must be pure TypeScript, no DOM, no browser globals. Contains scene graph types, command bus, history manager, serializer (save/load), validation and high‑level business rules.
+- **/packages/engine** â€” must be pure TypeScript, no DOM, no browser globals. Contains scene graph types, command bus, history manager, serializer (save/load), validation and highâ€‘level business rules.
 
-- **/packages/editor-ui** — React app that calls engine commands and subscribes to engine events for UI updates. No renderer logic here — only controls and binding code.
+- **/packages/editor-ui** â€” React app that calls engine commands and subscribes to engine events for UI updates. No renderer logic here â€” only controls and binding code.
 
-- **/packages/renderer-adapters** — each adapter depends on the engine package. They are thin translators: `EngineNode -> RendererNode` and manage GPU or DOM resources.
+- **/packages/renderer-adapters** â€” each adapter depends on the engine package. They are thin translators: `EngineNode -> RendererNode` and manage GPU or DOM resources.
 
-- **/packages/exporter** — high‑quality export code. When you build a custom renderer, the exporter can reuse shaders/passes to match on‑screen output.
+- **/packages/exporter** â€” highâ€‘quality export code. When you build a custom renderer, the exporter can reuse shaders/passes to match onâ€‘screen output.
 
 ---
 
-# Example: how engine↔renderer event flow works
+# Example: how engineâ†”renderer event flow works
 
 ```text
 User action -> Editor UI -> Engine.execute(command)
@@ -158,12 +158,12 @@ Key points:
 - **Command pattern for everything** (create, update, delete) for consistent undo/redo
 - **Diff-based history** (store patches, not full copies) for performance
 - **Node-level dirty flags** and fine-grained invalidation (avoid full redraws)
-- **Specification tests** for document → rendering expectations
+- **Specification tests** for document â†’ rendering expectations
 - **Visual regression tests** between adapters
 
 ---
 
-# Appendix — quick reference diagram
+# Appendix â€” quick reference diagram
 
 You can paste your architecture image here for reference:
 
@@ -173,4 +173,4 @@ You can paste your architecture image here for reference:
 
 # Closing notes
 
-Keep the engine pure. Treat renderer(s) as replaceable implementation details. If you follow this roadmap and folder layout you will be able to scale to a custom WebGL renderer, server-side exports, and advanced non‑destructive features without rewriting your engine.
+Keep the engine pure. Treat renderer(s) as replaceable implementation details. If you follow this roadmap and folder layout you will be able to scale to a custom WebGL renderer, server-side exports, and advanced nonâ€‘destructive features without rewriting your engine.

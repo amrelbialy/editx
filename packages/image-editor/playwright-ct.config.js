@@ -22,7 +22,7 @@ module.exports = defineConfig({
       ],
       resolve: {
         alias: {
-          "@creative-editor/engine": resolve(__dirname, "../engine/src"),
+          "@editx/engine": resolve(__dirname, "../engine/src"),
         },
       },
     },

@@ -19,11 +19,11 @@ import {
   PAGE_WIDTH,
 } from "./property-keys";
 
-/** Pure crop operations — scale, translation, flip, aspect ratio, reset. */
+/** Pure crop operations â€” scale, translation, flip, aspect ratio, reset. */
 export class BlockCropAPI {
   #engine: EngineCore;
 
-  /** @internal — callback wired by CreativeEngine for crop overlay routing. */
+  /** @internal â€” callback wired by EditxEngine for crop overlay routing. */
   #applyCropRatioHandler: ((ratio: number | null) => any) | null = null;
   #applyCropDimensionsHandler: ((w: number, h: number) => any) | null = null;
   #getCropVisualDimensionsHandler: (() => { width: number; height: number } | null) | null = null;
@@ -32,7 +32,7 @@ export class BlockCropAPI {
     this.#engine = engine;
   }
 
-  // ── Handler wiring (called by CreativeEngine) ─────
+  // â”€â”€ Handler wiring (called by EditxEngine) â”€â”€â”€â”€â”€
 
   /** @internal */
   _setApplyCropRatioHandler(handler: (ratio: number | null) => any): void {
@@ -51,7 +51,7 @@ export class BlockCropAPI {
     this.#getCropVisualDimensionsHandler = handler;
   }
 
-  // ── Crop queries ──────────────────────────────────
+  // â”€â”€ Crop queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   hasCrop(id: number): boolean {
     return this.supportsCrop(id) && H.getBool(this.#engine, id, CROP_ENABLED);
@@ -62,7 +62,7 @@ export class BlockCropAPI {
     return type === "image" || type === "page";
   }
 
-  // ── Crop scale/translation ────────────────────────
+  // â”€â”€ Crop scale/translation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   setCropScaleX(id: number, scaleX: number): void {
     H.setFloat(this.#engine, id, CROP_SCALE_X, scaleX);
@@ -106,7 +106,7 @@ export class BlockCropAPI {
     return H.getFloat(this.#engine, id, CROP_Y);
   }
 
-  // ── Crop flip & aspect ratio ──────────────────────
+  // â”€â”€ Crop flip & aspect ratio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   flipCropHorizontal(id: number): void {
     H.setBool(
@@ -139,7 +139,7 @@ export class BlockCropAPI {
     H.setBool(this.#engine, id, CROP_ASPECT_RATIO_LOCKED, locked);
   }
 
-  // ── Complex crop operations ───────────────────────
+  // â”€â”€ Complex crop operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /** Resets crop to defaults. For page blocks, restores PAGE_WIDTH/HEIGHT. Single undo batch. */
   resetCrop(id: number): void {

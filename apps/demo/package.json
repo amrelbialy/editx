@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@creative-editor/engine": "workspace:*",
-    "@creative-editor/image-editor": "workspace:*",
+    "@editx/engine": "workspace:*",
+    "@editx/image-editor": "workspace:*",
     "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
     "lucide-react": "^0.577.0",

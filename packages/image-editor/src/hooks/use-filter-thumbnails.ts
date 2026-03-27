@@ -1,4 +1,4 @@
-import { FILTER_PRESETS, loadImage } from "@creative-editor/engine";
+import { FILTER_PRESETS, loadImage } from "@editx/engine";
 import { useEffect, useRef, useState } from "react";
 import { useImageEditorStore } from "../store/image-editor-store";
 
@@ -41,7 +41,7 @@ export function useFilterThumbnails(): FilterThumbnail[] | null {
 async function generateThumbnails(src: string): Promise<FilterThumbnail[]> {
   const img = await loadImage(src);
 
-  // Fixed strip dimensions — cover-crop the image to fill
+  // Fixed strip dimensions â€” cover-crop the image to fill
   const thumbW = THUMB_WIDTH;
   const thumbH = THUMB_HEIGHT;
 

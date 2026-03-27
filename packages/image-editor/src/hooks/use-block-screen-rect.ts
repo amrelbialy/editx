@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useEffect, useRef, useState } from "react";
 
 export interface ScreenRect {
@@ -13,7 +13,7 @@ export interface ScreenRect {
  * Polls via requestAnimationFrame so it stays updated during drag, zoom, and pan.
  */
 export function useBlockScreenRect(
-  engine: CreativeEngine | null,
+  engine: EditxEngine | null,
   selectedBlockId: number | null,
 ): ScreenRect | null {
   const [rect, setRect] = useState<ScreenRect | null>(null);

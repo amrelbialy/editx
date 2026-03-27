@@ -1,5 +1,5 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { colorToHex, hexToColor } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { InputGroup } from "../ui/input-group";
@@ -7,7 +7,7 @@ import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
 interface ShadowPropertyPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
@@ -19,7 +19,7 @@ interface ShadowState {
   blur: number;
 }
 
-function readShadow(engine: CreativeEngine, blockId: number): ShadowState {
+function readShadow(engine: EditxEngine, blockId: number): ShadowState {
   const sc = engine.block.getShadowColor(blockId);
   return {
     enabled: engine.block.isShadowEnabled(blockId),

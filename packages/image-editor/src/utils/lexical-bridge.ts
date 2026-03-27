@@ -1,4 +1,4 @@
-// Re-export from engine — the canonical implementation now lives there.
+// Re-export from engine â€” the canonical implementation now lives there.
 export {
   $restoreSelectionFromOffsets,
   cssStringToRunStyle,
@@ -7,4 +7,4 @@ export {
   runStyleToCssString,
   runsToEditorState,
   textRunStyleToCssPatch,
-} from "@creative-editor/engine";
+} from "@editx/engine";

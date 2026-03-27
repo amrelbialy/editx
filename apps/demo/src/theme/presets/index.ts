@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from "@creative-editor/image-editor";
+import type { ThemePresetValues } from "@editx/image-editor";
 import { amberMinimalDark, amberMinimalLight } from "./amber-minimal";
 import { amethystHazeDark, amethystHazeLight } from "./amethyst-haze";
 import { catppuccinDark, catppuccinLight } from "./catppuccin";

@@ -12,13 +12,13 @@ import { EditorViewport } from "./editor-viewport";
 export class EditorAPI {
   #ctx: EditorContext;
 
-  // ── Sub-modules ────────────────────────────────────────
+  // â”€â”€ Sub-modules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   #crop: EditorCrop;
   #cursor: EditorCursor;
   #history: EditorHistory;
   #viewport: EditorViewport;
 
-  // ── Edit-mode state (cross-cuts crop & cursor) ─────────
+  // â”€â”€ Edit-mode state (cross-cuts crop & cursor) â”€â”€â”€â”€â”€â”€â”€â”€â”€
   #editMode: EditMode = "Transform";
   #editModeConfig: EditModeConfig = EDIT_MODE_DEFAULTS.Transform;
 
@@ -35,7 +35,7 @@ export class EditorAPI {
     this.#viewport = new EditorViewport(this.#ctx);
   }
 
-  /** @internal — called by CreativeEngine after construction */
+  /** @internal â€” called by EditxEngine after construction */
   _setBlockAPI(block: BlockAPI): void {
     this.#ctx.block = block;
   }
@@ -43,12 +43,12 @@ export class EditorAPI {
   setEditMode(mode: EditMode, opts?: { baseMode?: string; blockId?: number }): void {
     const prev = this.#editMode;
 
-    // ── Tear down previous mode ──────────────────────
+    // â”€â”€ Tear down previous mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (prev !== mode) {
       this.#exitMode(prev);
     }
 
-    // ── Apply new mode ───────────────────────────────
+    // â”€â”€ Apply new mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     this.#editMode = mode;
 
     const configKey = opts?.baseMode ?? mode;
@@ -58,7 +58,7 @@ export class EditorAPI {
     this.#cursor.setCursorType(this.#editModeConfig.defaultCursor);
     this.#cursor.setCursorRotation(0);
 
-    // ── Enter new mode ───────────────────────────────
+    // â”€â”€ Enter new mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     this.#enterMode(mode, opts?.blockId);
 
     this.#ctx.engine.emit("editMode:changed", { mode, previousMode: prev });

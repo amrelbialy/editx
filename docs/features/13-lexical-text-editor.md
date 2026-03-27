@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-Replace the fragile `contentEditable → HTML → TextRun[]` bridge with **Lexical** for the inline text editor overlay. The engine layer (TextRun model, block-api, text-run-utils) and canvas renderer (FormattedText) remain untouched. The entire `text-dom-utils.ts` (~220 lines) is deleted and replaced by ~60 lines of Lexical state serialization. Net result: fewer lines, zero DOM parsing, built-in IME/undo/keyboard support.
+Replace the fragile `contentEditable â†’ HTML â†’ TextRun[]` bridge with **Lexical** for the inline text editor overlay. The engine layer (TextRun model, block-api, text-run-utils) and canvas renderer (FormattedText) remain untouched. The entire `text-dom-utils.ts` (~220 lines) is deleted and replaced by ~60 lines of Lexical state serialization. Net result: fewer lines, zero DOM parsing, built-in IME/undo/keyboard support.
 
 ## Why
 
@@ -24,18 +24,18 @@ The current editing overlay uses a raw `contentEditable` div and manually conver
 ### Before (current)
 
 ```
-User types → contentEditable div → onInput(150ms debounce) → htmlToRuns(DOM→TextRun[]) → engine
-Engine change → TextRun[] → runsToHtml(TextRun[]→HTML) → el.innerHTML → restore cursor
+User types â†’ contentEditable div â†’ onInput(150ms debounce) â†’ htmlToRuns(DOMâ†’TextRun[]) â†’ engine
+Engine change â†’ TextRun[] â†’ runsToHtml(TextRun[]â†’HTML) â†’ el.innerHTML â†’ restore cursor
 ```
 
 ### After (Lexical)
 
 ```
-User types → Lexical EditorState → onChange → editorStateToRuns(state→TextRun[]) → engine
-Engine change → TextRun[] → runsToEditorState(TextRun[]→state) → editor.update()
+User types â†’ Lexical EditorState â†’ onChange â†’ editorStateToRuns(stateâ†’TextRun[]) â†’ engine
+Engine change â†’ TextRun[] â†’ runsToEditorState(TextRun[]â†’state) â†’ editor.update()
 ```
 
-The bridge becomes **Lexical JSON state ↔ TextRun[]** instead of **HTML ↔ TextRun[]**. No DOM parsing. No `getComputedStyle`. No browser-mangled HTML.
+The bridge becomes **Lexical JSON state â†” TextRun[]** instead of **HTML â†” TextRun[]**. No DOM parsing. No `getComputedStyle`. No browser-mangled HTML.
 
 ### What stays unchanged
 
@@ -54,11 +54,11 @@ The bridge becomes **Lexical JSON state ↔ TextRun[]** instead of **HTML ↔ Te
 
 | Decision                        | Choice                                      | Rationale                                                                  |
 | ------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
-| Keyboard shortcuts (Ctrl+B/I/U) | Route through engine API                    | Single source of truth — same path as toolbar buttons                      |
+| Keyboard shortcuts (Ctrl+B/I/U) | Route through engine API                    | Single source of truth â€” same path as toolbar buttons                      |
 | Undo/redo scope                 | Lexical `HistoryPlugin` (session-scoped)    | Engine history records final TextRun[] on close; local undo more intuitive |
 | Zoom scaling                    | CSS `transform: scale(zoom)` on container   | Simpler than per-node font math; Lexical nodes use 1:1 font sizes          |
 | Style storage in Lexical        | `node.setStyle()` CSS string + format flags | Lexical natively supports inline CSS + bold/italic flags                   |
-| Paste handling                  | `PASTE_COMMAND` → plain text only           | Replaces deprecated `document.execCommand`                                 |
+| Paste handling                  | `PASTE_COMMAND` â†’ plain text only           | Replaces deprecated `document.execCommand`                                 |
 | Blur detection                  | `BLUR_COMMAND` + portal-awareness checks    | Same Radix portal awareness, cleaner than `setTimeout(10ms)`               |
 
 ## Implementation
@@ -68,29 +68,29 @@ The bridge becomes **Lexical JSON state ↔ TextRun[]** instead of **HTML ↔ Te
 **Install:**
 
 ```bash
-pnpm add lexical @lexical/react --filter @creative-editor/image-editor
+pnpm add lexical @lexical/react --filter @editx/image-editor
 ```
 
 **Create `lexical-bridge.ts`** (~60 lines):
 
-- `runsToEditorState(editor, runs)` — TextRun[] → Lexical state
-- `editorStateToRuns(editorState)` — Lexical state → TextRun[]
-- `getSelectionOffsets(editorState)` — Lexical selection → `{ from, to }`
+- `runsToEditorState(editor, runs)` â€” TextRun[] â†’ Lexical state
+- `editorStateToRuns(editorState)` â€” Lexical state â†’ TextRun[]
+- `getSelectionOffsets(editorState)` â€” Lexical selection â†’ `{ from, to }`
 - Import `mergeAdjacentRuns` from engine (needs export)
 
 ### Phase 2: Rewrite TextEditorOverlay
 
 Replace the component internals with:
 
-- `<LexicalComposer>` → `<RichTextPlugin>` → `<ContentEditable>` → `<HistoryPlugin>`
-- `EngineSyncPlugin` — mount: load runs → Lexical; onChange: Lexical → engine; engine events: engine → Lexical
-- `SelectionSyncPlugin` — Lexical selection → store `{ from, to }`
-- `KeyboardShortcutsPlugin` — Ctrl+B/I/U → engine API, Escape → close
+- `<LexicalComposer>` â†’ `<RichTextPlugin>` â†’ `<ContentEditable>` â†’ `<HistoryPlugin>`
+- `EngineSyncPlugin` â€” mount: load runs â†’ Lexical; onChange: Lexical â†’ engine; engine events: engine â†’ Lexical
+- `SelectionSyncPlugin` â€” Lexical selection â†’ store `{ from, to }`
+- `KeyboardShortcutsPlugin` â€” Ctrl+B/I/U â†’ engine API, Escape â†’ close
 - Container: `getOverlayStyle()` + `transform: scale(zoom)`, `transformOrigin: top left`
 
 ### Phase 3: CSS Update
 
-Add `[data-text-editor-overlay] p { margin: 0; }` — Lexical renders `<p>` nodes.
+Add `[data-text-editor-overlay] p { margin: 0; }` â€” Lexical renders `<p>` nodes.
 
 ### Phase 4: Cleanup
 
@@ -122,14 +122,14 @@ Create `lexical-bridge.test.ts`:
 
 ## Verification
 
-1. `pnpm build` — no TypeScript errors
-2. `pnpm test` — bridge round-trip tests pass
-3. Manual: double-click text → overlay opens, Konva text visible, caret blinks
-4. Manual: type → Konva re-renders in sync (no lag)
-5. Manual: select text + Bold toolbar → formatting applied, overlay stays open
-6. Manual: Ctrl+B/I with selection → toggles formatting
-7. Manual: Ctrl+Z → undoes last text edit within session
-8. Manual: paste rich text → plain text only
-9. Manual: click outside → overlay closes
-10. Manual: toolbar color picker → focus returns to editor
-11. Manual: zoom in/out → overlay scales correctly
+1. `pnpm build` â€” no TypeScript errors
+2. `pnpm test` â€” bridge round-trip tests pass
+3. Manual: double-click text â†’ overlay opens, Konva text visible, caret blinks
+4. Manual: type â†’ Konva re-renders in sync (no lag)
+5. Manual: select text + Bold toolbar â†’ formatting applied, overlay stays open
+6. Manual: Ctrl+B/I with selection â†’ toggles formatting
+7. Manual: Ctrl+Z â†’ undoes last text edit within session
+8. Manual: paste rich text â†’ plain text only
+9. Manual: click outside â†’ overlay closes
+10. Manual: toolbar color picker â†’ focus returns to editor
+11. Manual: zoom in/out â†’ overlay scales correctly

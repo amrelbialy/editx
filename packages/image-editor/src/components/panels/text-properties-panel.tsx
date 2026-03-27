@@ -1,4 +1,4 @@
-import { type CreativeEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@creative-editor/engine";
+import { type EditxEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
@@ -8,7 +8,7 @@ import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
 
 export interface TextPropertiesPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
@@ -34,7 +34,7 @@ const FONT_FAMILIES = [
 ];
 
 function readTextBlockState(
-  engine: CreativeEngine,
+  engine: EditxEngine,
   blockId: number,
   selectionStart?: number,
 ): TextBlockState {

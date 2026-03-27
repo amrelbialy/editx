@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from "@creative-editor/image-editor";
+import type { ThemePresetValues } from "@editx/image-editor";
 
 export const kodamaGroveLight: ThemePresetValues = {
   background: "#e4d7b0",

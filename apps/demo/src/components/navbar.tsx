@@ -9,8 +9,8 @@ const NAV_LINKS = [
   { label: "Playground", href: "/playground" },
 ];
 
-const GITHUB_URL = "https://github.com/nicholasgriffintn/creative-editor";
-const NPM_URL = "https://www.npmjs.com/package/@creative-editor/image-editor";
+const GITHUB_URL = "https://github.com/nicholasgriffintn/editx";
+const NPM_URL = "https://www.npmjs.com/package/@editx/image-editor";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -20,10 +20,17 @@ function isActive(pathname: string, href: string) {
 
 function LogoMark() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="4" fill="#7c3aed" opacity="0.15" />
-      <rect x="6" y="6" width="12" height="12" rx="3" fill="#7c3aed" opacity="0.35" />
-      <rect x="9" y="9" width="6" height="6" rx="1.5" fill="#7c3aed" />
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="logo-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#7c3aed" />
+          <stop offset="50%" stopColor="#4f46e5" />
+          <stop offset="100%" stopColor="#10b981" />
+        </linearGradient>
+      </defs>
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="url(#logo-grad)" opacity="0.15" />
+      <rect x="6" y="6" width="12" height="12" rx="3" fill="url(#logo-grad)" opacity="0.35" />
+      <rect x="9" y="9" width="6" height="6" rx="1.5" fill="url(#logo-grad)" />
     </svg>
   );
 }
@@ -39,16 +46,21 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md shadow-[0_1px_8px_-2px_rgba(124,58,237,0.06)]">
       <div className="mx-auto flex h-14 max-w-7xl items-center px-6">
-        {/* Logo — left */}
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 no-underline"
-        >
+        <Link to="/" className="flex items-center gap-2 no-underline">
           <LogoMark />
-          <span className="text-sm font-semibold tracking-tight">Creative Editor</span>
+          <span className="flex items-baseline font-black tracking-tight">
+            <span
+              className="text-4xl bg-clip-text text-transparent"
+              style={{
+                backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #10b981 100%)",
+              }}
+            >
+              Editx
+            </span>
+          </span>
         </Link>
 
-        {/* Center links — desktop */}
+        {/* Center links â€” desktop */}
         <div className="hidden md:flex items-center gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 p-1 absolute left-1/2 -translate-x-1/2">
           {NAV_LINKS.map((link) => {
             const active = isActive(pathname, link.href);
@@ -68,7 +80,7 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Right icons — desktop */}
+        {/* Right icons â€” desktop */}
         <div className="hidden md:flex items-center gap-1 ml-auto">
           <button
             type="button"

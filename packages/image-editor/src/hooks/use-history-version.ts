@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 
 /**
@@ -6,7 +6,7 @@ import { useCallback, useRef, useSyncExternalStore } from "react";
  * Add this to useEffect dependency arrays so components re-read
  * engine state after history changes.
  */
-export function useHistoryVersion(engine: CreativeEngine | null): number {
+export function useHistoryVersion(engine: EditxEngine | null): number {
   const versionRef = useRef(0);
 
   const subscribe = useCallback(

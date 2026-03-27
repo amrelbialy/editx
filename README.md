@@ -1,6 +1,6 @@
-# Creative Editor SDK
+# Editx SDK
 
-A web-based Creative Editor SDK built with TypeScript, React, and PixiJS.
+A web-based Editx SDK built with TypeScript, React, and PixiJS.
 
 ## Structure
 

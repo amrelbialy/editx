@@ -1,9 +1,9 @@
 import { BlockAPI } from "./block/block-api";
 import { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
-import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./creative-engine-flush";
 import { EditorAPI } from "./editor/editor-api";
 import type { ExportOptions } from "./editor-types";
+import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./editx-engine-flush";
 import type { EngineCore } from "./engine-core";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
@@ -12,7 +12,7 @@ import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 import { clearImageCache } from "./utils/image-loader";
 
-export class CreativeEngine implements EngineCore {
+export class EditxEngine implements EngineCore {
   readonly block: BlockAPI;
   readonly editor: EditorAPI;
   readonly event: EventAPI;
@@ -30,7 +30,7 @@ export class CreativeEngine implements EngineCore {
   #silent = false;
   #disposed = false;
 
-  // ── Typed listener sets for public callbacks
+  // â”€â”€ Typed listener sets for public callbacks
   #historyListeners = new Set<() => void>();
   #zoomListeners = new Set<(zoom: number) => void>();
   #editModeListeners = new Set<(info: { mode: string; previousMode: string }) => void>();
@@ -204,7 +204,7 @@ export class CreativeEngine implements EngineCore {
     }
   }
 
-  // ── Typed event subscriptions ──────────────────────────
+  // â”€â”€ Typed event subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   #subscribe<T extends (...args: any[]) => void>(set: Set<T>, cb: T): () => void {
     set.add(cb);

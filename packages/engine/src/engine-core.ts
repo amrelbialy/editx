@@ -7,7 +7,7 @@ import type { RendererAdapter } from "./render-adapter";
  * Internal interface for the engine runtime.
  *
  * Sub-APIs depend on this interface instead of the concrete
- * {@link CreativeEngine} class to avoid circular imports.
+ * {@link EditxEngine} class to avoid circular imports.
  */
 export interface EngineCore {
   readonly event: EventAPI;

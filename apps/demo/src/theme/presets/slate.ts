@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from "@creative-editor/image-editor";
+import type { ThemePresetValues } from "@editx/image-editor";
 
 export const slateDark: ThemePresetValues = {
   background: "hsl(222.2 84% 4.9%)",

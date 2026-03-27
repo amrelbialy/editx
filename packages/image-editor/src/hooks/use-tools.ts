@@ -1,4 +1,4 @@
-import type { CreativeEngine, ShapeType } from "@creative-editor/engine";
+import type { EditxEngine, ShapeType } from "@editx/engine";
 import { useCallback, useMemo } from "react";
 import type { EditorEventCallbacks } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -23,8 +23,8 @@ const SHAPE_NAMES: Record<string, string> = {
 };
 
 export interface UseToolsOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
-  engine: CreativeEngine | null;
+  engineRef: React.RefObject<EditxEngine | null>;
+  engine: EditxEngine | null;
   selectedShapeId: number | null;
   setSelectedShapeId: (id: number | null) => void;
   events?: EditorEventCallbacks;

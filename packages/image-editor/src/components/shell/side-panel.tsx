@@ -1,4 +1,4 @@
-import type { AdjustmentParam, CreativeEngine, ShapeType } from "@creative-editor/engine";
+import type { AdjustmentParam, EditxEngine, ShapeType } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useMemo } from "react";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
@@ -19,7 +19,7 @@ import { getPropertyPanelTitleKey, getToolPanelTitle, getToolPanelTitleKey } fro
 import { ToolPanel } from "./tool-panel";
 
 interface SidePanelProps {
-  engine: CreativeEngine | null;
+  engine: EditxEngine | null;
   selectedShapeId: number | null;
   selectedBlockType: string | null;
   activeTool: ImageEditorTool;

@@ -29,7 +29,7 @@ export class BlockSelectionAPI {
     };
   }
 
-  /** @internal — fire double-click listeners (called by CreativeEngine). */
+  /** @internal â€” fire double-click listeners (called by EditxEngine). */
   _notifyBlockDoubleClick(blockId: number): void {
     for (const cb of this.#dblClickListeners) cb(blockId);
   }
@@ -62,7 +62,7 @@ export class BlockSelectionAPI {
     this.#syncTransformer();
   }
 
-  /** @internal — remove destroyed block IDs from selection (used by undo/redo). */
+  /** @internal â€” remove destroyed block IDs from selection (used by undo/redo). */
   _removeFromSelection(ids: number[]): void {
     let changed = false;
     for (const id of ids) {

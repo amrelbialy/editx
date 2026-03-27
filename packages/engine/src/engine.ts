@@ -135,10 +135,10 @@ export class Engine {
 
   // --- Undo / Redo ---
 
-  /** @internal — called after undo/redo to remove destroyed blocks from selection. */
+  /** @internal â€” called after undo/redo to remove destroyed blocks from selection. */
   #onSelectionCleanup: ((destroyedIds: number[]) => void) | null = null;
 
-  /** @internal — register a callback to clean stale selections after undo/redo. */
+  /** @internal â€” register a callback to clean stale selections after undo/redo. */
   _setSelectionCleanup(cb: (destroyedIds: number[]) => void): void {
     this.#onSelectionCleanup = cb;
   }
@@ -222,7 +222,7 @@ export class Engine {
     const dirtyIds = [...this.#dirty];
     this.#dirty.clear();
 
-    const t0 = typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
+    const t0 = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
       if (block) {
@@ -240,17 +240,17 @@ export class Engine {
       }
     }
     const tSync =
-      typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
+      typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
 
     this.#renderer.renderFrame();
-    if (typeof window !== "undefined" && (window as any).__CE_PERF) {
+    if (typeof window !== "undefined" && (window as any).__EX_PERF) {
       const tEnd = performance.now();
       console.log(
         `[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`,
       );
     }
 
-    // Deliver bundled events AFTER render — end of update cycle
+    // Deliver bundled events AFTER render â€” end of update cycle
     this.#eventApi._flush();
   }
 

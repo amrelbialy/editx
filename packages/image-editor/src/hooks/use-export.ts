@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback, useRef, useState } from "react";
 import type { CloseReason, EditorEventCallbacks, ExportConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -12,7 +12,7 @@ export interface ExportOverrides {
 }
 
 export interface UseExportOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
   exportConfig?: ExportConfig;
   onSave?: (blob: Blob) => void;
   onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;

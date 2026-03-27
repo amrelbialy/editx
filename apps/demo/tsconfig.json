@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@creative-editor/engine": ["../../packages/engine/src"]
+      "@editx/engine": ["../../packages/engine/src"]
     }
   },
   "include": ["src"],

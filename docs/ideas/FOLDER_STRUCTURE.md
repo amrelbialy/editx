@@ -3,7 +3,7 @@
 Actual monorepo layout after the codebase refactoring.
 
 ```
-creative-editor/
+editx/
   apps/
     demo/                          # Vite demo app
       src/
@@ -11,10 +11,10 @@ creative-editor/
         main.tsx
 
   packages/
-    engine/                        # @creative-editor/engine — core library
+    engine/                        # @editx/engine â€” core library
       src/
         index.ts                   # Barrel export for the package
-        creative-engine.ts         # Facade + factory (static create)
+        editx-engine.ts         # Facade + factory (static create)
         engine.ts                  # Core orchestrator (commands, history, events)
         render-adapter.ts          # RendererAdapter interface
         scene.ts                   # Scene API
@@ -59,7 +59,7 @@ creative-editor/
           color.ts                 # colorToHex, hexToColor
           image-loader.ts          # Shared image cache + loader + URL helpers
 
-    image-editor/                  # @creative-editor/image-editor
+    image-editor/                  # @editx/image-editor
       src/
         index.ts
         image-editor.tsx           # Main ImageEditor component
@@ -70,12 +70,12 @@ creative-editor/
         utils/
           load-image.ts            # Re-exports from engine/utils
 
-    react-editor/                  # @creative-editor/react-editor
+    react-editor/                  # @editx/react-editor
       src/
         index.ts
         styles.css
         components/
-          creative-editor.tsx
+          editx.tsx
           layer-panel.tsx
           properties-panel.tsx
           toolbar.tsx

@@ -16,7 +16,7 @@ export function PlaygroundCodeOutput(props: Props) {
     const themeBlock = isBuiltIn
       ? `{ preset: "${config.theme}" }`
       : `{ preset: "custom", colors: demoPresets["${config.theme}"] }`;
-    return `import { ImageEditor } from "@creative-editor/image-editor";
+    return `import { ImageEditor } from "@editx/image-editor";
 
 <ImageEditor
   src="/your-image.jpg"

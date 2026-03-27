@@ -1,12 +1,12 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/engine";
 import { Replace } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../../utils/cn";
 
 interface ImageFillPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
   onReplace: (file: File) => void;
 }
@@ -99,13 +99,13 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-muted-foreground @5xl/editor:text-base">Display</span>
             <span className="tabular-nums">
-              {blockWidth} × {blockHeight}
+              {blockWidth} Ã— {blockHeight}
             </span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-muted-foreground @5xl/editor:text-base">Original</span>
             <span className="tabular-nums">
-              {Math.round(originalWidth)} × {Math.round(originalHeight)}
+              {Math.round(originalWidth)} Ã— {Math.round(originalHeight)}
             </span>
           </div>
         </div>

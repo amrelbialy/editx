@@ -1,4 +1,4 @@
-import type { ImageEditorConfig, ThemeConfig } from "@creative-editor/image-editor";
+import type { ImageEditorConfig, ThemeConfig } from "@editx/image-editor";
 import { ChevronDown, ChevronUp, Code2, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useDarkMode } from "../hooks/use-dark-mode";

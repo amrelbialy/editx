@@ -1,15 +1,15 @@
-import { CreativeEngine } from "../creative-engine";
+import { EditxEngine } from "../editx-engine";
 import { KonvaRendererAdapter } from "./konva-renderer-adapter";
 
 export { KonvaCropOverlay } from "./konva-crop-overlay";
 export { KonvaRendererAdapter } from "./konva-renderer-adapter";
 
-/** Create a CreativeEngine with a Konva renderer attached to the given DOM container. */
-export async function createEngine(opts: { container: HTMLElement }): Promise<CreativeEngine> {
+/** Create a EditxEngine with a Konva renderer attached to the given DOM container. */
+export async function createEngine(opts: { container: HTMLElement }): Promise<EditxEngine> {
   const adapter = new KonvaRendererAdapter();
   await adapter.init(opts.container);
 
-  const engine = new CreativeEngine({ renderer: adapter });
+  const engine = new EditxEngine({ renderer: adapter });
 
   adapter.onBlockClick = (blockId, event) => {
     if (event.shiftKey) {

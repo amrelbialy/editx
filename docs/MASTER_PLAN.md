@@ -1,6 +1,6 @@
-# Creative Editor -- Image Editor Plugin Master Plan
+# Editx -- Image Editor Plugin Master Plan
 
-This document tracks the incremental build of a new image editor plugin on top of the creative engine. Each feature is developed as a real-life scenario, and the engine is evolved alongside to support it.
+This document tracks the incremental build of a new image editor plugin on top of the editx engine. Each feature is developed as a real-life scenario, and the engine is evolved alongside to support it.
 
 ## Architecture
 
@@ -21,12 +21,12 @@ Reference: filerobot image editor in `temp/filerobot-image-editor/`.
 
 ### img.ly CE.SDK API Reference
 
-We are simulating the img.ly Creative Engine SDK APIs. Use these as reference for designing our engine's public surface:
+We are simulating the img.ly editx engine SDK APIs. Use these as reference for designing our engine's public surface:
 
 - **Block API:** https://img.ly/docs/cesdk/js/api/engine/classes/blockapi/
 - **Editor API:** https://img.ly/docs/cesdk/js/api/cesdk-js/classes/editorapi/
 - **Scene API:** https://img.ly/docs/cesdk/js/api/cesdk-js/classes/sceneapi/
-- **Creative Engine:** https://img.ly/docs/cesdk/js/api/engine/classes/creativeengine/
+- **editx engine:** https://img.ly/docs/cesdk/js/api/engine/classes/EditxEngine/
 
 ---
 
@@ -54,10 +54,10 @@ We are simulating the img.ly Creative Engine SDK APIs. Use these as reference fo
 
 Before continuing with Feature 1 Improvements or Feature 2, the engine codebase needs structural cleanup:
 
-- Break up the Konva god class (494 lines, 7 responsibilities → 4 focused modules)
-- Remove dead code (pixi adapter, transformer — 630 lines)
-- Extract shared utilities (color, image loading — currently duplicated)
-- Add `dispose()` to CreativeEngine facade
+- Break up the Konva god class (494 lines, 7 responsibilities â†’ 4 focused modules)
+- Remove dead code (pixi adapter, transformer â€” 630 lines)
+- Extract shared utilities (color, image loading â€” currently duplicated)
+- Add `dispose()` to EditxEngine facade
 - Type safety improvements, console.log cleanup
 
 ---

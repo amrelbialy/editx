@@ -1,6 +1,6 @@
-# Image Editor UI/UX — Master Plan
+# Image Editor UI/UX â€” Master Plan
 
-This document covers the full UI/UX architecture for the image editor web app. The goal is to transform the current basic image editor into a **config-driven, themeable, customizable SDK** — like filerobot-image-editor and img.ly CE.SDK, but better.
+This document covers the full UI/UX architecture for the image editor web app. The goal is to transform the current basic image editor into a **config-driven, themeable, customizable SDK** â€” like filerobot-image-editor and img.ly CE.SDK, but better.
 
 ---
 
@@ -69,14 +69,14 @@ All colors, spacing, and radii flow through CSS variables. This enables runtime 
 
 | Theme | Vibe | Best For |
 |-------|------|----------|
-| **Zinc Dark** | Neutral, professional, minimal | Default — clean editor feel, doesn't compete with the image |
-| **Slate Dark** | Cool-toned, slightly blue | Photo editing — gentle blue undertones complement image work |
+| **Zinc Dark** | Neutral, professional, minimal | Default â€” clean editor feel, doesn't compete with the image |
+| **Slate Dark** | Cool-toned, slightly blue | Photo editing â€” gentle blue undertones complement image work |
 | **Neutral Dark** | Warm gray, subtle | Warm/inviting editor aesthetic |
 | **Stone Dark** | Earthy, organic tones | Softer, less technical feel |
 
 **Recommendation:** **Zinc Dark** as default (matches img.ly's vibe), with easy switching via `theme` config. Use tweakcn's editor at https://tweakcn.com/editor/theme to generate exact values.
 
-Custom brand themes: users pass a `theme.colors` object in config → injected as CSS variables at runtime.
+Custom brand themes: users pass a `theme.colors` object in config â†’ injected as CSS variables at runtime.
 
 ---
 
@@ -85,62 +85,62 @@ Custom brand themes: users pass a `theme.colors` object in config → injected a
 ### Desktop Layout (img.ly pattern)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Topbar                                                      │
-│ [↶ Undo][↷]      Photo Editor      [🔍-][Auto▾][🔍+] [Export Image] │
-├─────────────────────────────────────────────────────────────┤
-│ Contextual Bar (only visible when tool is active)           │
-│ e.g. Crop: [Cover ▾] Straighten [0][━|━] [↻][↺][⇆][⇅] ↺Reset [Done] │
-├───────┬──────────┬──────────────────────────────────────────┤
-│ Tool  │ Tool     │                                          │
-│ Side- │ Panel    │         Canvas Area                      │
-│ bar   │ (slides  │                                          │
-│       │  out,    │    ┌──────────────────┐                  │
-│ Crop  │  close-  │    │                  │                  │
-│ Adjust│  able    │    │   Image +        │                  │
-│ Filter│  with X) │    │   annotations    │                  │
-│       │          │    │                  │                  │
-│ ────  │ e.g.     │    └──────────────────┘                  │
-│ Text  │ Crop Area│                                          │
-│ Shapes│ W [1920] │                                          │
-│Sticker│ H [2658] │                                          │
-│       │          │                                          │
-│       │ [Aspect] │                                          │
-│       │ [Resize] │                                          │
-│       │          │                                          │
-│       │ Free 1:1 │                                          │
-│       │ 16:9 ... │                                          │
-│ ────  │          │                                          │
-│ Apps  │    [✕]   │                                          │
-└───────┴──────────┴──────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Topbar                                                      â”‚
+â”‚ [â†¶ Undo][â†·]      Photo Editor      [ðŸ”-][Autoâ–¾][ðŸ”+] [Export Image] â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Contextual Bar (only visible when tool is active)           â”‚
+â”‚ e.g. Crop: [Cover â–¾] Straighten [0][â”|â”] [â†»][â†º][â‡†][â‡…] â†ºReset [Done] â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Tool  â”‚ Tool     â”‚                                          â”‚
+â”‚ Side- â”‚ Panel    â”‚         Canvas Area                      â”‚
+â”‚ bar   â”‚ (slides  â”‚                                          â”‚
+â”‚       â”‚  out,    â”‚    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                  â”‚
+â”‚ Crop  â”‚  close-  â”‚    â”‚                  â”‚                  â”‚
+â”‚ Adjustâ”‚  able    â”‚    â”‚   Image +        â”‚                  â”‚
+â”‚ Filterâ”‚  with X) â”‚    â”‚   annotations    â”‚                  â”‚
+â”‚       â”‚          â”‚    â”‚                  â”‚                  â”‚
+â”‚ â”€â”€â”€â”€  â”‚ e.g.     â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                  â”‚
+â”‚ Text  â”‚ Crop Areaâ”‚                                          â”‚
+â”‚ Shapesâ”‚ W [1920] â”‚                                          â”‚
+â”‚Stickerâ”‚ H [2658] â”‚                                          â”‚
+â”‚       â”‚          â”‚                                          â”‚
+â”‚       â”‚ [Aspect] â”‚                                          â”‚
+â”‚       â”‚ [Resize] â”‚                                          â”‚
+â”‚       â”‚          â”‚                                          â”‚
+â”‚       â”‚ Free 1:1 â”‚                                          â”‚
+â”‚       â”‚ 16:9 ... â”‚                                          â”‚
+â”‚ â”€â”€â”€â”€  â”‚          â”‚                                          â”‚
+â”‚ Apps  â”‚    [âœ•]   â”‚                                          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **Key layout principles (from img.ly):**
 
-1. **Tool Sidebar** — Always visible, icon + label. Tools visually grouped with separators (editing tools | annotation tools). "Apps" pinned to bottom.
-2. **Tool Panel slides out** from the sidebar — expands between sidebar and canvas. Canvas shrinks to fit. Has a close (X) button at the bottom. Each tool has its own panel with full controls.
-3. **Contextual Top Bar** — Appears below the main topbar when a tool is active. Contains mode-specific actions (e.g., Crop → Cover/Crop/Fit dropdown, Straighten slider, rotate/flip, Reset, Done). Disappears when tool is closed.
-4. **NO persistent right properties panel** — all properties live inside the tool's slide-out panel. Annotation properties (position, color, size) are in their respective tool panels.
-5. **NO bottom bar** — all contextual actions (Done, Reset, Cancel) live in the contextual top bar.
+1. **Tool Sidebar** â€” Always visible, icon + label. Tools visually grouped with separators (editing tools | annotation tools). "Apps" pinned to bottom.
+2. **Tool Panel slides out** from the sidebar â€” expands between sidebar and canvas. Canvas shrinks to fit. Has a close (X) button at the bottom. Each tool has its own panel with full controls.
+3. **Contextual Top Bar** â€” Appears below the main topbar when a tool is active. Contains mode-specific actions (e.g., Crop â†’ Cover/Crop/Fit dropdown, Straighten slider, rotate/flip, Reset, Done). Disappears when tool is closed.
+4. **NO persistent right properties panel** â€” all properties live inside the tool's slide-out panel. Annotation properties (position, color, size) are in their respective tool panels.
+5. **NO bottom bar** â€” all contextual actions (Done, Reset, Cancel) live in the contextual top bar.
 6. **Canvas** occupies all remaining space. Zoom controls in the main topbar.
 
 ### Mobile (<768px)
 
 ```
-┌──────────────────────────┐
-│ Topbar  [☰] [Undo] [Save]│
-├──────────────────────────┤
-│                          │
-│     Canvas Area          │
-│     (full width)         │
-│                          │
-├──────────────────────────┤
-│ Bottom Tool Tabs (scroll)│
-│ [Crop][Adjust][Filter]...│
-├──────────────────────────┤
-│ Tool Options (sheet)     │
-│ (slides up from bottom)  │
-└──────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Topbar  [â˜°] [Undo] [Save]â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚                          â”‚
+â”‚     Canvas Area          â”‚
+â”‚     (full width)         â”‚
+â”‚                          â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Bottom Tool Tabs (scroll)â”‚
+â”‚ [Crop][Adjust][Filter]...â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Tool Options (sheet)     â”‚
+â”‚ (slides up from bottom)  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Layout Components
@@ -162,24 +162,24 @@ Custom brand themes: users pass a `theme.colors` object in config → injected a
 ### Tool Groups
 
 ```
-─── Editing Tools ───
+â”€â”€â”€ Editing Tools â”€â”€â”€
   Crop       (Crop icon)
   Adjust     (SlidersHorizontal icon)
   Filter     (Blend icon)
-─── separator ───
-─── Annotation Tools ───
+â”€â”€â”€ separator â”€â”€â”€
+â”€â”€â”€ Annotation Tools â”€â”€â”€
   Text       (Type icon)
   Shapes     (Hexagon icon)
   Sticker    (SmilePlus icon)
-─── spacer (grows) ───
-─── pinned bottom ───
+â”€â”€â”€ spacer (grows) â”€â”€â”€
+â”€â”€â”€ pinned bottom â”€â”€â”€
   Apps       (LayoutGrid icon)
 ```
 
 ### Sidebar Behavior
 
-- Clicking an active tool → closes the tool panel (deselects)
-- Clicking a different tool → swaps the panel content (with transition)
+- Clicking an active tool â†’ closes the tool panel (deselects)
+- Clicking a different tool â†’ swaps the panel content (with transition)
 - Tool panel has its own close (X) button
 - Sidebar highlights the active tool with accent background
 - Hover shows tooltip with keyboard shortcut
@@ -192,10 +192,10 @@ Each tool can define its own contextual bar content. The bar sits between the ma
 
 | Tool | Contextual Bar Content |
 |------|----------------------|
-| **Crop** | [Cover/Crop/Fit ▾] Straighten [0] [slider] [↻90°][↺90°][FlipH][FlipV] [Reset] [Done] |
+| **Crop** | [Cover/Crop/Fit â–¾] Straighten [0] [slider] [â†»90Â°][â†º90Â°][FlipH][FlipV] [Reset] [Done] |
 | **Adjust** | [Reset All] [Compare toggle] [Done] |
 | **Filter** | [Filter intensity slider] [Compare toggle] [Done] |
-| **Text** | [Font ▾] [Size] [B][I][U] [Align] [Color] [Done] |
+| **Text** | [Font â–¾] [Size] [B][I][U] [Align] [Color] [Done] |
 | **Shapes** | [Fill/Outline toggle] [Color] [Stroke width] [Done] |
 | **Sticker** | [Size slider] [Opacity] [Done] |
 
@@ -208,7 +208,7 @@ All contextual bars include **[Reset]** and **[Done]** at the right end.
 ### Usage (SDK-style)
 
 ```tsx
-import { ImageEditor } from '@creative-editor/image-editor'
+import { ImageEditor } from '@editx/image-editor'
 
 <ImageEditor
   src="photo.jpg"
@@ -326,7 +326,7 @@ interface CropToolConfig {
 User config is deep-merged with `defaultConfig` (same pattern as filerobot). Missing keys fall back to defaults. This means users only specify what they want to change:
 
 ```tsx
-// Minimal — everything else uses defaults
+// Minimal â€” everything else uses defaults
 <ImageEditor src="photo.jpg" config={{ tools: ['crop', 'adjust'] }} />
 ```
 
@@ -409,27 +409,27 @@ const watermarkTool: CustomTool = {
 ### Component Tree
 
 ```
-<ImageEditorProvider config={config}>             ← Config context + deep merge
-  <ThemeProvider theme={config.theme}>             ← CSS variables injection
-    <EditorShell>                                  ← Root layout (flex column)
+<ImageEditorProvider config={config}>             â† Config context + deep merge
+  <ThemeProvider theme={config.theme}>             â† CSS variables injection
+    <EditorShell>                                  â† Root layout (flex column)
 
-      <Topbar>                                     ← Always visible
-        <HistoryButtons />                         ← Undo / Redo (left)
-        <EditorTitle />                            ← "Photo Editor" (center)
-        <ZoomControls />                           ← Zoom out / Auto / Zoom in (right)
-        <ExportButton />                           ← Export Image (right end)
+      <Topbar>                                     â† Always visible
+        <HistoryButtons />                         â† Undo / Redo (left)
+        <EditorTitle />                            â† "Photo Editor" (center)
+        <ZoomControls />                           â† Zoom out / Auto / Zoom in (right)
+        <ExportButton />                           â† Export Image (right end)
       </Topbar>
 
-      <ContextualBar tool={activeTool}>            ← Only when tool active
-        {activeTool === 'crop' && <CropBar />}     ← Mode, straighten, rotate, flip
+      <ContextualBar tool={activeTool}>            â† Only when tool active
+        {activeTool === 'crop' && <CropBar />}     â† Mode, straighten, rotate, flip
         {activeTool === 'adjust' && <AdjustBar />}
         ...
-        <ResetButton />                            ← Always present
-        <DoneButton />                             ← Always present
+        <ResetButton />                            â† Always present
+        <DoneButton />                             â† Always present
       </ContextualBar>
 
-      <EditorBody>                                 ← Horizontal flex (grows)
-        <ToolSidebar>                              ← Fixed width (~80px)
+      <EditorBody>                                 â† Horizontal flex (grows)
+        <ToolSidebar>                              â† Fixed width (~80px)
           <ToolGroup label="editing">
             <ToolButton tool="crop" icon={Crop} />
             <ToolButton tool="adjust" icon={SlidersHorizontal} />
@@ -445,7 +445,7 @@ const watermarkTool: CustomTool = {
           <ToolButton tool="apps" icon={LayoutGrid} pinned />
         </ToolSidebar>
 
-        <ToolPanel open={!!activeTool}>            ← Slide-out, ~280px
+        <ToolPanel open={!!activeTool}>            â† Slide-out, ~280px
           <ToolPanelHeader title={toolLabel} />
           <ScrollArea>
             {activeTool === 'crop' && <CropPanel />}
@@ -455,11 +455,11 @@ const watermarkTool: CustomTool = {
             {activeTool === 'text' && <TextPanel />}
             {activeTool === 'sticker' && <StickerPanel />}
           </ScrollArea>
-          <CloseButton />                          ← X at bottom of panel
+          <CloseButton />                          â† X at bottom of panel
         </ToolPanel>
 
-        <CanvasArea>                               ← Fills remaining space
-          <Canvas />                               ← Konva stage
+        <CanvasArea>                               â† Fills remaining space
+          <Canvas />                               â† Konva stage
         </CanvasArea>
       </EditorBody>
 
@@ -474,7 +474,7 @@ These go in `packages/image-editor/src/components/ui/`:
 
 | Primitive | Radix Base | Usage |
 |-----------|-----------|-------|
-| `Button` | — | Actions, toolbar, Done/Reset |
+| `Button` | â€” | Actions, toolbar, Done/Reset |
 | `Slider` | `@radix-ui/react-slider` | Straighten, adjustments, opacity |
 | `Tooltip` | `@radix-ui/react-tooltip` | Tool labels, keyboard shortcuts |
 | `Popover` | `@radix-ui/react-popover` | Color picker |
@@ -484,8 +484,8 @@ These go in `packages/image-editor/src/components/ui/`:
 | `Toggle` | `@radix-ui/react-toggle` | Bold/italic, fill mode |
 | `ToggleGroup` | `@radix-ui/react-toggle-group` | Aspect ratio presets, alignment |
 | `Select` | `@radix-ui/react-select` | Font family, filter presets |
-| `Input` | — | Width/height px inputs, text content |
-| `Label` | — | Form labels |
+| `Input` | â€” | Width/height px inputs, text content |
+| `Label` | â€” | Form labels |
 | `Sheet` | `@radix-ui/react-dialog` | Mobile tool panels |
 | `ColorPicker` | Custom (Popover + canvas) | Fill, stroke, text color |
 
@@ -495,62 +495,62 @@ These go in `packages/image-editor/src/components/ui/`:
 
 ### Phase 1: Foundation (Theme + Primitives)
 
-1. **Install dependencies** — shadcn init, Radix packages, Lucide, CVA
-2. **Set up CSS variables theme** — Create `themes/` directory with zinc-dark, slate-dark, etc.
-3. **Create ThemeProvider** — Injects CSS variables from config, supports runtime switching
-4. **Add shadcn primitives** — Button, Slider, Tooltip, Popover, ScrollArea, Tabs, etc.
-5. **Create `cn()` utility** — Already exists, ensure it works with shadcn pattern
+1. **Install dependencies** â€” shadcn init, Radix packages, Lucide, CVA
+2. **Set up CSS variables theme** â€” Create `themes/` directory with zinc-dark, slate-dark, etc.
+3. **Create ThemeProvider** â€” Injects CSS variables from config, supports runtime switching
+4. **Add shadcn primitives** â€” Button, Slider, Tooltip, Popover, ScrollArea, Tabs, etc.
+5. **Create `cn()` utility** â€” Already exists, ensure it works with shadcn pattern
 
 **Verification:** Demo app renders with theme applied, primitives render correctly, theme can switch at runtime.
 
 ### Phase 2: Config System
 
-6. **Define `ImageEditorConfig` type** — Full typed config interface
-7. **Create `defaultConfig`** — Complete defaults for every option
-8. **Create `ImageEditorProvider`** — React context, deep-merge logic
-9. **Create `useConfig()` hook** — Access merged config anywhere
-10. **Wire tool visibility** — Tools array in config controls which tabs appear
+6. **Define `ImageEditorConfig` type** â€” Full typed config interface
+7. **Create `defaultConfig`** â€” Complete defaults for every option
+8. **Create `ImageEditorProvider`** â€” React context, deep-merge logic
+9. **Create `useConfig()` hook** â€” Access merged config anywhere
+10. **Wire tool visibility** â€” Tools array in config controls which tabs appear
 
 **Verification:** `<ImageEditor config={{ tools: ['crop'] }} />` shows only crop tab.
 
 ### Phase 3: Layout Rebuild (img.ly pattern)
 
-11. **Build `EditorShell`** — Root flex-column container
-12. **Build `Topbar`** — [Undo][Redo] | Title | [Zoom][Export]
-13. **Build `ContextualBar`** — Conditional bar below topbar, renders per-tool content + Reset/Done
-14. **Build `ToolSidebar`** — Vertical icon+label list, grouped with separators, Apps pinned to bottom
-15. **Build `ToolPanel`** — Slide-out panel (~280px), animated open/close, X button at bottom, ScrollArea content
-16. **Build `CanvasArea`** — Canvas wrapper that flexes to fill remaining space
+11. **Build `EditorShell`** â€” Root flex-column container
+12. **Build `Topbar`** â€” [Undo][Redo] | Title | [Zoom][Export]
+13. **Build `ContextualBar`** â€” Conditional bar below topbar, renders per-tool content + Reset/Done
+14. **Build `ToolSidebar`** â€” Vertical icon+label list, grouped with separators, Apps pinned to bottom
+15. **Build `ToolPanel`** â€” Slide-out panel (~280px), animated open/close, X button at bottom, ScrollArea content
+16. **Build `CanvasArea`** â€” Canvas wrapper that flexes to fill remaining space
 
 **Verification:** Editor shell renders with sidebar, clicking a tool opens slide-out panel, canvas resizes, contextual bar appears/disappears.
 
 ### Phase 4: Tool Panel + Contextual Bar Rebuild
 
-17. **Rebuild `CropPanel`** — Crop Area (W/H inputs), Aspect Ratio / Resize toggle, ratio preset grid
-18. **Build `CropBar`** — Cover/Crop/Fit dropdown, Straighten input + slider, rotate 90°, flip H/V, Reset, Done
-19. **Rebuild `AdjustPanel`** — Labeled sliders with reset-per-slider, grouped sections (Basic / Refinements)
-20. **Rebuild `FilterPanel`** — Thumbnail grid with active indicator + intensity slider
-21. **Rebuild `ShapesPanel`** — Shape preset grid + fill mode toggle + color
-22. **Add `ColorPicker`** — Popover with hue/saturation canvas, hex input, preset swatches
+17. **Rebuild `CropPanel`** â€” Crop Area (W/H inputs), Aspect Ratio / Resize toggle, ratio preset grid
+18. **Build `CropBar`** â€” Cover/Crop/Fit dropdown, Straighten input + slider, rotate 90Â°, flip H/V, Reset, Done
+19. **Rebuild `AdjustPanel`** â€” Labeled sliders with reset-per-slider, grouped sections (Basic / Refinements)
+20. **Rebuild `FilterPanel`** â€” Thumbnail grid with active indicator + intensity slider
+21. **Rebuild `ShapesPanel`** â€” Shape preset grid + fill mode toggle + color
+22. **Add `ColorPicker`** â€” Popover with hue/saturation canvas, hex input, preset swatches
 
 **Verification:** All existing tools work identically with new UI, contextual bars show correct controls per tool.
 
 ### Phase 5: Responsive + Polish
 
-23. **Mobile layout** — Sidebar becomes bottom tab bar, tool panels become bottom sheets
-24. **Keyboard shortcuts** — Tool switching (C/A/F/T/S), undo/redo, delete, escape to close panel
-25. **Panel transitions** — Smooth slide-out animation for tool panel, fade for contextual bar
-26. **Loading states** — Skeleton loaders for filter thumbnails, spinner for image load
-27. **Accessibility** — Focus management, ARIA labels, keyboard navigation through tools
+23. **Mobile layout** â€” Sidebar becomes bottom tab bar, tool panels become bottom sheets
+24. **Keyboard shortcuts** â€” Tool switching (C/A/F/T/S), undo/redo, delete, escape to close panel
+25. **Panel transitions** â€” Smooth slide-out animation for tool panel, fade for contextual bar
+26. **Loading states** â€” Skeleton loaders for filter thumbnails, spinner for image load
+27. **Accessibility** â€” Focus management, ARIA labels, keyboard navigation through tools
 
 **Verification:** Works on mobile viewport, keyboard-only navigation functional, smooth transitions.
 
 ### Phase 6: Customization Surface
 
-28. **Custom tool registration** — `customTools` prop API with panel + contextualBar components
-29. **Slot system** — topbarRight, toolSidebar, contextualBar slots
-30. **i18n system** — Translation keys, `locale` config, `useTranslation()` hook
-31. **Event callbacks** — onSave, onClose, onChange, onToolChange, onBeforeSave
+28. **Custom tool registration** â€” `customTools` prop API with panel + contextualBar components
+29. **Slot system** â€” topbarRight, toolSidebar, contextualBar slots
+30. **i18n system** â€” Translation keys, `locale` config, `useTranslation()` hook
+31. **Event callbacks** â€” onSave, onClose, onChange, onToolChange, onBeforeSave
 
 **Verification:** Custom tool appears in sidebar with panel, slot content renders, language can switch.
 
@@ -628,14 +628,14 @@ packages/image-editor/src/
 
 ## Decisions
 
-- **img.ly slide-out layout** over fixed 3-column — matches the reference exactly, canvas gets maximum space when no tool is open, properties live in the tool panel not a separate sidebar
-- **Contextual top bar** over bottom bar — tool actions (Done, Reset, mode switches) sit at the top like img.ly, not at the bottom
-- **shadcn primitives in image-editor** (not react-editor) for now — avoids premature abstraction. Move to shared package later.
-- **CSS variables over Tailwind theme config** — allows runtime theme switching without rebuild
-- **Config deep-merge** (filerobot pattern) — users only override what they need
-- **No styled-components** — pure Tailwind + CSS variables. Simpler, better performance, smaller bundle
-- **Desktop-first, responsive down** — image editing is primarily desktop; mobile uses bottom sheet pattern
-- **Tool groups with separators** — editing tools (crop/adjust/filter) visually separated from annotation tools (text/shapes/sticker)
+- **img.ly slide-out layout** over fixed 3-column â€” matches the reference exactly, canvas gets maximum space when no tool is open, properties live in the tool panel not a separate sidebar
+- **Contextual top bar** over bottom bar â€” tool actions (Done, Reset, mode switches) sit at the top like img.ly, not at the bottom
+- **shadcn primitives in image-editor** (not react-editor) for now â€” avoids premature abstraction. Move to shared package later.
+- **CSS variables over Tailwind theme config** â€” allows runtime theme switching without rebuild
+- **Config deep-merge** (filerobot pattern) â€” users only override what they need
+- **No styled-components** â€” pure Tailwind + CSS variables. Simpler, better performance, smaller bundle
+- **Desktop-first, responsive down** â€” image editing is primarily desktop; mobile uses bottom sheet pattern
+- **Tool groups with separators** â€” editing tools (crop/adjust/filter) visually separated from annotation tools (text/shapes/sticker)
 
 ---
 

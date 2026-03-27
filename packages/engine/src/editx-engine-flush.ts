@@ -45,7 +45,7 @@ export function flushDirtyBlocks(
   const dirtyIds = [...dirty];
   dirty.clear();
 
-  const t0 = typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
+  const t0 = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
   for (const id of dirtyIds) {
     const block = blockStore.get(id);
     if (block) renderer.syncBlock(id, block);
@@ -58,10 +58,10 @@ export function flushDirtyBlocks(
       renderer.syncChildOrder?.(block.children);
     }
   }
-  const tSync = typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
+  const tSync = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
 
   renderer.renderFrame();
-  if (typeof window !== "undefined" && (window as any).__CE_PERF) {
+  if (typeof window !== "undefined" && (window as any).__EX_PERF) {
     const tEnd = performance.now();
     console.log(
       `[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`,

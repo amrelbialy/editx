@@ -79,7 +79,7 @@ export function applyFilters(
   const hasAdjustments = values != null;
   const hasPreset = presetName !== "";
 
-  const _perf = typeof window !== "undefined" && (window as any).__CE_PERF;
+  const _perf = typeof window !== "undefined" && (window as any).__EX_PERF;
 
   if (!hasAdjustments && !hasPreset) {
     if (_perf) console.log("[perf:applyFilters] no adjustments/preset, skipping");
@@ -94,7 +94,7 @@ export function applyFilters(
     return;
   }
 
-  // ── WebGL path ──
+  // â”€â”€ WebGL path â”€â”€
   if (webgl) {
     let sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
     if (!sourceImg) {
@@ -112,7 +112,7 @@ export function applyFilters(
       }
     }
     if (sourceImg) {
-      const t0 = typeof window !== "undefined" && (window as any).__CE_PERF ? performance.now() : 0;
+      const t0 = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
       webgl.uploadImage(sourceImg, sourceImg.naturalWidth, sourceImg.naturalHeight);
 
       const params: FilterParams = {
@@ -138,7 +138,7 @@ export function applyFilters(
         imgNode.clearCache();
       }
       imgNode.image(filteredCanvas);
-      if (typeof window !== "undefined" && (window as any).__CE_PERF) {
+      if (typeof window !== "undefined" && (window as any).__EX_PERF) {
         console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
       }
       return;
@@ -149,7 +149,7 @@ export function applyFilters(
     if (_perf) console.log("[perf:applyFilters] #webgl is null, using CPU fallback");
   }
 
-  // ── CPU fallback path ──
+  // â”€â”€ CPU fallback path â”€â”€
   if (_perf) console.log("[perf:applyFilters] CPU fallback running");
   const t1 = _perf ? performance.now() : 0;
   const filterPresetFn = presetName ? (getFilterPreset(presetName) ?? null) : null;

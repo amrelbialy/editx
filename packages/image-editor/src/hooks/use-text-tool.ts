@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback } from "react";
 import { useConfig } from "../config/config-context";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -16,7 +16,7 @@ const PRESET_CONFIG: Record<
 };
 
 export interface UseTextToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useTextTool({ engineRef }: UseTextToolOptions) {

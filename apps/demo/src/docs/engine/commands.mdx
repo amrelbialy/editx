@@ -1,14 +1,14 @@
 # Commands
 
-The command pattern for undo/redo in Creative Editor Engine.
+The command pattern for undo/redo in Editx Engine.
 
 ## Command Pattern
 
 All document mutations go through the **command system**. This ensures every change is:
 
-- **Undoable** — `Ctrl+Z` reverts the last change
-- **Redoable** — `Ctrl+Shift+Z` re-applies it
-- **Atomic** — multiple property changes can be batched into one undo step
+- **Undoable** â€” `Ctrl+Z` reverts the last change
+- **Redoable** â€” `Ctrl+Shift+Z` re-applies it
+- **Atomic** â€” multiple property changes can be batched into one undo step
 
 ## Usage
 
@@ -43,6 +43,6 @@ class MyCommand implements Command {
 }
 ```
 
-Undo is handled automatically by patch reversal — no separate `undo()` method needed.
+Undo is handled automatically by patch reversal â€” no separate `undo()` method needed.
 
 Detailed command authoring guide coming soon.

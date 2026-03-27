@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from "@creative-editor/image-editor";
+import type { ThemePresetValues } from "@editx/image-editor";
 
 export const t3ChatLight: ThemePresetValues = {
   background: "#ffffff",

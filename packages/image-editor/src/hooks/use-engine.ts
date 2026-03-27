@@ -1,5 +1,5 @@
-import { type CreativeEngine, evictImage } from "@creative-editor/engine";
-import { createEngine } from "@creative-editor/engine/konva";
+import { type EditxEngine, evictImage } from "@editx/engine";
+import { createEngine } from "@editx/engine/konva";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ImageSource } from "../image-editor";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -42,7 +42,7 @@ function ensureImageReady(source: ImageSource): Promise<void> {
 
 /**
  * Extract the raw URL string from a source for identity comparison.
- * Does NOT create blob URLs — purely reads existing URLs.
+ * Does NOT create blob URLs â€” purely reads existing URLs.
  */
 function getSourceIdentity(source: ImageSource): string | null {
   if (typeof source === "string") return source;
@@ -58,8 +58,8 @@ export interface UseEngineOptions {
 
 export interface UseEngineResult {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  engine: CreativeEngine | null;
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engine: EditxEngine | null;
+  engineRef: React.RefObject<EditxEngine | null>;
   initEditor: (source: ImageSource, signal?: { disposed: boolean }) => Promise<void>;
   handleRetry: () => void;
   handleDragOver: (e: React.DragEvent) => void;
@@ -75,9 +75,9 @@ export function useEngine({
   keepZoomOnSourceChange = false,
 }: UseEngineOptions): UseEngineResult {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const engineRef = useRef<CreativeEngine | null>(null);
+  const engineRef = useRef<EditxEngine | null>(null);
   const blobUrlRef = useRef<string | null>(null);
-  const [engine, setEngine] = useState<CreativeEngine | null>(null);
+  const [engine, setEngine] = useState<EditxEngine | null>(null);
 
   const loadedSourceRef = useRef<ImageSource | null>(null);
   const loadingSourceIdentityRef = useRef<string | null>(null);
@@ -148,7 +148,7 @@ export function useEngine({
             throw new Error(fileResult.error);
           }
           for (const w of fileResult.warnings) {
-            console.warn(`[creative-editor] ${w}`);
+            console.warn(`[editx] ${w}`);
           }
         }
 
@@ -182,7 +182,7 @@ export function useEngine({
           throw new Error(dimResult.error);
         }
         for (const w of dimResult.warnings) {
-          console.warn(`[creative-editor] ${w}`);
+          console.warn(`[editx] ${w}`);
         }
 
         const scaled = downscaleIfNeeded(htmlImg);
@@ -260,7 +260,7 @@ export function useEngine({
         if (signal?.disposed) return;
         loadingSourceIdentityRef.current = null;
         const message = err instanceof Error ? err.message : "Failed to load image";
-        console.error("[creative-editor] Init error:", message);
+        console.error("[editx] Init error:", message);
 
         if (
           typeof source === "object" &&

@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -7,11 +7,11 @@ import { cn } from "../../utils/cn";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 interface TextEditToolbarProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
-function readTargetStyle(engine: CreativeEngine, blockId: number, selectionStart?: number) {
+function readTargetStyle(engine: EditxEngine, blockId: number, selectionStart?: number) {
   const runs = engine.block.getTextRuns(blockId);
   let style = runs[0]?.style ?? {};
   if (selectionStart != null && selectionStart > 0) {

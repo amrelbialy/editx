@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockRenderer } from "./__tests__/mocks/mock-renderer";
 import { BlockAPI } from "./block/block-api";
-import { CreativeEngine } from "./creative-engine";
+import { EditxEngine } from "./editx-engine";
 import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 
 describe("SceneAPI", () => {
-  let engine: CreativeEngine;
+  let engine: EditxEngine;
   let block: BlockAPI;
   let scene: SceneAPI;
   let renderer: RendererAdapter;
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new CreativeEngine({ renderer });
+    engine = new EditxEngine({ renderer });
     block = new BlockAPI(engine);
     scene = new SceneAPI(engine, block);
   });
@@ -128,7 +128,7 @@ describe("SceneAPI", () => {
       const json = scene.saveToString();
 
       // Create a fresh engine and load
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -156,7 +156,7 @@ describe("SceneAPI", () => {
 
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -188,7 +188,7 @@ describe("SceneAPI", () => {
 
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -213,7 +213,7 @@ describe("SceneAPI", () => {
 
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -227,7 +227,7 @@ describe("SceneAPI", () => {
       await scene.create();
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -239,7 +239,7 @@ describe("SceneAPI", () => {
       await scene.create();
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);
@@ -281,7 +281,7 @@ describe("SceneAPI", () => {
 
       const json = scene.saveToString();
 
-      const engine2 = new CreativeEngine({ renderer: createMockRenderer() });
+      const engine2 = new EditxEngine({ renderer: createMockRenderer() });
       const block2 = new BlockAPI(engine2);
       const scene2 = new SceneAPI(engine2, block2);
       await scene2.loadFromString(json);

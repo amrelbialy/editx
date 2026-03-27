@@ -17,11 +17,11 @@ A clean, well-separated codebase makes every future feature easier to implement.
 | Duplicated code (`colorToHex`, image loading)       | Medium       | Multiple files                               |
 | Two parallel event systems                          | Medium       | `EventBus` + `EventAPI`                      |
 | Type safety gaps (`any` in Patch, untyped metadata) | Medium       | `history-manager.ts`, konva adapter          |
-| No `dispose()` on `CreativeEngine` facade           | Medium       | `creative-engine.ts`                         |
+| No `dispose()` on `EditxEngine` facade           | Medium       | `editx-engine.ts`                         |
 | Missing shared utilities                            | Medium       | Color, image loading                         |
 | BlockStore mixes 5 concerns (208 lines)             | Medium       | `block-store.ts`                             |
 | BlockAPI repetitive setters + setKind bypass        | Medium       | `block-api.ts`                               |
-| Nested batch bug risk                               | Low          | `block-api.ts` + `creative-engine.ts`        |
+| Nested batch bug risk                               | Low          | `block-api.ts` + `editx-engine.ts`        |
 | Mutable default color references                    | Low          | `block-defaults.ts`                          |
 
 ---
@@ -32,15 +32,15 @@ A clean, well-separated codebase makes every future feature easier to implement.
 
 **Files to delete:**
 
-- `packages/engine/src/pixi-renderer-adapter.ts` (461 lines) — does NOT implement the current `RendererAdapter` interface, uses the old `createLayer`/`updateLayer` API, ~80 lines of commented-out code, ~30 console.logs. Completely abandoned.
-- `packages/engine/src/transformer/transformer.ts` (169 lines) — PixiJS-only, incomplete (visual wireframe only, no interaction), ~20 console.logs. Only used by the dead pixi adapter.
+- `packages/engine/src/pixi-renderer-adapter.ts` (461 lines) â€” does NOT implement the current `RendererAdapter` interface, uses the old `createLayer`/`updateLayer` API, ~80 lines of commented-out code, ~30 console.logs. Completely abandoned.
+- `packages/engine/src/transformer/transformer.ts` (169 lines) â€” PixiJS-only, incomplete (visual wireframe only, no interaction), ~20 console.logs. Only used by the dead pixi adapter.
 - Delete the `packages/engine/src/transformer/` directory entirely.
 
 **Code to clean up:**
 
-- Remove the `'pixi'` branch comment in `creative-engine.ts` `create()` — renderer option type should be `'konva'` only (or removed entirely until pixi is reimplemented).
-- Remove `sidebarOpen` from `packages/react-editor/src/store/editor-store.ts` — never read anywhere.
-- Remove the unused dependency on `@creative-editor/react-editor` from `packages/image-editor/package.json` if it's never imported.
+- Remove the `'pixi'` branch comment in `editx-engine.ts` `create()` â€” renderer option type should be `'konva'` only (or removed entirely until pixi is reimplemented).
+- Remove `sidebarOpen` from `packages/react-editor/src/store/editor-store.ts` â€” never read anywhere.
+- Remove the unused dependency on `@editx/react-editor` from `packages/image-editor/package.json` if it's never imported.
 
 **Estimated line reduction:** ~630 lines of dead code removed.
 
@@ -53,9 +53,9 @@ Sweep the entire codebase and remove all `console.log` calls:
 | File                                 | Approx. count |
 | ------------------------------------ | ------------- |
 | `engine.ts`                          | 2             |
-| `creative-engine.ts`                 | 2             |
+| `editx-engine.ts`                 | 2             |
 | `block-store.ts`                     | 1 (commented) |
-| `creative-editor.tsx` (react-editor) | 1             |
+| `editx.tsx` (react-editor) | 1             |
 | `layer-panel.tsx`                    | 1             |
 | `properties-panel.tsx`               | 1             |
 
@@ -69,19 +69,19 @@ Create `packages/engine/src/utils/` directory for shared logic:
 
 #### 3a. `packages/engine/src/utils/color.ts`
 
-Extract `colorToHex()` from `konva-renderer-adapter.ts` (line 4) and `hexToColor()` from `properties-panel.tsx` (lines 14–28). Both are duplicated. Place in a single shared module.
+Extract `colorToHex()` from `konva-renderer-adapter.ts` (line 4) and `hexToColor()` from `properties-panel.tsx` (lines 14â€“28). Both are duplicated. Place in a single shared module.
 
 **Consumers that import the shared version:**
 
-- `konva-renderer-adapter.ts` — remove inline `colorToHex()`
-- `properties-panel.tsx` (react-editor) — remove inline `colorToHex()` and `hexToColor()`
+- `konva-renderer-adapter.ts` â€” remove inline `colorToHex()`
+- `properties-panel.tsx` (react-editor) â€” remove inline `colorToHex()` and `hexToColor()`
 
 #### 3b. `packages/engine/src/utils/image-loader.ts`
 
 Consolidate the two separate image caches and loading functions:
 
-- `packages/image-editor/src/utils/load-image.ts` → `imageCache` + `loadImage()`
-- `konva-renderer-adapter.ts` → `#imageCache` + `#loadImage()`
+- `packages/image-editor/src/utils/load-image.ts` â†’ `imageCache` + `loadImage()`
+- `konva-renderer-adapter.ts` â†’ `#imageCache` + `#loadImage()`
 
 Create a single `ImageLoader` class (or module with functions) that:
 
@@ -93,8 +93,8 @@ Create a single `ImageLoader` class (or module with functions) that:
 
 **Consumers:**
 
-- `konva-renderer-adapter.ts` — receives `ImageLoader` instance, removes private cache
-- `image-editor.tsx` / `load-image.ts` — uses the same `ImageLoader` via engine
+- `konva-renderer-adapter.ts` â€” receives `ImageLoader` instance, removes private cache
+- `image-editor.tsx` / `load-image.ts` â€” uses the same `ImageLoader` via engine
 
 #### 3c. `packages/engine/src/utils/index.ts`
 
@@ -118,7 +118,7 @@ packages/engine/src/
     index.ts                     -- Re-export KonvaRendererAdapter
 ```
 
-#### 4a. `konva-camera.ts` — Camera / Viewport Controller
+#### 4a. `konva-camera.ts` â€” Camera / Viewport Controller
 
 Extract from `konva-renderer-adapter.ts`:
 
@@ -130,12 +130,12 @@ Extract from `konva-renderer-adapter.ts`:
 
 Receives a reference to the Konva `Stage` and the `contentLayer`.
 
-#### 4b. `konva-node-factory.ts` — Node Creation & Update
+#### 4b. `konva-node-factory.ts` â€” Node Creation & Update
 
 Extract from `konva-renderer-adapter.ts`:
 
-- `#createNode(id, block)` — type-based dispatch to create Konva nodes
-- `#updateNode(node, block)` — reads block properties, applies to Konva nodes
+- `#createNode(id, block)` â€” type-based dispatch to create Konva nodes
+- `#updateNode(node, block)` â€” reads block properties, applies to Konva nodes
 - Uses the shared `ImageLoader` from Step 3b (no more private `#loadImage`)
 - Uses the shared `colorToHex` from Step 3a
 
@@ -145,7 +145,7 @@ Also split the 70-line `#updateNode()` into per-type updaters:
 - `updateTextNode(node, block)`
 - `updateShapeNode(node, block)` (rect + ellipse share logic)
 
-#### 4c. `konva-interaction-handler.ts` — Interaction / Input Handler
+#### 4c. `konva-interaction-handler.ts` â€” Interaction / Input Handler
 
 Extract from `konva-renderer-adapter.ts`:
 
@@ -155,15 +155,15 @@ Extract from `konva-renderer-adapter.ts`:
 - Click/drag event handling
 - Receives callbacks: `onBlockClick`, `onBlockDragEnd`, `onBlockTransformEnd`, `onStageClick`
 
-#### 4d. `konva-renderer-adapter.ts` — Slim Orchestrator
+#### 4d. `konva-renderer-adapter.ts` â€” Slim Orchestrator
 
 What remains:
 
 - `implements RendererAdapter`
 - `init()`, `createScene()`, `dispose()`
-- `syncBlock()`, `removeBlock()` — delegates to node factory
-- `showTransformer()`, `hideTransformer()` — thin wrapper
-- `renderFrame()` — delegates to stage
+- `syncBlock()`, `removeBlock()` â€” delegates to node factory
+- `showTransformer()`, `hideTransformer()` â€” thin wrapper
+- `renderFrame()` â€” delegates to stage
 - Wires together camera, node factory, interaction handler
 
 **Target: ~120 lines** (down from 494).
@@ -188,18 +188,18 @@ packages/engine/src/block/
   index.ts                    -- Barrel exports
 ```
 
-#### 5a. `block-store.ts` — Core CRUD & Registry (slim)
+#### 5a. `block-store.ts` â€” Core CRUD & Registry (slim)
 
 Keep only:
 
 - `#blocks` Map, `#nextId` counter
-- `create()`, `get()`, `exists()`, `destroy()` (without recursive child logic — delegate to hierarchy)
+- `create()`, `get()`, `exists()`, `destroy()` (without recursive child logic â€” delegate to hierarchy)
 - `getType()`, `getKind()`, `setKind()`, `getName()`, `setName()`
 - `findByType()`, `findByKind()`
 
-The `destroy()` method currently does recursive child destruction AND unparenting — split the hierarchy parts out. `BlockStore` composes `BlockHierarchy`, `BlockProperties`, and `BlockSnapshot`.
+The `destroy()` method currently does recursive child destruction AND unparenting â€” split the hierarchy parts out. `BlockStore` composes `BlockHierarchy`, `BlockProperties`, and `BlockSnapshot`.
 
-#### 5b. `block-hierarchy.ts` — Hierarchy Manager
+#### 5b. `block-hierarchy.ts` â€” Hierarchy Manager
 
 Extract:
 
@@ -211,7 +211,7 @@ Extract:
 
 Receives a reference to the blocks Map from `BlockStore`.
 
-#### 5c. `block-properties.ts` — Property Accessors
+#### 5c. `block-properties.ts` â€” Property Accessors
 
 Extract:
 
@@ -222,34 +222,34 @@ Extract:
 
 Receives a reference to the blocks Map from `BlockStore`.
 
-#### 5d. `block-snapshot.ts` — Snapshot & Restore
+#### 5d. `block-snapshot.ts` â€” Snapshot & Restore
 
 Extract:
 
-- `snapshot(id)` — creates deep copy of a block
-- `restore(data)` — restores a block from snapshot
-- `#deepCopyProperties()` — private helper
+- `snapshot(id)` â€” creates deep copy of a block
+- `restore(data)` â€” restores a block from snapshot
+- `#deepCopyProperties()` â€” private helper
 
 Receives a reference to the blocks Map from `BlockStore`.
 
 #### 5e. Clean up `block-api.ts`
 
 - Replace the 4 identical typed setters (`setFloat`, `setString`, `setBool`, `setColor`) with a single generic `setProperty(id, key, value)` public method. Keep the typed variants as thin wrappers if the public API must stay stable.
-- Fix `setKind()` — currently bypasses command pattern with an inline object. Create a `SetKindCommand` class or route through `SetPropertyCommand`.
-- Document the nested batch situation: `setPosition()`/`setSize()` call `beginBatch()`/`endBatch()`, and `creative-engine.ts` `onBlockTransformEnd` also wraps in a batch. Add a comment noting this is intentional (inner batch is a no-op when already batching).
+- Fix `setKind()` â€” currently bypasses command pattern with an inline object. Create a `SetKindCommand` class or route through `SetPropertyCommand`.
+- Document the nested batch situation: `setPosition()`/`setSize()` call `beginBatch()`/`endBatch()`, and `editx-engine.ts` `onBlockTransformEnd` also wraps in a batch. Add a comment noting this is intentional (inner batch is a no-op when already batching).
 
 ---
 
-### Step 6: Add `dispose()` to CreativeEngine Facade
+### Step 6: Add `dispose()` to EditxEngine Facade
 
-Currently cleanup requires: `engine.core.getRenderer()?.dispose()` — reaching into internals.
+Currently cleanup requires: `engine.core.getRenderer()?.dispose()` â€” reaching into internals.
 
-- Add a `dispose()` method on `CreativeEngine` that:
+- Add a `dispose()` method on `EditxEngine` that:
   - Calls `renderer.dispose()`
   - Clears the image loader cache
   - Removes event listeners
   - Sets an internal `#disposed` flag
-- Update `image-editor.tsx` and `creative-editor.tsx` to call `engine.dispose()` instead of the internal path.
+- Update `image-editor.tsx` and `editx.tsx` to call `engine.dispose()` instead of the internal path.
 
 ---
 
@@ -260,8 +260,8 @@ Currently cleanup requires: `engine.core.getRenderer()?.dispose()` — reaching 
 In `history-manager.ts`, change:
 
 ```
-before: any → before: BlockData | null
-after: any  → after: BlockData | null
+before: any â†’ before: BlockData | null
+after: any  â†’ after: BlockData | null
 ```
 
 #### 7b. Replace `(node as any).__blockId` with typed metadata
@@ -269,7 +269,7 @@ after: any  → after: BlockData | null
 In the konva adapter, use Konva node attributes instead of `any` casts:
 
 - `node.setAttr('blockId', id)` / `node.getAttr('blockId')`
-- Same for `__loadedSrc` → `node.setAttr('loadedSrc', src)`
+- Same for `__loadedSrc` â†’ `node.setAttr('loadedSrc', src)`
 
 #### 7c. Type the `EventBus`
 
@@ -297,7 +297,7 @@ return structuredClone(defaults[type]);
 
 #### 8b. Remove unresolved design comment
 
-In `creative-engine.ts`, the comment `"here adapter doesn't communicate with block api directly. Question: how to handle this?"` should be resolved and removed.
+In `editx-engine.ts`, the comment `"here adapter doesn't communicate with block api directly. Question: how to handle this?"` should be resolved and removed.
 
 ---
 
@@ -306,7 +306,7 @@ In `creative-engine.ts`, the comment `"here adapter doesn't communicate with blo
 ```
 packages/engine/src/
   index.ts
-  creative-engine.ts          -- Facade + factory (slim)
+  editx-engine.ts          -- Facade + factory (slim)
   engine.ts                   -- Core orchestrator
   render-adapter.ts           -- RendererAdapter interface
   scene.ts                    -- Scene API
@@ -358,16 +358,16 @@ packages/engine/src/
 
 | Order | Step                                                       | Est. Effort | Risk                                         |
 | ----- | ---------------------------------------------------------- | ----------- | -------------------------------------------- |
-| 1     | Remove dead code (pixi adapter, transformer, unused state) | Small       | None — deletion only                         |
+| 1     | Remove dead code (pixi adapter, transformer, unused state) | Small       | None â€” deletion only                         |
 | 2     | Remove console.logs                                        | Small       | None                                         |
-| 3     | Extract shared utilities (color, image-loader)             | Small       | Low — pure extraction                        |
-| 4     | Break up konva god class into 4 modules                    | **Medium**  | Medium — must maintain all existing behavior |
-| 5     | Split BlockStore + clean up BlockAPI                       | **Medium**  | Medium — core data layer, test carefully     |
-| 6     | Add `dispose()` to CreativeEngine                          | Small       | Low                                          |
+| 3     | Extract shared utilities (color, image-loader)             | Small       | Low â€” pure extraction                        |
+| 4     | Break up konva god class into 4 modules                    | **Medium**  | Medium â€” must maintain all existing behavior |
+| 5     | Split BlockStore + clean up BlockAPI                       | **Medium**  | Medium â€” core data layer, test carefully     |
+| 6     | Add `dispose()` to EditxEngine                          | Small       | Low                                          |
 | 7     | Type safety improvements                                   | Small       | Low                                          |
 | 8     | Minor fixes (deep copy defaults, comments)                 | Small       | Low                                          |
 
-Steps 1–3 are safe, isolated changes. Step 4 is the main refactor — do it carefully with the demo app running to verify nothing breaks.
+Steps 1â€“3 are safe, isolated changes. Step 4 is the main refactor â€” do it carefully with the demo app running to verify nothing breaks.
 
 ---
 
@@ -375,8 +375,8 @@ Steps 1–3 are safe, isolated changes. Step 4 is the main refactor — do it ca
 
 - **After Step 1**: `pnpm build` succeeds, demo app loads and displays image, no runtime errors.
 - **After Step 2**: No `console.log` output in browser dev tools (except Vite/HMR).
-- **After Step 3**: `colorToHex` imported from `utils/color.ts` everywhere. Single image cache — load same URL twice, verify only one network request.
-- **After Step 4**: Demo app works identically — image loads, centered, fitted, not draggable. The `konva/` folder has 4 files, each under 150 lines. `konva-renderer-adapter.ts` is ~120 lines.
+- **After Step 3**: `colorToHex` imported from `utils/color.ts` everywhere. Single image cache â€” load same URL twice, verify only one network request.
+- **After Step 4**: Demo app works identically â€” image loads, centered, fitted, not draggable. The `konva/` folder has 4 files, each under 150 lines. `konva-renderer-adapter.ts` is ~120 lines.
 - **After Step 5**: `block/` has 5 focused files. All existing block operations work unchanged. `setKind()` goes through command pattern. `setProperty()` works for all types.
 - **After Step 6**: `engine.dispose()` works. `image-editor.tsx` no longer reaches into `core.getRenderer()`.
 - **After Step 7**: No `any` casts in `Patch`, no `(node as any)` in konva code, `EventBus` is typed.
@@ -390,5 +390,5 @@ After this refactoring is complete:
 
 1. Update `FOLDER_STRUCTURE.md` to reflect the actual new structure
 2. Mark this plan as **done**
-3. Proceed to **Feature 1 Improvements** (`docs/features/01-load-image.md` → Improvements section)
+3. Proceed to **Feature 1 Improvements** (`docs/features/01-load-image.md` â†’ Improvements section)
 4. Then proceed to **Feature 2: Crop** (`docs/features/02-crop.md`)

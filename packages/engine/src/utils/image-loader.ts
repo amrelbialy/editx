@@ -24,7 +24,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
       const fallback = new Image();
       fallback.onload = () => {
         console.warn(
-          `[creative-editor] Image loaded without CORS headers. ` +
+          `[editx] Image loaded without CORS headers. ` +
             `The canvas will be tainted and export may be blocked: ${src}`,
         );
         imageCache.set(src, fallback);

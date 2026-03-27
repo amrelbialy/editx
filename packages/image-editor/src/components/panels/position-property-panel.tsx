@@ -1,5 +1,5 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { SHAPE_RECT_CORNER_RADIUS } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { SHAPE_RECT_CORNER_RADIUS } from "@editx/engine";
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -21,7 +21,7 @@ import { SliderField } from "../ui/slider-field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface PositionPropertyPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
   onBringForward?: () => void;
   onSendBackward?: () => void;
@@ -39,7 +39,7 @@ interface PosState {
   shapeKind: string;
 }
 
-function readPos(engine: CreativeEngine, blockId: number): PosState {
+function readPos(engine: EditxEngine, blockId: number): PosState {
   const pos = engine.block.getPosition(blockId);
   const size = engine.block.getSize(blockId);
 

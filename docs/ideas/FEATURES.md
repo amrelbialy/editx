@@ -1,28 +1,28 @@
-# Creative Editor SDK Roadmap
+# Editx SDK Roadmap
 
-A phased roadmap for building a web-based Creative Editor SDK (image/video/text/template editor), designed for **solo developers** using **React, TypeScript, PixiJS, Zustand, Tailwind, and Shadcn/UI**.
+A phased roadmap for building a web-based Editx SDK (image/video/text/template editor), designed for **solo developers** using **React, TypeScript, PixiJS, Zustand, Tailwind, and Shadcn/UI**.
 
 ---
 
-## Phase 0 — Project Setup (High Priority)
+## Phase 0 â€” Project Setup (High Priority)
 
 **Goal:** Establish monorepo, packages, and basic build system.
 
-- ✅ Initialize **pnpm** + **Turborepo** monorepo
-- ✅ Create **packages**:
+- âœ… Initialize **pnpm** + **Turborepo** monorepo
+- âœ… Create **packages**:
   - `engine` (core document + command system)
   - `renderer` (PixiJS renderer)
   - `react-editor` (React wrapper + UI)
   - `types` (shared TypeScript types)
   - `utils` (helper functions)
-- ✅ Create **apps/demo** using Vite (React + TypeScript)
-- ✅ Setup **TailwindCSS** + Shadcn/UI
-- ✅ Configure **TypeScript** in all packages
-- ✅ Setup **Zustand store** for UI state
+- âœ… Create **apps/demo** using Vite (React + TypeScript)
+- âœ… Setup **TailwindCSS** + Shadcn/UI
+- âœ… Configure **TypeScript** in all packages
+- âœ… Setup **Zustand store** for UI state
 
 ---
 
-## Phase 1 — Core Engine (High Priority)
+## Phase 1 â€” Core Engine (High Priority)
 
 **Goal:** Implement the backbone of your editor.
 
@@ -38,7 +38,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 2 — Renderer (High Priority)
+## Phase 2 â€” Renderer (High Priority)
 
 **Goal:** Render layers efficiently using PixiJS.
 
@@ -53,7 +53,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 3 — React Editor UI (High Priority)
+## Phase 3 â€” React Editor UI (High Priority)
 
 **Goal:** Build user-facing editor interface.
 
@@ -66,7 +66,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 4 — Tools & Interactions (Medium Priority)
+## Phase 4 â€” Tools & Interactions (Medium Priority)
 
 **Goal:** Implement essential editor tools.
 
@@ -81,13 +81,13 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 5 — Export / Processing (Medium Priority)
+## Phase 5 â€” Export / Processing (Medium Priority)
 
 **Goal:** Implement image & video export pipeline.
 
 - Image export (PNG, JPEG, WEBP)
 - Video export:
-  - Browser (ffmpeg.wasm — limited)
+  - Browser (ffmpeg.wasm â€” limited)
   - Backend / SaaS (high-res)
   - Frame rendering from PixiJS
   - Audio support
@@ -96,7 +96,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 6 — Templates & Assets (Medium Priority)
+## Phase 6 â€” Templates & Assets (Medium Priority)
 
 - Save/load `CreativeDocument` JSON
 - Placeholder system for text/images
@@ -107,7 +107,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 7 — Video / Timeline (Medium Priority)
+## Phase 7 â€” Video / Timeline (Medium Priority)
 
 - VideoLayer: load/play preview, transform, opacity
 - Timeline tracks: start/end time, trim handles, reordering
@@ -117,7 +117,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 8 — Filters / Effects (Low Priority)
+## Phase 8 â€” Filters / Effects (Low Priority)
 
 - Image filters: brightness, contrast, saturation, blur, custom shaders
 - Text effects: shadow, outline, gradient, animations
@@ -126,7 +126,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 9 — Plugins / SDK Extensibility (Low Priority)
+## Phase 9 â€” Plugins / SDK Extensibility (Low Priority)
 
 - Custom tools
 - Custom layer types
@@ -136,7 +136,7 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 
 ---
 
-## Phase 10 — SaaS / Account Integration (Optional)
+## Phase 10 â€” SaaS / Account Integration (Optional)
 
 - Free plan: limited resolution, duration, watermark
 - Self-hosted API option
@@ -149,5 +149,5 @@ A phased roadmap for building a web-based Creative Editor SDK (image/video/text/
 - **Engine:** pure TypeScript, headless, handles document/layers/commands
 - **UI State:** Zustand store for React components (selected layer, active tool, zoom, sidebar)
 - **Renderer:** PixiJS for GPU-accelerated canvas rendering
-- **Export:** Browser (ffmpeg.wasm) → Backend / SaaS (ffmpeg + optional headless Pixi)
-- **Incremental approach:** Build Phase 0 → Phase 1 → Phase 2 first; tools, export, video can be added gradually
+- **Export:** Browser (ffmpeg.wasm) â†’ Backend / SaaS (ffmpeg + optional headless Pixi)
+- **Incremental approach:** Build Phase 0 â†’ Phase 1 â†’ Phase 2 first; tools, export, video can be added gradually

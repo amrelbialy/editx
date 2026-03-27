@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
 
 export interface UseHistoryResult {
@@ -9,8 +9,8 @@ export interface UseHistoryResult {
 }
 
 export function useHistory(
-  engine: CreativeEngine | null,
-  engineRef: React.RefObject<CreativeEngine | null>,
+  engine: EditxEngine | null,
+  engineRef: React.RefObject<EditxEngine | null>,
 ): UseHistoryResult {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);

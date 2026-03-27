@@ -1,39 +1,39 @@
 # Engine Overview
 
-The block-based core engine powering Creative Editor.
+The block-based core engine powering Editx.
 
 ## What is the Engine?
 
-`@creative-editor/engine` is the headless core that powers the Creative Image Editor. It provides:
+`@editx/engine` is the headless core that powers the Editx Image Editor. It provides:
 
-- **Block system** — everything is a block (pages, graphics, text, images)
-- **Command pattern** — all mutations are undoable/redoable
-- **Konva renderer** — GPU-accelerated canvas rendering
-- **EventAPI** — observable state changes
+- **Block system** â€” everything is a block (pages, graphics, text, images)
+- **Command pattern** â€” all mutations are undoable/redoable
+- **Konva renderer** â€” GPU-accelerated canvas rendering
+- **EventAPI** â€” observable state changes
 
 The engine has **zero React dependency** and can be used standalone.
 
 ## Installation
 
 ```bash
-pnpm add @creative-editor/engine konva
+pnpm add @editx/engine konva
 ```
 
 ## Architecture
 
 ```
 Scene
-├── Page (block)
-│   ├── Graphic (block) — with Shape + Fill sub-blocks
-│   ├── Text (block)
-│   └── Image (block)
-└── Stack (optional grouping)
+â”œâ”€â”€ Page (block)
+â”‚   â”œâ”€â”€ Graphic (block) â€” with Shape + Fill sub-blocks
+â”‚   â”œâ”€â”€ Text (block)
+â”‚   â””â”€â”€ Image (block)
+â””â”€â”€ Stack (optional grouping)
 ```
 
 ## Next Steps
 
-- [Blocks](/docs/engine/blocks) — the block type system
-- [Engine API](/docs/engine/engine-api) — history, batching, events, export
-- [Block API](/docs/engine/block-api) — create, query, and mutate blocks
-- [Editor API](/docs/engine/editor-api) — viewport, zoom, edit modes
-- [Scene & Events](/docs/engine/scene-api) — scene management and event subscriptions
+- [Blocks](/docs/engine/blocks) â€” the block type system
+- [Engine API](/docs/engine/engine-api) â€” history, batching, events, export
+- [Block API](/docs/engine/block-api) â€” create, query, and mutate blocks
+- [Editor API](/docs/engine/editor-api) â€” viewport, zoom, edit modes
+- [Scene & Events](/docs/engine/scene-api) â€” scene management and event subscriptions

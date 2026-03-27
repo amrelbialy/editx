@@ -1,5 +1,5 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { colorToHex, FILL_SOLID_COLOR, TEXT_ALIGN } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { colorToHex, FILL_SOLID_COLOR, TEXT_ALIGN } from "@editx/engine";
 import {
   AlignCenter,
   AlignLeft,
@@ -34,7 +34,7 @@ import { Separator } from "../ui/separator";
 import { Slider } from "../ui/slider";
 
 interface BlockPropertiesBarProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
   blockType: "text" | "graphic" | "image";
 }
@@ -49,9 +49,9 @@ const FONT_FAMILIES = [
   "Verdana",
 ];
 
-// ── State readers ──
+// â”€â”€ State readers â”€â”€
 
-function readTextState(engine: CreativeEngine, blockId: number, selectionStart?: number) {
+function readTextState(engine: EditxEngine, blockId: number, selectionStart?: number) {
   const runs = engine.block.getTextRuns(blockId);
   const align = engine.block.getString(blockId, TEXT_ALIGN);
 
@@ -79,7 +79,7 @@ function readTextState(engine: CreativeEngine, blockId: number, selectionStart?:
   };
 }
 
-function readBlockColor(engine: CreativeEngine, blockId: number): string {
+function readBlockColor(engine: EditxEngine, blockId: number): string {
   const fillId = engine.block.getFill(blockId);
   if (fillId != null) {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
@@ -88,7 +88,7 @@ function readBlockColor(engine: CreativeEngine, blockId: number): string {
   return "#4a90e2";
 }
 
-// ── Main Component ──
+// â”€â”€ Main Component â”€â”€
 
 export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
   engine,
@@ -133,7 +133,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     setOpacity(engine.block.getOpacity(blockId));
   }, [engine, blockId, isText, isImage, textSelectionRange]);
 
-  // ── Selection-aware style range ──
+  // â”€â”€ Selection-aware style range â”€â”€
   const hasCharSelection =
     editingTextBlockId === blockId &&
     textSelectionRange !== null &&
@@ -146,7 +146,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     return { start: 0, end: engine.block.getTextContent(blockId).length };
   }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
-  // ── Text handlers ──
+  // â”€â”€ Text handlers â”€â”€
   const handleFontFamily = useCallback(
     (value: string) => {
       const { start, end } = getStyleRange();
@@ -266,7 +266,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     refresh();
   }, [engine, blockId, getStyleRange, refresh]);
 
-  // ── Shared handlers ──
+  // â”€â”€ Shared handlers â”€â”€
   const handleOpacityChange = useCallback(
     ([v]: number[]) => {
       engine.block.setOpacity(blockId, v);
@@ -316,7 +316,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       )}
       data-text-toolbar
     >
-      {/* ── Text-specific controls ── */}
+      {/* â”€â”€ Text-specific controls â”€â”€ */}
       {isText && textState && (
         <>
           {/* Font family */}
@@ -470,7 +470,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Advanced text properties (≡A) */}
+          {/* Advanced text properties (â‰¡A) */}
           <PanelButton
             panel="text-advanced"
             icon={<TextCursorInput className="h-4 w-4" />}
@@ -538,7 +538,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         </>
       )}
 
-      {/* ── Shared property buttons ── */}
+      {/* â”€â”€ Shared property buttons â”€â”€ */}
 
       {/* Color (text + graphic only) */}
       {!isImage && (
@@ -609,7 +609,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         />
       )}
 
-      {/* Style dropdown (image only — Adjustments / Filters) */}
+      {/* Style dropdown (image only â€” Adjustments / Filters) */}
       {isImage && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

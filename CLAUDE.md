@@ -1,12 +1,12 @@
-# Creative Editor — Project Rules
+# Editx â€” Project Rules
 
 ## Overview
 
 Monorepo for a block-based creative/image editor. Two publishable packages + one demo app.
 
-- **`packages/engine`** — Core block-based engine. Konva 10 renderer, command pattern for undo/redo, EventAPI (img.ly-style).
-- **`packages/image-editor`** — React 19 image editor component. Tailwind CSS 4, Radix UI primitives, Zustand, Lexical for rich text.
-- **`apps/demo`** — Vite dev app that consumes image-editor.
+- **`packages/engine`** â€” Core block-based engine. Konva 10 renderer, command pattern for undo/redo, EventAPI (img.ly-style).
+- **`packages/image-editor`** â€” React 19 image editor component. Tailwind CSS 4, Radix UI primitives, Zustand, Lexical for rich text.
+- **`apps/demo`** â€” Vite dev app that consumes image-editor.
 
 ## Commands
 
@@ -23,17 +23,17 @@ pnpm check          # Format + lint + import sorting in one pass (Biome)
 ### Per-package
 
 ```bash
-pnpm --filter @creative-editor/engine test
-pnpm --filter @creative-editor/image-editor test
-pnpm --filter @creative-editor/image-editor test:e2e   # Playwright CT (when set up)
+pnpm --filter @editx/engine test
+pnpm --filter @editx/image-editor test
+pnpm --filter @editx/image-editor test:e2e   # Playwright CT (when set up)
 ```
 
 ## Architecture
 
 ```
-packages/engine     → pure TypeScript, no React dependency
-packages/image-editor → depends on engine (workspace:*), React 19
-apps/demo           → depends on image-editor, Vite
+packages/engine     â†’ pure TypeScript, no React dependency
+packages/image-editor â†’ depends on engine (workspace:*), React 19
+apps/demo           â†’ depends on image-editor, Vite
 ```
 
 Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tests.
@@ -43,8 +43,8 @@ Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tes
 - **Max 250 lines per file** (components, hooks, utils). Split by concern before adding more code.
 - **One React component per file**. Co-located types and small helpers are fine.
 - **One concern per hook**. Compose via aggregator hooks.
-- **CSS Container Queries** (`@container/editor` + `@3xl/editor:`) over viewport breakpoints or JS detection — the editor must adapt to its own container size, not the viewport.
-- **No `console.log` in production code** — use `__CE_PERF` flag for perf instrumentation.
+- **CSS Container Queries** (`@container/editor` + `@3xl/editor:`) over viewport breakpoints or JS detection â€” the editor must adapt to its own container size, not the viewport.
+- **No `console.log` in production code** â€” use `__EX_PERF` flag for perf instrumentation.
 
 ## Coding Conventions
 

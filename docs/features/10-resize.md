@@ -171,7 +171,7 @@ interface CropToolConfig {
 
 - `packages/engine/src/editor/editor-crop.ts` — `applyCropDimensions()`, `getCropVisualDimensions()`
 - `packages/engine/src/block/block-api.ts` — expose new methods
-- `packages/engine/src/creative-engine.ts` — wire handler (same pattern as applyCropRatio)
+- `packages/engine/src/editx-engine.ts` — wire handler (same pattern as applyCropRatio)
 - `packages/engine/src/index.ts` — export if needed
 
 **Image Editor:**

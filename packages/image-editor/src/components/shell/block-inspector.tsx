@@ -1,4 +1,4 @@
-import type { AdjustmentParam, CreativeEngine } from "@creative-editor/engine";
+import type { AdjustmentParam, EditxEngine } from "@editx/engine";
 import type React from "react";
 import type { AlignDirection } from "../../hooks/use-block-actions";
 import type { PropertySidePanel } from "../../store/image-editor-store";
@@ -15,7 +15,7 @@ import { TextAdvancedPanel } from "../panels/text-advanced-panel";
 
 interface BlockInspectorProps {
   panel: PropertySidePanel;
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
   blockType: string | null;
   blockEffects: {

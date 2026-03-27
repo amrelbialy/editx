@@ -1,4 +1,4 @@
-import type { TextRun } from "@creative-editor/engine";
+import type { TextRun } from "@editx/engine";
 import { createEditor, ParagraphNode, TextNode } from "lexical";
 import { beforeEach, describe, expect, it } from "vitest";
 import { editorStateToRuns, runsToEditorState } from "./lexical-bridge";
@@ -35,7 +35,7 @@ describe("lexical-bridge", () => {
     _root = result.root;
   });
 
-  // ── Round-trip: TextRun[] → Lexical → TextRun[] ──────────────────
+  // â”€â”€ Round-trip: TextRun[] â†’ Lexical â†’ TextRun[] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("round-trip", () => {
     it("preserves plain text", async () => {
@@ -142,7 +142,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // ── Multi-run / mixed styles ──────────────────────────────────────
+  // â”€â”€ Multi-run / mixed styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("mixed styles", () => {
     it("preserves adjacent runs with different styles", async () => {
@@ -180,7 +180,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // ── Multi-paragraph / newlines ────────────────────────────────────
+  // â”€â”€ Multi-paragraph / newlines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("newlines", () => {
     it("preserves newlines as paragraph boundaries", async () => {
@@ -230,7 +230,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // ── Edge cases ────────────────────────────────────────────────────
+  // â”€â”€ Edge cases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe("edge cases", () => {
     it("handles empty runs array", async () => {
@@ -311,12 +311,12 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // ── Helper ────────────────────────────────────────────────────────
+  // â”€â”€ Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function applyRuns(runs: TextRun[]): Promise<void> {
     return new Promise<void>((resolve) => {
       runsToEditorState(editor, runs);
-      // Lexical batches updates — resolve on next microtask
+      // Lexical batches updates â€” resolve on next microtask
       queueMicrotask(resolve);
     });
   }

@@ -1,5 +1,5 @@
-import type { CreativeEngine, TextRunStyle } from "@creative-editor/engine";
-import { TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN } from "@creative-editor/engine";
+import type { EditxEngine, TextRunStyle } from "@editx/engine";
+import { TEXT_LINE_HEIGHT, TEXT_VERTICAL_ALIGN } from "@editx/engine";
 import {
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
@@ -14,7 +14,7 @@ import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
 
 interface TextAdvancedPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
@@ -28,7 +28,7 @@ interface AdvancedState {
 }
 
 function readAdvancedState(
-  engine: CreativeEngine,
+  engine: EditxEngine,
   blockId: number,
   selectionStart?: number,
 ): AdvancedState {
@@ -91,7 +91,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
     return engine.onHistoryChanged(() => refresh());
   }, [engine, refresh]);
 
-  // ── Handlers ──
+  // â”€â”€ Handlers â”€â”€
 
   const handleVerticalAlign = useCallback(
     (align: string) => {
@@ -152,7 +152,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
   );
 
   const CASE_OPTIONS = [
-    { value: "none", label: "—" },
+    { value: "none", label: "â€”" },
     { value: "uppercase", label: "AG" },
     { value: "lowercase", label: "ag" },
     { value: "capitalize", label: "Ag" },

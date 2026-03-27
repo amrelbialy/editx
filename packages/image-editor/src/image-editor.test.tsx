@@ -7,7 +7,7 @@ import { useImageEditorStore } from "./store/image-editor-store";
 // Track mock engine instances for assertions
 let latestMockEngine: any = null;
 
-// Shared factory — used by both @creative-editor/engine and @creative-editor/engine/konva mocks
+// Shared factory â€” used by both @editx/engine and @editx/engine/konva mocks
 const createMockEngine = () => {
   const eng = {
     scene: {
@@ -113,9 +113,9 @@ const createMockEngine = () => {
 };
 
 // Mock the engine and image loading dependencies
-vi.mock("@creative-editor/engine", () => {
+vi.mock("@editx/engine", () => {
   return {
-    CreativeEngine: {
+    EditxEngine: {
       create: vi.fn().mockImplementation(() => Promise.resolve(createMockEngine())),
     },
     IMAGE_SRC: "image/src",
@@ -173,7 +173,7 @@ vi.mock("@creative-editor/engine", () => {
   };
 });
 
-vi.mock("@creative-editor/engine/konva", () => ({
+vi.mock("@editx/engine/konva", () => ({
   createEngine: vi.fn().mockImplementation(() => Promise.resolve(createMockEngine())),
 }));
 

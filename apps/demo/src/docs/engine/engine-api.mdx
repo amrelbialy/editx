@@ -1,6 +1,6 @@
 # Engine API
 
-The `CreativeEngine` class is the main entry point for the engine.
+The `EditxEngine` class is the main entry point for the engine.
 
 ## Properties
 
@@ -71,7 +71,7 @@ const unsub = engine.onEditModeChanged(({ mode, previousMode }) => { /* ... */ }
 ```ts
 const blob = await engine.exportScene({
   format: "png",   // "png" | "jpeg" | "webp"
-  quality: 0.92,   // 0–1, for jpeg/webp
+  quality: 0.92,   // 0â€“1, for jpeg/webp
   pixelRatio: 2,   // DPR multiplier
 });
 ```

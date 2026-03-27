@@ -7,15 +7,15 @@ import { CreateEffectCommand } from "../../controller/commands/create-effect-com
 import { DestroyBlockCommand } from "../../controller/commands/destroy-block-command";
 import { RemoveEffectCommand } from "../../controller/commands/remove-effect-command";
 import { SetPropertyCommand } from "../../controller/commands/set-property-command";
-import { CreativeEngine } from "../../creative-engine";
+import { EditxEngine } from "../../editx-engine";
 import type { BlockEvent } from "../../event-api";
 import { createMockRenderer } from "../mocks/mock-renderer";
 
 describe("Engine Integration: Event Ordering", () => {
-  let engine: CreativeEngine;
+  let engine: EditxEngine;
 
   beforeEach(() => {
-    engine = new CreativeEngine({ renderer: createMockRenderer() });
+    engine = new EditxEngine({ renderer: createMockRenderer() });
   });
 
   it("delivers 'created' event after command exec", () => {
@@ -84,7 +84,7 @@ describe("Engine Integration: Event Ordering", () => {
     expect(events[0].type).toBe("updated");
   });
 
-  it("dedupes events within a batch (same block → single event)", () => {
+  it("dedupes events within a batch (same block â†’ single event)", () => {
     const store = engine.getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
@@ -148,10 +148,10 @@ describe("Engine Integration: Event Ordering", () => {
 });
 
 describe("Engine Integration: Effect Chains", () => {
-  let engine: CreativeEngine;
+  let engine: EditxEngine;
 
   beforeEach(() => {
-    engine = new CreativeEngine({ renderer: createMockRenderer() });
+    engine = new EditxEngine({ renderer: createMockRenderer() });
   });
 
   it("creates effect, appends to block, sets properties, and undoes all", () => {
@@ -176,15 +176,15 @@ describe("Engine Integration: Effect Chains", () => {
     engine.exec(new SetPropertyCommand(store, effectId, "adjustments/brightness", 0.5));
     expect(store.getFloat(effectId, "adjustments/brightness")).toBe(0.5);
 
-    // Undo property → brightness back to 0
+    // Undo property â†’ brightness back to 0
     engine.undo();
     expect(store.getFloat(effectId, "adjustments/brightness")).toBe(0);
 
-    // Undo append → effect detached
+    // Undo append â†’ effect detached
     engine.undo();
     expect(store.get(blockId)!.effectIds).not.toContain(effectId);
 
-    // Redo append → effect reattached
+    // Redo append â†’ effect reattached
     engine.redo();
     expect(store.get(blockId)!.effectIds).toContain(effectId);
   });
@@ -207,19 +207,19 @@ describe("Engine Integration: Effect Chains", () => {
     engine.exec(new RemoveEffectCommand(store, blockId, 0));
     expect(store.get(blockId)!.effectIds).toEqual([]);
 
-    // Undo → effect restored
+    // Undo â†’ effect restored
     engine.undo();
     expect(store.get(blockId)!.effectIds).toEqual([effectId]);
   });
 });
 
 describe("Engine Integration: Renderer Sync", () => {
-  let engine: CreativeEngine;
+  let engine: EditxEngine;
   let renderer: ReturnType<typeof createMockRenderer>;
 
   beforeEach(() => {
     renderer = createMockRenderer();
-    engine = new CreativeEngine({ renderer });
+    engine = new EditxEngine({ renderer });
   });
 
   it("syncs blocks to renderer after each command", () => {

@@ -24,8 +24,8 @@ export default defineConfig({
   appType: "spa",
   resolve: {
     alias: {
-      "@creative-editor/engine": path.resolve(__dirname, "../../packages/engine/src"),
-      "@creative-editor/image-editor": path.resolve(__dirname, "../../packages/image-editor/src"),
+      "@editx/engine": path.resolve(__dirname, "../../packages/engine/src"),
+      "@editx/image-editor": path.resolve(__dirname, "../../packages/image-editor/src"),
     },
   },
 });

@@ -1,9 +1,9 @@
 import {
   ADJUSTMENT_PARAMS,
   type AdjustmentParam,
-  type CreativeEngine,
+  type EditxEngine,
   EFFECT_FILTER_NAME,
-} from "@creative-editor/engine";
+} from "@editx/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdjustmentValues } from "../components/panels/adjust-panel";
 
@@ -23,7 +23,7 @@ const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
 };
 
 export interface UseBlockEffectsOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
   blockId: number | null;
 }
 

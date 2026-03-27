@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import "@creative-editor/image-editor/styles.css";
+@import "@editx/image-editor/styles.css";
 
 /* Dark mode via .dark class on <html> */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -25,7 +25,7 @@ html.dark {
   height: 100vh;
 }
 
-/* ── Animations ───────────────────────────────────────────────── */
+/* â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -40,13 +40,13 @@ html.dark {
   animation: fade-in-up 0.5s ease-out both;
 }
 
-/* ── Thin scrollbar for dark code snippets ────────────────────── */
+/* â”€â”€ Thin scrollbar for dark code snippets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .code-snippet {
   scrollbar-width: thin;
   scrollbar-color: #3f3f46 transparent;
 }
 
-/* ── Custom range slider (playground) ─────────────────────────── */
+/* â”€â”€ Custom range slider (playground) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .playground-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -129,7 +129,7 @@ html.dark {
   background: #52525b;
 }
 
-/* ── Docs prose styles (light theme) ──────────────────────────── */
+/* â”€â”€ Docs prose styles (light theme) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .prose-docs {
   line-height: 1.75;
   color: #3f3f46;
@@ -267,7 +267,7 @@ html.dark {
   margin: 2rem 0;
 }
 
-/* ── Docs prose styles (dark theme) ───────────────────────────── */
+/* â”€â”€ Docs prose styles (dark theme) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dark .prose-docs {
   color: #a1a1aa;
 }

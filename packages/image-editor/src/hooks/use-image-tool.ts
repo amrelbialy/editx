@@ -1,11 +1,11 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/engine";
 import { useCallback } from "react";
 import { useConfig } from "../config/config-context";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseImageToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB

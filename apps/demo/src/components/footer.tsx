@@ -21,7 +21,7 @@ export function Footer() {
     <footer className="border-t border-zinc-800 bg-zinc-950 text-zinc-400">
       <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
         <div className="col-span-2 md:col-span-1">
-          <h3 className="text-lg font-semibold text-white">Creative Editor</h3>
+          <h3 className="text-lg font-semibold text-white">Editx</h3>
           <p className="mt-2 text-sm leading-relaxed">
             Open-source block-based image editor for React. Crop, adjust, filter, annotate &amp;
             export.

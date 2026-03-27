@@ -1,4 +1,4 @@
-import type { ShapeType } from "@creative-editor/engine";
+import type { ShapeType } from "@editx/engine";
 import { Circle, Hexagon, MoveRight, Pentagon, Square, Star, Triangle } from "lucide-react";
 import type React from "react";
 import { useCallback } from "react";

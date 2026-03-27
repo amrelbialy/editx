@@ -1,4 +1,4 @@
-# Creative Editor — Changelog
+# Editx â€” Changelog
 
 ---
 
@@ -30,10 +30,10 @@ Added an `EventAPI` class to the engine that follows the IMG.LY pattern. Events 
 
 #### Created
 
-- **`packages/engine/src/event-api.ts`** — New `EventAPI` class:
-  - `subscribe(blocks, callback)` — subscribe to block lifecycle events
-    - `blocks: number[]` — filter by block IDs. Empty array = all blocks
-    - `callback: (events: BlockEvent[]) => void` — receives bundled events
+- **`packages/engine/src/event-api.ts`** â€” New `EventAPI` class:
+  - `subscribe(blocks, callback)` â€” subscribe to block lifecycle events
+    - `blocks: number[]` â€” filter by block IDs. Empty array = all blocks
+    - `callback: (events: BlockEvent[]) => void` â€” receives bundled events
     - Returns `() => void` unsubscribe function
   - Events: `{ type: 'created' | 'updated' | 'destroyed', block: number }`
   - Internal `_enqueue()` and `_flush()` methods called by Engine
@@ -43,15 +43,15 @@ Added an `EventAPI` class to the engine that follows the IMG.LY pattern. Events 
 - **`packages/engine/src/engine.ts`**
   - Added `EventAPI` instance, exposed via `engine.event` getter
   - `exec()` and `endBatch()` now enqueue typed block events from patches
-  - `#flush()` calls `eventApi._flush()` AFTER render — events arrive at end of update cycle
+  - `#flush()` calls `eventApi._flush()` AFTER render â€” events arrive at end of update cycle
   - `#applyPatches()` (undo/redo) also enqueues events
-  - `#enqueueBlockEvents()` — new private method that reads patch before/after to determine event type:
-    - `before === null` → `created`
-    - `after === null` → `destroyed`
-    - both present → `updated`
+  - `#enqueueBlockEvents()` â€” new private method that reads patch before/after to determine event type:
+    - `before === null` â†’ `created`
+    - `after === null` â†’ `destroyed`
+    - both present â†’ `updated`
   - Removed inline `nodes:updated` emission (replaced by EventAPI)
 
-- **`packages/engine/src/creative-engine.ts`**
+- **`packages/engine/src/editx-engine.ts`**
   - Exposes `event: EventAPI` as a public property
 
 - **`packages/engine/src/index.ts`**
@@ -68,14 +68,14 @@ Added an `EventAPI` class to the engine that follows the IMG.LY pattern. Events 
 ```
 1. User drags block 5
 2. Engine executes SetPropertyCommand
-3. Command returns Patch → engine calls eventApi._enqueue({ type: 'updated', block: 5 })
+3. Command returns Patch â†’ engine calls eventApi._enqueue({ type: 'updated', block: 5 })
 4. Engine flushes dirty blocks to renderer (Konva redraws)
 5. Engine calls eventApi._flush():
    - Deduplicates events
    - Subscriber for [5] receives: [{ type: 'updated', block: 5 }]
    - Subscriber for [12] receives: nothing (block 12 not in event list)
    - Subscriber for [] (all) receives: [{ type: 'updated', block: 5 }]
-6. React hook callback fires → getSnapshot() → re-render if value changed
+6. React hook callback fires â†’ getSnapshot() â†’ re-render if value changed
 ```
 
 ### Event Delivery Timing
@@ -94,7 +94,7 @@ The old `engine.core.on()` / `engine.core.off()` / `engine.core.emit()` still ex
 
 ### Problem
 
-The previous engine-to-React communication used a `transformTick` counter in Zustand. Any block change anywhere incremented this global counter, causing every subscribed component to re-render and re-read all values from the engine — even if the change was irrelevant to that component.
+The previous engine-to-React communication used a `transformTick` counter in Zustand. Any block change anywhere incremented this global counter, causing every subscribed component to re-render and re-read all values from the engine â€” even if the change was irrelevant to that component.
 
 ### Solution
 
@@ -104,16 +104,16 @@ Replaced the `EditorReactBridge` class and `transformTick` pattern with React 18
 
 #### Created
 
-- **`packages/react-editor/src/hooks/use-engine.ts`** — 9 hooks:
-  - `useSelection(engine)` — subscribes to `selection:changed`, returns `number[]`
-  - `useSelectedBlockId(engine)` — convenience wrapper, returns first selected ID or `null`
-  - `useBlockFloat(engine, blockId, key)` — subscribes to `nodes:updated` filtered by blockId
-  - `useBlockString(engine, blockId, key)` — same pattern for string properties
-  - `useBlockBool(engine, blockId, key)` — same pattern for boolean properties
-  - `useBlockColor(engine, blockId, key)` — same pattern for Color properties
-  - `useBlockChildren(engine, blockId)` — subscribes to all `nodes:updated` (for list changes)
-  - `useBlockType(engine, blockId)` — block type
-  - `useBlockKind(engine, blockId)` — block kind/sub-type
+- **`packages/react-editor/src/hooks/use-engine.ts`** â€” 9 hooks:
+  - `useSelection(engine)` â€” subscribes to `selection:changed`, returns `number[]`
+  - `useSelectedBlockId(engine)` â€” convenience wrapper, returns first selected ID or `null`
+  - `useBlockFloat(engine, blockId, key)` â€” subscribes to `nodes:updated` filtered by blockId
+  - `useBlockString(engine, blockId, key)` â€” same pattern for string properties
+  - `useBlockBool(engine, blockId, key)` â€” same pattern for boolean properties
+  - `useBlockColor(engine, blockId, key)` â€” same pattern for Color properties
+  - `useBlockChildren(engine, blockId)` â€” subscribes to all `nodes:updated` (for list changes)
+  - `useBlockType(engine, blockId)` â€” block type
+  - `useBlockKind(engine, blockId)` â€” block kind/sub-type
 
 #### Modified
 
@@ -129,7 +129,7 @@ Replaced the `EditorReactBridge` class and `transformTick` pattern with React 18
 - **`packages/react-editor/src/components/layer-panel.tsx`**
   - Replaced `useEditorStore(s => s.transformTick)` and `useEditorStore(s => s.selectedBlockId)` with `useSelectedBlockId` + `useBlockChildren` hooks
 
-- **`packages/react-editor/src/components/creative-editor.tsx`**
+- **`packages/react-editor/src/components/editx.tsx`**
   - Removed `EditorReactBridge` creation and cleanup
   - Removed `bridgeRef`
 
@@ -138,19 +138,19 @@ Replaced the `EditorReactBridge` class and `transformTick` pattern with React 18
 
 #### Deleted
 
-- **`packages/react-editor/src/editor-react-bridge.ts`** — no longer needed
+- **`packages/react-editor/src/editor-react-bridge.ts`** â€” no longer needed
 
 ### How It Works Now
 
 ```
-Engine emits 'nodes:updated' with block IDs → ['5', '12']
-  ↓
+Engine emits 'nodes:updated' with block IDs â†’ ['5', '12']
+  â†“
 useBlockFloat(engine, 5, 'transform/position/x')
-  → checks: is '5' in the ID list? YES → calls getSnapshot()
-  → React compares old vs new value → re-renders only if different
+  â†’ checks: is '5' in the ID list? YES â†’ calls getSnapshot()
+  â†’ React compares old vs new value â†’ re-renders only if different
 
 useBlockFloat(engine, 7, 'fill/color')
-  → checks: is '7' in the ID list? NO → does nothing
+  â†’ checks: is '7' in the ID list? NO â†’ does nothing
 ```
 
 ### No Engine Changes

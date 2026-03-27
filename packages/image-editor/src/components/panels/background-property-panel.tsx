@@ -1,16 +1,16 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { ColorPicker } from "../ui/color-picker";
 import { SwitchField } from "../ui/switch-field";
 
 interface BackgroundPropertyPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
-function readFillState(engine: CreativeEngine, blockId: number) {
+function readFillState(engine: EditxEngine, blockId: number) {
   const fillEnabled = engine.block.isFillEnabled(blockId);
   let color = "#000000";
   const fillId = engine.block.getFill(blockId);

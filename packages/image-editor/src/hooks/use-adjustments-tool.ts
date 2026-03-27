@@ -1,8 +1,4 @@
-import {
-  ADJUSTMENT_PARAMS,
-  type AdjustmentParam,
-  type CreativeEngine,
-} from "@creative-editor/engine";
+import { ADJUSTMENT_PARAMS, type AdjustmentParam, type EditxEngine } from "@editx/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdjustmentValues } from "../components/panels/adjust-panel";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -23,7 +19,7 @@ const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
 };
 
 export interface UseAdjustmentsToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
@@ -163,7 +159,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     return ce.onHistoryChanged(() => {
       const eid = adjustEffectIdRef.current;
       if (eid === null || !ce.block.exists(eid)) {
-        // Effect was destroyed by undo — re-discover it
+        // Effect was destroyed by undo â€” re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
           const found = effects.find((id) => ce.block.getKind(id) === "adjustments");

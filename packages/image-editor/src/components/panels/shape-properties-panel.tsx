@@ -1,11 +1,11 @@
 import {
   type Color,
-  type CreativeEngine,
   colorToHex,
+  type EditxEngine,
   FILL_SOLID_COLOR,
   hexToColor,
   SHAPE_RECT_CORNER_RADIUS,
-} from "@creative-editor/engine";
+} from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { InputGroup } from "../ui/input-group";
@@ -15,7 +15,7 @@ import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
 export interface ShapePropertiesPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
@@ -42,7 +42,7 @@ function colorToInputHex(c: Color): string {
   return colorToHex(c).substring(0, 7);
 }
 
-function readShapeState(engine: CreativeEngine, blockId: number): ShapeState {
+function readShapeState(engine: EditxEngine, blockId: number): ShapeState {
   const b = engine.block;
   const pos = b.getPosition(blockId);
   const size = b.getSize(blockId);

@@ -49545,14 +49545,14 @@ function visualCropToSource(crop, origW, origH, rotDeg, flipH, flipV) {
 
 class BlockCropAPI {
   #engine;
-  /** @internal — callback wired by CreativeEngine for crop overlay routing. */
+  /** @internal — callback wired by EditxEngine for crop overlay routing. */
   #applyCropRatioHandler = null;
   #applyCropDimensionsHandler = null;
   #getCropVisualDimensionsHandler = null;
   constructor(engine) {
     this.#engine = engine;
   }
-  // ── Handler wiring (called by CreativeEngine) ─────
+  // ── Handler wiring (called by EditxEngine) ─────
   /** @internal */
   _setApplyCropRatioHandler(handler) {
     this.#applyCropRatioHandler = handler;
@@ -52612,7 +52612,7 @@ class EditorAPI {
     this.#history = new EditorHistory(this.#ctx);
     this.#viewport = new EditorViewport(this.#ctx);
   }
-  /** @internal — called by CreativeEngine after construction */
+  /** @internal — called by EditxEngine after construction */
   _setBlockAPI(block) {
     this.#ctx.block = block;
   }
@@ -53102,7 +53102,7 @@ class Engine {
     }
     const dirtyIds = [...this.#dirty];
     this.#dirty.clear();
-    const t0 = typeof window !== "undefined" && window.__CE_PERF ? performance.now() : 0;
+    const t0 = typeof window !== "undefined" && window.__EX_PERF ? performance.now() : 0;
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
       if (block) {
@@ -53117,9 +53117,9 @@ class Engine {
         this.#renderer.syncChildOrder?.(block.children);
       }
     }
-    const tSync = typeof window !== "undefined" && window.__CE_PERF ? performance.now() : 0;
+    const tSync = typeof window !== "undefined" && window.__EX_PERF ? performance.now() : 0;
     this.#renderer.renderFrame();
-    if (typeof window !== "undefined" && window.__CE_PERF) {
+    if (typeof window !== "undefined" && window.__EX_PERF) {
       const tEnd = performance.now();
       console.log(
         `[perf:flush] syncBlocks: ${(tSync - t0).toFixed(2)}ms | renderFrame: ${(tEnd - tSync).toFixed(2)}ms | total: ${(tEnd - t0).toFixed(2)}ms (${dirtyIds.length} dirty)`
@@ -64521,7 +64521,7 @@ function loadImage(src) {
       const fallback = new Image();
       fallback.onload = () => {
         console.warn(
-          `[creative-editor] Image loaded without CORS headers. The canvas will be tainted and export may be blocked: ${src}`
+          `[editx] Image loaded without CORS headers. The canvas will be tainted and export may be blocked: ${src}`
         );
         imageCache.set(src, fallback);
         resolve(fallback);
@@ -66534,7 +66534,7 @@ class KonvaNodeFactory {
     const presetName = this.#collectFilterPresetName(block, resolveBlock);
     const hasAdjustments = values != null;
     const hasPreset = presetName !== "";
-    const _perf = typeof window !== "undefined" && window.__CE_PERF;
+    const _perf = typeof window !== "undefined" && window.__EX_PERF;
     if (!hasAdjustments && !hasPreset) {
       if (_perf) console.log("[perf:applyFilters] no adjustments/preset, skipping");
       if (imgNode.filters()?.length) {
@@ -66564,7 +66564,7 @@ class KonvaNodeFactory {
         }
       }
       if (sourceImg) {
-        const t0 = typeof window !== "undefined" && window.__CE_PERF ? performance.now() : 0;
+        const t0 = typeof window !== "undefined" && window.__EX_PERF ? performance.now() : 0;
         this.#webgl.uploadImage(sourceImg, sourceImg.naturalWidth, sourceImg.naturalHeight);
         const params = {
           brightness: values?.brightness ?? 0,
@@ -66587,7 +66587,7 @@ class KonvaNodeFactory {
           imgNode.clearCache();
         }
         imgNode.image(filteredCanvas);
-        if (typeof window !== "undefined" && window.__CE_PERF) {
+        if (typeof window !== "undefined" && window.__EX_PERF) {
           console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
         }
         return;
@@ -67387,7 +67387,7 @@ void main() {
 }
 `;
 function perfEnabled() {
-  return typeof window !== "undefined" && window.__CE_PERF === true;
+  return typeof window !== "undefined" && window.__EX_PERF === true;
 }
 class WebGLFilterRenderer {
   #canvas;
@@ -68046,7 +68046,7 @@ class SceneAPI {
   }
 }
 
-class CreativeEngine {
+class EditxEngine {
   #disposed = false;
   constructor(params) {
     this.core = params.core;
@@ -68137,7 +68137,7 @@ class CreativeEngine {
       }
     };
     adapter.resolveBlock = (id) => core.getBlockStore().get(id);
-    return new CreativeEngine({ core, block, editor, scene });
+    return new EditxEngine({ core, block, editor, scene });
   }
 }
 
@@ -75466,7 +75466,7 @@ function downscaleIfNeeded(img, maxMegapixels = DEFAULT_MAX_MEGAPIXELS) {
   const workingWidth = Math.round(naturalWidth * scale);
   const workingHeight = Math.round(naturalHeight * scale);
   console.warn(
-    `[creative-editor] Image is ${megapixels.toFixed(1)} MP (${naturalWidth}×${naturalHeight}). Downscaling to ${workingWidth}×${workingHeight} for editing. Original dimensions preserved for export.`
+    `[editx] Image is ${megapixels.toFixed(1)} MP (${naturalWidth}×${naturalHeight}). Downscaling to ${workingWidth}×${workingHeight} for editing. Original dimensions preserved for export.`
   );
   const canvas = document.createElement("canvas");
   canvas.width = workingWidth;
@@ -75679,7 +75679,7 @@ function useEngine({
             throw new Error(fileResult.error);
           }
           for (const w of fileResult.warnings) {
-            console.warn(`[creative-editor] ${w}`);
+            console.warn(`[editx] ${w}`);
           }
         }
         let processedSource = source;
@@ -75708,7 +75708,7 @@ function useEngine({
           throw new Error(dimResult.error);
         }
         for (const w of dimResult.warnings) {
-          console.warn(`[creative-editor] ${w}`);
+          console.warn(`[editx] ${w}`);
         }
         const scaled = downscaleIfNeeded(htmlImg);
         let workingUrl = imgUrl;
@@ -75728,7 +75728,7 @@ function useEngine({
           height: htmlImg.naturalHeight,
           name
         });
-        const ce = await CreativeEngine.create({
+        const ce = await EditxEngine.create({
           container: containerRef.current
         });
         if (signal?.disposed) return;
@@ -75768,7 +75768,7 @@ function useEngine({
         if (signal?.disposed) return;
         loadingSourceIdentityRef.current = null;
         const message = err instanceof Error ? err.message : "Failed to load image";
-        console.error("[creative-editor] Init error:", message);
+        console.error("[editx] Init error:", message);
         if (typeof source === "object" && source !== null && "width" in source && "height" in source) {
           const obj = source;
           if (obj.width && obj.height) {

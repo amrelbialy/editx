@@ -1,12 +1,12 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { colorToHex, FILL_SOLID_COLOR, hexToColor } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { colorToHex, FILL_SOLID_COLOR, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
 
 interface ColorPropertyPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
   blockType: "text" | "graphic";
 }

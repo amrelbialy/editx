@@ -1,10 +1,10 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback } from "react";
 
 export type AlignDirection = "left" | "center" | "right" | "top" | "middle" | "bottom";
 
 export interface UseBlockActionsOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
   selectedBlockId: number | null;
   onDeselect?: () => void;
 }

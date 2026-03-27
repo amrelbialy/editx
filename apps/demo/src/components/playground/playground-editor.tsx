@@ -1,5 +1,5 @@
-import type { ImageEditorConfig } from "@creative-editor/image-editor";
-import { ImageEditor } from "@creative-editor/image-editor";
+import type { ImageEditorConfig } from "@editx/image-editor";
+import { ImageEditor } from "@editx/image-editor";
 
 interface Props {
   src: string | File;

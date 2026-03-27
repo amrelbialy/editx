@@ -55,7 +55,7 @@ const FEATURES: Feature[] = [
   {
     icon: Shapes,
     title: "Shapes",
-    desc: "Rectangles, ellipses, lines, arrows, polygons, stars — filled or outlined.",
+    desc: "Rectangles, ellipses, lines, arrows, polygons, stars â€” filled or outlined.",
     from: "#10b981",
     to: "#14b8a6",
   },
@@ -121,7 +121,7 @@ function HeroSection() {
             className="w-2 h-2 rounded-full bg-emerald-500"
             style={{ boxShadow: "0 0 6px #34d399" }}
           />
-          @creative-editor/image-editor
+          @editx/image-editor
         </span>
         <h1
           className="text-5xl md:text-7xl font-bold leading-tight tracking-tight animate-fade-in-up"
@@ -131,14 +131,14 @@ function HeroSection() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Creative Editor
+          Editx
         </h1>
         <p
           className="max-w-xl text-lg leading-relaxed text-zinc-500 animate-fade-in-up"
           style={{ animationDelay: "0.1s" }}
         >
           A block-based image editor component for React 19. Crop, adjust, filter, add text & shapes
-          — fully themeable and extensible.
+          â€” fully themeable and extensible.
         </p>
 
         <div
@@ -173,13 +173,13 @@ function HeroSection() {
         </div>
         <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-zinc-400">
           <span>React 19</span>
-          <span>·</span>
+          <span>Â·</span>
           <span>TypeScript</span>
-          <span>·</span>
+          <span>Â·</span>
           <span>Konva 10</span>
-          <span>·</span>
+          <span>Â·</span>
           <span>Tailwind CSS 4</span>
-          <span>·</span>
+          <span>Â·</span>
           <span>Fully Themeable</span>
         </div>
       </div>
@@ -197,9 +197,7 @@ function DemoSection() {
         <h2 className="text-3xl font-semibold mt-2 mb-2 text-zinc-900 dark:text-zinc-100">
           Try it right here
         </h2>
-        <p className="text-zinc-500">
-          Edit a real photo with the full Creative Editor. No setup required.
-        </p>
+        <p className="text-zinc-500">Edit a real photo with the full Editx. No setup required.</p>
       </div>
       <InlineDemo />
     </section>

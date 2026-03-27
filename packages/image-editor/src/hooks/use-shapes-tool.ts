@@ -1,11 +1,11 @@
-import type { CreativeEngine, ShapeType } from "@creative-editor/engine";
-import { hexToColor } from "@creative-editor/engine";
+import type { EditxEngine, ShapeType } from "@editx/engine";
+import { hexToColor } from "@editx/engine";
 import { useCallback } from "react";
 import { useConfig } from "../config/config-context";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseShapesToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useShapesTool({ engineRef }: UseShapesToolOptions) {

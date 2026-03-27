@@ -1,4 +1,4 @@
-import { ImageEditor } from "@creative-editor/image-editor";
+import { ImageEditor } from "@editx/image-editor";
 import { useMemo } from "react";
 import { useDarkMode } from "../hooks/use-dark-mode";
 

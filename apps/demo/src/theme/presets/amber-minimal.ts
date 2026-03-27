@@ -1,4 +1,4 @@
-import type { ThemePresetValues } from "@creative-editor/image-editor";
+import type { ThemePresetValues } from "@editx/image-editor";
 
 export const amberMinimalLight: ThemePresetValues = {
   background: "hsl(0 0% 100%)",

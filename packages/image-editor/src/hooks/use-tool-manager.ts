@@ -1,10 +1,10 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback } from "react";
 import type { EditorEventCallbacks, ImageEditorToolId } from "../config/config.types";
 import { type ImageEditorTool, useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseToolManagerOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
   crop: {
     enterCropMode: () => void;
     handleCropApply: () => void;

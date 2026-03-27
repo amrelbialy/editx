@@ -1,12 +1,12 @@
-import type { CreativeEngine } from "@creative-editor/engine";
-import { colorToHex, hexToColor } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
+import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
 interface StrokePropertyPanelProps {
-  engine: CreativeEngine;
+  engine: EditxEngine;
   blockId: number;
 }
 
@@ -16,7 +16,7 @@ interface StrokeState {
   width: number;
 }
 
-function readStroke(engine: CreativeEngine, blockId: number): StrokeState {
+function readStroke(engine: EditxEngine, blockId: number): StrokeState {
   return {
     enabled: engine.block.isStrokeEnabled(blockId),
     color: colorToHex(engine.block.getStrokeColor(blockId)).substring(0, 7),

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { COLOR_MAP, CodeHighlight, tokenize } from "./code-highlight";
 import { CopyButton } from "./copy-button";
 
-const INSTALL_CMD = "pnpm add @creative-editor/image-editor";
-const IMPORT_CMD = 'import { ImageEditor } from "@creative-editor/image-editor";';
+const INSTALL_CMD = "pnpm add @editx/image-editor";
+const IMPORT_CMD = 'import { ImageEditor } from "@editx/image-editor";';
 
 function InlineCode(props: { code: string }) {
   const tokens = tokenize(props.code);
@@ -73,7 +73,7 @@ const STEPS = [
 ];
 
 const TABS = {
-  React: `import { ImageEditor } from "@creative-editor/image-editor";
+  React: `import { ImageEditor } from "@editx/image-editor";
 
 function App() {
   return (
@@ -90,7 +90,7 @@ function App() {
     />
   );
 }`,
-  Modal: `import { ImageEditorModal } from "@creative-editor/image-editor";
+  Modal: `import { ImageEditorModal } from "@editx/image-editor";
 import { useState } from "react";
 
 function App() {

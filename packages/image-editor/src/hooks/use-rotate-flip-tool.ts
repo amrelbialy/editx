@@ -1,4 +1,4 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../store/image-editor-store";
 
@@ -9,7 +9,7 @@ export interface RotationState {
 }
 
 export interface UseRotateFlipToolOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
+  engineRef: React.RefObject<EditxEngine | null>;
 }
 
 export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {

@@ -1,9 +1,9 @@
-import type { CreativeEngine } from "@creative-editor/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
 
 interface UseZoomOptions {
-  engineRef: React.RefObject<CreativeEngine | null>;
-  engine: CreativeEngine | null;
+  engineRef: React.RefObject<EditxEngine | null>;
+  engine: EditxEngine | null;
 }
 
 export function useZoom({ engineRef, engine }: UseZoomOptions) {
