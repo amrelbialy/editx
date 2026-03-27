@@ -30,7 +30,7 @@ export class EditxEngine implements EngineCore {
   #silent = false;
   #disposed = false;
 
-  // â”€â”€ Typed listener sets for public callbacks
+  // ── Typed listener sets for public callbacks
   #historyListeners = new Set<() => void>();
   #zoomListeners = new Set<(zoom: number) => void>();
   #editModeListeners = new Set<(info: { mode: string; previousMode: string }) => void>();
@@ -204,7 +204,7 @@ export class EditxEngine implements EngineCore {
     }
   }
 
-  // â”€â”€ Typed event subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Typed event subscriptions ──────────────────────────
 
   #subscribe<T extends (...args: any[]) => void>(set: Set<T>, cb: T): () => void {
     set.add(cb);

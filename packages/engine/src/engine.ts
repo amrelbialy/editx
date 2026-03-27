@@ -135,10 +135,10 @@ export class Engine {
 
   // --- Undo / Redo ---
 
-  /** @internal â€” called after undo/redo to remove destroyed blocks from selection. */
+  /** @internal — called after undo/redo to remove destroyed blocks from selection. */
   #onSelectionCleanup: ((destroyedIds: number[]) => void) | null = null;
 
-  /** @internal â€” register a callback to clean stale selections after undo/redo. */
+  /** @internal — register a callback to clean stale selections after undo/redo. */
   _setSelectionCleanup(cb: (destroyedIds: number[]) => void): void {
     this.#onSelectionCleanup = cb;
   }
@@ -250,7 +250,7 @@ export class Engine {
       );
     }
 
-    // Deliver bundled events AFTER render â€” end of update cycle
+    // Deliver bundled events AFTER render — end of update cycle
     this.#eventApi._flush();
   }
 

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Button,
   ImageEditorModal,
   Select,
@@ -102,11 +102,11 @@ function App() {
 
   /** Resolve preset name to a ThemeConfig object. */
   const themeConfig = useMemo((): ThemeConfig => {
-    // Built-in presets (dark / light) â€” pass by name
+    // Built-in presets (dark / light) — pass by name
     if (themePreset === "dark" || themePreset === "light") {
       return { preset: themePreset };
     }
-    // Demo presets â€” pass colors directly
+    // Demo presets — pass colors directly
     const colors = demoPresets[themePreset];
     return colors ? { preset: "custom", colors } : { preset: "dark" };
   }, [themePreset]);

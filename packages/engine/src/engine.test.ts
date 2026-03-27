@@ -120,7 +120,7 @@ describe("EditxEngine", () => {
       vi.mocked(renderer.syncBlock).mockClear();
       vi.mocked(renderer.removeBlock).mockClear();
 
-      engine.undo(); // undo create â†’ destroy
+      engine.undo(); // undo create → destroy
       expect(renderer.removeBlock).toHaveBeenCalledWith(id);
     });
 
@@ -133,7 +133,7 @@ describe("EditxEngine", () => {
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 50));
       vi.mocked(renderer.syncBlock).mockClear();
 
-      engine.undo(); // undo property change â†’ sync block
+      engine.undo(); // undo property change → sync block
       expect(renderer.syncBlock).toHaveBeenCalled();
     });
 
@@ -236,7 +236,7 @@ describe("EditxEngine", () => {
       engine.endBatch();
       // Events are flushed after endBatch (but only with renderer)
       // Without renderer, _flush is not called since #flush returns early.
-      // This is correct behavior â€” events need a renderer-driven flush cycle.
+      // This is correct behavior — events need a renderer-driven flush cycle.
     });
   });
 
@@ -309,10 +309,10 @@ describe("EditxEngine", () => {
       engine.beginBatch();
       engine.exec(new SetPropertyCommand(store, id, "transform/position/y", 20));
       engine.exec(new SetPropertyCommand(store, id, "transform/size/width", 300));
-      engine.endBatch(); // inner endBatch â€” should NOT commit
+      engine.endBatch(); // inner endBatch — should NOT commit
 
       engine.exec(new SetPropertyCommand(store, id, "transform/size/height", 400));
-      engine.endBatch(); // outer endBatch â€” commits all
+      engine.endBatch(); // outer endBatch — commits all
 
       expect(store.getFloat(id, "transform/position/x")).toBe(10);
       expect(store.getFloat(id, "transform/position/y")).toBe(20);
@@ -344,10 +344,10 @@ describe("EditxEngine", () => {
 
       engine.beginBatch();
       engine.exec(new SetPropertyCommand(store, id, "transform/position/y", 20));
-      engine.endBatch(); // inner â€” no flush
+      engine.endBatch(); // inner — no flush
       expect(renderer.renderFrame).not.toHaveBeenCalled();
 
-      engine.endBatch(); // outer â€” flush
+      engine.endBatch(); // outer — flush
       expect(renderer.renderFrame).toHaveBeenCalled();
     });
 
@@ -409,7 +409,7 @@ describe("EditxEngine", () => {
       engine.block.select(id);
       expect(engine.block.findAllSelected()).toContain(id);
 
-      engine.undo(); // undo create â†’ destroy
+      engine.undo(); // undo create → destroy
       expect(engine.block.findAllSelected()).not.toContain(id);
     });
 
@@ -424,7 +424,7 @@ describe("EditxEngine", () => {
       engine.block.select(id);
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 50));
 
-      engine.undo(); // undo property change â€” no destroy
+      engine.undo(); // undo property change — no destroy
       expect(engine.block.findAllSelected()).toContain(id);
     });
   });

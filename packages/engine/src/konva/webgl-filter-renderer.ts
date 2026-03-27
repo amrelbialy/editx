@@ -3,15 +3,15 @@
  *
  * Applies all 12 adjustments + preset color grading in a single
  * fragment-shader draw call on a hidden offscreen canvas.
- * The result is fed to Konva.Image.image() â€” no Konva cache() needed.
+ * The result is fed to Konva.Image.image() — no Konva cache() needed.
  */
 
 import { FRAGMENT_SRC, VERTEX_SRC } from "./glsl-filter-shaders";
 import { PRESET_UNIFORMS } from "./webgl-preset-data";
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────
 // Public types
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────
 
 export interface FilterParams {
   brightness: number; // -1..1
@@ -29,9 +29,9 @@ export interface FilterParams {
   preset: string; // preset name or '' for none
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────
 // WebGLFilterRenderer
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────
 
 /** Enable to log per-call timing to the console. Set via window.__EX_PERF = true */
 function perfEnabled(): boolean {
@@ -122,7 +122,7 @@ export class WebGLFilterRenderer {
     this.#uploadedSource = source;
     if (perfEnabled())
       console.log(
-        `[perf:webgl] uploadImage ${width}Ã—${height}: ${(performance.now() - t0).toFixed(2)}ms`,
+        `[perf:webgl] uploadImage ${width}×${height}: ${(performance.now() - t0).toFixed(2)}ms`,
       );
   }
 
@@ -159,11 +159,11 @@ export class WebGLFilterRenderer {
 
     // Draw full-screen quad
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    // gl.finish() would force GPU sync â€” only enable for accurate timing
+    // gl.finish() would force GPU sync — only enable for accurate timing
     if (perfEnabled()) {
       gl.finish(); // force GPU to complete so timing is accurate
       console.log(
-        `[perf:webgl] render (${this.#currentWidth}Ã—${this.#currentHeight}): ${(performance.now() - t0).toFixed(2)}ms`,
+        `[perf:webgl] render (${this.#currentWidth}×${this.#currentHeight}): ${(performance.now() - t0).toFixed(2)}ms`,
       );
     }
 
@@ -183,7 +183,7 @@ export class WebGLFilterRenderer {
     gl.getExtension("WEBGL_lose_context")?.loseContext();
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──────────── private helpers ────────────
 
   #createProgram(vsSrc: string, fsSrc: string): WebGLProgram {
     const gl = this.#gl;
@@ -290,7 +290,7 @@ export class WebGLFilterRenderer {
 
     const preset = PRESET_UNIFORMS.get(presetName);
     if (!preset) {
-      // Unknown preset â€” clear
+      // Unknown preset — clear
       this.#applyPresetUniforms("");
       return;
     }

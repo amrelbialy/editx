@@ -37,7 +37,7 @@ export interface TextEditorOverlayProps {
   onClose: () => void;
 }
 
-// â”€â”€ SelectionSyncPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SelectionSyncPlugin ─────────────────────────────────────────────
 // Reports Lexical selection as { from, to } character offsets to the store.
 
 function SelectionSyncPlugin() {
@@ -57,8 +57,8 @@ function SelectionSyncPlugin() {
   return null;
 }
 
-// â”€â”€ KeyboardShortcutsPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Handles Ctrl+B/I/U via Lexical commands, Escape â†’ close.
+// ── KeyboardShortcutsPlugin ─────────────────────────────────────────
+// Handles Ctrl+B/I/U via Lexical commands, Escape → close.
 
 function KeyboardShortcutsPlugin({ onClose }: { onClose: () => void }) {
   const [editor] = useLexicalComposerContext();
@@ -87,8 +87,8 @@ function KeyboardShortcutsPlugin({ onClose }: { onClose: () => void }) {
   return null;
 }
 
-// â”€â”€ PastePlainTextPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Strips formatting from pasted content â€” plain text only.
+// ── PastePlainTextPlugin ────────────────────────────────────────────
+// Strips formatting from pasted content — plain text only.
 
 function PastePlainTextPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -119,7 +119,7 @@ function PastePlainTextPlugin() {
   return null;
 }
 
-// â”€â”€ BlurHandlerPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── BlurHandlerPlugin ───────────────────────────────────────────────
 // Closes the editor when focus leaves to a non-toolbar element.
 
 function BlurHandlerPlugin({ onClose }: { onClose: () => void }) {
@@ -163,7 +163,7 @@ function BlurHandlerPlugin({ onClose }: { onClose: () => void }) {
   return null;
 }
 
-// â”€â”€ AutoFocusPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── AutoFocusPlugin ─────────────────────────────────────────────────
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -181,11 +181,11 @@ function AutoFocusPlugin() {
   return null;
 }
 
-// â”€â”€ ToolbarPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Inline toolbar rendered inside LexicalComposer â€” uses Lexical API directly.
+// ── ToolbarPlugin ───────────────────────────────────────────────────
+// Inline toolbar rendered inside LexicalComposer — uses Lexical API directly.
 
-// â”€â”€ ToolbarPlugin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Inline toolbar rendered inside LexicalComposer â€” uses Lexical API directly.
+// ── ToolbarPlugin ───────────────────────────────────────────────────
+// Inline toolbar rendered inside LexicalComposer — uses Lexical API directly.
 
 function ToolbarPlugin({ zoom }: { zoom: number }) {
   const [editor] = useLexicalComposerContext();
@@ -299,7 +299,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
         )}
         data-text-toolbar
       >
-        {/* Color swatch â€” opens color panel */}
+        {/* Color swatch — opens color panel */}
         <button
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setPropertySidePanel(propertySidePanel === "color" ? null : "color")}
@@ -374,7 +374,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
   );
 }
 
-// â”€â”€ TextEditorOverlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TextEditorOverlay ───────────────────────────────────────────────
 
 export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   engine,
@@ -405,7 +405,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const lineHeight = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT) ?? 1.2;
     const padding = engine.block.getFloat(blockId, TEXT_PADDING) ?? 0;
 
-    // Use CSS transform for zoom scaling â€” Lexical content uses 1:1 font sizes
+    // Use CSS transform for zoom scaling — Lexical content uses 1:1 font sizes
     const screenWidth = bottomRight.x - topLeft.x;
     const screenHeight = bottomRight.y - topLeft.y;
 

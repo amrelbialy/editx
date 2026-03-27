@@ -91,7 +91,7 @@ export function useCropTool({ engineRef }: UseCropToolOptions) {
     setCropDimensions(null);
   }, [engineRef, setActiveTool]);
 
-  // â”€â”€ Resize-tab handlers â”€â”€
+  // ── Resize-tab handlers ──
 
   /** Set the crop overlay to exact pixel dimensions. */
   const handleResizeDimensions = useCallback(

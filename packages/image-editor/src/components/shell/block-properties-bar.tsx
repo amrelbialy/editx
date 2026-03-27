@@ -49,7 +49,7 @@ const FONT_FAMILIES = [
   "Verdana",
 ];
 
-// â”€â”€ State readers â”€â”€
+// ── State readers ──
 
 function readTextState(engine: EditxEngine, blockId: number, selectionStart?: number) {
   const runs = engine.block.getTextRuns(blockId);
@@ -88,7 +88,7 @@ function readBlockColor(engine: EditxEngine, blockId: number): string {
   return "#4a90e2";
 }
 
-// â”€â”€ Main Component â”€â”€
+// ── Main Component ──
 
 export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
   engine,
@@ -133,7 +133,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     setOpacity(engine.block.getOpacity(blockId));
   }, [engine, blockId, isText, isImage, textSelectionRange]);
 
-  // â”€â”€ Selection-aware style range â”€â”€
+  // ── Selection-aware style range ──
   const hasCharSelection =
     editingTextBlockId === blockId &&
     textSelectionRange !== null &&
@@ -146,7 +146,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     return { start: 0, end: engine.block.getTextContent(blockId).length };
   }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
-  // â”€â”€ Text handlers â”€â”€
+  // ── Text handlers ──
   const handleFontFamily = useCallback(
     (value: string) => {
       const { start, end } = getStyleRange();
@@ -266,7 +266,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     refresh();
   }, [engine, blockId, getStyleRange, refresh]);
 
-  // â”€â”€ Shared handlers â”€â”€
+  // ── Shared handlers ──
   const handleOpacityChange = useCallback(
     ([v]: number[]) => {
       engine.block.setOpacity(blockId, v);
@@ -316,7 +316,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
       )}
       data-text-toolbar
     >
-      {/* â”€â”€ Text-specific controls â”€â”€ */}
+      {/* ── Text-specific controls ── */}
       {isText && textState && (
         <>
           {/* Font family */}
@@ -470,7 +470,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Advanced text properties (â‰¡A) */}
+          {/* Advanced text properties (≡A) */}
           <PanelButton
             panel="text-advanced"
             icon={<TextCursorInput className="h-4 w-4" />}
@@ -538,7 +538,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         </>
       )}
 
-      {/* â”€â”€ Shared property buttons â”€â”€ */}
+      {/* ── Shared property buttons ── */}
 
       {/* Color (text + graphic only) */}
       {!isImage && (
@@ -609,7 +609,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
         />
       )}
 
-      {/* Style dropdown (image only â€” Adjustments / Filters) */}
+      {/* Style dropdown (image only — Adjustments / Filters) */}
       {isImage && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

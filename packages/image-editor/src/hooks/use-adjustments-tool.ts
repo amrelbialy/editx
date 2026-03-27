@@ -159,7 +159,7 @@ export function useAdjustmentsTool({ engineRef }: UseAdjustmentsToolOptions) {
     return ce.onHistoryChanged(() => {
       const eid = adjustEffectIdRef.current;
       if (eid === null || !ce.block.exists(eid)) {
-        // Effect was destroyed by undo â€” re-discover it
+        // Effect was destroyed by undo — re-discover it
         if (editableBlockId !== null) {
           const effects = ce.block.getEffects(editableBlockId);
           const found = effects.find((id) => ce.block.getKind(id) === "adjustments");

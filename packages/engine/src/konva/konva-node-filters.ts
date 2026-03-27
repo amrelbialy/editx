@@ -94,7 +94,7 @@ export function applyFilters(
     return;
   }
 
-  // â”€â”€ WebGL path â”€â”€
+  // ── WebGL path ──
   if (webgl) {
     let sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
     if (!sourceImg) {
@@ -149,7 +149,7 @@ export function applyFilters(
     if (_perf) console.log("[perf:applyFilters] #webgl is null, using CPU fallback");
   }
 
-  // â”€â”€ CPU fallback path â”€â”€
+  // ── CPU fallback path ──
   if (_perf) console.log("[perf:applyFilters] CPU fallback running");
   const t1 = _perf ? performance.now() : 0;
   const filterPresetFn = presetName ? (getFilterPreset(presetName) ?? null) : null;

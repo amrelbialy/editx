@@ -91,7 +91,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
     return engine.onHistoryChanged(() => refresh());
   }, [engine, refresh]);
 
-  // â”€â”€ Handlers â”€â”€
+  // ── Handlers ──
 
   const handleVerticalAlign = useCallback(
     (align: string) => {
@@ -152,7 +152,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
   );
 
   const CASE_OPTIONS = [
-    { value: "none", label: "â€”" },
+    { value: "none", label: "—" },
     { value: "uppercase", label: "AG" },
     { value: "lowercase", label: "ag" },
     { value: "capitalize", label: "Ag" },

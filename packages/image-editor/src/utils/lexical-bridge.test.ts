@@ -35,7 +35,7 @@ describe("lexical-bridge", () => {
     _root = result.root;
   });
 
-  // â”€â”€ Round-trip: TextRun[] â†’ Lexical â†’ TextRun[] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Round-trip: TextRun[] → Lexical → TextRun[] ──────────────────
 
   describe("round-trip", () => {
     it("preserves plain text", async () => {
@@ -142,7 +142,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // â”€â”€ Multi-run / mixed styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Multi-run / mixed styles ──────────────────────────────────────
 
   describe("mixed styles", () => {
     it("preserves adjacent runs with different styles", async () => {
@@ -180,7 +180,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // â”€â”€ Multi-paragraph / newlines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Multi-paragraph / newlines ────────────────────────────────────
 
   describe("newlines", () => {
     it("preserves newlines as paragraph boundaries", async () => {
@@ -230,7 +230,7 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // â”€â”€ Edge cases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Edge cases ────────────────────────────────────────────────────
 
   describe("edge cases", () => {
     it("handles empty runs array", async () => {
@@ -311,12 +311,12 @@ describe("lexical-bridge", () => {
     });
   });
 
-  // â”€â”€ Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Helper ────────────────────────────────────────────────────────
 
   function applyRuns(runs: TextRun[]): Promise<void> {
     return new Promise<void>((resolve) => {
       runsToEditorState(editor, runs);
-      // Lexical batches updates â€” resolve on next microtask
+      // Lexical batches updates — resolve on next microtask
       queueMicrotask(resolve);
     });
   }

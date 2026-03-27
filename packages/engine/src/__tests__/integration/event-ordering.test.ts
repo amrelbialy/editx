@@ -84,7 +84,7 @@ describe("Engine Integration: Event Ordering", () => {
     expect(events[0].type).toBe("updated");
   });
 
-  it("dedupes events within a batch (same block â†’ single event)", () => {
+  it("dedupes events within a batch (same block → single event)", () => {
     const store = engine.getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
@@ -176,15 +176,15 @@ describe("Engine Integration: Effect Chains", () => {
     engine.exec(new SetPropertyCommand(store, effectId, "adjustments/brightness", 0.5));
     expect(store.getFloat(effectId, "adjustments/brightness")).toBe(0.5);
 
-    // Undo property â†’ brightness back to 0
+    // Undo property → brightness back to 0
     engine.undo();
     expect(store.getFloat(effectId, "adjustments/brightness")).toBe(0);
 
-    // Undo append â†’ effect detached
+    // Undo append → effect detached
     engine.undo();
     expect(store.get(blockId)!.effectIds).not.toContain(effectId);
 
-    // Redo append â†’ effect reattached
+    // Redo append → effect reattached
     engine.redo();
     expect(store.get(blockId)!.effectIds).toContain(effectId);
   });
@@ -207,7 +207,7 @@ describe("Engine Integration: Effect Chains", () => {
     engine.exec(new RemoveEffectCommand(store, blockId, 0));
     expect(store.get(blockId)!.effectIds).toEqual([]);
 
-    // Undo â†’ effect restored
+    // Undo → effect restored
     engine.undo();
     expect(store.get(blockId)!.effectIds).toEqual([effectId]);
   });

@@ -23,7 +23,7 @@ import { EditorAPI } from "./editor/editor-api";
 import { EditxEngine } from "./editx-engine";
 import type { RendererAdapter } from "./render-adapter";
 
-describe("EditorAPI â€” Edit Mode Management", () => {
+describe("EditorAPI — Edit Mode Management", () => {
   let engine: EditxEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -37,7 +37,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     editor._setBlockAPI(block);
   });
 
-  // â”€â”€ setEditMode / getEditMode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── setEditMode / getEditMode ────────────────────────
 
   describe("setEditMode / getEditMode", () => {
     it("defaults to Transform mode", () => {
@@ -96,7 +96,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     });
   });
 
-  // â”€â”€ Mode config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mode config ──────────────────────────────────────
 
   describe("getEditModeConfig", () => {
     it("Transform config enables transformer and selection", () => {
@@ -134,7 +134,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     });
   });
 
-  // â”€â”€ Cursor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cursor ───────────────────────────────────────────
 
   describe("getCursorType", () => {
     it('defaults to "default" in Transform mode', () => {
@@ -169,7 +169,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     });
   });
 
-  // â”€â”€ Text cursor position â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Text cursor position ─────────────────────────────
 
   describe("text cursor screen position", () => {
     it("defaults to (0, 0)", () => {
@@ -184,7 +184,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     });
   });
 
-  // â”€â”€ Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Events ───────────────────────────────────────────
 
   describe("editMode:changed event", () => {
     it("fires when mode changes", () => {
@@ -224,7 +224,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
     });
   });
 
-  // â”€â”€ Crop mode integration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Crop mode integration ────────────────────────────
 
   describe("Crop mode via setEditMode", () => {
     it("shows crop overlay when entering Crop with selected block", () => {
@@ -287,7 +287,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
       const cropRect = { x: 10, y: 20, width: 80, height: 60 };
       vi.mocked(renderer.getCropRect).mockReturnValue(cropRect);
 
-      // Exit crop mode â€” should auto-commit
+      // Exit crop mode — should auto-commit
       editor.setEditMode("Transform");
 
       expect(store.getBool(blockId, CROP_ENABLED)).toBe(true);
@@ -322,7 +322,7 @@ describe("EditorAPI â€” Edit Mode Management", () => {
   });
 });
 
-describe("EditorAPI â€” existing API still works", () => {
+describe("EditorAPI — existing API still works", () => {
   let engine: EditxEngine;
   let editor: EditorAPI;
   let renderer: RendererAdapter;
@@ -351,7 +351,7 @@ describe("EditorAPI â€” existing API still works", () => {
   });
 });
 
-describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
+describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
   let engine: EditxEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -389,7 +389,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     const cropRect = { x: 100, y: 50, width: 960, height: 540 };
     vi.mocked(renderer.getCropRect).mockReturnValue(cropRect);
 
-    // Exit crop mode â€” auto-commits
+    // Exit crop mode — auto-commits
     editor.setEditMode("Transform");
 
     const store = engine.getBlockStore();
@@ -433,7 +433,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(800);
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
 
-    // Undo the crop â€” should restore everything atomically
+    // Undo the crop — should restore everything atomically
     editor.undo();
 
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
@@ -458,7 +458,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     block.select(pageId);
     editor.setEditMode("Crop");
 
-    // Should show overlay with ORIGINAL dims (1920Ã—1080), not current page dims (960Ã—540)
+    // Should show overlay with ORIGINAL dims (1920×1080), not current page dims (960×540)
     expect(renderer.showCropOverlay).toHaveBeenCalledWith(
       pageId,
       { x: 0, y: 0, width: 1920, height: 1080 },
@@ -487,12 +487,12 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     );
   });
 
-  it("setupCropOverlay swaps imageRect dims after 90Â° rotation", () => {
+  it("setupCropOverlay swaps imageRect dims after 90° rotation", () => {
     const store = engine.getBlockStore();
-    // Create a portrait page with original dims 640Ã—960
+    // Create a portrait page with original dims 640×960
     const pageId = createPageWithImage(640, 960);
 
-    // Rotate 90Â° CW â€” swaps PAGE_WIDTH/HEIGHT to 960Ã—640
+    // Rotate 90° CW — swaps PAGE_WIDTH/HEIGHT to 960×640
     block.rotateClockwise(pageId);
 
     expect(store.getFloat(pageId, IMAGE_ROTATION)).toBe(90);
@@ -504,7 +504,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     vi.mocked(renderer.showCropOverlay).mockClear();
     editor.setEditMode("Crop");
 
-    // Should show overlay with VISUAL (rotated) dims 960Ã—640, NOT source 640Ã—960
+    // Should show overlay with VISUAL (rotated) dims 960×640, NOT source 640×960
     expect(renderer.showCropOverlay).toHaveBeenCalledWith(
       pageId,
       { x: 0, y: 0, width: 960, height: 640 },
@@ -532,7 +532,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
     vi.mocked(renderer.showCropOverlay).mockClear();
     editor.setEditMode("Crop");
 
-    // Verify the overlay was called with visual-space imageRect (960Ã—640)
+    // Verify the overlay was called with visual-space imageRect (960×640)
     const call = vi.mocked(renderer.showCropOverlay).mock.calls[0];
     expect(call[1]).toEqual({ x: 0, y: 0, width: 960, height: 640 });
     // Initial crop should be transformed to visual space (non-undefined)
@@ -619,7 +619,7 @@ describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
   });
 });
 
-describe("BlockAPI â€” Image Rotation & Flip", () => {
+describe("BlockAPI — Image Rotation & Flip", () => {
   let engine: EditxEngine;
   let block: BlockAPI;
   let editor: EditorAPI;
@@ -633,7 +633,7 @@ describe("BlockAPI â€” Image Rotation & Flip", () => {
     editor = new EditorAPI(engine);
     editor._setBlockAPI(block);
 
-    // Create a page (1920 Ã— 1080 landscape image)
+    // Create a page (1920 × 1080 landscape image)
     const store = engine.getBlockStore();
     const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
@@ -666,7 +666,7 @@ describe("BlockAPI â€” Image Rotation & Flip", () => {
 
   // --- rotateClockwise ---
 
-  it("rotateClockwise rotates by +90Â° and swaps page dims", () => {
+  it("rotateClockwise rotates by +90° and swaps page dims", () => {
     block.rotateClockwise(pageId);
     const store = engine.getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(90);
@@ -674,14 +674,14 @@ describe("BlockAPI â€” Image Rotation & Flip", () => {
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
   });
 
-  it("rotateClockwise wraps from 90â†’180 without dim swap", () => {
+  it("rotateClockwise wraps from 90→180 without dim swap", () => {
     block.rotateClockwise(pageId);
     block.rotateClockwise(pageId);
     const store = engine.getBlockStore();
-    // 180Â° normalizes to -180 or 180
+    // 180° normalizes to -180 or 180
     const rot = block.getImageRotation(pageId);
     expect(Math.abs(rot)).toBe(180);
-    // After two CW 90Â° rotations, dims should be back to original
+    // After two CW 90° rotations, dims should be back to original
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1920);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
   });
@@ -699,7 +699,7 @@ describe("BlockAPI â€” Image Rotation & Flip", () => {
 
   // --- rotateCounterClockwise ---
 
-  it("rotateCounterClockwise rotates by -90Â° and swaps page dims", () => {
+  it("rotateCounterClockwise rotates by -90° and swaps page dims", () => {
     block.rotateCounterClockwise(pageId);
     const store = engine.getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(-90);
@@ -761,9 +761,9 @@ describe("BlockAPI â€” Image Rotation & Flip", () => {
   });
 });
 
-// â”€â”€ applyCropDimensions / getCropVisualDimensions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── applyCropDimensions / getCropVisualDimensions ────────────────
 
-describe("EditorCrop â€” applyCropDimensions & getCropVisualDimensions", () => {
+describe("EditorCrop — applyCropDimensions & getCropVisualDimensions", () => {
   let engine: EditxEngine;
   let editor: EditorAPI;
   let block: BlockAPI;
@@ -806,7 +806,7 @@ describe("EditorCrop â€” applyCropDimensions & getCropVisualDimensions", ()
 
     // Should lock the ratio to 1:1
     expect(renderer.setCropRatio).toHaveBeenCalledWith(1);
-    // Should set the crop rect to 1080Ã—1080 centered on the old center
+    // Should set the crop rect to 1080×1080 centered on the old center
     expect(renderer.setCropRect).toHaveBeenCalledWith(
       expect.objectContaining({ width: 1080, height: 1080 }),
     );
@@ -821,7 +821,7 @@ describe("EditorCrop â€” applyCropDimensions & getCropVisualDimensions", ()
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 800, height: 600 });
 
-    // Request 1920Ã—1080, which exceeds 800Ã—600. Should clamp while keeping 16:9 ratio.
+    // Request 1920×1080, which exceeds 800×600. Should clamp while keeping 16:9 ratio.
     block.applyCropDimensions(pageId, 1920, 1080);
 
     const call = vi.mocked(renderer.setCropRect).mock.calls[0][0];
@@ -836,13 +836,13 @@ describe("EditorCrop â€” applyCropDimensions & getCropVisualDimensions", ()
     editor.setEditMode("Crop");
 
     vi.mocked(renderer.getCropImageRect).mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
-    // Current crop is offset â€” center at (500, 300)
+    // Current crop is offset — center at (500, 300)
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 200, y: 100, width: 600, height: 400 });
 
     block.applyCropDimensions(pageId, 400, 400);
 
     const call = vi.mocked(renderer.setCropRect).mock.calls[0][0];
-    // Center = (500, 300), new size = 400Ã—400 â†’ x = 300, y = 100
+    // Center = (500, 300), new size = 400×400 → x = 300, y = 100
     expect(call.x).toBe(300);
     expect(call.y).toBe(100);
     expect(call.width).toBe(400);

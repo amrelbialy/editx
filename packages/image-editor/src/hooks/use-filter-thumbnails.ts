@@ -41,7 +41,7 @@ export function useFilterThumbnails(): FilterThumbnail[] | null {
 async function generateThumbnails(src: string): Promise<FilterThumbnail[]> {
   const img = await loadImage(src);
 
-  // Fixed strip dimensions â€” cover-crop the image to fill
+  // Fixed strip dimensions — cover-crop the image to fill
   const thumbW = THUMB_WIDTH;
   const thumbH = THUMB_HEIGHT;
 

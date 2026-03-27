@@ -42,7 +42,7 @@ function ensureImageReady(source: ImageSource): Promise<void> {
 
 /**
  * Extract the raw URL string from a source for identity comparison.
- * Does NOT create blob URLs â€” purely reads existing URLs.
+ * Does NOT create blob URLs — purely reads existing URLs.
  */
 function getSourceIdentity(source: ImageSource): string | null {
   if (typeof source === "string") return source;

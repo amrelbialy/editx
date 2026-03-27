@@ -1,4 +1,4 @@
-import {
+﻿import {
   Crop,
   History,
   ImagePlus,
@@ -55,7 +55,7 @@ const FEATURES: Feature[] = [
   {
     icon: Shapes,
     title: "Shapes",
-    desc: "Rectangles, ellipses, lines, arrows, polygons, stars â€” filled or outlined.",
+    desc: "Rectangles, ellipses, lines, arrows, polygons, stars — filled or outlined.",
     from: "#10b981",
     to: "#14b8a6",
   },

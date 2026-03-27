@@ -14,7 +14,7 @@ describe("Engine Integration: Command Chains", () => {
     engine = new EditxEngine({ renderer: createMockRenderer() });
   });
 
-  describe("create â†’ set properties â†’ undo â†’ redo â†’ destroy â†’ undo", () => {
+  describe("create → set properties → undo → redo → destroy → undo", () => {
     it("full lifecycle with correct state at each step", () => {
       const store = engine.getBlockStore();
 
@@ -31,12 +31,12 @@ describe("Engine Integration: Command Chains", () => {
       expect(store.getFloat(id, "transform/position/x")).toBe(100);
       expect(store.getFloat(id, "transform/position/y")).toBe(200);
 
-      // 3. Undo position/y â†’ reverts to 0
+      // 3. Undo position/y → reverts to 0
       engine.undo();
       expect(store.getFloat(id, "transform/position/y")).toBe(0);
       expect(store.getFloat(id, "transform/position/x")).toBe(100);
 
-      // 4. Redo position/y â†’ back to 200
+      // 4. Redo position/y → back to 200
       engine.redo();
       expect(store.getFloat(id, "transform/position/y")).toBe(200);
 
@@ -44,7 +44,7 @@ describe("Engine Integration: Command Chains", () => {
       engine.exec(new DestroyBlockCommand(store, id));
       expect(store.exists(id)).toBe(false);
 
-      // 6. Undo destroy â†’ block restored
+      // 6. Undo destroy → block restored
       engine.undo();
       expect(store.exists(id)).toBe(true);
       expect(store.getFloat(id, "transform/position/x")).toBe(100);
@@ -140,7 +140,7 @@ describe("Engine Integration: Command Chains", () => {
       expect(store.exists(pageId)).toBe(false);
       expect(store.exists(childId)).toBe(false);
 
-      // Undo â†’ both restored
+      // Undo → both restored
       engine.undo();
       expect(store.exists(pageId)).toBe(true);
       expect(store.exists(childId)).toBe(true);
@@ -149,7 +149,7 @@ describe("Engine Integration: Command Chains", () => {
   });
 
   describe("multiple undo-redo cycles", () => {
-    it("handles 5 actions â†’ undo 3 â†’ redo 1 correctly", () => {
+    it("handles 5 actions → undo 3 → redo 1 correctly", () => {
       const store = engine.getBlockStore();
 
       const createCmd = new CreateBlockCommand(store, "graphic");
@@ -165,17 +165,17 @@ describe("Engine Integration: Command Chains", () => {
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 50));
       expect(store.getFloat(id, "transform/position/x")).toBe(50);
 
-      // Undo 3 â†’ x should be 20
+      // Undo 3 → x should be 20
       engine.undo();
       engine.undo();
       engine.undo();
       expect(store.getFloat(id, "transform/position/x")).toBe(20);
 
-      // Redo 1 â†’ x should be 30
+      // Redo 1 → x should be 30
       engine.redo();
       expect(store.getFloat(id, "transform/position/x")).toBe(30);
 
-      // New action after partial undo â†’ clears redo stack
+      // New action after partial undo → clears redo stack
       engine.exec(new SetPropertyCommand(store, id, "transform/position/x", 99));
       expect(store.getFloat(id, "transform/position/x")).toBe(99);
       expect(engine.canRedo()).toBe(false);
@@ -207,13 +207,13 @@ describe("Engine Integration: Command Chains", () => {
       expect(store.exists(child1)).toBe(false);
       expect(store.getChildren(pageId)).toEqual([child2]);
 
-      // Undo â†’ child1 restored AND parent's children array restored
+      // Undo → child1 restored AND parent's children array restored
       engine.undo();
       expect(store.exists(child1)).toBe(true);
       expect(store.getChildren(pageId)).toEqual([child1, child2]);
       expect(store.getParent(child1)).toBe(pageId);
 
-      // Redo â†’ child1 destroyed again, parent updated
+      // Redo → child1 destroyed again, parent updated
       engine.redo();
       expect(store.exists(child1)).toBe(false);
       expect(store.getChildren(pageId)).toEqual([child2]);
@@ -237,7 +237,7 @@ describe("Engine Integration: Command Chains", () => {
       expect(store.exists(effectId)).toBe(false);
       expect(store.getEffects(blockId)).toEqual([]);
 
-      // Undo â†’ effect restored AND owner's effectIds restored
+      // Undo → effect restored AND owner's effectIds restored
       engine.undo();
       expect(store.exists(effectId)).toBe(true);
       expect(store.getEffects(blockId)).toEqual([effectId]);

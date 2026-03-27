@@ -24,7 +24,7 @@ const DEFAULT_MAX_MEGAPIXELS = 25;
  * Downscale an image if it exceeds the megapixel budget.
  *
  * @param img - The loaded HTMLImageElement.
- * @param maxMegapixels - Maximum megapixels (width Ã— height / 1_000_000). Default: 25.
+ * @param maxMegapixels - Maximum megapixels (width × height / 1_000_000). Default: 25.
  * @returns The (possibly downscaled) image info.
  */
 export function downscaleIfNeeded(
@@ -51,8 +51,8 @@ export function downscaleIfNeeded(
   const workingHeight = Math.round(naturalHeight * scale);
 
   console.warn(
-    `[editx] Image is ${megapixels.toFixed(1)} MP (${naturalWidth}Ã—${naturalHeight}). ` +
-      `Downscaling to ${workingWidth}Ã—${workingHeight} for editing. Original dimensions preserved for export.`,
+    `[editx] Image is ${megapixels.toFixed(1)} MP (${naturalWidth}×${naturalHeight}). ` +
+      `Downscaling to ${workingWidth}×${workingHeight} for editing. Original dimensions preserved for export.`,
   );
 
   const canvas = document.createElement("canvas");

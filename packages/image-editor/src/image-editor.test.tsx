@@ -7,7 +7,7 @@ import { useImageEditorStore } from "./store/image-editor-store";
 // Track mock engine instances for assertions
 let latestMockEngine: any = null;
 
-// Shared factory â€” used by both @editx/engine and @editx/engine/konva mocks
+// Shared factory — used by both @editx/engine and @editx/engine/konva mocks
 const createMockEngine = () => {
  const eng = {
  scene: {

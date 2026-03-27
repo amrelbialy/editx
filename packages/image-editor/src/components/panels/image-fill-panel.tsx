@@ -99,13 +99,13 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-muted-foreground @5xl/editor:text-base">Display</span>
             <span className="tabular-nums">
-              {blockWidth} Ã— {blockHeight}
+              {blockWidth} × {blockHeight}
             </span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-muted-foreground @5xl/editor:text-base">Original</span>
             <span className="tabular-nums">
-              {Math.round(originalWidth)} Ã— {Math.round(originalHeight)}
+              {Math.round(originalWidth)} × {Math.round(originalHeight)}
             </span>
           </div>
         </div>

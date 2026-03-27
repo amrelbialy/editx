@@ -1,4 +1,4 @@
-import { Github, Menu, Moon, Package, Sun, X } from "lucide-react";
+﻿import { Github, Menu, Moon, Package, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useDarkMode } from "../hooks/use-dark-mode";
@@ -60,7 +60,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Center links â€” desktop */}
+        {/* Center links — desktop */}
         <div className="hidden md:flex items-center gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 p-1 absolute left-1/2 -translate-x-1/2">
           {NAV_LINKS.map((link) => {
             const active = isActive(pathname, link.href);
@@ -80,7 +80,7 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Right icons â€” desktop */}
+        {/* Right icons — desktop */}
         <div className="hidden md:flex items-center gap-1 ml-auto">
           <button
             type="button"
