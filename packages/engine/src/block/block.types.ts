@@ -9,7 +9,6 @@ export type BlockType =
   | "shape"
   | "fill";
 
-/** Effect type identifiers — mirrors img.ly EFFECT_TYPES. */
 export type EffectType = "adjustments" | "filter";
 
 /** Shape geometry types — sub-block kinds for type='shape'. */

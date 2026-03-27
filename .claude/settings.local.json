@@ -1,8 +1,8 @@
 {
-  "permissions": {
-    "allow": [
-      "WebFetch(domain:img.ly)",
-      "WebSearch"
-    ]
-  }
+ "permissions": {
+ "allow": [
+ "WebFetch(domain:Editx)",
+ "WebSearch"
+ ]
+ }
 }

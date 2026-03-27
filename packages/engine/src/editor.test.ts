@@ -351,9 +351,7 @@ describe("EditorAPI â€” existing API still works", () => {
   });
 });
 
-// â”€â”€ Crop improvement: img.ly-style crop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-describe("EditorAPI â€” img.ly-style crop (page resize)", () => {
+describe("EditorAPI â€” Block Lifecycle crop (page resize)", () => {
   let engine: EditxEngine;
   let editor: EditorAPI;
   let block: BlockAPI;

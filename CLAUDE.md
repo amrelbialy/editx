@@ -4,20 +4,20 @@
 
 Monorepo for a block-based creative/image editor. Two publishable packages + one demo app.
 
-- **`packages/engine`** â€” Core block-based engine. Konva 10 renderer, command pattern for undo/redo, EventAPI (img.ly-style).
+- **`packages/engine`** â€” Core block-based engine. Konva 10 renderer, command pattern for undo/redo, EventAPI (Block Lifecycle).
 - **`packages/image-editor`** â€” React 19 image editor component. Tailwind CSS 4, Radix UI primitives, Zustand, Lexical for rich text.
 - **`apps/demo`** â€” Vite dev app that consumes image-editor.
 
 ## Commands
 
 ```bash
-pnpm build          # Build all packages (tsc via turborepo)
-pnpm dev            # Watch mode for all packages
-pnpm test           # Run all unit tests (Vitest)
-pnpm test:coverage  # Run tests with V8 coverage
-pnpm format         # Format all files (Biome)
-pnpm lint           # Lint all files (Biome)
-pnpm check          # Format + lint + import sorting in one pass (Biome)
+pnpm build # Build all packages (tsc via turborepo)
+pnpm dev # Watch mode for all packages
+pnpm test # Run all unit tests (Vitest)
+pnpm test:coverage # Run tests with V8 coverage
+pnpm format # Format all files (Biome)
+pnpm lint # Lint all files (Biome)
+pnpm check # Format + lint + import sorting in one pass (Biome)
 ```
 
 ### Per-package
@@ -25,15 +25,15 @@ pnpm check          # Format + lint + import sorting in one pass (Biome)
 ```bash
 pnpm --filter @editx/engine test
 pnpm --filter @editx/image-editor test
-pnpm --filter @editx/image-editor test:e2e   # Playwright CT (when set up)
+pnpm --filter @editx/image-editor test:e2e # Playwright CT (when set up)
 ```
 
 ## Architecture
 
 ```
-packages/engine     â†’ pure TypeScript, no React dependency
+packages/engine â†’ pure TypeScript, no React dependency
 packages/image-editor â†’ depends on engine (workspace:*), React 19
-apps/demo           â†’ depends on image-editor, Vite
+apps/demo â†’ depends on image-editor, Vite
 ```
 
 Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tests.
@@ -71,8 +71,8 @@ Props on a separate line, destructured on the first line of the body:
 
 ```tsx
 export const MyComponent: React.FC<MyComponentProps> = (props) => {
-  const { label, value, onChange } = props;
-  // ...
+ const { label, value, onChange } = props;
+ // ...
 };
 ```
 
@@ -80,16 +80,16 @@ export const MyComponent: React.FC<MyComponentProps> = (props) => {
 
 ```
 components/ui/{name}/
-  {name}.component.tsx    # Implementation
-  {name}.types.ts         # Props interface (if needed)
-  {name}.constants.ts     # CVA variants, enums (if needed)
-  index.ts                # Barrel export
+ {name}.component.tsx # Implementation
+ {name}.types.ts # Props interface (if needed)
+ {name}.constants.ts # CVA variants, enums (if needed)
+ index.ts # Barrel export
 ```
 
 Naming follows interaction-based conventions (e.g., `input-group` not `number-field`, `section` not `panel-section`).
 
 ## Key References
 
-- img.ly CE.SDK API patterns (for engine API design)
+- block-based editor API patterns (for engine API design)
 - Scaleflex UI Kit in `temp/ui-kit/` (for UI component naming/structure conventions)
-- Filerobot Image Editor in `temp/filerobot-image-editor/` (for math/logic reference)
+- 
