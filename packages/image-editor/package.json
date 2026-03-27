@@ -1,6 +1,20 @@
 {
   "name": "@editx/image-editor",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
+  "description": "React image editor component with crop, filters, annotations, and more",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amrelbialy/editx",
+    "directory": "packages/image-editor"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "src/styles.css"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -44,8 +58,6 @@
     "clsx": "^2.1.1",
     "lexical": "^0.42.0",
     "lucide-react": "^0.577.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.0"

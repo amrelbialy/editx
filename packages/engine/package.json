@@ -1,6 +1,19 @@
 {
   "name": "@editx/engine",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
+  "description": "Block-based creative engine with command pattern undo/redo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amrelbialy/editx",
+    "directory": "packages/engine"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

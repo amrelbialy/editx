@@ -1,7 +1,7 @@
 const FOOTER_LINKS = {
   Resources: [
-    { label: "GitHub", href: "#" },
-    { label: "npm", href: "#" },
+    { label: "GitHub", href: "https://github.com/amrelbialy/editx" },
+    { label: "npm", href: "https://www.npmjs.com/package/@editx/image-editor" },
     { label: "Documentation", href: "/docs" },
   ],
   Examples: [
@@ -10,9 +10,9 @@ const FOOTER_LINKS = {
     { label: "Theming", href: "/docs/image-editor/theming" },
   ],
   Support: [
-    { label: "Report an Issue", href: "#" },
-    { label: "Discussions", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Report an Issue", href: "https://github.com/amrelbialy/editx/issues" },
+    { label: "Discussions", href: "https://github.com/amrelbialy/editx/discussions" },
+    { label: "Contact", href: "https://github.com/amrelbialy/editx" },
   ],
 };
 
