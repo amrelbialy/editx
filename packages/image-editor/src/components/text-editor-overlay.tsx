@@ -422,30 +422,23 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const pos = engine.block.getPosition(blockId);
     const size = engine.block.getSize(blockId);
     const zoom = engine.editor.getZoom();
+    const rotation = engine.block.getRotation(blockId);
 
     const topLeft = engine.editor.worldToScreen({ x: pos.x, y: pos.y });
-    const bottomRight = engine.editor.worldToScreen({
-      x: pos.x + size.width,
-      y: pos.y + size.height,
-    });
 
-    if (!topLeft || !bottomRight) return { display: "none" };
+    if (!topLeft) return { display: "none" };
 
     const align = engine.block.getString(blockId, TEXT_ALIGN) || "left";
     const lineHeight = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT) ?? 1.2;
     const padding = engine.block.getFloat(blockId, TEXT_PADDING) ?? 0;
 
-    // Use CSS transform for zoom scaling — Lexical content uses 1:1 font sizes
-    const screenWidth = bottomRight.x - topLeft.x;
-    const screenHeight = bottomRight.y - topLeft.y;
-
     return {
       position: "absolute",
       left: topLeft.x,
       top: topLeft.y,
-      width: screenWidth / zoom,
-      height: screenHeight / zoom,
-      transform: `scale(${zoom})`,
+      width: size.width,
+      height: size.height,
+      transform: `scale(${zoom}) rotate(${rotation}deg)`,
       transformOrigin: "top left",
       textAlign: align as React.CSSProperties["textAlign"],
       lineHeight: String(lineHeight),

@@ -8,20 +8,18 @@ import type { KonvaCamera } from "./konva-camera";
 export class KonvaHoverOutline {
   #rect: Konva.Rect;
   #uiLayer: Konva.Layer;
-  #contentLayer: Konva.Layer;
   #transformer: Konva.Transformer;
   #camera: KonvaCamera;
   #hoveredBlockId: number | null = null;
 
   constructor(
     uiLayer: Konva.Layer,
-    contentLayer: Konva.Layer,
+    _contentLayer: Konva.Layer,
     transformer: Konva.Transformer,
     camera: KonvaCamera,
     accentColor: string,
   ) {
     this.#uiLayer = uiLayer;
-    this.#contentLayer = contentLayer;
     this.#transformer = transformer;
     this.#camera = camera;
 
@@ -53,6 +51,12 @@ export class KonvaHoverOutline {
         this.#uiLayer.batchDraw();
       }
     });
+
+    node.on("dragstart", () => {
+      this.#hoveredBlockId = null;
+      this.#rect.visible(false);
+      this.#uiLayer.batchDraw();
+    });
   }
 
   /** Hide hover outline (e.g. when showing transformer). */
@@ -66,12 +70,23 @@ export class KonvaHoverOutline {
   }
 
   #show(node: Konva.Node): void {
-    const rect = node.getClientRect({ relativeTo: this.#contentLayer });
+    const w = node.width();
+    const h = node.height();
+    // Center-origin shapes (polygon, star, ellipse) position at center;
+    // offset to top-left for the hover rect.
+    const isCenterOrigin =
+      node instanceof Konva.RegularPolygon ||
+      node instanceof Konva.Star ||
+      node instanceof Konva.Ellipse;
+    const x = isCenterOrigin ? node.x() - w / 2 : node.x();
+    const y = isCenterOrigin ? node.y() - h / 2 : node.y();
+
     this.#rect.setAttrs({
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      x,
+      y,
+      width: w,
+      height: h,
+      rotation: node.rotation(),
       visible: true,
       strokeWidth: 2 / this.#camera.getZoom(),
     });
