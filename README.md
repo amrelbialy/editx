@@ -27,9 +27,23 @@
 pnpm add @editx/image-editor
 ```
 
+### CSS Setup
+
+Editx uses **Tailwind CSS 4**. In your project's main CSS file, import the editor styles and add a `@source` directive so Tailwind generates the required utility classes:
+
+```css
+@import "tailwindcss";
+@import "@editx/image-editor/styles.css";
+
+@source "../node_modules/@editx/image-editor/dist";
+```
+
+> **Important:** The `@source` path must point to `dist` — only `dist` is included in the published package. Without this directive, Tailwind won't detect the editor's container query classes and the responsive layout will break.
+
+### Usage
+
 ```tsx
 import { ImageEditor } from "@editx/image-editor";
-import "@editx/image-editor/styles.css";
 
 function App() {
   return (

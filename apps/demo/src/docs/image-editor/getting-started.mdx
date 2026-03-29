@@ -10,6 +10,21 @@ pnpm add @editx/image-editor
 
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
+## CSS Setup
+
+Editx is styled with Tailwind CSS 4 and uses CSS Container Queries for responsive layout. In your project's main CSS file:
+
+```css
+@import "tailwindcss";
+@import "@editx/image-editor/styles.css";
+
+@source "../node_modules/@editx/image-editor/dist";
+```
+
+The `@source` directive tells Tailwind to scan the editor's compiled output for utility classes. Without it, container query variants like `@xl/editor:` won't be generated and you'll see mobile styles on desktop.
+
+> **Note:** The path must point to `dist`, not `src` — only `dist` is included in the published package.
+
 ## Basic Usage
 
 ```tsx
