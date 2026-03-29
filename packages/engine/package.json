@@ -1,6 +1,6 @@
 {
   "name": "@editx/engine",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Block-based creative engine with command pattern undo/redo",
   "license": "MIT",
   "repository": {
