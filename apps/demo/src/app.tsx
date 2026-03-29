@@ -1,5 +1,6 @@
 ﻿import {
   Button,
+  ImageEditor,
   ImageEditorModal,
   Select,
   SelectContent,
@@ -10,7 +11,7 @@
   type ThemeConfig,
   ThemeProvider,
 } from "@editx/image-editor";
-import { GripVertical, ImageIcon, Link, Upload } from "lucide-react";
+import { GripVertical, ImageIcon, Link, Maximize2, Minimize2, Upload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { demoPresets } from "./theme/presets";
 
@@ -20,31 +21,40 @@ const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50
 const ALL_PRESETS = ["dark", "light", ...Object.keys(demoPresets)] as const;
 type PresetName = (typeof ALL_PRESETS)[number];
 
+type EditorMode = "modal" | "inline";
+
 function App() {
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>("modal");
   const [imageSrc, setImageSrc] = useState<string | File | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [themePreset, setThemePreset] = useState<PresetName>("dark");
 
+  const openEditor = useCallback(
+    (src: string | File, mode: EditorMode = editorMode) => {
+      setImageSrc(src);
+      setEditorMode(mode);
+      setEditorOpen(true);
+    },
+    [editorMode],
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageSrc(file);
-      setEditorOpen(true);
+      openEditor(file);
     }
   };
 
   const handleUseSample = () => {
-    setImageSrc(SAMPLE_IMAGE);
-    setEditorOpen(true);
+    openEditor(SAMPLE_IMAGE);
   };
 
   const handleLoadUrl = () => {
     const trimmed = urlInput.trim();
     if (trimmed) {
-      setImageSrc(trimmed);
-      setEditorOpen(true);
+      openEditor(trimmed);
     }
   };
 
@@ -63,38 +73,40 @@ function App() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file?.type.startsWith("image/")) {
-      setImageSrc(file);
-      setEditorOpen(true);
-      return;
-    }
-    const url = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
-    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
-      setImageSrc(url);
-      setEditorOpen(true);
-    }
-  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file?.type.startsWith("image/")) {
+        openEditor(file);
+        return;
+      }
+      const url = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+      if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+        openEditor(url);
+      }
+    },
+    [openEditor],
+  );
 
-  // --- Clipboard paste ---
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    for (const item of Array.from(items)) {
-      if (item.type.startsWith("image/")) {
-        const blob = item.getAsFile();
-        if (blob) {
-          e.preventDefault();
-          setImageSrc(blob);
-          setEditorOpen(true);
-          return;
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const blob = item.getAsFile();
+          if (blob) {
+            e.preventDefault();
+            openEditor(blob);
+            return;
+          }
         }
       }
-    }
-  }, []);
+    },
+    [openEditor],
+  );
 
   const handleThemeChange = useCallback((value: string) => {
     setThemePreset(value as PresetName);
@@ -128,43 +140,80 @@ function App() {
     setEditorOpen(false);
   }, []);
 
-  if (editorOpen && imageSrc) {
+  const themeSlot = (
+    <Select value={themePreset} onValueChange={handleThemeChange}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {ALL_PRESETS.map((t) => (
+          <SelectItem key={t} value={t}>
+            {t}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  // --- Inline editor (full-page) ---
+  if (editorOpen && imageSrc && editorMode === "inline") {
     return (
-      <ImageEditorModal
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
+      <ImageEditor
         src={imageSrc}
         onSave={handleSave}
         onClose={handleClose}
         config={config}
-        slots={{
-          topbarRight: (
-            <Select value={themePreset} onValueChange={handleThemeChange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ALL_PRESETS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ),
-        }}
+        width="100%"
+        height="100dvh"
+        slots={{ topbarRight: themeSlot }}
       />
     );
   }
 
+  // --- Modal editor (centered, not fullscreen) ---
+  const modalEditor = editorOpen && imageSrc && editorMode === "modal" && (
+    <ImageEditorModal
+      open={editorOpen}
+      onOpenChange={setEditorOpen}
+      src={imageSrc}
+      onSave={handleSave}
+      onClose={handleClose}
+      config={config}
+      slots={{ topbarRight: themeSlot }}
+    />
+  );
+
   return (
     <ThemeProvider theme={themeConfig}>
+      {modalEditor}
       <div className="flex flex-col items-center justify-center h-screen p-8" onPaste={handlePaste}>
         {/* Card */}
         <div className="w-full max-w-md bg-card text-card-foreground border border-border rounded-xl shadow-lg p-8 flex flex-col items-center gap-6">
           <div className="text-center space-y-1.5">
             <h1 className="text-2xl font-semibold tracking-tight">Editx Image Editor</h1>
             <p className="text-sm text-muted-foreground">Choose an image to get started</p>
+          </div>
+
+          <Separator />
+
+          {/* Mode toggle */}
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditorMode("modal")}
+              className={`flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 px-3 transition-colors border ${editorMode === "modal" ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:bg-accent"}`}
+            >
+              <Maximize2 className="size-3.5" />
+              Modal
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorMode("inline")}
+              className={`flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 px-3 transition-colors border ${editorMode === "inline" ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:bg-accent"}`}
+            >
+              <Minimize2 className="size-3.5" />
+              Inline
+            </button>
           </div>
 
           <Separator />

@@ -617,6 +617,32 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(607);
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
   });
+
+  it("undo rotation while in crop mode refreshes the crop overlay", () => {
+    const pageId = createPageWithImage(640, 960);
+    block.select(pageId);
+    editor.setEditMode("Crop");
+
+    // Rotate 90° CW while in crop mode — swaps PAGE_WIDTH/HEIGHT
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 960, height: 640 });
+    block.rotateClockwise(pageId);
+
+    // Simulate what the UI does after rotation: refresh the overlay
+    editor.refreshCropOverlay();
+    vi.mocked(renderer.showCropOverlay).mockClear();
+
+    // Undo the rotation — should auto-refresh the crop overlay
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 960, height: 640 });
+    editor.undo();
+
+    // The crop overlay should have been re-shown with restored (pre-rotation) dimensions
+    expect(renderer.showCropOverlay).toHaveBeenCalledWith(
+      pageId,
+      { x: 0, y: 0, width: 640, height: 960 },
+      expect.objectContaining({ width: 640, height: 960 }),
+      { rotation: 0, flipH: false, flipV: false, sourceWidth: 640, sourceHeight: 960 },
+    );
+  });
 });
 
 describe("BlockAPI — Image Rotation & Flip", () => {

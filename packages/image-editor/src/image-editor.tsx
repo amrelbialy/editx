@@ -170,6 +170,16 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     return ce.event.subscribe([], () => markDirty());
   }, [engine, engineRef, markDirty]);
 
+  // Sync theme accent color to engine transformer
+  useEffect(() => {
+    if (!engine || !containerRef.current) return;
+    const el = containerRef.current.closest(".ie-theme") as HTMLElement | null;
+    if (!el) return;
+    const primary = getComputedStyle(el).getPropertyValue("--primary").trim();
+    if (primary) engine.setAccentColor(primary);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: re-run when theme config changes
+  }, [engine, containerRef, userConfig]);
+
   // --- Derived state ---
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
 

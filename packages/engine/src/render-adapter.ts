@@ -82,6 +82,9 @@ export interface RendererAdapter {
   /** Update the rendered cursor. Optional — not all adapters manage cursors. */
   setCursor?(type: CursorType): void;
 
+  /** Update the accent color used by the transformer and selection UI. */
+  setAccentColor?(color: string): void;
+
   //
   // Crop overlay
   //
@@ -107,7 +110,7 @@ export interface RendererAdapter {
   // Interaction callbacks (renderer → engine)
   //
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
-  onBlockDblClick?: (blockId: number) => void;
+  onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
     blockId: number,

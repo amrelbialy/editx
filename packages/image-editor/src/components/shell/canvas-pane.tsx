@@ -1,5 +1,5 @@
 import type { EditxEngine } from "@editx/engine";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import type { EditorSlots } from "../../config/config.types";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
 import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
@@ -51,18 +51,37 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const blockScreenRect = useBlockScreenRect(engine ?? null, selectedShapeId);
 
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+  const editingTextClickPos = useImageEditorStore((s) => s.editingTextClickPos);
   const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
   const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
+
+  const editingRef = useRef(editingTextBlockId);
+  editingRef.current = editingTextBlockId;
 
   // Subscribe to dblclick on text blocks to enter inline editing
   useEffect(() => {
     if (!engine) return;
-    return engine.block.onBlockDoubleClick((blockId: number) => {
+    return engine.block.onBlockDoubleClick((blockId: number, screenPos) => {
       if (engine.block.getType(blockId) === "text") {
-        setEditingTextBlockId(blockId);
+        setEditingTextBlockId(blockId, screenPos);
       }
     });
   }, [engine, setEditingTextBlockId]);
+
+  // When clicking stage while editing text, close editor but keep block selected
+  useEffect(() => {
+    if (!engine) return;
+    const handler = () => {
+      const blockId = editingRef.current;
+      if (blockId !== null) {
+        engine.block.select(blockId);
+        setEditingTextBlockId(null);
+        setTextSelectionRange(null);
+      }
+    };
+    engine.on("stage:click", handler);
+    return () => engine.off("stage:click", handler);
+  }, [engine, setEditingTextBlockId, setTextSelectionRange]);
 
   const handleCloseTextEditor = useCallback(() => {
     setEditingTextBlockId(null);
@@ -110,6 +129,7 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
           engine={engine}
           blockId={editingTextBlockId}
           canvasRef={canvasRef}
+          clickScreenPos={editingTextClickPos}
           onClose={handleCloseTextEditor}
         />
       )}

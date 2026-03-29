@@ -33,6 +33,14 @@ export class EditorAPI {
     this.#cursor = new EditorCursor(this.#ctx);
     this.#history = new EditorHistory(this.#ctx);
     this.#viewport = new EditorViewport(this.#ctx);
+
+    // Auto-refresh the crop overlay after undo/redo so it reflects
+    // restored rotation, flip, and page dimensions.
+    engine.onHistoryChanged(() => {
+      if (this.#editMode === "Crop") {
+        this.#crop.refreshCropOverlay();
+      }
+    });
   }
 
   /** @internal — called by EditxEngine after construction */

@@ -253,15 +253,15 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     engine.block.setTextStyle(blockId, start, end, {
       fontWeight: "normal",
       fontStyle: "normal",
-      textDecoration: undefined,
-      backgroundColor: undefined,
+      textDecoration: "",
+      backgroundColor: "",
       textTransform: "none",
-      textShadowColor: undefined,
-      textShadowBlur: undefined,
-      textShadowOffsetX: undefined,
-      textShadowOffsetY: undefined,
-      textStrokeColor: undefined,
-      textStrokeWidth: undefined,
+      textShadowColor: "",
+      textShadowBlur: 0,
+      textShadowOffsetX: 0,
+      textShadowOffsetY: 0,
+      textStrokeColor: "",
+      textStrokeWidth: 0,
     });
     refresh();
   }, [engine, blockId, getStyleRange, refresh]);

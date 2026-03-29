@@ -18,7 +18,8 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
       engine.block.select(blockId);
     }
   };
-  adapter.onBlockDblClick = (blockId) => engine.emit("block:dblclick", blockId);
+  adapter.onBlockDblClick = (blockId, screenPos) =>
+    engine.emit("block:dblclick", blockId, screenPos);
   adapter.onStageClick = (worldPos) => {
     engine.block.deselectAll();
     engine.emit("stage:click", worldPos);

@@ -3,7 +3,7 @@ import type { KonvaCamera } from "./konva-camera";
 
 export interface InteractionCallbacks {
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
-  onBlockDblClick?: (blockId: number) => void;
+  onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
 }
@@ -54,7 +54,12 @@ export function setupInteraction(deps: InteractionDeps): void {
     const clickNode = findBlockNode(e.target as Konva.Node);
     const blockId = clickNode?.getAttr("blockId") as number | undefined;
     if (blockId !== undefined && !clickNode?.getAttr("isPage")) {
-      callbacks.onBlockDblClick?.(blockId);
+      const pointer = stage.getPointerPosition();
+      const container = stage.container().getBoundingClientRect();
+      const screenPos = pointer
+        ? { x: container.left + pointer.x, y: container.top + pointer.y }
+        : { x: 0, y: 0 };
+      callbacks.onBlockDblClick?.(blockId, screenPos);
     }
   });
 

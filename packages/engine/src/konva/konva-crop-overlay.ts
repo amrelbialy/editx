@@ -174,6 +174,12 @@ export class KonvaCropOverlay {
     return this.#group.visible();
   }
 
+  setAccentColor(color: string): void {
+    this.#transformer.anchorStroke(color);
+    this.#transformer.borderStroke(color);
+    this.#layer.batchDraw();
+  }
+
   destroy(): void {
     this.#cutout.off("dragmove dragend transform transformend");
     this.#group.destroy();

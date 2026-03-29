@@ -24,12 +24,14 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
         return (
           <div key={group.label}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-base font-medium text-foreground">{group.label}</span>
+              <span className="text-sm font-medium text-foreground @5xl/editor:text-base">
+                {group.label}
+              </span>
               {hasMore && (
                 <button
                   type="button"
                   onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
-                  className="text-base text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background rounded-sm"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors @5xl/editor:text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background rounded-sm"
                 >
                   {isExpanded ? "Less" : `More (${group.presets.length - VISIBLE_COUNT})`}
                 </button>
@@ -45,7 +47,7 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
                     key={`${preset.width}x${preset.height}-${preset.label}`}
                     onClick={() => onSelect(preset)}
                     className={cn(
-                      "flex flex-col items-center justify-start rounded-md px-1.5 py-2 text-base transition-colors min-w-0",
+                      "flex flex-col items-center justify-start rounded-md px-1.5 py-2 text-sm transition-colors min-w-0 @5xl/editor:text-base",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       isActive
                         ? "bg-primary text-primary-foreground"

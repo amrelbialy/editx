@@ -103,12 +103,14 @@ export class BlockAPI {
   onSelectionChanged(cb: (ids: number[]) => void): () => void {
     return this.#selection.onSelectionChanged(cb);
   }
-  onBlockDoubleClick(cb: (blockId: number) => void): () => void {
+  onBlockDoubleClick(
+    cb: (blockId: number, screenPos?: { x: number; y: number }) => void,
+  ): () => void {
     return this.#selection.onBlockDoubleClick(cb);
   }
   /** @internal */
-  _notifyBlockDoubleClick(blockId: number): void {
-    this.#selection._notifyBlockDoubleClick(blockId);
+  _notifyBlockDoubleClick(blockId: number, screenPos?: { x: number; y: number }): void {
+    this.#selection._notifyBlockDoubleClick(blockId, screenPos);
   }
   _removeFromSelection(ids: number[]): void {
     this.#selection._removeFromSelection(ids);

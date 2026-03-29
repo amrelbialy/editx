@@ -34,6 +34,8 @@ export interface TextEditorOverlayProps {
   engine: EditxEngine;
   blockId: number;
   canvasRef: React.RefObject<HTMLDivElement | null>;
+  /** Screen coordinates of the double-click that initiated editing. */
+  clickScreenPos?: { x: number; y: number } | null;
   onClose: () => void;
 }
 
@@ -165,7 +167,7 @@ function BlurHandlerPlugin({ onClose }: { onClose: () => void }) {
 
 // ── AutoFocusPlugin ─────────────────────────────────────────────────
 
-function AutoFocusPlugin() {
+function AutoFocusPlugin({ clickScreenPos }: { clickScreenPos?: { x: number; y: number } | null }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -173,10 +175,42 @@ function AutoFocusPlugin() {
       () => {
         const root = editor.getRootElement();
         root?.focus({ preventScroll: true });
+
+        if (!clickScreenPos) return;
+
+        // Use the browser's hit-test API to find the DOM position at the click point
+        const { x, y } = clickScreenPos;
+        let domNode: Node | null = null;
+        let offset = 0;
+
+        if (document.caretPositionFromPoint) {
+          const pos = document.caretPositionFromPoint(x, y);
+          if (pos) {
+            domNode = pos.offsetNode;
+            offset = pos.offset;
+          }
+        } else if (document.caretRangeFromPoint) {
+          const range = document.caretRangeFromPoint(x, y);
+          if (range) {
+            domNode = range.startContainer;
+            offset = range.startOffset;
+          }
+        }
+
+        if (!domNode) return;
+
+        // Verify the hit node is inside the editor root
+        if (!root?.contains(domNode)) return;
+
+        // Create a native selection at the hit point — Lexical will sync from it
+        const sel = window.getSelection();
+        if (sel) {
+          sel.collapse(domNode, offset);
+        }
       },
       { defaultSelection: "rootStart" },
     );
-  }, [editor]);
+  }, [editor, clickScreenPos]);
 
   return null;
 }
@@ -380,6 +414,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   engine,
   blockId,
   canvasRef,
+  clickScreenPos,
   onClose,
 }) => {
   // Compute screen position and size of the text block
@@ -396,11 +431,6 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
 
     if (!topLeft || !bottomRight) return { display: "none" };
 
-    const canvasEl = canvasRef.current;
-    const canvasRect = canvasEl?.getBoundingClientRect();
-    const offsetX = canvasRect?.left ?? 0;
-    const offsetY = canvasRect?.top ?? 0;
-
     const align = engine.block.getString(blockId, TEXT_ALIGN) || "left";
     const lineHeight = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT) ?? 1.2;
     const padding = engine.block.getFloat(blockId, TEXT_PADDING) ?? 0;
@@ -410,9 +440,9 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const screenHeight = bottomRight.y - topLeft.y;
 
     return {
-      position: "fixed",
-      left: topLeft.x + offsetX,
-      top: topLeft.y + offsetY,
+      position: "absolute",
+      left: topLeft.x,
+      top: topLeft.y,
       width: screenWidth / zoom,
       height: screenHeight / zoom,
       transform: `scale(${zoom})`,
@@ -427,10 +457,10 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
       boxSizing: "border-box",
       color: "transparent",
       caretColor: "var(--primary)",
-      outline: "3px solid var(--primary)",
+      outline: `${3 / zoom}px solid var(--primary)`,
       outlineOffset: "0px",
     };
-  }, [engine, blockId, canvasRef]);
+  }, [engine, blockId]);
 
   // Hide the transformer while overlay is active; restore on unmount.
   useEffect(() => {
@@ -486,7 +516,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />
-        <AutoFocusPlugin />
+        <AutoFocusPlugin clickScreenPos={clickScreenPos} />
         <SelectionSyncPlugin />
         <KeyboardShortcutsPlugin onClose={onClose} />
         <PastePlainTextPlugin />

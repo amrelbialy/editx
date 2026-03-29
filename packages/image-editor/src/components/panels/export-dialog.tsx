@@ -51,7 +51,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-sm @3xl/editor:w-md">
         <DialogHeader>
           <DialogTitle>Export Image</DialogTitle>
           <DialogDescription>

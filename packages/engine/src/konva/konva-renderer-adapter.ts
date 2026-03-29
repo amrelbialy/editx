@@ -9,6 +9,7 @@ import type { KonvaCamera } from "./konva-camera";
 import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
 import type { KonvaCropOverlay } from "./konva-crop-overlay";
 import { exportScene } from "./konva-export";
+import { KonvaHoverOutline } from "./konva-hover-outline";
 import type { KonvaNodeFactory } from "./konva-node-factory";
 import { createKonvaScene } from "./konva-scene-setup";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
@@ -28,9 +29,11 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #resizeObserver?: ResizeObserver;
   #lastPageSize?: { width: number; height: number };
   #webgl: WebGLFilterRenderer | null = null;
+  #updateAccentColor?: (color: string) => void;
+  #hoverOutline!: KonvaHoverOutline;
 
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
-  onBlockDblClick?: (blockId: number) => void;
+  onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
     blockId: number,
@@ -52,7 +55,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
     const scene = createKonvaScene(this.#rootEl, pageW, pageH, this.#nodeMap, {
       onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
-      onBlockDblClick: (blockId) => this.onBlockDblClick?.(blockId),
+      onBlockDblClick: (blockId, screenPos) => this.onBlockDblClick?.(blockId, screenPos),
       onStageClick: (worldPos) => this.onStageClick?.(worldPos),
       onZoomChange: (zoom) => this.onZoomChange?.(zoom),
       onCropChange: (rect) => this.onCropChange?.(rect),
@@ -67,7 +70,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#nodeFactory = scene.nodeFactory;
     this.#cropOverlay = scene.cropOverlay;
     this.#webgl = scene.webgl;
+    this.#updateAccentColor = scene.updateAccentColor;
     this.#lastPageSize = { width: pageW, height: pageH };
+
+    this.#hoverOutline = new KonvaHoverOutline(
+      this.#uiLayer,
+      this.#contentLayer,
+      this.#transformer,
+      this.#camera,
+      "#4971FF",
+    );
 
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = new ResizeObserver(() => {
@@ -109,6 +121,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       node = created;
       this.#nodeMap.set(id, node);
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
+      this.#hoverOutline.bind(id, node);
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
@@ -148,6 +161,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   showTransformer(blockIds: number[], blockType?: string): void {
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
+    this.#hoverOutline.hide();
     this.#transformer.nodes(nodes);
     this.#transformer.enabledAnchors(
       blockType === "text"
@@ -264,6 +278,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
   renderFrame(): void {
     this.#contentLayer?.draw();
     this.#uiLayer?.draw();
+  }
+
+  setAccentColor(color: string): void {
+    this.#updateAccentColor?.(color);
+    this.#cropOverlay?.setAccentColor(color);
+    this.#hoverOutline?.setAccentColor(color);
   }
 
   async exportScene(options: ExportOptions): Promise<Blob> {

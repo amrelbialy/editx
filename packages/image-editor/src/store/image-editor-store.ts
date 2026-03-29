@@ -48,6 +48,8 @@ interface ImageEditorState {
 
   /** Block ID currently in inline text editing mode (double-clicked). null when not editing. */
   editingTextBlockId: number | null;
+  /** Screen position of the double-click that initiated text editing. */
+  editingTextClickPos: { x: number; y: number } | null;
   /** Current text selection range within the inline editor. null when no selection. */
   textSelectionRange: { from: number; to: number } | null;
 
@@ -65,7 +67,7 @@ interface ImageEditorState {
   clearError: () => void;
   setShownImageDimensions: (dims: ShownImageDimensions) => void;
   setCropPreset: (preset: CropPresetId) => void;
-  setEditingTextBlockId: (id: number | null) => void;
+  setEditingTextBlockId: (id: number | null, clickPos?: { x: number; y: number }) => void;
   setTextSelectionRange: (range: { from: number; to: number } | null) => void;
   setPropertySidePanel: (panel: PropertySidePanel) => void;
   markDirty: () => void;
@@ -82,6 +84,7 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   cropPreset: "free",
 
   editingTextBlockId: null,
+  editingTextClickPos: null,
   textSelectionRange: null,
   propertySidePanel: null,
   hasUnsavedChanges: false,
@@ -94,7 +97,8 @@ export const useImageEditorStore = create<ImageEditorState>((set) => ({
   clearError: () => set({ error: null }),
   setShownImageDimensions: (dims) => set({ shownImageDimensions: dims }),
   setCropPreset: (preset) => set({ cropPreset: preset }),
-  setEditingTextBlockId: (id) => set({ editingTextBlockId: id }),
+  setEditingTextBlockId: (id, clickPos) =>
+    set({ editingTextBlockId: id, editingTextClickPos: clickPos ?? null }),
   setTextSelectionRange: (range) => set({ textSelectionRange: range }),
   setPropertySidePanel: (panel) => set({ propertySidePanel: panel }),
   markDirty: () => set({ hasUnsavedChanges: true }),

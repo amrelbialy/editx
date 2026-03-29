@@ -63,12 +63,17 @@ const SelectContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "item-aligned", ...props }, ref) => {
   const container = usePopoverContainer();
+  const preventScrollFocus = (e: Event) => {
+    e.preventDefault();
+    (e.target as HTMLElement | null)?.focus?.({ preventScroll: true });
+  };
 
   return (
     <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         ref={ref}
         // collisionBoundary={container ?? null}
+        onCloseAutoFocus={preventScrollFocus}
         className={cn(
           "relative z-50 max-h-60 min-w-[8rem] overflow-hidden rounded-lg border border-border bg-card shadow-lg",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",

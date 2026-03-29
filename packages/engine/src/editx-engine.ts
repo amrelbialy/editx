@@ -60,6 +60,10 @@ export class EditxEngine implements EngineCore {
     return this.#renderer;
   }
 
+  setAccentColor(color: string): void {
+    this.#renderer?.setAccentColor?.(color);
+  }
+
   setActiveScene(id: number) {
     this.#activeSceneId = id;
   }
@@ -200,7 +204,8 @@ export class EditxEngine implements EngineCore {
         cb(args[0] as { mode: string; previousMode: string });
     }
     if (event === "block:dblclick" && typeof args[0] === "number") {
-      this.block._notifyBlockDoubleClick(args[0]);
+      const screenPos = args[1] as { x: number; y: number } | undefined;
+      this.block._notifyBlockDoubleClick(args[0], screenPos);
     }
   }
 

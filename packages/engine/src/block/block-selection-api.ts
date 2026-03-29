@@ -7,7 +7,7 @@ export class BlockSelectionAPI {
   #selection = new Set<number>();
   #transformerEnabled = true;
   #selectionListeners = new Set<(ids: number[]) => void>();
-  #dblClickListeners = new Set<(blockId: number) => void>();
+  #dblClickListeners = new Set<(blockId: number, screenPos?: { x: number; y: number }) => void>();
 
   constructor(engine: EngineCore) {
     this.#engine = engine;
@@ -22,7 +22,9 @@ export class BlockSelectionAPI {
   }
 
   /** Subscribe to block double-click events. Returns an unsubscribe function. */
-  onBlockDoubleClick(cb: (blockId: number) => void): () => void {
+  onBlockDoubleClick(
+    cb: (blockId: number, screenPos?: { x: number; y: number }) => void,
+  ): () => void {
     this.#dblClickListeners.add(cb);
     return () => {
       this.#dblClickListeners.delete(cb);
@@ -30,8 +32,8 @@ export class BlockSelectionAPI {
   }
 
   /** @internal — fire double-click listeners (called by EditxEngine). */
-  _notifyBlockDoubleClick(blockId: number): void {
-    for (const cb of this.#dblClickListeners) cb(blockId);
+  _notifyBlockDoubleClick(blockId: number, screenPos?: { x: number; y: number }): void {
+    for (const cb of this.#dblClickListeners) cb(blockId, screenPos);
   }
 
   select(id: number): void {

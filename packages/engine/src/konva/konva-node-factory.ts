@@ -109,9 +109,20 @@ export class KonvaNodeFactory {
 
     node.setAttr("blockId", id);
 
+    const isCenterOrigin = () =>
+      node instanceof Konva.RegularPolygon ||
+      node instanceof Konva.Star ||
+      node instanceof Konva.Ellipse;
+
     node.on("dragend", () => {
       const pos = node.position();
-      callbacks.onDragEnd(id, pos.x, pos.y);
+      if (isCenterOrigin()) {
+        const w = node.getAttr("blockWidth") ?? 100;
+        const h = node.getAttr("blockHeight") ?? 100;
+        callbacks.onDragEnd(id, pos.x - w / 2, pos.y - h / 2);
+      } else {
+        callbacks.onDragEnd(id, pos.x, pos.y);
+      }
     });
 
     node.on("transformend", () => {
@@ -119,15 +130,19 @@ export class KonvaNodeFactory {
       const scaleY = node.scaleY();
       const baseW = node.getAttr("blockWidth") ?? node.width();
       const baseH = node.getAttr("blockHeight") ?? node.height();
-      callbacks.onTransformEnd(id, {
-        x: node.x(),
-        y: node.y(),
-        width: baseW * scaleX,
-        height: baseH * scaleY,
+      const newW = baseW * scaleX;
+      const newH = baseH * scaleY;
+      const center = isCenterOrigin();
+      const result = {
+        x: center ? node.x() - newW / 2 : node.x(),
+        y: center ? node.y() - newH / 2 : node.y(),
+        width: newW,
+        height: newH,
         rotation: node.rotation(),
-      });
+      };
       node.scaleX(1);
       node.scaleY(1);
+      callbacks.onTransformEnd(id, result);
     });
 
     return node;
@@ -153,7 +168,14 @@ export class KonvaNodeFactory {
     const opacity = (props[OPACITY] as number) ?? 1;
     const visible = (props[VISIBLE] as boolean) ?? true;
 
-    node.setAttrs({ x, y, rotation, opacity, visible });
+    // Center-origin shapes store top-left in engine; convert to center for Konva
+    const isCenterOrigin =
+      node instanceof Konva.RegularPolygon ||
+      node instanceof Konva.Star ||
+      node instanceof Konva.Ellipse;
+    const nx = isCenterOrigin ? x + width / 2 : x;
+    const ny = isCenterOrigin ? y + height / 2 : y;
+    node.setAttrs({ x: nx, y: ny, rotation, opacity, visible });
 
     if (block.type === "image") {
       updateImageNode(

@@ -21,6 +21,67 @@ import {
 } from "../block/property-keys";
 import { colorToHex } from "../utils/color";
 
+// ── Stretched polygon/star vertex helpers ──────────────────────────
+
+/** Compute regular polygon vertices stretched to fill width × height, centered at origin. */
+function computePolygonPoints(sides: number, width: number, height: number): number[] {
+  const points: number[] = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (2 * Math.PI * i) / sides - Math.PI / 2;
+    points.push(Math.cos(angle) * (width / 2), Math.sin(angle) * (height / 2));
+  }
+  return points;
+}
+
+/** Compute star vertices stretched to fill width × height, centered at origin. */
+function computeStarPoints(
+  numPoints: number,
+  innerDiameter: number,
+  width: number,
+  height: number,
+): number[] {
+  const points: number[] = [];
+  for (let i = 0; i < numPoints * 2; i++) {
+    const angle = (Math.PI * i) / numPoints - Math.PI / 2;
+    const r = i % 2 === 0 ? 1 : innerDiameter;
+    points.push(Math.cos(angle) * r * (width / 2), Math.sin(angle) * r * (height / 2));
+  }
+  return points;
+}
+
+function createPolySceneFunc(points: number[]) {
+  return (ctx: any, shape: any) => {
+    ctx.beginPath();
+    ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) {
+      ctx.lineTo(points[i], points[i + 1]);
+    }
+    ctx.closePath();
+    ctx.fillStrokeShape(shape);
+  };
+}
+
+function createPolyHitFunc(points: number[]) {
+  return (ctx: any, shape: any) => {
+    ctx.beginPath();
+    ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) {
+      ctx.lineTo(points[i], points[i + 1]);
+    }
+    ctx.closePath();
+    ctx.fillStrokeShape(shape);
+  };
+}
+
+/** Returns a getSelfRect function that reads blockWidth/blockHeight from attrs dynamically. */
+function dynamicCenterSelfRect(node: Konva.Shape) {
+  return () => {
+    const w = (node.getAttr("blockWidth") as number) ?? 100;
+    const h = (node.getAttr("blockHeight") as number) ?? 100;
+    return { x: -w / 2, y: -h / 2, width: w, height: h };
+  };
+}
+
 /** Resolve fill and stroke from sub-blocks (or fall back to block properties). */
 export function applyShapeFillStroke(
   node: Konva.Shape,
@@ -92,6 +153,8 @@ export function updateEllipseNode(
 ): void {
   node.radiusX(width / 2);
   node.radiusY(height / 2);
+  node.setAttr("blockWidth", width);
+  node.setAttr("blockHeight", height);
   applyShapeFillStroke(node, props, block, resolveBlock);
 }
 
@@ -126,9 +189,6 @@ export function updatePolygonNode(
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {
-  const radius = Math.min(width, height) / 2;
-  node.radius(radius);
-
   let sides = 5;
   if (block?.shapeId != null && resolveBlock) {
     const shapeBlock = resolveBlock(block.shapeId);
@@ -136,9 +196,21 @@ export function updatePolygonNode(
       sides = (shapeBlock.properties[SHAPE_POLYGON_SIDES] as number) ?? 5;
     }
   }
+
+  // Set block dimensions and getSelfRect BEFORE radius/sides — changing radius triggers
+  // the Transformer's onChange which reads getSelfRect, so it must already be current.
+  node.setAttr("blockWidth", width);
+  node.setAttr("blockHeight", height);
+  node.getSelfRect = dynamicCenterSelfRect(node);
+
+  node.radius(Math.max(width, height) / 2);
   node.sides(sides);
   node.offsetX(0);
   node.offsetY(0);
+
+  const points = computePolygonPoints(sides, width, height);
+  node.sceneFunc(createPolySceneFunc(points));
+  node.hitFunc(createPolyHitFunc(points));
 
   applyShapeFillStroke(node, props, block, resolveBlock);
 }
@@ -151,7 +223,6 @@ export function updateStarNode(
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {
-  const outerRadius = Math.min(width, height) / 2;
   let numPoints = 5;
   let innerDiameter = 0.5;
 
@@ -163,9 +234,19 @@ export function updateStarNode(
     }
   }
 
+  // Set block dimensions and getSelfRect BEFORE radius — changing radius triggers
+  // the Transformer's onChange which reads getSelfRect, so it must already be current.
+  node.setAttr("blockWidth", width);
+  node.setAttr("blockHeight", height);
+  node.getSelfRect = dynamicCenterSelfRect(node);
+
   node.numPoints(numPoints);
-  node.outerRadius(outerRadius);
-  node.innerRadius(outerRadius * innerDiameter);
+  node.outerRadius(Math.max(width, height) / 2);
+  node.innerRadius(node.outerRadius() * innerDiameter);
+
+  const points = computeStarPoints(numPoints, innerDiameter, width, height);
+  node.sceneFunc(createPolySceneFunc(points));
+  node.hitFunc(createPolyHitFunc(points));
 
   applyShapeFillStroke(node, props, block, resolveBlock);
 }

@@ -12,6 +12,7 @@ export interface SceneComponents {
   contentLayer: Konva.Layer;
   uiLayer: Konva.Layer;
   transformer: Konva.Transformer;
+  updateAccentColor: (color: string) => void;
   selectionRect: Konva.Rect;
   camera: KonvaCamera;
   nodeFactory: KonvaNodeFactory;
@@ -21,7 +22,7 @@ export interface SceneComponents {
 
 export interface SceneCallbacks {
   onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
-  onBlockDblClick?: (blockId: number) => void;
+  onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onCropChange?: (rect: CropRect) => void;
@@ -46,7 +47,7 @@ export function createKonvaScene(
   const uiLayer = new Konva.Layer();
   stage.add(uiLayer);
 
-  const transformer = createStyledTransformer(uiLayer);
+  const { transformer, updateAccent } = createStyledTransformer(uiLayer);
   uiLayer.add(transformer);
 
   const selectionRect = new Konva.Rect({
@@ -83,7 +84,7 @@ export function createKonvaScene(
     camera,
     callbacks: {
       onBlockClick: (blockId, event) => callbacks.onBlockClick?.(blockId, event),
-      onBlockDblClick: (blockId) => callbacks.onBlockDblClick?.(blockId),
+      onBlockDblClick: (blockId, screenPos) => callbacks.onBlockDblClick?.(blockId, screenPos),
       onStageClick: (worldPos) => callbacks.onStageClick?.(worldPos),
       onZoomChange: (zoom) => callbacks.onZoomChange?.(zoom),
     },
@@ -97,6 +98,7 @@ export function createKonvaScene(
     contentLayer,
     uiLayer,
     transformer,
+    updateAccentColor: updateAccent,
     selectionRect,
     camera,
     nodeFactory,

@@ -167,6 +167,85 @@ export const CropPanel: React.FC<CropPanelProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Crop Area dimensions — visible in both tabs */}
+      <div>
+        <div className="text-sm font-medium text-muted-foreground mb-2 @5xl/editor:text-base">
+          Crop Area
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Width & Height inputs */}
+          <div className="flex-1 flex flex-col gap-2">
+            {/* Width */}
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="crop-resize-width"
+                className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
+              >
+                {t("crop.width")}
+              </label>
+              <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
+                <input
+                  id="crop-resize-width"
+                  type="number"
+                  value={resizeWidth || ""}
+                  onChange={(e) => handleWidthChange(Number(e.target.value))}
+                  min={1}
+                  className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
+                  data-testid="resize-width-input"
+                />
+                <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
+              </div>
+            </div>
+
+            {/* Height */}
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="crop-resize-height"
+                className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
+              >
+                {t("crop.height")}
+              </label>
+              <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
+                <input
+                  id="crop-resize-height"
+                  type="number"
+                  value={resizeHeight || ""}
+                  onChange={(e) => handleHeightChange(Number(e.target.value))}
+                  min={1}
+                  className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
+                  data-testid="resize-height-input"
+                />
+                <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Ratio lock */}
+          <button
+            onClick={() => setRatioLocked((v) => !v)}
+            className={cn(
+              "p-1.5 rounded transition-colors shrink-0",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+              ratioLocked
+                ? "text-primary hover:text-primary/80"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
+            aria-pressed={ratioLocked}
+            title={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
+            data-testid="resize-ratio-lock"
+          >
+            {ratioLocked ? (
+              <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+            ) : (
+              <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      <hr className="border-border" />
+
       {/* Tab switcher */}
       <div
         role="tablist"
@@ -241,98 +320,14 @@ export const CropPanel: React.FC<CropPanelProps> = ({
         </div>
       )}
 
-      {/* Resize tab */}
-      {tab === "resize" && (
-        <div
-          role="tabpanel"
-          id="crop-tab-resize"
-          aria-labelledby="crop-tab-resize-trigger"
-          className="flex flex-col gap-4"
-        >
-          {/* Crop Area dimensions */}
-          <div>
-            <div className="text-sm font-medium text-muted-foreground mb-2 @5xl/editor:text-base">
-              Crop Area
-            </div>
-            <div className="flex flex-col gap-2">
-              {/* Width */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="crop-resize-width"
-                  className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
-                >
-                  {t("crop.width")}
-                </label>
-                <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
-                  <input
-                    id="crop-resize-width"
-                    type="number"
-                    value={resizeWidth || ""}
-                    onChange={(e) => handleWidthChange(Number(e.target.value))}
-                    min={1}
-                    className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
-                    data-testid="resize-width-input"
-                  />
-                  <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
-                </div>
-              </div>
-
-              {/* Ratio lock */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setRatioLocked((v) => !v)}
-                  className={cn(
-                    "p-1 rounded transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                    ratioLocked
-                      ? "text-primary hover:text-primary/80"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  aria-label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
-                  aria-pressed={ratioLocked}
-                  title={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
-                  data-testid="resize-ratio-lock"
-                >
-                  {ratioLocked ? (
-                    <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-                  ) : (
-                    <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-                  )}
-                </button>
-              </div>
-
-              {/* Height */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="crop-resize-height"
-                  className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
-                >
-                  {t("crop.height")}
-                </label>
-                <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
-                  <input
-                    id="crop-resize-height"
-                    type="number"
-                    value={resizeHeight || ""}
-                    onChange={(e) => handleHeightChange(Number(e.target.value))}
-                    min={1}
-                    className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
-                    data-testid="resize-height-input"
-                  />
-                  <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Platform presets */}
-          {resizePresets.length > 0 && (
-            <ResizePresets
-              groups={resizePresets}
-              activePreset={activeResizePreset}
-              onSelect={handlePresetSelect}
-            />
-          )}
+      {/* Resize tab — platform presets */}
+      {tab === "resize" && resizePresets.length > 0 && (
+        <div role="tabpanel" id="crop-tab-resize" aria-labelledby="crop-tab-resize-trigger">
+          <ResizePresets
+            groups={resizePresets}
+            activePreset={activeResizePreset}
+            onSelect={handlePresetSelect}
+          />
         </div>
       )}
     </div>
