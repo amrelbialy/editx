@@ -1,4 +1,10 @@
-import { type EditxEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_PADDING } from "@editx/engine";
+import {
+  type EditxEngine,
+  TEXT_ALIGN,
+  TEXT_LINE_HEIGHT,
+  TEXT_PADDING,
+  TEXT_VERTICAL_ALIGN,
+} from "@editx/engine";
 import {
   createLexicalComposerContext,
   LexicalComposerContext,
@@ -432,8 +438,28 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const lineHeight = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT) ?? 1.2;
     const padding = engine.block.getFloat(blockId, TEXT_PADDING) ?? 0;
 
+    // Read the block's default font from the first text run so Lexical
+    // paragraph layout matches the Konva canvas rendering.
+    const verticalAlign = engine.block.getString(blockId, TEXT_VERTICAL_ALIGN) || "top";
+
+    // Read the block's default font from the first text run so Lexical
+    // paragraph layout matches the Konva canvas rendering.
+    const runs = engine.block.getTextRuns(blockId);
+    const firstStyle = runs[0]?.style;
+    const fontSize = firstStyle?.fontSize ?? 16;
+    const fontFamily = firstStyle?.fontFamily ?? "Arial";
+    const letterSpacing = firstStyle?.letterSpacing ?? 0;
+    const textTransform = firstStyle?.textTransform ?? "none";
+
+    // Map vertical align to flexbox alignment
+    const justifyMap = { top: "flex-start", middle: "center", bottom: "flex-end" } as const;
+    const justifyContent = justifyMap[verticalAlign as keyof typeof justifyMap] ?? "flex-start";
+
     return {
       position: "absolute",
+      display: "flex",
+      flexDirection: "column" as const,
+      justifyContent,
       left: topLeft.x,
       top: topLeft.y,
       width: size.width,
@@ -442,6 +468,10 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
       transformOrigin: "top left",
       textAlign: align as React.CSSProperties["textAlign"],
       lineHeight: String(lineHeight),
+      fontSize: `${fontSize}px`,
+      fontFamily,
+      letterSpacing: letterSpacing !== 0 ? `${letterSpacing}px` : undefined,
+      textTransform: textTransform as React.CSSProperties["textTransform"],
       padding: `${padding}px`,
       zIndex: 50,
       overflow: "visible",
@@ -502,7 +532,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
           contentEditable={
             <ContentEditable
               ref={contentRef}
-              className="cursor-text whitespace-pre-wrap break-words outline-none"
+              className="cursor-text whitespace-pre-wrap wrap-break-word outline-none"
               style={{ minHeight: "1em" }}
             />
           }

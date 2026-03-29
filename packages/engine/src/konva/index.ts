@@ -28,10 +28,33 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
   adapter.onBlockDragEnd = (blockId, x, y) => engine.block.setPosition(blockId, x, y);
   adapter.onBlockTransformEnd = (blockId, transform) => {
     engine.beginBatch();
+    const isText = engine.block.getType(blockId) === "text";
+
+    // Scale font sizes proportionally when resizing text blocks
+    if (isText) {
+      const oldSize = engine.block.getSize(blockId);
+      const scaleX = transform.width / oldSize.width;
+      const scaleY = transform.height / oldSize.height;
+      const scaleFactor = Math.sqrt(scaleX * scaleY);
+      if (Math.abs(scaleFactor - 1) > 0.001) {
+        const runs = engine.block.getTextRuns(blockId);
+        const scaledRuns = runs.map((run) => ({
+          ...run,
+          style: {
+            ...run.style,
+            fontSize: run.style.fontSize
+              ? Math.round(run.style.fontSize * scaleFactor * 10) / 10
+              : run.style.fontSize,
+          },
+        }));
+        engine.block.setProperty(blockId, "text/runs", scaledRuns);
+      }
+    }
+
     engine.block.setPosition(blockId, transform.x, transform.y);
     engine.block.setSize(blockId, transform.width, transform.height);
     engine.block.setRotation(blockId, transform.rotation);
-    if (engine.block.getType(blockId) === "text") {
+    if (isText) {
       engine.block.setBool(blockId, "text/autoHeight", false);
     }
     engine.endBatch();

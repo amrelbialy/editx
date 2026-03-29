@@ -5,12 +5,14 @@ import {
   createEditor,
   FORMAT_TEXT_COMMAND,
   type LexicalEditor,
+  TextNode,
 } from "lexical";
 import type { TextRun, TextRunStyle } from "./block.types";
 import {
   $restoreSelectionFromOffsets,
   editorStateToRuns,
   getSelectionOffsets,
+  runStyleToCssString,
   runsToEditorState,
   textRunStyleToCssPatch,
 } from "./lexical-bridge";
@@ -27,6 +29,7 @@ export class TextEditorSession {
 
   #onChange: TextEditorSessionOnChange;
   #unregisterListener: (() => void) | null = null;
+  #unregisterTransform: (() => void) | null = null;
   #isProgrammatic = false;
 
   constructor(blockId: number, initialRuns: TextRun[], onChange: TextEditorSessionOnChange) {
@@ -42,6 +45,17 @@ export class TextEditorSession {
 
     // Populate with initial content
     runsToEditorState(this.editor, initialRuns);
+
+    // Ensure newly created text nodes inherit the block's default CSS style.
+    // Lexical propagates format flags (bold/italic) but not inline CSS on Enter/Shift+Enter.
+    const defaultCss = runStyleToCssString(initialRuns[0]?.style ?? {});
+    if (defaultCss) {
+      this.#unregisterTransform = this.editor.registerNodeTransform(TextNode, (node) => {
+        if (!node.getStyle()) {
+          node.setStyle(defaultCss);
+        }
+      });
+    }
 
     // Listen for changes from typing / DOM input (not programmatic API calls)
     this.#unregisterListener = this.editor.registerUpdateListener(({ editorState, tags }) => {
@@ -182,6 +196,10 @@ export class TextEditorSession {
     if (this.#unregisterListener) {
       this.#unregisterListener();
       this.#unregisterListener = null;
+    }
+    if (this.#unregisterTransform) {
+      this.#unregisterTransform();
+      this.#unregisterTransform = null;
     }
   }
 }

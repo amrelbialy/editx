@@ -10,6 +10,20 @@ export class BlockPropertyAPI {
     this.#engine = engine;
   }
 
+  onStateChanged(ids: number[], cb: (changedIds: number[]) => void): () => void {
+    const handler = (...args: unknown[]) => {
+      const changed = args[0] as number[];
+      if (ids.length === 0) {
+        cb(changed);
+        return;
+      }
+      const overlap = changed.filter((id) => ids.includes(id));
+      if (overlap.length > 0) cb(overlap);
+    };
+    this.#engine.on("block:stateChanged", handler);
+    return () => this.#engine.off("block:stateChanged", handler);
+  }
+
   getProperty(id: number, key: string): PropertyValue | undefined {
     return H.getProperty(this.#engine, id, key);
   }

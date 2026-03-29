@@ -19,6 +19,7 @@ export function setProperty(
   value: PropertyValue,
 ): void {
   engine.exec(new SetPropertyCommand(engine.getBlockStore(), id, key, value));
+  engine.emit("block:stateChanged", [id]);
 }
 
 export function getFloat(engine: EngineCore, id: number, key: string): number {

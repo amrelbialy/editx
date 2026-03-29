@@ -124,6 +124,18 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     setOpacity(engine.block.getOpacity(blockId));
   }, [engine, blockId, isText, isImage, textSelectionRange]);
 
+  // Re-read state when engine notifies of property changes on this block
+  useEffect(() => {
+    return engine.block.onStateChanged([blockId], () => {
+      if (isText) {
+        setTextState(readTextState(engine, blockId, textSelectionRange?.from));
+      } else if (!isImage) {
+        setFillColor(readBlockColor(engine, blockId));
+      }
+      setOpacity(engine.block.getOpacity(blockId));
+    });
+  }, [engine, blockId, isText, isImage, textSelectionRange]);
+
   const refresh = useCallback(() => {
     if (isText) {
       setTextState(readTextState(engine, blockId, textSelectionRange?.from));

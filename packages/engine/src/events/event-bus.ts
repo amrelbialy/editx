@@ -1,6 +1,7 @@
 /** Known event signatures emitted by the engine. */
 export interface EventMap {
   "selection:changed": (ids: number[]) => void;
+  "block:stateChanged": (ids: number[]) => void;
   "history:undo": () => void;
   "history:redo": () => void;
   "history:clear": () => void;

@@ -108,6 +108,16 @@ export class BlockAPI {
   ): () => void {
     return this.#selection.onBlockDoubleClick(cb);
   }
+
+  /**
+   * Subscribe to state changes for the given block IDs.
+   * Pass an empty array to listen for changes on *all* blocks.
+   * Returns an unsubscribe function.
+   */
+  onStateChanged(ids: number[], cb: (changedIds: number[]) => void): () => void {
+    return this.#property.onStateChanged(ids, cb);
+  }
+
   /** @internal */
   _notifyBlockDoubleClick(blockId: number, screenPos?: { x: number; y: number }): void {
     this.#selection._notifyBlockDoubleClick(blockId, screenPos);
