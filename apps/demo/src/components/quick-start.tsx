@@ -1,3 +1,4 @@
+import type React from "react";
 import { useState } from "react";
 import { COLOR_MAP, CodeHighlight, tokenize } from "./code-highlight";
 import { CopyButton } from "./copy-button";
@@ -9,11 +10,23 @@ function InlineCode(props: { code: string }) {
   const tokens = tokenize(props.code);
   return (
     <>
-      {tokens.map((token, i) => (
-        <span key={`${i}-${token.type}`} className={COLOR_MAP[token.type] ?? "text-zinc-200"}>
-          {token.value}
-        </span>
-      ))}
+      {
+        tokens.reduce<{ offset: number; elements: React.ReactNode[] }>(
+          (acc, token) => {
+            acc.elements.push(
+              <span
+                key={`${acc.offset}-${token.type}`}
+                className={COLOR_MAP[token.type] ?? "text-zinc-200"}
+              >
+                {token.value}
+              </span>,
+            );
+            acc.offset += token.value.length;
+            return acc;
+          },
+          { offset: 0, elements: [] },
+        ).elements
+      }
     </>
   );
 }

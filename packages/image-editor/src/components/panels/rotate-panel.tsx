@@ -26,7 +26,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
   onRotateCounterClockwise,
   onFlipHorizontal,
   onFlipVertical,
-  onReset,
+  onReset: _onReset,
 }) => {
   const { t } = useTranslation();
 

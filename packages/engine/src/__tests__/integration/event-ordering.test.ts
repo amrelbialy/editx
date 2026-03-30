@@ -1,6 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BlockStore } from "../../block/block-store";
-import { AppendChildCommand } from "../../controller/commands/append-child-command";
 import { AppendEffectCommand } from "../../controller/commands/append-effect-command";
 import { CreateBlockCommand } from "../../controller/commands/create-block-command";
 import { CreateEffectCommand } from "../../controller/commands/create-effect-command";

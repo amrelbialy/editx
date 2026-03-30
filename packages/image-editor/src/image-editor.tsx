@@ -168,7 +168,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     const ce = engineRef.current;
     if (!ce) return;
     return ce.event.subscribe([], () => markDirty());
-  }, [engine, engineRef, markDirty]);
+  }, [engineRef, markDirty]);
 
   // Sync theme accent color to engine transformer
   useEffect(() => {
@@ -177,7 +177,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     if (!el) return;
     const primary = getComputedStyle(el).getPropertyValue("--primary").trim();
     if (primary) engine.setAccentColor(primary);
-  }, [engine, containerRef, userConfig]);
+  }, [engine, containerRef]);
 
   // --- Derived state ---
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
@@ -193,7 +193,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
         <div
           className="flex flex-col h-full w-full"
           role="application"
-          tabIndex={0}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onPaste={handlePaste}

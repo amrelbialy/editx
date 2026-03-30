@@ -1,3 +1,4 @@
+import type React from "react";
 import { useMemo } from "react";
 
 interface Token {
@@ -73,11 +74,23 @@ export function CodeHighlight(props: Props) {
       style={{ background: "linear-gradient(145deg, #0c0c1d 0%, #111118 50%, #0a0a14 100%)" }}
     >
       <code className="font-mono">
-        {tokens.map((token, i) => (
-          <span key={`${i}-${token.type}`} className={COLOR_MAP[token.type] ?? "text-zinc-200"}>
-            {token.value}
-          </span>
-        ))}
+        {
+          tokens.reduce<{ offset: number; elements: React.ReactNode[] }>(
+            (acc, token) => {
+              acc.elements.push(
+                <span
+                  key={`${acc.offset}-${token.type}`}
+                  className={COLOR_MAP[token.type] ?? "text-zinc-200"}
+                >
+                  {token.value}
+                </span>,
+              );
+              acc.offset += token.value.length;
+              return acc;
+            },
+            { offset: 0, elements: [] },
+          ).elements
+        }
       </code>
     </pre>
   );

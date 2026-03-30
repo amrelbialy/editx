@@ -70,7 +70,7 @@ export function collectFilterPresetName(
 export function applyFilters(
   imgNode: Konva.Image,
   block: BlockData,
-  stage: Konva.Stage | null,
+  _stage: Konva.Stage | null,
   webgl: WebGLFilterRenderer | null,
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {

@@ -108,6 +108,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
+            type="button"
             onMouseDown={(e) => e.preventDefault()}
             className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
@@ -122,6 +123,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
             <div className="grid grid-cols-6 gap-1">
               {PRESET_COLORS.map((c) => (
                 <button
+                  type="button"
                   key={c}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleTextColor(c)}
@@ -154,6 +156,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
 
       {/* Bold */}
       <button
+        type="button"
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleBoldToggle}
         className={cn(
@@ -169,6 +172,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
 
       {/* Italic */}
       <button
+        type="button"
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleItalicToggle}
         className={cn(

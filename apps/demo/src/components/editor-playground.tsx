@@ -41,7 +41,7 @@ export function EditorPlayground() {
     if (theme === "dark" || theme === "light") return { preset: theme };
     const colors = demoPresets[theme];
     return colors ? { preset: "custom", colors } : { preset: "dark" };
-  }, [config.theme]);
+  }, [config]);
 
   const editorConfig = useMemo(
     () => ({

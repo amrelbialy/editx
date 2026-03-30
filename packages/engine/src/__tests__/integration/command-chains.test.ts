@@ -1,5 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BlockStore } from "../../block/block-store";
+import { beforeEach, describe, expect, it } from "vitest";
 import { AppendChildCommand } from "../../controller/commands/append-child-command";
 import { CreateBlockCommand } from "../../controller/commands/create-block-command";
 import { DestroyBlockCommand } from "../../controller/commands/destroy-block-command";

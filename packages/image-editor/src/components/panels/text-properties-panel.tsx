@@ -217,6 +217,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
       <Section label="Style">
         <div className="flex gap-1">
           <button
+            type="button"
             onClick={handleBoldToggle}
             className={`h-8 w-8 rounded-md text-base font-bold transition-colors ${
               state.fontWeight === "bold"
@@ -227,6 +228,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
             B
           </button>
           <button
+            type="button"
             onClick={handleItalicToggle}
             className={`h-8 w-8 rounded-md text-base italic transition-colors ${
               state.fontStyle === "italic"
@@ -259,6 +261,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
         <div className="flex gap-1">
           {(["left", "center", "right"] as const).map((align) => (
             <button
+              type="button"
               key={align}
               onClick={() => handleTextAlign(align)}
               className={`h-8 px-3 rounded-md text-base transition-colors ${

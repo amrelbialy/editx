@@ -115,7 +115,7 @@ export class Engine {
   }
 
   #markDirty(patches: Patch[]) {
-    patches.forEach((p) => this.#dirty.add(p.id));
+    for (const p of patches) this.#dirty.add(p.id);
   }
 
   #enqueueBlockEvents(patches: Patch[]) {

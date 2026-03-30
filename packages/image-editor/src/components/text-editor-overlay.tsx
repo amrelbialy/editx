@@ -341,6 +341,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
       >
         {/* Color swatch — opens color panel */}
         <button
+          type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setPropertySidePanel(propertySidePanel === "color" ? null : "color")}
           className={cn(
@@ -358,6 +359,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
 
         {/* Bold */}
         <button
+          type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleBold}
           className={cn(
@@ -370,6 +372,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
 
         {/* Italic */}
         <button
+          type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleItalic}
           className={cn(
@@ -384,6 +387,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
 
         {/* Underline */}
         <button
+          type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleUnderline}
           className={cn(
@@ -398,6 +402,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
 
         {/* Strikethrough */}
         <button
+          type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleStrikethrough}
           className={cn(
@@ -419,7 +424,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
 export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   engine,
   blockId,
-  canvasRef,
+  canvasRef: _canvasRef,
   clickScreenPos,
   onClose,
 }) => {

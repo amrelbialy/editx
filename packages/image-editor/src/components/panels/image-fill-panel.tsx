@@ -72,6 +72,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
 
       {/* Replace button */}
       <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
         className={cn(
           "flex items-center justify-center gap-2 w-full h-8 rounded-md text-sm font-medium transition-colors @5xl/editor:h-9 @5xl/editor:text-base",

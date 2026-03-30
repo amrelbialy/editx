@@ -44,7 +44,6 @@ function buildCssVariables(theme: ThemeConfig): Record<string, string> {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, children }) => {
-  const colorsJson = theme.colors ? JSON.stringify(theme.colors) : "";
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined);
   const refCallback = useCallback((node: HTMLDivElement | null) => {
     setContainer(node ?? undefined);
@@ -53,8 +52,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ theme = {}, childr
     const vars = buildCssVariables(theme);
     const fontFamily = theme.fontFamily ?? "Inter, system-ui, sans-serif";
     return { ...vars, fontFamily } as React.CSSProperties;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme.preset, theme.borderRadius, theme.fontFamily, colorsJson]);
+  }, [theme]);
 
   return (
     <div ref={refCallback} style={style} className="ie-theme h-full w-full min-h-full min-w-full">

@@ -259,6 +259,7 @@ function App() {
           </div>
 
           {/* Drag-and-drop zone */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: drop zone with drag events */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

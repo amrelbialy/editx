@@ -222,6 +222,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
 
           {/* Ratio lock */}
           <button
+            type="button"
             onClick={() => setRatioLocked((v) => !v)}
             className={cn(
               "p-1.5 rounded transition-colors shrink-0",
@@ -301,6 +302,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
           <fieldset className="grid grid-cols-2 gap-1.5" aria-label={t("a11y.aspectRatioPresets")}>
             {presets.map((preset) => (
               <button
+                type="button"
                 key={preset.id}
                 onClick={() => handleSelect(preset.id)}
                 data-testid={`crop-preset-${preset.id}`}

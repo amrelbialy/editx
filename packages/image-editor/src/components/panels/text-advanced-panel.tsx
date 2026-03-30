@@ -171,6 +171,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             ] as const
           ).map(([align, Icon]) => (
             <button
+              type="button"
               key={align}
               onClick={() => handleVerticalAlign(align)}
               className={cn(
@@ -223,6 +224,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
         <div className="flex gap-1">
           {CASE_OPTIONS.map((opt) => (
             <button
+              type="button"
               key={opt.value}
               onClick={() => handleTextTransform(opt.value)}
               className={cn(

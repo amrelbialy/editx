@@ -58,7 +58,7 @@ export class TextEditorSession {
     }
 
     // Listen for changes from typing / DOM input (not programmatic API calls)
-    this.#unregisterListener = this.editor.registerUpdateListener(({ editorState, tags }) => {
+    this.#unregisterListener = this.editor.registerUpdateListener(({ editorState }) => {
       if (this.#isProgrammatic) return;
       const runs = editorStateToRuns(editorState);
       this.#onChange(runs);

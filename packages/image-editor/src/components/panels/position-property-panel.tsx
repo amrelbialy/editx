@@ -246,6 +246,7 @@ const ZOrderButton: React.FC<{
   <Tooltip>
     <TooltipTrigger asChild>
       <button
+        type="button"
         onClick={onClick}
         disabled={!onClick}
         className={cn(

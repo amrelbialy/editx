@@ -1,6 +1,6 @@
 import type React from "react";
-import { useCallback, useMemo } from "react";
-import { Dialog, DialogContent, DialogTitle } from "./components/ui/dialog";
+import { useCallback } from "react";
+import { Dialog, DialogContent } from "./components/ui/dialog";
 import type { CloseReason } from "./config/config.types";
 import { ImageEditor, type ImageEditorProps } from "./image-editor";
 import { ThemeProvider } from "./theme/theme-provider";
