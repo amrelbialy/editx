@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
+  "version": "independent",
+  "npmClient": "pnpm",
+  "packages": ["packages/*"],
+  "command": {
+    "version": {
+      "conventionalCommits": true,
+      "changelogPreset": "conventionalcommits",
+      "changelogHeaderMessage": "# Editx — Changelog\n",
+      "createRelease": "github",
+      "message": "chore(release): %s",
+      "conventionalPrerelease": "*"
+    },
+    "publish": {
+      "npmClientArgs": ["--no-git-checks"]
+    }
+  }
+}

@@ -177,7 +177,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     if (!el) return;
     const primary = getComputedStyle(el).getPropertyValue("--primary").trim();
     if (primary) engine.setAccentColor(primary);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: re-run when theme config changes
   }, [engine, containerRef, userConfig]);
 
   // --- Derived state ---
