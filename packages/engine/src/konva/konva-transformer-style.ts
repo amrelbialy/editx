@@ -161,6 +161,14 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
         anchor.sceneFunc(rotaterSceneFunc as any);
       }
     },
+
+    boundBoxFunc: (oldBox, newBox) => {
+      const MIN_SIZE = 20;
+      if (Math.abs(newBox.width) < MIN_SIZE || Math.abs(newBox.height) < MIN_SIZE) {
+        return oldBox;
+      }
+      return newBox;
+    },
   });
 
   // ── Helpers ───────────────────────────────────────────────────

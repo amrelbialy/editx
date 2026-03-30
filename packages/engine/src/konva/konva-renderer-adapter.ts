@@ -38,6 +38,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onBlockTransformEnd?: (
     blockId: number,
     transform: { x: number; y: number; width: number; height: number; rotation: number },
+    anchorName?: string,
   ) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
@@ -113,7 +114,11 @@ export class KonvaRendererAdapter implements RendererAdapter {
         block,
         {
           onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
-          onTransformEnd: (blockId, transform) => this.onBlockTransformEnd?.(blockId, transform),
+          onTransformEnd: (blockId, transform) => {
+            const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
+            this.onBlockTransformEnd?.(blockId, transform, anchor);
+          },
+          getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
         },
         this.resolveBlock,
       );
@@ -159,24 +164,20 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
-  showTransformer(blockIds: number[], blockType?: string): void {
+  showTransformer(blockIds: number[], _blockType?: string): void {
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
     this.#hoverOutline.hide();
     this.#transformer.nodes(nodes);
-    this.#transformer.enabledAnchors(
-      blockType === "text"
-        ? ["top-left", "top-right", "bottom-left", "bottom-right"]
-        : [
-            "top-left",
-            "top-right",
-            "bottom-left",
-            "bottom-right",
-            "middle-left",
-            "middle-right",
-            "top-center",
-            "bottom-center",
-          ],
-    );
+    this.#transformer.enabledAnchors([
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+      "middle-left",
+      "middle-right",
+      "top-center",
+      "bottom-center",
+    ]);
     (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
   }

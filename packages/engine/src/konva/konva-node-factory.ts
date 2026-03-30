@@ -27,6 +27,7 @@ export interface NodeCallbacks {
     id: number,
     transform: { x: number; y: number; width: number; height: number; rotation: number },
   ) => void;
+  getActiveAnchor?: () => string;
 }
 
 /**
@@ -124,6 +125,25 @@ export class KonvaNodeFactory {
         callbacks.onDragEnd(id, pos.x, pos.y);
       }
     });
+
+    // For text nodes on pill (edge) anchors, reset scale and apply width/height
+    // live so the text reflows instead of visually stretching.
+    // Corner anchors still scale normally (font sizes are adjusted on transformend).
+    if (block.type === "text") {
+      const PILL_ANCHORS = new Set(["middle-left", "middle-right", "top-center", "bottom-center"]);
+      node.on("transform", () => {
+        const anchor = callbacks.getActiveAnchor?.() ?? "";
+        if (!PILL_ANCHORS.has(anchor)) return;
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+        if (scaleX !== 1 || scaleY !== 1) {
+          node.width(node.width() * scaleX);
+          node.height(node.height() * scaleY);
+          node.scaleX(1);
+          node.scaleY(1);
+        }
+      });
+    }
 
     node.on("transformend", () => {
       const scaleX = node.scaleX();

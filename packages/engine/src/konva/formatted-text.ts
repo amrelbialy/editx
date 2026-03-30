@@ -142,14 +142,30 @@ export class FormattedText extends Konva.Shape {
   // ── Rendering ──────────────────────────────────────
 
   _sceneFunc(context: Konva.Context): void {
-    renderFormattedText(context._context, this._computeTextLines(), {
-      width: this.width() || 99999,
-      height: this.height() || 0,
+    const ctx = context._context;
+    const w = this.width() || 0;
+    const h = this.height() || 0;
+
+    // Clip text to the container bounds so it doesn't overflow on resize
+    if (w > 0 && h > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      ctx.clip();
+    }
+
+    renderFormattedText(ctx, this._computeTextLines(), {
+      width: w || 99999,
+      height: h,
       padding: this.padding(),
       align: this.align(),
       verticalAlign: this.verticalAlign(),
       backgroundFill: this.getAttr("backgroundFill") as string | undefined,
     });
+
+    if (w > 0 && h > 0) {
+      ctx.restore();
+    }
   }
 
   _hitFunc(context: Konva.Context): void {

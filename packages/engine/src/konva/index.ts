@@ -26,12 +26,15 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
   };
   adapter.onZoomChange = (zoom) => engine.emit("zoom:changed", zoom);
   adapter.onBlockDragEnd = (blockId, x, y) => engine.block.setPosition(blockId, x, y);
-  adapter.onBlockTransformEnd = (blockId, transform) => {
+  const CORNER_ANCHORS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
+
+  adapter.onBlockTransformEnd = (blockId, transform, anchorName) => {
     engine.beginBatch();
     const isText = engine.block.getType(blockId) === "text";
+    const isCorner = CORNER_ANCHORS.has(anchorName ?? "");
 
-    // Scale font sizes proportionally when resizing text blocks
-    if (isText) {
+    // Scale font sizes only on corner resize (pills just resize the container)
+    if (isText && isCorner) {
       const oldSize = engine.block.getSize(blockId);
       const scaleX = transform.width / oldSize.width;
       const scaleY = transform.height / oldSize.height;
