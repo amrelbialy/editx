@@ -19,6 +19,7 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
       { label: "Block API", href: "/docs/engine/block-api" },
       { label: "Editor API", href: "/docs/engine/editor-api" },
       { label: "Scene & Events", href: "/docs/engine/scene-api" },
+      { label: "Variable API", href: "/docs/engine/variable-api" },
     ],
   },
 ];

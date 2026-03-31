@@ -47,6 +47,7 @@ export class KonvaNodeFactory {
     block: BlockData,
     callbacks: NodeCallbacks,
     resolveBlock?: (id: number) => BlockData | undefined,
+    _resolveText?: (text: string) => string,
   ): Konva.Node | null {
     if (block.type === "page") {
       return createPageNode(id);
@@ -172,6 +173,7 @@ export class KonvaNodeFactory {
     node: Konva.Node,
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
+    resolveText?: (text: string) => string,
   ): { autoHeight?: number } | undefined {
     const props = block.properties;
 
@@ -219,6 +221,7 @@ export class KonvaNodeFactory {
         height,
         block,
         resolveBlock,
+        resolveText,
       );
       if (result.computedHeight != null) {
         return { autoHeight: result.computedHeight };

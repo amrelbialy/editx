@@ -9,7 +9,9 @@ import EngineBlocks from "./docs/engine/blocks.mdx";
 import EngineEditorApi from "./docs/engine/editor-api.mdx";
 import EngineApi from "./docs/engine/engine-api.mdx";
 import EngineOverview from "./docs/engine/overview.mdx";
+import EnginePluginApi from "./docs/engine/plugin-api.mdx";
 import EngineSceneApi from "./docs/engine/scene-api.mdx";
+import EngineVariableApi from "./docs/engine/variable-api.mdx";
 import IeApi from "./docs/image-editor/api.mdx";
 import IeConfiguration from "./docs/image-editor/configuration.mdx";
 import IeGettingStarted from "./docs/image-editor/getting-started.mdx";
@@ -47,6 +49,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Route path="/docs/engine/block-api" element={<DocsPage component={EngineBlockApi} />} />
       <Route path="/docs/engine/editor-api" element={<DocsPage component={EngineEditorApi} />} />
       <Route path="/docs/engine/scene-api" element={<DocsPage component={EngineSceneApi} />} />
+      <Route
+        path="/docs/engine/variable-api"
+        element={<DocsPage component={EngineVariableApi} />}
+      />
+      <Route path="/docs/engine/plugin-api" element={<DocsPage component={EnginePluginApi} />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />

@@ -15,6 +15,7 @@ interface SerializedScene {
   blocks: BlockData[];
   activeSceneId: number | null;
   activePageId: number | null;
+  variableValues?: Record<string, string>;
 }
 
 export class SceneAPI {
@@ -181,6 +182,12 @@ export class SceneAPI {
       activeSceneId: this.#engine.getActiveScene(),
       activePageId: this.#engine.getActivePage(),
     };
+
+    const variableValues = this.#engine.variable._serialize();
+    if (Object.keys(variableValues).length > 0) {
+      payload.variableValues = variableValues;
+    }
+
     return JSON.stringify(payload);
   }
 
@@ -211,6 +218,11 @@ export class SceneAPI {
     }
     if (payload.activePageId !== null) {
       this.#engine.setActivePage(payload.activePageId);
+    }
+
+    // Restore variable values
+    if (payload.variableValues) {
+      this.#engine.variable._deserialize(payload.variableValues);
     }
 
     // Rebuild renderer

@@ -2,6 +2,7 @@ import type { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import type { EventAPI } from "./event-api";
 import type { RendererAdapter } from "./render-adapter";
+import type { VariableAPI } from "./variable-api";
 
 /**
  * Internal interface for the engine runtime.
@@ -11,6 +12,7 @@ import type { RendererAdapter } from "./render-adapter";
  */
 export interface EngineCore {
   readonly event: EventAPI;
+  readonly variable: VariableAPI;
   getBlockStore(): BlockStore;
   getRenderer(): RendererAdapter | null;
   exec(command: Command): void;

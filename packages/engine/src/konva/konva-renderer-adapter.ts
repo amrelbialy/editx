@@ -45,6 +45,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onZoomChange?: (zoom: number) => void;
   onAutoSize?: (blockId: number, computedHeight: number) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
+  resolveText?: (text: string) => string;
 
   async init(root: HTMLElement): Promise<void> {
     this.#rootEl = root;
@@ -121,6 +122,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
           getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
         },
         this.resolveBlock,
+        this.resolveText,
       );
       if (!created) return;
       node = created;
@@ -129,7 +131,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#hoverOutline.bind(id, node);
     }
 
-    const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
+    const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock, this.resolveText);
     this.#transformer.moveToTop();
     if (result && result.autoHeight != null) {
       this.onAutoSize?.(id, result.autoHeight);

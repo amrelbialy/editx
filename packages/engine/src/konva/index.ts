@@ -71,6 +71,7 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     }
   };
   adapter.resolveBlock = (id) => engine.getBlockStore().get(id);
+  adapter.resolveText = (text) => engine.variable.resolve(text);
 
   return engine;
 }

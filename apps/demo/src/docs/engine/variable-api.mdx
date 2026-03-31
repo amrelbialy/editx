@@ -1,0 +1,168 @@
+# Variable API
+
+The `engine.variable` API manages template variables — named placeholders that are resolved at render time in text blocks.
+
+## Quick Start
+
+```ts
+// Create a text block with a placeholder
+const textId = engine.block.create("text");
+engine.block.setString(textId, "text/content", "Hello, {{name}}!");
+
+// Set the variable value
+engine.variable.setString("name", "World");
+// Canvas renders: "Hello, World!"
+```
+
+## Setting & Getting Variables
+
+```ts
+engine.variable.setString("headline", "Summer Sale");
+engine.variable.getString("headline"); // "Summer Sale"
+engine.variable.getString("unknown");  // undefined
+```
+
+## Listing Variables
+
+```ts
+engine.variable.findAll(); // ["headline", "market", "sku"]
+```
+
+## Removing Variables
+
+```ts
+engine.variable.remove("headline");
+// Text blocks with {{headline}} now render the literal placeholder
+```
+
+## Placeholder Syntax
+
+Use double curly braces in text block content:
+
+```
+{{variableName}}
+```
+
+- Placeholders are resolved at **render time** — the stored `text/content` property is never mutated.
+- Unset variables render as-is: `{{variableName}}` appears literally on canvas.
+- Multiple placeholders work in a single block: `"{{market}} — {{headline}}"`.
+
+## Variable Definitions
+
+Define typed schemas for variables with defaults and validation:
+
+```ts
+engine.variable.define("headline", {
+  type: "string",
+  required: true,
+  default: "Summer Sale",
+  label: "Headline",
+  description: "Main banner headline text",
+});
+
+engine.variable.define("productImage", {
+  type: "image",
+  required: true,
+});
+```
+
+### Reading Definitions
+
+```ts
+engine.variable.getDefinition("headline");
+// { type: "string", required: true, default: "Summer Sale", label: "Headline", ... }
+
+engine.variable.getDefinitions();
+// { headline: {...}, productImage: {...} }
+```
+
+### Default Values
+
+When a variable is defined with a `default`, `getString()` falls back to it:
+
+```ts
+engine.variable.define("market", { type: "string", default: "US" });
+engine.variable.getString("market"); // "US" (default)
+
+engine.variable.setString("market", "FR");
+engine.variable.getString("market"); // "FR" (explicit value)
+
+engine.variable.remove("market");
+engine.variable.getString("market"); // "US" (reverts to default)
+```
+
+### Validation
+
+Check that all required variables have values:
+
+```ts
+const result = engine.variable.validate();
+// { valid: false, errors: [{ name: "productImage", error: "required" }] }
+```
+
+## Template Metadata
+
+Store name, description, and a name template for generating variant names:
+
+```ts
+engine.variable.setTemplateMeta({
+  name: "Summer Campaign Banner",
+  description: "1080x1080 social media banner",
+  nameTemplate: "{{market}}-{{headline}}-{{sku}}",
+});
+
+engine.variable.getTemplateMeta();
+// { name: "Summer Campaign Banner", ... }
+
+engine.variable.resolveNameTemplate();
+// "FR-Summer Sale-12345"
+```
+
+## Variable Types
+
+| Type | Description |
+|---|---|
+| `"string"` | Text content |
+| `"image"` | Image URL or URI |
+| `"color"` | Colour value (hex string) |
+
+All types use `setString` / `getString` in the current implementation.
+
+## Events
+
+```ts
+engine.on("variable:changed", (name, value) => {
+  console.log(`Variable ${name} changed to ${value}`);
+});
+```
+
+The `variable:changed` event fires on both `setString()` and `remove()`.
+
+## Serialization
+
+Variable values, definitions, and template metadata are included in scene serialization:
+
+```ts
+const json = engine.scene.saveToString();
+// JSON includes variableValues, variableDefinitions, templateMeta
+
+await engine.scene.loadFromString(json);
+// Variables, definitions, and metadata are restored
+```
+
+## API Reference
+
+| Method | Returns | Description |
+|---|---|---|
+| `setString(name, value)` | `void` | Set a variable's value |
+| `getString(name)` | `string \| undefined` | Get a variable's value (falls back to default) |
+| `findAll()` | `string[]` | List all variable names with values |
+| `remove(name)` | `void` | Remove a variable's explicit value |
+| `define(name, definition)` | `void` | Define a variable's schema |
+| `getDefinition(name)` | `VariableDefinition \| undefined` | Get a variable's schema |
+| `getDefinitions()` | `Record<string, VariableDefinition>` | Get all variable schemas |
+| `removeDefinition(name)` | `void` | Remove a variable's schema |
+| `validate()` | `ValidationResult` | Check required variables have values |
+| `setTemplateMeta(meta)` | `void` | Set template metadata |
+| `getTemplateMeta()` | `TemplateMeta \| null` | Get template metadata |
+| `resolveNameTemplate()` | `string \| null` | Resolve variables in the name template |

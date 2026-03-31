@@ -10,6 +10,7 @@ The `EditxEngine` class is the main entry point for the engine.
 | `editor` | `EditorAPI` | Editor state, viewport, and edit mode |
 | `event` | `EventAPI` | Block lifecycle event subscriptions |
 | `scene` | `SceneAPI` | Scene and page management |
+| `variable` | `VariableAPI` | Template variable management |
 
 ## History
 
@@ -75,6 +76,20 @@ const blob = await engine.exportScene({
   pixelRatio: 2,   // DPR multiplier
 });
 ```
+
+## Variables
+
+Manage template variables (text placeholders resolved at render time):
+
+```ts
+engine.variable.setString("name", "World");
+engine.variable.getString("name"); // "World"
+engine.variable.findAll();          // ["name"]
+engine.variable.remove("name");
+```
+
+Text blocks with `{{name}}` render the resolved value. See the [Variable API](/docs/engine/variable-api) docs for full details.
+
 
 ## Lifecycle
 

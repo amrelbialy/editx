@@ -11,12 +11,14 @@ import { HistoryManager, type Patch } from "./history-manager";
 import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 import { clearImageCache } from "./utils/image-loader";
+import { VariableAPI } from "./variable-api";
 
 export class EditxEngine implements EngineCore {
   readonly block: BlockAPI;
   readonly editor: EditorAPI;
   readonly event: EventAPI;
   readonly scene: SceneAPI;
+  readonly variable: VariableAPI;
 
   #blockStore: BlockStore;
   #events = new EventBus();
@@ -51,6 +53,7 @@ export class EditxEngine implements EngineCore {
       this.editor._getCrop().getCropVisualDimensions(),
     );
     this.scene = new SceneAPI(this, this.block);
+    this.variable = new VariableAPI(this);
   }
 
   getBlockStore(): BlockStore {

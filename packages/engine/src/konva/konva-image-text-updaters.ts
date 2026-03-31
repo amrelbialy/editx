@@ -94,6 +94,7 @@ export function updateTextNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  resolveText?: (text: string) => string,
 ): { computedHeight: number | null } {
   let runs = props[TEXT_RUNS] as TextRun[] | undefined;
   if (!runs || !Array.isArray(runs) || runs.length === 0) {
@@ -111,6 +112,9 @@ export function updateTextNode(
         },
       },
     ];
+  }
+  if (resolveText) {
+    runs = runs.map((run) => ({ ...run, text: resolveText(run.text) }));
   }
   textNode.textRuns(runs);
   textNode.width(width);

@@ -7,6 +7,7 @@ export interface EventMap {
   "history:clear": () => void;
   "stage:click": (worldPos: { x: number; y: number }) => void;
   "zoom:changed": (zoom: number) => void;
+  "variable:changed": (name: string, value: string | undefined) => void;
 }
 
 type EventName = keyof EventMap;

@@ -21,6 +21,8 @@ const SECTIONS = [
       { label: "Block API", href: "/docs/engine/block-api" },
       { label: "Editor API", href: "/docs/engine/editor-api" },
       { label: "Scene & Events", href: "/docs/engine/scene-api" },
+      { label: "Variable API", href: "/docs/engine/variable-api" },
+      { label: "Plugin API", href: "/docs/engine/plugin-api" },
     ],
   },
 ];

@@ -134,3 +134,4 @@ export {
   sourceToUrl,
   toPrecisedFloat,
 } from "./utils";
+export { VariableAPI } from "./variable-api";
