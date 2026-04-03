@@ -1,6 +1,6 @@
 {
   "name": "@editx/engine",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Block-based creative engine with command pattern undo/redo",
   "keywords": [
     "editx",
