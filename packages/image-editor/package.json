@@ -1,7 +1,23 @@
 {
   "name": "@editx/image-editor",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "React image editor component with crop, filters, annotations, and more",
+  "keywords": [
+    "editx",
+    "image-editor",
+    "photo-editor",
+    "react-image-editor",
+    "canvas-editor",
+    "crop",
+    "filters",
+    "annotations",
+    "text-editor",
+    "react",
+    "konva",
+    "design-tool",
+    "graphic-editor",
+    "tailwindcss"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

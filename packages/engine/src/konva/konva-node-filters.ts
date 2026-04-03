@@ -91,6 +91,7 @@ export function applyFilters(
     if (orig && imgNode.image() !== orig) {
       imgNode.image(orig);
     }
+    imgNode.setAttr("_filteredCanvas", undefined);
     return;
   }
 
@@ -137,7 +138,24 @@ export function applyFilters(
         imgNode.filters([]);
         imgNode.clearCache();
       }
-      imgNode.image(filteredCanvas);
+
+      // Copy into a per-node canvas so each Image node owns its own buffer
+      // (the WebGL renderer returns the same shared canvas every time).
+      let copyCanvas = imgNode.getAttr("_filteredCanvas") as HTMLCanvasElement | undefined;
+      if (
+        !copyCanvas ||
+        copyCanvas.width !== filteredCanvas.width ||
+        copyCanvas.height !== filteredCanvas.height
+      ) {
+        copyCanvas = document.createElement("canvas");
+        copyCanvas.width = filteredCanvas.width;
+        copyCanvas.height = filteredCanvas.height;
+        imgNode.setAttr("_filteredCanvas", copyCanvas);
+      }
+      const ctx2d = copyCanvas.getContext("2d")!;
+      ctx2d.clearRect(0, 0, copyCanvas.width, copyCanvas.height);
+      ctx2d.drawImage(filteredCanvas, 0, 0);
+      imgNode.image(copyCanvas);
       if (typeof window !== "undefined" && (window as any).__EX_PERF) {
         console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
       }

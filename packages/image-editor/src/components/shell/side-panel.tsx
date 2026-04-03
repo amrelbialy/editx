@@ -124,6 +124,9 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     }
   }, [propertySidePanel, setPropertySidePanel, activeTool, crop, setActiveTool]);
 
+  // When an image block is selected, redirect adjust/filter tools to block effects
+  const isImageBlockSelected = selectedBlockType === "image" && selectedShapeId !== null;
+
   // --- Tool content router ---
   const toolContent = useMemo(() => {
     switch (activeTool) {
@@ -150,7 +153,14 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
           />
         );
       case "adjust":
-        return (
+        return isImageBlockSelected ? (
+          <AdjustPanel
+            values={blockEffects.adjustValues}
+            onChange={blockEffects.handleAdjustChange}
+            onCommit={blockEffects.handleAdjustCommit}
+            onReset={blockEffects.handleAdjustReset}
+          />
+        ) : (
           <AdjustPanel
             values={adjustments.adjustValues}
             onChange={adjustments.handleAdjustChange}
@@ -159,7 +169,12 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
           />
         );
       case "filter":
-        return (
+        return isImageBlockSelected ? (
+          <FilterPanel
+            activeFilter={blockEffects.activeFilter}
+            onSelect={blockEffects.handleFilterSelect}
+          />
+        ) : (
           <FilterPanel activeFilter={filter.activeFilter} onSelect={filter.handleFilterSelect} />
         );
       case "shapes":
@@ -172,7 +187,19 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
         if (CustomPanel) return <CustomPanel />;
         return null;
     }
-  }, [activeTool, crop, rotateFlip, adjustments, filter, addShape, addText, addImage, CustomPanel]);
+  }, [
+    activeTool,
+    crop,
+    rotateFlip,
+    adjustments,
+    filter,
+    addShape,
+    addText,
+    addImage,
+    CustomPanel,
+    isImageBlockSelected,
+    blockEffects,
+  ]);
 
   return (
     <ToolPanel open={open} title={title} onClose={handleClose}>
