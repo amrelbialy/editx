@@ -2,6 +2,19 @@
   "name": "@editx/engine",
   "version": "0.1.0-alpha.4",
   "description": "Block-based creative engine with command pattern undo/redo",
+  "keywords": [
+    "editx",
+    "creative-engine",
+    "block-based-editor",
+    "canvas-engine",
+    "image-editor-engine",
+    "konva",
+    "command-pattern",
+    "undo-redo",
+    "2d-canvas",
+    "design-tool",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
