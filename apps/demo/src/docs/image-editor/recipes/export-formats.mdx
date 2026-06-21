@@ -1,0 +1,27 @@
+import { RecipeScenario } from "../../../components/recipe-scenario";
+
+# Control export formats
+
+Restrict the formats offered in the export dialog with `export.formats`, and pick
+the one selected by default with `export.defaultFormat`.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    export: {
+      formats: ["png", "jpeg"],
+      defaultFormat: "jpeg",
+    },
+  }}
+/>
+```
+
+## Try it
+
+Open the export dialog — only **PNG** and **JPEG** are offered, with JPEG
+pre-selected:
+
+<RecipeScenario config={{ export: { formats: ["png", "jpeg"], defaultFormat: "jpeg" } }} />
+
+> Verified by `tests/recipes/export-formats.spec.tsx` in the `@editx/image-editor` package.

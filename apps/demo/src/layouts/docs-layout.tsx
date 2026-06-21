@@ -11,6 +11,19 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
     ],
   },
   {
+    heading: "Recipes",
+    links: [
+      { label: "Limit Tools", href: "/docs/image-editor/recipes/limit-tools" },
+      { label: "Custom Theme", href: "/docs/image-editor/recipes/custom-theme" },
+      { label: "Localize", href: "/docs/image-editor/recipes/localize" },
+      { label: "Export Formats", href: "/docs/image-editor/recipes/export-formats" },
+      { label: "Custom Tool", href: "/docs/image-editor/recipes/custom-tool" },
+      { label: "Inject Slots", href: "/docs/image-editor/recipes/inject-slots" },
+      { label: "Tool Change Events", href: "/docs/image-editor/recipes/track-tool-changes" },
+      { label: "Open in Modal", href: "/docs/image-editor/recipes/open-in-modal" },
+    ],
+  },
+  {
     heading: "Engine",
     links: [
       { label: "Overview", href: "/docs/engine/overview" },

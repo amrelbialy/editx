@@ -1,3 +1,4 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/open-in-modal.harness-CFRWugrl.js","assets/image-editor-r4KlYbP7.js","assets/track-tool-changes.harness-JfULK7QZ.js","assets/custom-tool.harness-Dp1eFJ0b.js"])))=>i.map(i=>d[i]);
 function _mergeNamespaces(n, m) {
   for (var i = 0; i < m.length; i++) {
     const e = m[i];
@@ -17657,10 +17658,14 @@ window.playwrightUpdate = async (rootElement, component) => {
   entry.setRenderer(() => __pwRender(component));
 };
 
-const d__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor = () => __vitePreload(() => import('./image-editor-LBiHYxtW.js'),true              ?[]:void 0).then((mod) => mod.ImageEditor);
-const D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor = () => __vitePreload(() => import('./image-editor-LBiHYxtW.js'),true              ?[]:void 0).then((mod) => mod.ImageEditor);
-__pwRegistry.initialize({ d__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor,
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness = () => __vitePreload(() => import('./open-in-modal.harness-CFRWugrl.js'),true              ?__vite__mapDeps([0,1]):void 0).then((mod) => mod.OpenInModalHarness);
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_track_tool_changes_harness_TrackToolChangesHarness = () => __vitePreload(() => import('./track-tool-changes.harness-JfULK7QZ.js'),true              ?__vite__mapDeps([2,1]):void 0).then((mod) => mod.TrackToolChangesHarness);
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_custom_tool_harness_CustomToolHarness = () => __vitePreload(() => import('./custom-tool.harness-Dp1eFJ0b.js'),true              ?__vite__mapDeps([3,1]):void 0).then((mod) => mod.CustomToolHarness);
+const D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor = () => __vitePreload(() => import('./image-editor-r4KlYbP7.js').then(n => n.i),true              ?[]:void 0).then((mod) => mod.ImageEditor);
+__pwRegistry.initialize({ D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness,
+  D__personal_projects_creative_editor_packages_image_editor_tests_recipes_track_tool_changes_harness_TrackToolChangesHarness,
+  D__personal_projects_creative_editor_packages_image_editor_tests_recipes_custom_tool_harness_CustomToolHarness,
   D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor });
 
 export { React$1 as R, requireReactDom as a, React as b, getDefaultExportFromCjs as g, reactExports as r };
-//# sourceMappingURL=index-BDYVOQ8X.js.map
+//# sourceMappingURL=index-8Qc25cWx.js.map

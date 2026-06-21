@@ -222,6 +222,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
             <ToolNav
               activeTool={tools.activeToolId}
               onToolSelect={tools.handleSidebarToolSelect}
+              customTools={userConfig?.customTools}
               sidebarBottom={slots?.sidebarBottom}
             />
 

@@ -1,8 +1,8 @@
 <h1 align="center">EditX</h1>
 
 <p align="center">
-  Block-based image editor SDK for React 19.<br/>
-  Crop, adjust, filter, add text &amp; shapes — fully themeable and extensible.
+  The open-source, extensible image editor &mdash; powered by a headless block engine.<br/>
+  Crop, adjust, filter, annotate &amp; export. React 19 UI today, framework-agnostic core underneath.
 </p>
 
 <p align="center">
@@ -13,6 +13,14 @@
 </p>
 
 ---
+
+## Why EditX
+
+- **Open source & MIT-licensed** — no per-seat fees, no vendor lock-in.
+- **Real engine underneath** — `@editx/image-editor` is a thin UI over [`@editx/engine`](./packages/engine), a headless, framework-agnostic block engine with a command-based undo/redo system. Build your own UI, or extend ours.
+- **Extensible by design** — configure tools, theme, and i18n; register custom tools, render slots, and event hooks without forking.
+- **Non-destructive** — every edit is a block property change routed through the command system, so everything is undoable and serializable.
+- **Modern stack** — React 19, Tailwind CSS 4, CSS Container Queries, WebGL-accelerated filters.
 
 ## Packages
 

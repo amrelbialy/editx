@@ -12,6 +12,21 @@ const SECTIONS = [
     ],
   },
   {
+    title: "Recipes",
+    description:
+      "Copy-paste, test-verified scenarios — each renders a live editor with that config.",
+    links: [
+      { label: "Limit Tools", href: "/docs/image-editor/recipes/limit-tools" },
+      { label: "Custom Theme", href: "/docs/image-editor/recipes/custom-theme" },
+      { label: "Localize", href: "/docs/image-editor/recipes/localize" },
+      { label: "Export Formats", href: "/docs/image-editor/recipes/export-formats" },
+      { label: "Custom Tool", href: "/docs/image-editor/recipes/custom-tool" },
+      { label: "Inject Slots", href: "/docs/image-editor/recipes/inject-slots" },
+      { label: "Tool Change Events", href: "/docs/image-editor/recipes/track-tool-changes" },
+      { label: "Open in Modal", href: "/docs/image-editor/recipes/open-in-modal" },
+    ],
+  },
+  {
     title: "Engine",
     description: "The headless block-based engine — blocks, commands, undo/redo.",
     links: [

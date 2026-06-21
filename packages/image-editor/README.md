@@ -1,6 +1,7 @@
 # @editx/image-editor
 
-React 19 image editor component — crop, adjust, filter, add text & shapes, fully themeable and extensible.
+The open-source, extensible image editor — crop, adjust, filter, annotate & export.
+A React 19 component on top of the headless, framework-agnostic [`@editx/engine`](https://github.com/amrelbialy/editx/tree/main/packages/engine).
 
 Part of the [EditX](https://github.com/amrelbialy/editx) monorepo.
 

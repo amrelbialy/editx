@@ -1,0 +1,29 @@
+import { RecipeScenario } from "../../../components/recipe-scenario";
+
+# Customize the theme
+
+Override individual theme colors and the corner radius via `config.theme`. Color
+overrides map to CSS variables (e.g. `primary` → `--primary`) and
+`borderRadius` → `--radius`.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    theme: {
+      colors: { primary: "#ff3366" },
+      borderRadius: "0.75rem",
+    },
+  }}
+/>
+```
+
+## Try it
+
+Note the pink accent color and rounded controls:
+
+<RecipeScenario
+  config={{ theme: { colors: { primary: "#ff3366" }, borderRadius: "0.75rem" } }}
+/>
+
+> Verified by `tests/recipes/custom-theme.spec.tsx` in the `@editx/image-editor` package.

@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`@editx/image-editor config contract > keeps a stable default-config shape 1`] = `
+[
+  "adjust.controls",
+  "crop.allowCustomRatio",
+  "crop.defaultMode",
+  "crop.modes",
+  "crop.presets",
+  "crop.resizePresets",
+  "crop.showRotateFlip",
+  "crop.showStraighten",
+  "defaultTool",
+  "export.defaultFormat",
+  "export.formats",
+  "export.quality",
+  "filter.showIntensity",
+  "image.maxDimension",
+  "image.maxFileSize",
+  "shapes.defaultColor",
+  "shapes.defaultFillMode",
+  "shapes.presets",
+  "text.defaultColor",
+  "text.defaultFontSize",
+  "text.fonts",
+  "theme.borderRadius",
+  "theme.fontFamily",
+  "theme.preset",
+  "tools",
+  "ui.contextualBar.show",
+  "ui.showTitle",
+  "ui.title",
+  "ui.toolSidebar.groupSeparators",
+  "ui.toolSidebar.showLabels",
+]
+`;

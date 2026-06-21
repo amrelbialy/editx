@@ -1,0 +1,25 @@
+import { RecipeScenario } from "../../../components/recipe-scenario";
+
+# Localize the UI
+
+Set the active `locale` and override individual strings with `translations`.
+Keys use dot-notation (e.g. `tools.crop`) and fall back to the default English
+copy when a key is missing.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    locale: "es",
+    translations: { "tools.crop": "Recortar" },
+  }}
+/>
+```
+
+## Try it
+
+The Crop tool is relabelled **Recortar**:
+
+<RecipeScenario config={{ locale: "es", translations: { "tools.crop": "Recortar" } }} />
+
+> Verified by `tests/recipes/localize.spec.tsx` in the `@editx/image-editor` package.

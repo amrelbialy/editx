@@ -1,0 +1,29 @@
+import { RecipeToolTracker } from "../../../components/recipe-tool-tracker";
+
+# React to tool changes
+
+Pass an `events` prop to be notified when the active tool changes. `onToolChange`
+receives the tool id (e.g. `"adjust"`) or `null` when the user returns to the
+default selection.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  events={{
+    onToolChange: (toolId) => {
+      console.log("active tool:", toolId);
+    },
+  }}
+/>
+```
+
+`events.onBeforeSave(blob)` is also available to transform the exported blob
+before it reaches `onSave`.
+
+## Try it
+
+Pick a tool — the latest `onToolChange` value is shown beneath the editor:
+
+<RecipeToolTracker />
+
+> Verified by `tests/recipes/track-tool-changes.spec.tsx` in the `@editx/image-editor` package.

@@ -13,6 +13,14 @@ import EngineSceneApi from "./docs/engine/scene-api.mdx";
 import IeApi from "./docs/image-editor/api.mdx";
 import IeConfiguration from "./docs/image-editor/configuration.mdx";
 import IeGettingStarted from "./docs/image-editor/getting-started.mdx";
+import IeRecipeCustomTheme from "./docs/image-editor/recipes/custom-theme.mdx";
+import IeRecipeCustomTool from "./docs/image-editor/recipes/custom-tool.mdx";
+import IeRecipeExportFormats from "./docs/image-editor/recipes/export-formats.mdx";
+import IeRecipeInjectSlots from "./docs/image-editor/recipes/inject-slots.mdx";
+import IeRecipeLimitTools from "./docs/image-editor/recipes/limit-tools.mdx";
+import IeRecipeLocalize from "./docs/image-editor/recipes/localize.mdx";
+import IeRecipeOpenInModal from "./docs/image-editor/recipes/open-in-modal.mdx";
+import IeRecipeTrackToolChanges from "./docs/image-editor/recipes/track-tool-changes.mdx";
 import IeTheming from "./docs/image-editor/theming.mdx";
 
 import "./index.css";
@@ -41,6 +49,38 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       />
       <Route path="/docs/image-editor/api" element={<DocsPage component={IeApi} />} />
       <Route path="/docs/image-editor/theming" element={<DocsPage component={IeTheming} />} />
+      <Route
+        path="/docs/image-editor/recipes/limit-tools"
+        element={<DocsPage component={IeRecipeLimitTools} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/custom-theme"
+        element={<DocsPage component={IeRecipeCustomTheme} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/localize"
+        element={<DocsPage component={IeRecipeLocalize} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/export-formats"
+        element={<DocsPage component={IeRecipeExportFormats} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/custom-tool"
+        element={<DocsPage component={IeRecipeCustomTool} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/inject-slots"
+        element={<DocsPage component={IeRecipeInjectSlots} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/track-tool-changes"
+        element={<DocsPage component={IeRecipeTrackToolChanges} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/open-in-modal"
+        element={<DocsPage component={IeRecipeOpenInModal} />}
+      />
       <Route path="/docs/engine/overview" element={<DocsPage component={EngineOverview} />} />
       <Route path="/docs/engine/blocks" element={<DocsPage component={EngineBlocks} />} />
       <Route path="/docs/engine/engine-api" element={<DocsPage component={EngineApi} />} />
