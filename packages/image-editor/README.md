@@ -93,6 +93,27 @@ editor.update({ config: { tools: ["crop"] } }); // patch options later
 editor.destroy(); // tear down when done
 ```
 
+### As an HTML Web Component
+
+Register `<editx-image-editor>` once and use it declaratively in any HTML.
+
+```ts
+import { defineImageEditorElement } from "@editx/image-editor/element";
+import "@editx/image-editor/styles.css";
+
+defineImageEditorElement(); // registers <editx-image-editor>
+```
+
+```html
+<editx-image-editor src="/photo.jpg" width="900px" height="600px"></editx-image-editor>
+```
+
+```js
+const el = document.querySelector("editx-image-editor");
+el.config = { tools: ["crop", "adjust"] }; // complex inputs are properties
+el.addEventListener("save", (e) => upload(e.detail.blob));
+```
+
 ## Features
 
 - **Crop** — freeform, aspect ratio presets, interactive handles

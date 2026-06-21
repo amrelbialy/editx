@@ -25,6 +25,7 @@ const SECTIONS = [
       { label: "Tool Change Events", href: "/docs/image-editor/recipes/track-tool-changes" },
       { label: "Open in Modal", href: "/docs/image-editor/recipes/open-in-modal" },
       { label: "Vanilla / No-React", href: "/docs/image-editor/recipes/vanilla-mount" },
+      { label: "Web Component", href: "/docs/image-editor/recipes/web-component" },
     ],
   },
   {
