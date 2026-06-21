@@ -1,5 +1,5 @@
-import { j as jsxRuntimeExports, I as ImageEditor } from './image-editor-r4KlYbP7.js';
-import './index-8Qc25cWx.js';
+import { j as jsxRuntimeExports, I as ImageEditor } from './image-editor-Y5VSeXZP.js';
+import './index-Drhe2rH0.js';
 
 const StickersIcon = ({ className }) => /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { className, viewBox: "0 0 24 24", "aria-hidden": "true" });
 const StickersPanel = () => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { "data-testid": "stickers-panel", children: "Pick a sticker" });
@@ -18,4 +18,4 @@ const CustomToolHarness = () => /* @__PURE__ */ jsxRuntimeExports.jsx(
 );
 
 export { CustomToolHarness };
-//# sourceMappingURL=custom-tool.harness-Dp1eFJ0b.js.map
+//# sourceMappingURL=custom-tool.harness-C2bXJ5av.js.map

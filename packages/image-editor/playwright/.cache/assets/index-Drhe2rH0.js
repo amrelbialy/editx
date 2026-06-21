@@ -1,4 +1,4 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/open-in-modal.harness-CFRWugrl.js","assets/image-editor-r4KlYbP7.js","assets/track-tool-changes.harness-JfULK7QZ.js","assets/custom-tool.harness-Dp1eFJ0b.js"])))=>i.map(i=>d[i]);
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/vanilla-mount.harness-CmPwcKyc.js","assets/image-editor-Y5VSeXZP.js","assets/open-in-modal.harness-FekVCQPo.js","assets/track-tool-changes.harness-BV4d8NOA.js","assets/custom-tool.harness-C2bXJ5av.js"])))=>i.map(i=>d[i]);
 function _mergeNamespaces(n, m) {
   for (var i = 0; i < m.length; i++) {
     const e = m[i];
@@ -17658,14 +17658,16 @@ window.playwrightUpdate = async (rootElement, component) => {
   entry.setRenderer(() => __pwRender(component));
 };
 
-const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness = () => __vitePreload(() => import('./open-in-modal.harness-CFRWugrl.js'),true              ?__vite__mapDeps([0,1]):void 0).then((mod) => mod.OpenInModalHarness);
-const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_track_tool_changes_harness_TrackToolChangesHarness = () => __vitePreload(() => import('./track-tool-changes.harness-JfULK7QZ.js'),true              ?__vite__mapDeps([2,1]):void 0).then((mod) => mod.TrackToolChangesHarness);
-const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_custom_tool_harness_CustomToolHarness = () => __vitePreload(() => import('./custom-tool.harness-Dp1eFJ0b.js'),true              ?__vite__mapDeps([3,1]):void 0).then((mod) => mod.CustomToolHarness);
-const D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor = () => __vitePreload(() => import('./image-editor-r4KlYbP7.js').then(n => n.i),true              ?[]:void 0).then((mod) => mod.ImageEditor);
-__pwRegistry.initialize({ D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness,
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_vanilla_mount_harness_VanillaMountHarness = () => __vitePreload(() => import('./vanilla-mount.harness-CmPwcKyc.js'),true              ?__vite__mapDeps([0,1]):void 0).then((mod) => mod.VanillaMountHarness);
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness = () => __vitePreload(() => import('./open-in-modal.harness-FekVCQPo.js'),true              ?__vite__mapDeps([2,1]):void 0).then((mod) => mod.OpenInModalHarness);
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_track_tool_changes_harness_TrackToolChangesHarness = () => __vitePreload(() => import('./track-tool-changes.harness-BV4d8NOA.js'),true              ?__vite__mapDeps([3,1]):void 0).then((mod) => mod.TrackToolChangesHarness);
+const D__personal_projects_creative_editor_packages_image_editor_tests_recipes_custom_tool_harness_CustomToolHarness = () => __vitePreload(() => import('./custom-tool.harness-C2bXJ5av.js'),true              ?__vite__mapDeps([4,1]):void 0).then((mod) => mod.CustomToolHarness);
+const D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor = () => __vitePreload(() => import('./image-editor-Y5VSeXZP.js').then(n => n.i),true              ?[]:void 0).then((mod) => mod.ImageEditor);
+__pwRegistry.initialize({ D__personal_projects_creative_editor_packages_image_editor_tests_recipes_vanilla_mount_harness_VanillaMountHarness,
+  D__personal_projects_creative_editor_packages_image_editor_tests_recipes_open_in_modal_harness_OpenInModalHarness,
   D__personal_projects_creative_editor_packages_image_editor_tests_recipes_track_tool_changes_harness_TrackToolChangesHarness,
   D__personal_projects_creative_editor_packages_image_editor_tests_recipes_custom_tool_harness_CustomToolHarness,
   D__personal_projects_creative_editor_packages_image_editor_src_image_editor_ImageEditor });
 
-export { React$1 as R, requireReactDom as a, React as b, getDefaultExportFromCjs as g, reactExports as r };
-//# sourceMappingURL=index-8Qc25cWx.js.map
+export { React$1 as R, requireReactDom as a, React as b, clientExports as c, getDefaultExportFromCjs as g, reactExports as r };
+//# sourceMappingURL=index-Drhe2rH0.js.map

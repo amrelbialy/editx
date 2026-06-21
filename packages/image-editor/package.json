@@ -40,6 +40,10 @@
       "import": "./dist/index.js"
     },
     "./styles.css": "./src/styles.css",
+    "./vanilla": {
+      "types": "./dist/vanilla.d.ts",
+      "import": "./dist/vanilla.js"
+    },
     "./presets": {
       "types": "./dist/theme/presets/index.d.ts",
       "import": "./dist/theme/presets/index.js"

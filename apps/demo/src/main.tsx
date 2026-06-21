@@ -21,6 +21,7 @@ import IeRecipeLimitTools from "./docs/image-editor/recipes/limit-tools.mdx";
 import IeRecipeLocalize from "./docs/image-editor/recipes/localize.mdx";
 import IeRecipeOpenInModal from "./docs/image-editor/recipes/open-in-modal.mdx";
 import IeRecipeTrackToolChanges from "./docs/image-editor/recipes/track-tool-changes.mdx";
+import IeRecipeVanillaMount from "./docs/image-editor/recipes/vanilla-mount.mdx";
 import IeTheming from "./docs/image-editor/theming.mdx";
 
 import "./index.css";
@@ -80,6 +81,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Route
         path="/docs/image-editor/recipes/open-in-modal"
         element={<DocsPage component={IeRecipeOpenInModal} />}
+      />
+      <Route
+        path="/docs/image-editor/recipes/vanilla-mount"
+        element={<DocsPage component={IeRecipeVanillaMount} />}
       />
       <Route path="/docs/engine/overview" element={<DocsPage component={EngineOverview} />} />
       <Route path="/docs/engine/blocks" element={<DocsPage component={EngineBlocks} />} />

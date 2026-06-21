@@ -21,6 +21,7 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
       { label: "Inject Slots", href: "/docs/image-editor/recipes/inject-slots" },
       { label: "Tool Change Events", href: "/docs/image-editor/recipes/track-tool-changes" },
       { label: "Open in Modal", href: "/docs/image-editor/recipes/open-in-modal" },
+      { label: "Vanilla / No-React", href: "/docs/image-editor/recipes/vanilla-mount" },
     ],
   },
   {

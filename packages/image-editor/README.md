@@ -76,6 +76,23 @@ function App() {
 }
 ```
 
+### Without React (any framework)
+
+Mount the editor into a plain DOM element — no React required in your app.
+
+```ts
+import { createImageEditor } from "@editx/image-editor/vanilla";
+import "@editx/image-editor/styles.css";
+
+const editor = createImageEditor("#editor", {
+  src: "/photo.jpg",
+  onSave: (blob) => upload(blob),
+});
+
+editor.update({ config: { tools: ["crop"] } }); // patch options later
+editor.destroy(); // tear down when done
+```
+
 ## Features
 
 - **Crop** — freeform, aspect ratio presets, interactive handles
