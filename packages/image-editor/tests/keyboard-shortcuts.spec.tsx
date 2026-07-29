@@ -41,7 +41,7 @@ test.describe("Keyboard Shortcuts", () => {
     await focusEditor(component);
 
     await page.keyboard.press("f");
-    await expect(component.getByText("Original")).toBeVisible({ timeout: 5_000 });
+    await expect(component.getByTestId("filter-original")).toBeVisible({ timeout: 5_000 });
   });
 
   test("S key activates shapes tool", async ({ mount, page }) => {

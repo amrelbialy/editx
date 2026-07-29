@@ -15,7 +15,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "../../utils/cn";
-import { InputGroup } from "../ui/input-group";
+import { Input } from "../ui/input";
 import { Section } from "../ui/section";
 import { SliderField } from "../ui/slider-field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -138,16 +138,16 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
       {/* Position */}
       <Section label="Position">
         <div className="grid grid-cols-2 gap-2">
-          <InputGroup label="X" value={state.x} onChange={handlePosX} />
-          <InputGroup label="Y" value={state.y} onChange={handlePosY} />
+          <Input type="number" label="X" value={state.x} onChange={handlePosX} />
+          <Input type="number" label="Y" value={state.y} onChange={handlePosY} />
         </div>
       </Section>
 
       {/* Size */}
       <Section label="Size">
         <div className="grid grid-cols-2 gap-2">
-          <InputGroup label="W" value={state.width} onChange={handleWidth} />
-          <InputGroup label="H" value={state.height} onChange={handleHeight} />
+          <Input type="number" label="W" value={state.width} onChange={handleWidth} />
+          <Input type="number" label="H" value={state.height} onChange={handleHeight} />
         </div>
       </Section>
 
@@ -166,9 +166,7 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
       {/* Move (z-order) */}
       {(onBringForward || onSendBackward || onBringToFront || onSendToBack) && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
-            Move
-          </span>
+          <span className="text-fluid font-medium text-muted-foreground">Move</span>
           <div className="flex gap-1">
             <ZOrderButton
               icon={<ChevronsUp className="h-4 w-4" />}
@@ -197,9 +195,7 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
       {/* Align to Page */}
       {onAlign && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
-            Align to Page
-          </span>
+          <span className="text-fluid font-medium text-muted-foreground">Align to Page</span>
           <div className="grid grid-cols-3 gap-1">
             <ZOrderButton
               icon={<AlignStartVertical className="h-4 w-4" />}

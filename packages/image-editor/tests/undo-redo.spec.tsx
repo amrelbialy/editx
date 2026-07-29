@@ -26,7 +26,7 @@ test.describe("Undo/Redo", () => {
     await page.keyboard.press("Control+z");
 
     // Editor should still be functional
-    await expect(component.getByText("Photo Editor")).toBeVisible();
+    await expect(component.getByText("Image Editor")).toBeVisible();
   });
 
   test("Ctrl+Shift+Z triggers redo", async ({ mount, page }) => {
@@ -41,6 +41,6 @@ test.describe("Undo/Redo", () => {
     await page.keyboard.press("Control+Shift+z");
 
     // Editor should still be functional
-    await expect(component.getByText("Photo Editor")).toBeVisible();
+    await expect(component.getByText("Image Editor")).toBeVisible();
   });
 });

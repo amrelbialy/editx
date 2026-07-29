@@ -29,7 +29,7 @@ test.describe("Tool Selection", () => {
     await toolbar.getByText("Filters").click();
 
     // Should show the "Original" option (no-filter preset)
-    await expect(component.getByText("Original")).toBeVisible({ timeout: 5_000 });
+    await expect(component.getByTestId("filter-original")).toBeVisible({ timeout: 5_000 });
   });
 
   test("activates Shapes tool and shows shape options", async ({ mount }) => {

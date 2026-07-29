@@ -56,10 +56,8 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
   }, []);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
-        {t("image.addImage")}
-      </div>
+    <div className="flex flex-col gap-fluid">
+      <div className="text-fluid font-medium text-muted-foreground">{t("image.addImage")}</div>
 
       {/* Drop zone / upload button */}
       <button
@@ -78,12 +76,8 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         )}
       >
         <Upload className="h-6 w-6 text-muted-foreground @5xl/editor:h-8 @5xl/editor:w-8" />
-        <span className="text-sm text-muted-foreground @5xl/editor:text-base">
-          {t("image.dropHint")}
-        </span>
-        <span className="text-sm text-muted-foreground/60 @5xl/editor:text-base">
-          {t("image.sizeHint")}
-        </span>
+        <span className="text-fluid text-muted-foreground">{t("image.dropHint")}</span>
+        <span className="text-fluid text-muted-foreground/60">{t("image.sizeHint")}</span>
       </button>
 
       <input
@@ -95,7 +89,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       />
 
       {error && (
-        <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2 @5xl/editor:text-base">
+        <div className="text-fluid text-destructive bg-destructive/10 rounded-md px-3 py-2">
           {error}
         </div>
       )}
@@ -105,7 +99,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-sm @5xl/editor:text-base",
+          "flex items-center gap-2 px-3 py-2 rounded-md text-fluid",
           "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
         )}
       >

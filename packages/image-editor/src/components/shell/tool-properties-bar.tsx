@@ -9,7 +9,7 @@ import {
 import type React from "react";
 import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
-import { Button } from "../ui/button";
+import { IconButton } from "../ui/icon-button";
 import { Separator } from "../ui/separator";
 
 interface ToolPropertiesBarProps {
@@ -44,54 +44,34 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
     <div
       className={cn(
         "flex items-center gap-1 h-10 px-3",
-        "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
+        "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
         "animate-in fade-in-0 slide-in-from-top-1 duration-150",
       )}
     >
       {/* Rotate/flip actions for crop & rotate tools */}
       {showRotateFlip && (
         <>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+          <IconButton
             onClick={onRotateCounterClockwise}
-            aria-label={t("bar.rotateLeft")}
-            title={t("bar.rotateLeft")}
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            label={t("bar.rotateLeft")}
+            icon={<RotateCcw className="h-4 w-4" />}
+          />
+          <IconButton
             onClick={onRotateClockwise}
-            aria-label={t("bar.rotateRight")}
-            title={t("bar.rotateRight")}
-          >
-            <RotateCw className="h-4 w-4" />
-          </Button>
+            label={t("bar.rotateRight")}
+            icon={<RotateCw className="h-4 w-4" />}
+          />
           <Separator orientation="vertical" className="h-5 mx-0.5" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+          <IconButton
             onClick={onFlipHorizontal}
-            aria-label={t("bar.flipH")}
-            title={t("bar.flipH")}
-          >
-            <FlipHorizontal className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            label={t("bar.flipH")}
+            icon={<FlipHorizontal className="h-4 w-4" />}
+          />
+          <IconButton
             onClick={onFlipVertical}
-            aria-label={t("bar.flipV")}
-            title={t("bar.flipV")}
-          >
-            <FlipVertical className="h-4 w-4" />
-          </Button>
+            label={t("bar.flipV")}
+            icon={<FlipVertical className="h-4 w-4" />}
+          />
 
           <Separator orientation="vertical" className="h-5 mx-1" />
         </>
@@ -103,26 +83,19 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
       {/* Reset + Done (always present) */}
       <div className="flex items-center gap-1">
         {onReset && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <IconButton
             onClick={onReset}
-            className="gap-1 h-7 text-xs rounded-md"
-          >
-            <ResetIcon className="h-3.5 w-3.5" />
-            {t("bar.reset")}
-          </Button>
+            label={t("bar.reset")}
+            icon={<ResetIcon className="h-4 w-4" />}
+          />
         )}
         {onDone && (
-          <Button
-            variant="default"
-            size="sm"
+          <IconButton
             onClick={onDone}
-            className="gap-1 h-7 text-xs rounded-full"
-          >
-            <Check className="h-3.5 w-3.5" />
-            {t("bar.done")}
-          </Button>
+            variant="default"
+            label={t("bar.done")}
+            icon={<Check className="h-4 w-4" />}
+          />
         )}
       </div>
     </div>

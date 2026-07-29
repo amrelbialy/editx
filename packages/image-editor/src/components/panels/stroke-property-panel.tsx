@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { ColorSwatch } from "../ui/color-swatch";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
@@ -63,15 +64,10 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
     <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
       {/* Color */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-base text-muted-foreground">Color</span>
+        <span className="text-fluid text-muted-foreground">Color</span>
         <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={state.color}
-            onChange={handleColor}
-            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-          />
-          <span className="text-base font-mono text-muted-foreground">{state.color}</span>
+          <ColorSwatch value={state.color} onChange={handleColor} />
+          <span className="text-fluid font-mono text-muted-foreground">{state.color}</span>
         </div>
       </div>
 

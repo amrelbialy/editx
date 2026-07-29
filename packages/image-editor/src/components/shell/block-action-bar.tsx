@@ -33,7 +33,7 @@ const ActionButton: React.FC<{
         onClick={onClick}
         aria-label={label}
         className={cn(
-          "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
           variant === "destructive"
             ? "text-destructive hover:bg-destructive/10"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -65,7 +65,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
       aria-label={t("a11y.blockActions")}
       className={cn(
         "inline-flex items-center gap-0.5 h-9 px-1.5",
-        "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
+        "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
         "animate-in fade-in-0 slide-in-from-bottom-1 duration-150",
       )}
     >

@@ -43,7 +43,7 @@ export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
   };
 
   return (
-    <Section label="Add Text">
+    <Section label="Text styles">
       <SelectionGrid
         items={TEXT_PRESETS}
         onSelect={handleSelect}

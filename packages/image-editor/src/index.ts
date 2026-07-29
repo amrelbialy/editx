@@ -2,8 +2,12 @@ export type { ButtonProps } from "./components/ui/button";
 export { Button } from "./components/ui/button";
 export { ColorPalette } from "./components/ui/color-palette";
 export { ColorPicker, DEFAULT_COLORS } from "./components/ui/color-picker";
-export { InputGroup } from "./components/ui/input-group";
+export { ColorSwatch } from "./components/ui/color-swatch";
+export { IconButton } from "./components/ui/icon-button";
+export type { InputProps } from "./components/ui/input";
+export { Input } from "./components/ui/input";
 export { Section } from "./components/ui/section";
+export { SegmentedControl } from "./components/ui/segmented-control";
 export {
   Select,
   SelectContent,

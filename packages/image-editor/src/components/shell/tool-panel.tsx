@@ -23,12 +23,9 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
   useEffect(() => {
     if (open) {
       triggerRef.current = document.activeElement;
-      // Focus the first interactive element inside the panel after mount
+      // Announce the dialog without implying that Close is the primary action.
       requestAnimationFrame(() => {
-        const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
-        );
-        firstFocusable?.focus({ preventScroll: true });
+        panelRef.current?.focus({ preventScroll: true });
       });
     } else if (triggerRef.current instanceof HTMLElement) {
       triggerRef.current.focus({ preventScroll: true });
@@ -58,6 +55,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
 
       <aside
         ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title ?? t("a11y.toolOptions")}
@@ -65,12 +63,16 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
         className={cn(
           // Narrow: bottom sheet — slides up from bottom
           "absolute bottom-0 left-0 right-0 z-40",
-          "bg-card rounded-t-xl max-h-[60vh] flex flex-col",
+          "bg-card rounded-t-xl max-h-[60vh] flex flex-col outline-none",
           "animate-in slide-in-from-bottom duration-200",
+          // Fluid type steps — grow panel text as the editor widens
+          "@3xl/editor:[--text-fluid-size:0.75rem]",
+          "@5xl/editor:[--text-fluid-size:0.8125rem]",
+          "@7xl/editor:[--text-fluid-size:0.875rem]",
           // Wide: side panel — slides in from left
           "@xl/editor:relative @xl/editor:bottom-auto @xl/editor:left-auto @xl/editor:right-auto",
           "@xl/editor:z-auto @xl/editor:rounded-none @xl/editor:max-h-none",
-          "@xl/editor:w-70 @xl/editor:shrink-0",
+          "@xl/editor:w-60 @3xl/editor:w-75 @xl/editor:shrink-0",
           "@xl/editor:border-r @xl/editor:border-border",
           "@xl/editor:[--tw-enter-translate-y:0] @xl/editor:slide-in-from-left-4",
         )}
@@ -81,7 +83,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
             {/* Narrow: drag handle + title */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-1 rounded-full bg-muted-foreground/30 @xl/editor:hidden" />
-              <span className="text-sm font-medium @5xl/editor:text-base">{title}</span>
+              <span className="text-fluid font-medium">{title}</span>
             </div>
             <Button
               variant="ghost"
@@ -96,7 +98,7 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
         )}
 
         <ScrollArea className="flex-1">
-          <div className="p-4">{children}</div>
+          <div className="@container/panel p-(--pad-fluid)">{children}</div>
         </ScrollArea>
       </aside>
     </>

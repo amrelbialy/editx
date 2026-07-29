@@ -39,8 +39,8 @@ export const ZoomMenu: React.FC<ZoomMenuProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs min-w-12 gap-0.5"
-          title={t("zoom.options")}
+          className="text-xs min-w-12 gap-0.5 h-8 rounded-none @5xl/editor:h-9"
+          aria-label={t("zoom.options")}
         >
           {zoomLabel}
           <ChevronUp className="h-3 w-3 opacity-60" />

@@ -13,7 +13,7 @@ test.describe("Image Load", () => {
     await expect(component).toBeVisible();
 
     // Topbar should appear
-    await expect(component.getByText("Photo Editor")).toBeVisible();
+    await expect(component.getByText("Image Editor")).toBeVisible();
 
     // Export button should be present
     await expect(component.getByText("Export Image")).toBeVisible();

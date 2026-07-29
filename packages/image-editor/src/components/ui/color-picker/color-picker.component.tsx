@@ -38,8 +38,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
       {opacity !== undefined && onOpacityChange && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground @5xl/editor:text-base">Opacity</span>
-            <span className="text-sm text-muted-foreground tabular-nums @5xl/editor:text-base">
+            <span className="text-fluid text-muted-foreground">Opacity</span>
+            <span className="text-fluid text-muted-foreground tabular-nums">
               {Math.round(opacity * 100)}
             </span>
           </div>
@@ -56,16 +56,16 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
       {/* Hex input */}
       {showHexInput && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground @5xl/editor:text-base">Hex</span>
+          <span className="text-fluid text-muted-foreground">Hex</span>
           <div className="flex items-center gap-1 flex-1">
             <input
               type="text"
               value={color.replace("#", "").toUpperCase()}
               onChange={handleHexInput}
               maxLength={6}
-              className="flex-1 h-7 rounded-md border border-border bg-background px-2 text-sm font-mono @5xl/editor:text-base"
+              className="flex-1 h-7 rounded-md border border-border bg-background px-2 text-fluid font-mono"
             />
-            <span className="text-sm text-muted-foreground @5xl/editor:text-base">#</span>
+            <span className="text-fluid text-muted-foreground">#</span>
           </div>
         </div>
       )}
@@ -73,9 +73,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
       {/* Color swatches */}
       {swatches.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-muted-foreground @5xl/editor:text-base">
-            Default Colors
-          </span>
+          <span className="text-fluid font-medium text-muted-foreground">Default Colors</span>
           <ColorPalette colors={swatches} value={color} onSelect={onChange} />
         </div>
       )}

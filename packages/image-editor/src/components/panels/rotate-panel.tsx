@@ -48,7 +48,9 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* 90° rotation buttons */}
       <div>
-        <div className="text-base font-medium text-muted-foreground mb-2">{t("rotate.rotate")}</div>
+        <div className="text-fluid font-medium text-muted-foreground mb-2">
+          {t("rotate.rotate")}
+        </div>
         <div className="flex gap-1.5">
           <Button
             variant="secondary"
@@ -57,7 +59,6 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             onClick={onRotateCounterClockwise}
             data-testid="rotate-ccw"
             aria-label={t("rotate.ccw")}
-            title={t("rotate.ccw")}
           >
             <RotateCcw className="h-4 w-4" />
             −90°
@@ -69,7 +70,6 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             onClick={onRotateClockwise}
             data-testid="rotate-cw"
             aria-label={t("rotate.cw")}
-            title={t("rotate.cw")}
           >
             <RotateCw className="h-4 w-4" />
             +90°
@@ -81,7 +81,7 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
       {/* Flip buttons */}
       <div>
-        <div className="text-base font-medium text-muted-foreground mb-2">{t("rotate.flip")}</div>
+        <div className="text-fluid font-medium text-muted-foreground mb-2">{t("rotate.flip")}</div>
         <div className="flex gap-1.5">
           <Button
             variant={flipH ? "default" : "secondary"}
@@ -91,7 +91,6 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             data-testid="flip-h"
             aria-label={t("rotate.flipH")}
             aria-pressed={flipH}
-            title={t("rotate.flipH")}
           >
             <FlipHorizontal className="h-4 w-4" />
             {t("rotate.horizontal")}
@@ -104,7 +103,6 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
             data-testid="flip-v"
             aria-label={t("rotate.flipV")}
             aria-pressed={flipV}
-            title={t("rotate.flipV")}
           >
             <FlipVertical className="h-4 w-4" />
             {t("rotate.vertical")}

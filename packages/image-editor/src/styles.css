@@ -13,8 +13,8 @@
 
 @theme inline {
   /* Border radius scale (used by rounded-sm / rounded-md / rounded-lg / rounded-xl) */
-  --radius-sm: calc(var(--radius, 0.5rem) - 4px);
-  --radius-md: calc(var(--radius, 0.5rem) - 2px);
+  --radius-sm: calc(var(--radius, 0.5rem) - 2px);
+  --radius-md: var(--radius, 0.5rem);
   --radius-lg: var(--radius, 0.5rem);
   --radius-xl: calc(var(--radius, 0.5rem) + 4px);
 
@@ -80,6 +80,16 @@
   /* Spacing */
   --spacing: var(--spacing, 0.27rem);
 
+  /* Fluid spacing — scales with the nearest container (panel), clamped */
+  --gap-fluid: clamp(0.5rem, 0.35rem + 1cqi, 0.75rem);
+  --pad-fluid: clamp(0.5rem, 0.35rem + 1.5cqi, 0.75rem);
+
+  /* Fluid type — panel text steps up with the EDITOR container width.
+     Driven by --text-fluid-size (overridden at @container/editor breakpoints
+     on the tool panel), so it grows on large screens. */
+  --text-fluid: var(--text-fluid-size, 0.6875rem);
+  --text-fluid--line-height: 1.4;
+
   /* Letter-spacing scale */
   --tracking-tighter: calc(var(--tracking-normal, -0.01em) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal, -0.01em) - 0.025em);
@@ -105,6 +115,9 @@
     --font-mono: "JetBrains Mono", monospace;
     --radius: 0.5rem;
     --spacing: 0.27rem;
+    --gap-fluid: clamp(0.5rem, 0.35rem + 1cqi, 0.75rem);
+    --pad-fluid: clamp(0.5rem, 0.35rem + 1.5cqi, 0.75rem);
+    --text-fluid-size: 0.6875rem;
     --tracking-normal: -0.01em;
     --shadow-2xs: 0px 4px 10px 0px hsl(0 0 0 / 0.03);
     --shadow-xs: 0px 4px 10px 0px hsl(0 0 0 / 0.03);
@@ -114,6 +127,14 @@
     --shadow-lg: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 4px 6px -1px hsl(0 0 0 / 0.05);
     --shadow-xl: 0px 4px 10px 0px hsl(0 0 0 / 0.05), 0px 8px 10px -1px hsl(0 0 0 / 0.05);
     --shadow-2xl: 0px 4px 10px 0px hsl(0 0 0 / 0.13);
+  }
+
+  .ie-theme button:enabled {
+    cursor: pointer;
+  }
+
+  .ie-theme button:disabled {
+    cursor: not-allowed;
   }
 
   .ie-theme * {

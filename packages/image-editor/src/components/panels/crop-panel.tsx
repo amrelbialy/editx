@@ -1,13 +1,4 @@
-import {
-  Link,
-  Monitor,
-  RectangleHorizontal,
-  RectangleVertical,
-  Scan,
-  Smartphone,
-  Square,
-  Unlink,
-} from "lucide-react";
+import { Link, Unlink } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResizePreset } from "../../config/config.types";
@@ -15,37 +6,11 @@ import { useConfig } from "../../config/config-context";
 import { useTranslation } from "../../i18n/i18n-context";
 import { type CropPresetId, useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
+import { IconButton } from "../ui/icon-button";
+import { Input } from "../ui/input";
+import { SegmentedControl } from "../ui/segmented-control";
+import { AspectRatioPresets } from "./aspect-ratio-presets";
 import { ResizePresets } from "./resize-presets";
-
-const presets: { id: CropPresetId; label: string; icon: React.ReactNode }[] = [
-  { id: "free", label: "Free", icon: <Scan className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" /> },
-  {
-    id: "original",
-    label: "Original",
-    icon: <RectangleHorizontal className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  },
-  { id: "1:1", label: "1:1", icon: <Square className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" /> },
-  {
-    id: "4:3",
-    label: "4:3",
-    icon: <RectangleHorizontal className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  },
-  {
-    id: "3:4",
-    label: "3:4",
-    icon: <RectangleVertical className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  },
-  {
-    id: "16:9",
-    label: "16:9",
-    icon: <Monitor className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  },
-  {
-    id: "9:16",
-    label: "9:16",
-    icon: <Smartphone className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  },
-];
 
 type CropTab = "aspectRatio" | "resize";
 
@@ -166,165 +131,91 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   const resizePresets = config.crop?.resizePresets ?? [];
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-fluid">
       {/* Crop Area dimensions — visible in both tabs */}
       <div>
-        <div className="text-sm font-medium text-muted-foreground mb-2 @5xl/editor:text-base">
-          Crop Area
-        </div>
-        <div className="flex items-center gap-2">
+        <div className="text-fluid font-medium text-muted-foreground mb-2">Crop Area</div>
+        <div className="flex items-stretch gap-1.5">
           {/* Width & Height inputs */}
           <div className="flex-1 flex flex-col gap-2">
-            {/* Width */}
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="crop-resize-width"
-                className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
-              >
-                {t("crop.width")}
-              </label>
-              <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
-                <input
-                  id="crop-resize-width"
-                  type="number"
-                  value={resizeWidth || ""}
-                  onChange={(e) => handleWidthChange(Number(e.target.value))}
-                  min={1}
-                  className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
-                  data-testid="resize-width-input"
-                />
-                <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
-              </div>
-            </div>
-
-            {/* Height */}
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="crop-resize-height"
-                className="text-sm text-muted-foreground w-12 shrink-0 @5xl/editor:text-base"
-              >
-                {t("crop.height")}
-              </label>
-              <div className="flex-1 flex items-center gap-1 bg-muted rounded-md px-2 py-1.5">
-                <input
-                  id="crop-resize-height"
-                  type="number"
-                  value={resizeHeight || ""}
-                  onChange={(e) => handleHeightChange(Number(e.target.value))}
-                  min={1}
-                  className="flex-1 bg-transparent text-sm text-foreground outline-none tabular-nums w-0 @5xl/editor:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:rounded-sm"
-                  data-testid="resize-height-input"
-                />
-                <span className="text-sm text-muted-foreground @5xl/editor:text-base">px</span>
-              </div>
-            </div>
+            <Input
+              type="number"
+              min={1}
+              label={t("crop.width")}
+              labelClassName="w-12"
+              suffix="px"
+              value={resizeWidth || ""}
+              onChange={(e) => handleWidthChange(Number(e.target.value))}
+              data-testid="resize-width-input"
+            />
+            <Input
+              type="number"
+              min={1}
+              label={t("crop.height")}
+              labelClassName="w-12"
+              suffix="px"
+              value={resizeHeight || ""}
+              onChange={(e) => handleHeightChange(Number(e.target.value))}
+              data-testid="resize-height-input"
+            />
           </div>
 
-          {/* Ratio lock */}
-          <button
-            type="button"
-            onClick={() => setRatioLocked((v) => !v)}
-            className={cn(
-              "p-1.5 rounded transition-colors shrink-0",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              ratioLocked
-                ? "text-primary hover:text-primary/80"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            aria-label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
-            aria-pressed={ratioLocked}
-            title={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
-            data-testid="resize-ratio-lock"
-          >
-            {ratioLocked ? (
-              <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-            ) : (
-              <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-            )}
-          </button>
+          {/* Ratio lock — bracket visually connects the two fields */}
+          <div className="relative flex shrink-0 items-center">
+            <span
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute left-0 top-1/4 bottom-1/4 w-2 rounded-r-md border-y border-r transition-colors",
+                ratioLocked ? "border-primary" : "border-border",
+              )}
+            />
+            <IconButton
+              label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
+              icon={
+                ratioLocked ? (
+                  <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+                ) : (
+                  <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
+                )
+              }
+              tooltipSide="left"
+              onClick={() => setRatioLocked((v) => !v)}
+              aria-pressed={ratioLocked}
+              data-testid="resize-ratio-lock"
+              className={cn("ml-2", ratioLocked ? "text-primary" : "text-muted-foreground")}
+            />
+          </div>
         </div>
       </div>
 
-      <hr className="border-border" />
-
       {/* Tab switcher */}
-      <div
-        role="tablist"
-        aria-label={t("a11y.cropMode")}
-        className="flex bg-muted rounded-lg p-0.5"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "aspectRatio"}
-          aria-controls="crop-tab-aspect-ratio"
-          id="crop-tab-aspect-ratio-trigger"
-          onClick={() => setTab("aspectRatio")}
-          className={cn(
-            "flex-1 text-sm font-medium py-1.5 rounded-md transition-colors @5xl/editor:text-base",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-            tab === "aspectRatio"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {t("crop.aspectRatio")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "resize"}
-          aria-controls="crop-tab-resize"
-          id="crop-tab-resize-trigger"
-          onClick={() => setTab("resize")}
-          className={cn(
-            "flex-1 text-sm font-medium py-1.5 rounded-md transition-colors @5xl/editor:text-base",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-            tab === "resize"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {t("crop.resize")}
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel={t("a11y.cropMode")}
+        value={tab}
+        onValueChange={setTab}
+        options={[
+          { value: "aspectRatio", label: t("crop.aspectRatio") },
+          { value: "resize", label: t("crop.resize") },
+        ]}
+      />
 
       {/* Aspect Ratio tab */}
       {tab === "aspectRatio" && (
-        <div
-          role="tabpanel"
-          id="crop-tab-aspect-ratio"
-          aria-labelledby="crop-tab-aspect-ratio-trigger"
-        >
-          <div className="text-sm font-medium text-muted-foreground mb-1 @5xl/editor:text-base">
+        <div role="tabpanel" id="crop-tab-aspect-ratio">
+          <div className="text-fluid font-medium text-muted-foreground mb-1">
             {t("crop.aspectRatio")}
           </div>
-          <fieldset className="grid grid-cols-2 gap-1.5" aria-label={t("a11y.aspectRatioPresets")}>
-            {presets.map((preset) => (
-              <button
-                type="button"
-                key={preset.id}
-                onClick={() => handleSelect(preset.id)}
-                data-testid={`crop-preset-${preset.id}`}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-md px-1.5 py-2 text-sm transition-colors @5xl/editor:gap-1 @5xl/editor:px-2 @5xl/editor:py-2.5 @5xl/editor:text-base",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                  cropPreset === preset.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                )}
-              >
-                {preset.icon}
-                {preset.label}
-              </button>
-            ))}
-          </fieldset>
+          <AspectRatioPresets
+            activePreset={cropPreset}
+            ariaLabel={t("a11y.aspectRatioPresets")}
+            onSelect={handleSelect}
+          />
         </div>
       )}
 
       {/* Resize tab — platform presets */}
       {tab === "resize" && resizePresets.length > 0 && (
-        <div role="tabpanel" id="crop-tab-resize" aria-labelledby="crop-tab-resize-trigger">
+        <div role="tabpanel" id="crop-tab-resize">
           <ResizePresets
             groups={resizePresets}
             activePreset={activeResizePreset}

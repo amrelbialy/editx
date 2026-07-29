@@ -14,6 +14,7 @@ import { useTranslation } from "../../i18n/i18n-context";
 import type { TranslationKey } from "../../i18n/translations/en";
 import { cn } from "../../utils/cn";
 import { Separator } from "../ui/separator";
+import { focusRing } from "../ui/styles";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface ToolDef {
@@ -83,11 +84,11 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
             aria-label={tool.label}
             aria-keyshortcuts={tool.shortcut}
             className={cn(
-              "flex flex-col items-center justify-center py-1.5 px-1.5 rounded-md transition-colors",
-              "min-w-10 @xl/editor:w-full @xl/editor:py-2 @xl/editor:px-1",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              "text-muted-foreground hover:text-foreground hover:bg-accent",
-              isActive && "bg-primary text-primary-foreground",
+              "flex flex-col items-center justify-center py-1.5 px-1.5 rounded-md transition-colors cursor-pointer",
+              "min-w-10 @xl/editor:w-16 @xl/editor:h-[58px] @xl/editor:py-0 @xl/editor:px-1",
+              focusRing,
+              "text-muted-foreground hover:text-foreground hover:bg-primary/8",
+              isActive && "bg-primary/12 text-primary shadow-sm hover:bg-primary/12",
             )}
           >
             <Icon className="h-4.5 w-4.5 @5xl/editor:h-6 @5xl/editor:w-6" />
@@ -127,7 +128,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         "px-1 py-1 overflow-x-auto order-last",
         // Desktop (wide): vertical left sidebar
         "@xl/editor:flex-col @xl/editor:items-center @xl/editor:justify-start",
-        "@xl/editor:w-18 @xl/editor:py-2 @xl/editor:px-0",
+        "@xl/editor:w-20 @xl/editor:py-2 @xl/editor:px-0",
         "@xl/editor:bg-sidebar @xl/editor:border-t-0 @xl/editor:border-r @xl/editor:border-sidebar-border",
         "@xl/editor:overflow-x-visible @xl/editor:overflow-y-auto @xl/editor:order-first",
       )}

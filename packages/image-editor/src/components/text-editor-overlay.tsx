@@ -345,7 +345,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setPropertySidePanel(propertySidePanel === "color" ? null : "color")}
           className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             propertySidePanel === "color"
               ? "bg-primary/20 ring-1 ring-primary/30"
               : "text-muted-foreground hover:bg-accent",
@@ -363,7 +363,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleBold}
           className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             isBold ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
           )}
         >
@@ -376,7 +376,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleItalic}
           className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             isItalic
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent",
@@ -391,7 +391,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleUnderline}
           className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             isUnderline
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent",
@@ -406,7 +406,7 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleStrikethrough}
           className={cn(
-            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             isStrikethrough
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent",

@@ -2,7 +2,8 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { InputGroup } from "../ui/input-group";
+import { ColorSwatch } from "../ui/color-swatch";
+import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
@@ -85,24 +86,29 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
     <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
       {/* Color */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-base text-muted-foreground">Color</span>
+        <span className="text-fluid text-muted-foreground">Color</span>
         <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={state.color}
-            onChange={handleColor}
-            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-          />
-          <span className="text-base font-mono text-muted-foreground">{state.color}</span>
+          <ColorSwatch value={state.color} onChange={handleColor} />
+          <span className="text-fluid font-mono text-muted-foreground">{state.color}</span>
         </div>
       </div>
 
       {/* Offset */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-base text-muted-foreground">Offset</span>
+        <span className="text-fluid text-muted-foreground">Offset</span>
         <div className="grid grid-cols-2 gap-2">
-          <InputGroup label="X" value={Math.round(state.offsetX)} onChange={handleOffsetX} />
-          <InputGroup label="Y" value={Math.round(state.offsetY)} onChange={handleOffsetY} />
+          <Input
+            type="number"
+            label="X"
+            value={Math.round(state.offsetX)}
+            onChange={handleOffsetX}
+          />
+          <Input
+            type="number"
+            label="Y"
+            value={Math.round(state.offsetY)}
+            onChange={handleOffsetY}
+          />
         </div>
       </div>
 

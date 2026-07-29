@@ -8,7 +8,8 @@ import {
 } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { InputGroup } from "../ui/input-group";
+import { ColorSwatch } from "../ui/color-swatch";
+import { Input } from "../ui/input";
 import { Section } from "../ui/section";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
@@ -237,20 +238,15 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-base font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="text-fluid font-medium text-muted-foreground uppercase tracking-wider">
         Shape Properties
       </div>
 
       {/* Fill Color */}
       <Section label="Fill Color">
         <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={state.fillColor}
-            onChange={handleFillColor}
-            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-          />
-          <span className="text-base font-mono text-muted-foreground">{state.fillColor}</span>
+          <ColorSwatch value={state.fillColor} onChange={handleFillColor} />
+          <span className="text-fluid font-mono text-muted-foreground">{state.fillColor}</span>
         </div>
       </Section>
 
@@ -270,16 +266,16 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
       {/* Position */}
       <Section label="Position">
         <div className="grid grid-cols-2 gap-2">
-          <InputGroup label="X" value={state.x} onChange={handlePosX} />
-          <InputGroup label="Y" value={state.y} onChange={handlePosY} />
+          <Input type="number" label="X" value={state.x} onChange={handlePosX} />
+          <Input type="number" label="Y" value={state.y} onChange={handlePosY} />
         </div>
       </Section>
 
       {/* Size */}
       <Section label="Size">
         <div className="grid grid-cols-2 gap-2">
-          <InputGroup label="W" value={state.width} onChange={handleWidth} />
-          <InputGroup label="H" value={state.height} onChange={handleHeight} />
+          <Input type="number" label="W" value={state.width} onChange={handleWidth} />
+          <Input type="number" label="H" value={state.height} onChange={handleHeight} />
         </div>
       </Section>
 
@@ -305,13 +301,8 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={state.strokeColor}
-              onChange={handleStrokeColor}
-              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-            />
-            <span className="text-base font-mono text-muted-foreground">{state.strokeColor}</span>
+            <ColorSwatch value={state.strokeColor} onChange={handleStrokeColor} />
+            <span className="text-fluid font-mono text-muted-foreground">{state.strokeColor}</span>
           </div>
           <SliderField
             label="Width"
@@ -335,17 +326,22 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={state.shadowColor}
-              onChange={handleShadowColor}
-              className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-            />
-            <span className="text-base font-mono text-muted-foreground">{state.shadowColor}</span>
+            <ColorSwatch value={state.shadowColor} onChange={handleShadowColor} />
+            <span className="text-fluid font-mono text-muted-foreground">{state.shadowColor}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <InputGroup label="X" value={state.shadowOffsetX} onChange={handleShadowOffsetX} />
-            <InputGroup label="Y" value={state.shadowOffsetY} onChange={handleShadowOffsetY} />
+            <Input
+              type="number"
+              label="X"
+              value={state.shadowOffsetX}
+              onChange={handleShadowOffsetX}
+            />
+            <Input
+              type="number"
+              label="Y"
+              value={state.shadowOffsetY}
+              onChange={handleShadowOffsetY}
+            />
           </div>
           <SliderField
             label="Blur"

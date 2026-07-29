@@ -39,7 +39,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
                 <span
                   className={cn(
                     "absolute inset-0 flex items-center px-2 @5xl/editor:px-3",
-                    "text-sm font-medium text-white drop-shadow-md @5xl/editor:text-base",
+                    "text-fluid font-medium text-white drop-shadow-md",
                     (isActive || undefined) && "opacity-0",
                     !isActive && "group-hover:opacity-0",
                   )}
@@ -59,7 +59,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
                 <div className="overflow-hidden">
                   <span
                     className={cn(
-                      "block px-2 py-0.5 text-sm font-medium text-left @5xl/editor:px-3 @5xl/editor:py-1 @5xl/editor:text-base",
+                      "block px-2 py-0.5 text-fluid font-medium text-left @5xl/editor:px-3 @5xl/editor:py-1",
                       isActive ? "text-background" : "text-accent-foreground",
                     )}
                   >
@@ -71,7 +71,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
           );
         })
       ) : (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-sm text-muted-foreground @5xl/editor:text-base">
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-fluid text-muted-foreground">
           <Spinner size="sm" />
           Generating previews…
         </div>

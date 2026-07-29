@@ -2,6 +2,7 @@ import { type EditxEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
+import { ColorSwatch } from "../ui/color-swatch";
 import { Section } from "../ui/section";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
@@ -176,8 +177,8 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
   );
 
   return (
-    <div className="flex flex-col gap-3" data-text-toolbar>
-      <div className="text-base font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="flex flex-col gap-fluid" data-text-toolbar>
+      <div className="text-fluid font-medium text-muted-foreground uppercase tracking-wider">
         Text Properties
         {hasCharSelection && <span className="ml-1 text-primary normal-case">(selection)</span>}
       </div>
@@ -207,9 +208,9 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
             onChange={handleFontSize}
             min={1}
             max={500}
-            className="w-16 h-8 rounded-md border border-border bg-background px-2 text-base text-center tabular-nums"
+            className="w-16 h-8 rounded-md border border-border bg-background px-2 text-fluid text-center tabular-nums"
           />
-          <span className="text-base text-muted-foreground">px</span>
+          <span className="text-fluid text-muted-foreground">px</span>
         </div>
       </Section>
 
@@ -219,7 +220,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           <button
             type="button"
             onClick={handleBoldToggle}
-            className={`h-8 w-8 rounded-md text-base font-bold transition-colors ${
+            className={`h-8 w-8 rounded-md text-fluid font-bold transition-colors ${
               state.fontWeight === "bold"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent"
@@ -230,7 +231,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           <button
             type="button"
             onClick={handleItalicToggle}
-            className={`h-8 w-8 rounded-md text-base italic transition-colors ${
+            className={`h-8 w-8 rounded-md text-fluid italic transition-colors ${
               state.fontStyle === "italic"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent"
@@ -244,13 +245,8 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
       {/* Text Color */}
       <Section label="Color">
         <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={state.fill}
-            onChange={handleFillColor}
-            className="w-8 h-8 rounded border border-border bg-transparent cursor-pointer"
-          />
-          <span className="text-base font-mono text-muted-foreground">{state.fill}</span>
+          <ColorSwatch value={state.fill} onChange={handleFillColor} />
+          <span className="text-fluid font-mono text-muted-foreground">{state.fill}</span>
         </div>
       </Section>
 
@@ -264,7 +260,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
               type="button"
               key={align}
               onClick={() => handleTextAlign(align)}
-              className={`h-8 px-3 rounded-md text-base transition-colors ${
+              className={`h-8 px-3 rounded-md text-fluid transition-colors ${
                 state.textAlign === align
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-accent"

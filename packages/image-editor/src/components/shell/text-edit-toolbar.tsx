@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { controlBase, focusRing } from "../ui/styles";
 
 interface TextEditToolbarProps {
   engine: EditxEngine;
@@ -99,7 +100,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
     <div
       className={cn(
         "inline-flex items-center gap-0.5 h-9 px-1.5",
-        "bg-card/95 backdrop-blur-sm border border-border rounded-full shadow-lg",
+        "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
         "animate-in fade-in-0 slide-in-from-bottom-1 duration-150",
       )}
       data-text-toolbar
@@ -110,7 +111,10 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            className={cn(
+              "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
+              focusRing,
+            )}
           >
             <div
               className="w-4 h-4 rounded-full border border-border"
@@ -129,7 +133,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
                   onClick={() => handleTextColor(c)}
                   className={cn(
                     "w-6 h-6 rounded-full border transition-transform hover:scale-110",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                    focusRing,
                     state.fill === c ? "border-primary ring-2 ring-primary/30" : "border-border",
                   )}
                   style={{ backgroundColor: c }}
@@ -145,7 +149,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
                   const v = e.target.value;
                   if (/^#[0-9a-fA-F]{6}$/.test(v)) handleTextColor(v);
                 }}
-                className="flex-1 h-7 px-2 text-xs bg-background border border-border rounded-md font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                className={cn(controlBase, focusRing, "flex-1 px-2 font-mono")}
                 maxLength={7}
                 data-text-toolbar
               />
@@ -160,8 +164,8 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleBoldToggle}
         className={cn(
-          "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
+          focusRing,
           state.fontWeight === "bold"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",
@@ -176,8 +180,8 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleItalicToggle}
         className={cn(
-          "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
+          focusRing,
           state.fontStyle === "italic"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-accent",

@@ -1,5 +1,6 @@
 import type React from "react";
 import { cn } from "../../../utils/cn";
+import { focusRing } from "../styles";
 import type { SelectionGridProps } from "./selection-grid.types";
 
 export const SelectionGrid: React.FC<SelectionGridProps> = (props) => {
@@ -18,8 +19,8 @@ export const SelectionGrid: React.FC<SelectionGridProps> = (props) => {
           onClick={() => onSelect(item.id)}
           data-testid={`grid-${item.id}`}
           className={cn(
-            "flex flex-col items-center gap-0.5 rounded-md px-1.5 py-2 text-sm transition-colors @5xl/editor:gap-1 @5xl/editor:px-2 @5xl/editor:py-2.5 @5xl/editor:text-base",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+            "flex flex-col items-center gap-0.5 rounded-md px-1.5 py-1.5 text-fluid transition-colors @5xl/editor:gap-1 @5xl/editor:px-2 @5xl/editor:py-2",
+            focusRing,
             activeId === item.id
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",

@@ -2,6 +2,9 @@ import type React from "react";
 import { useState } from "react";
 import type { ResizePreset, ResizePresetGroup } from "../../config/config.types";
 import { cn } from "../../utils/cn";
+import { Button } from "../ui/button";
+import { focusRing } from "../ui/styles";
+import { AspectRatioIcon } from "./aspect-ratio-icon";
 
 export interface ResizePresetsProps {
   groups: ResizePresetGroup[];
@@ -24,20 +27,19 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
         return (
           <div key={group.label}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground @5xl/editor:text-base">
-                {group.label}
-              </span>
+              <span className="text-fluid font-medium text-foreground">{group.label}</span>
               {hasMore && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-2 py-0.5 text-fluid text-muted-foreground"
                   onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors @5xl/editor:text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background rounded-sm"
                 >
                   {isExpanded ? "Less" : `More (${group.presets.length - VISIBLE_COUNT})`}
-                </button>
+                </Button>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 @3xl/editor:grid-cols-3">
               {visiblePresets.map((preset) => {
                 const isActive =
                   activePreset?.width === preset.width && activePreset?.height === preset.height;
@@ -47,15 +49,19 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
                     key={`${preset.width}x${preset.height}-${preset.label}`}
                     onClick={() => onSelect(preset)}
                     className={cn(
-                      "flex flex-col items-center justify-start rounded-md px-1.5 py-2 text-sm transition-colors min-w-0 @5xl/editor:text-base",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                      "flex flex-col items-center justify-start rounded-md px-1.5 py-2 text-fluid transition-colors min-w-0",
+                      "cursor-pointer",
+                      focusRing,
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
                     <div className="flex items-center justify-center h-7">
-                      <PresetIcon width={preset.width} height={preset.height} active={isActive} />
+                      <AspectRatioIcon
+                        ratio={preset.width / preset.height}
+                        className="h-6 w-6 @3xl/editor:h-7 @3xl/editor:w-7"
+                      />
                     </div>
                     <span className="text-center leading-tight line-clamp-2 mt-1">
                       {preset.label}
@@ -70,26 +76,3 @@ export const ResizePresets: React.FC<ResizePresetsProps> = ({ groups, activePres
     </div>
   );
 };
-
-/** Tiny aspect-ratio icon that reflects the preset's proportions. */
-function PresetIcon({ width, height, active }: { width: number; height: number; active: boolean }) {
-  const maxDim = 24;
-  const ratio = width / height;
-  let w: number, h: number;
-  if (ratio >= 1) {
-    w = maxDim;
-    h = maxDim / ratio;
-  } else {
-    h = maxDim;
-    w = maxDim * ratio;
-  }
-  return (
-    <div
-      className={cn(
-        "rounded-[3px] border-[1.5px]",
-        active ? "border-primary-foreground" : "border-muted-foreground",
-      )}
-      style={{ width: Math.max(w, 8), height: Math.max(h, 8) }}
-    />
-  );
-}
