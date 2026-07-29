@@ -163,6 +163,10 @@ export function setupInteraction(deps: InteractionDeps): void {
   container.addEventListener(
     "wheel",
     (e: WheelEvent) => {
+      // Only zoom when Ctrl/Cmd is held. Trackpad pinch gestures also set
+      // ctrlKey, so pinch-to-zoom keeps working; plain scroll is ignored.
+      if (!e.ctrlKey && !e.metaKey) return;
+
       e.preventDefault();
 
       const oldZoom = camera.getZoom();
