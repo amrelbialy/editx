@@ -3,7 +3,8 @@ import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/e
 import { Replace } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "../../utils/cn";
+import { Button } from "../ui/button";
+import { Section } from "../ui/section";
 
 interface ImageFillPanelProps {
   engine: EditxEngine;
@@ -62,7 +63,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
   );
 
   return (
-    <div className="flex flex-col gap-4 p-1">
+    <div className="flex flex-col gap-3 p-1">
       {/* Preview thumbnail */}
       {imageSrc && (
         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden border border-border">
@@ -71,17 +72,10 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
       )}
 
       {/* Replace button */}
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className={cn(
-          "flex items-center justify-center gap-2 w-full h-8 rounded-md text-fluid font-medium transition-colors @5xl/editor:h-9",
-          "bg-accent hover:bg-accent/80 text-accent-foreground",
-        )}
-      >
+      <Button variant="secondary" className="w-full" onClick={() => fileInputRef.current?.click()}>
         <Replace className="h-4 w-4" />
         Replace Image
-      </button>
+      </Button>
 
       <input
         ref={fileInputRef}
@@ -92,10 +86,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
       />
 
       {/* Dimensions info */}
-      <div className="flex flex-col gap-2">
-        <h4 className="text-fluid font-medium text-muted-foreground uppercase tracking-wide">
-          Dimensions
-        </h4>
+      <Section label="Dimensions">
         <div className="grid grid-cols-2 gap-2 text-fluid">
           <div className="flex flex-col gap-0.5">
             <span className="text-fluid text-muted-foreground">Display</span>
@@ -110,7 +101,7 @@ export const ImageFillPanel: React.FC<ImageFillPanelProps> = ({ engine, blockId,
             </span>
           </div>
         </div>
-      </div>
+      </Section>
     </div>
   );
 };

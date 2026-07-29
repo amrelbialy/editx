@@ -32,9 +32,11 @@ import {
 import { Bold, Italic, Strikethrough, Underline } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "../i18n/i18n-context";
 import { useImageEditorStore } from "../store/image-editor-store";
 import { cn } from "../utils/cn";
 import { getSelectionOffsets } from "../utils/lexical-bridge";
+import { IconButton } from "./ui/icon-button";
 
 export interface TextEditorOverlayProps {
   engine: EditxEngine;
@@ -228,6 +230,7 @@ function AutoFocusPlugin({ clickScreenPos }: { clickScreenPos?: { x: number; y: 
 // Inline toolbar rendered inside LexicalComposer — uses Lexical API directly.
 
 function ToolbarPlugin({ zoom }: { zoom: number }) {
+  const { t } = useTranslation();
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -340,80 +343,62 @@ function ToolbarPlugin({ zoom }: { zoom: number }) {
         data-text-toolbar
       >
         {/* Color swatch — opens color panel */}
-        <button
-          type="button"
+        <IconButton
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setPropertySidePanel(propertySidePanel === "color" ? null : "color")}
+          label={t("block.color")}
           className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
             propertySidePanel === "color"
               ? "bg-primary/20 ring-1 ring-primary/30"
-              : "text-muted-foreground hover:bg-accent",
+              : "text-muted-foreground",
           )}
-        >
-          <div
-            className="w-4 h-4 rounded-full border border-border"
-            style={{ backgroundColor: fontColor }}
-          />
-        </button>
+          icon={
+            <div
+              className="w-4 h-4 rounded-full border border-border"
+              style={{ backgroundColor: fontColor }}
+            />
+          }
+        />
 
         {/* Bold */}
-        <button
-          type="button"
+        <IconButton
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleBold}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-            isBold ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
-          )}
-        >
-          <Bold className="h-4 w-4" />
-        </button>
+          label={t("block.bold")}
+          variant={isBold ? "default" : "ghost"}
+          className={isBold ? undefined : "text-muted-foreground"}
+          icon={<Bold className="h-4 w-4" />}
+        />
 
         {/* Italic */}
-        <button
-          type="button"
+        <IconButton
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleItalic}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-            isItalic
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
-          )}
-        >
-          <Italic className="h-4 w-4" />
-        </button>
+          label={t("block.italic")}
+          variant={isItalic ? "default" : "ghost"}
+          className={isItalic ? undefined : "text-muted-foreground"}
+          icon={<Italic className="h-4 w-4" />}
+        />
 
         {/* Underline */}
-        <button
-          type="button"
+        <IconButton
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleUnderline}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-            isUnderline
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
-          )}
-        >
-          <Underline className="h-4 w-4" />
-        </button>
+          label={t("block.underline")}
+          variant={isUnderline ? "default" : "ghost"}
+          className={isUnderline ? undefined : "text-muted-foreground"}
+          icon={<Underline className="h-4 w-4" />}
+        />
 
         {/* Strikethrough */}
-        <button
-          type="button"
+        <IconButton
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleStrikethrough}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-            isStrikethrough
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
-          )}
-        >
-          <Strikethrough className="h-4 w-4" />
-        </button>
+          label={t("block.strikethrough")}
+          variant={isStrikethrough ? "default" : "ghost"}
+          className={isStrikethrough ? undefined : "text-muted-foreground"}
+          icon={<Strikethrough className="h-4 w-4" />}
+        />
       </div>
     </div>
   );

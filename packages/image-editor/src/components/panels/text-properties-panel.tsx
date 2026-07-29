@@ -1,9 +1,13 @@
 import { type EditxEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@editx/engine";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorSwatch } from "../ui/color-swatch";
+import { IconButton } from "../ui/icon-button";
+import { Input } from "../ui/input";
 import { Section } from "../ui/section";
+import { SegmentedControl } from "../ui/segmented-control";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
@@ -201,44 +205,36 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
 
       {/* Font Size */}
       <Section label="Size">
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            value={Math.round(state.fontSize)}
-            onChange={handleFontSize}
-            min={1}
-            max={500}
-            className="w-16 h-8 rounded-md border border-border bg-background px-2 text-fluid text-center tabular-nums"
-          />
-          <span className="text-fluid text-muted-foreground">px</span>
-        </div>
+        <Input
+          type="number"
+          value={Math.round(state.fontSize)}
+          onChange={handleFontSize}
+          min={1}
+          max={500}
+          suffix="px"
+          className="w-24"
+        />
       </Section>
 
       {/* Bold / Italic toggles */}
       <Section label="Style">
         <div className="flex gap-1">
-          <button
-            type="button"
+          <IconButton
+            size="sm"
+            className="h-8 w-8"
+            variant={state.fontWeight === "bold" ? "default" : "secondary"}
             onClick={handleBoldToggle}
-            className={`h-8 w-8 rounded-md text-fluid font-bold transition-colors ${
-              state.fontWeight === "bold"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            B
-          </button>
-          <button
-            type="button"
+            label="Bold"
+            icon={<Bold className="h-4 w-4" />}
+          />
+          <IconButton
+            size="sm"
+            className="h-8 w-8"
+            variant={state.fontStyle === "italic" ? "default" : "secondary"}
             onClick={handleItalicToggle}
-            className={`h-8 w-8 rounded-md text-fluid italic transition-colors ${
-              state.fontStyle === "italic"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            I
-          </button>
+            label="Italic"
+            icon={<Italic className="h-4 w-4" />}
+          />
         </div>
       </Section>
 
@@ -254,22 +250,16 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
 
       {/* Alignment */}
       <Section label="Alignment">
-        <div className="flex gap-1">
-          {(["left", "center", "right"] as const).map((align) => (
-            <button
-              type="button"
-              key={align}
-              onClick={() => handleTextAlign(align)}
-              className={`h-8 px-3 rounded-md text-fluid transition-colors ${
-                state.textAlign === align
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              {align.charAt(0).toUpperCase() + align.slice(1)}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Text alignment"
+          value={state.textAlign as "left" | "center" | "right"}
+          onValueChange={handleTextAlign}
+          options={[
+            { value: "left", label: <AlignLeft className="h-4 w-4" />, ariaLabel: "Left" },
+            { value: "center", label: <AlignCenter className="h-4 w-4" />, ariaLabel: "Center" },
+            { value: "right", label: <AlignRight className="h-4 w-4" />, ariaLabel: "Right" },
+          ]}
+        />
       </Section>
 
       {/* Letter Spacing */}

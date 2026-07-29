@@ -3,6 +3,8 @@ import type React from "react";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
+import { Button } from "../ui/button";
+import { focusRing } from "../ui/styles";
 
 export interface ImagePanelProps {
   onAddImage: (file: File) => Promise<void>;
@@ -70,6 +72,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
         className={cn(
           "flex flex-col items-center justify-center gap-2 p-6",
           "border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+          focusRing,
           isDragOver
             ? "border-primary bg-primary/10"
             : "border-border hover:border-muted-foreground hover:bg-accent/50",
@@ -95,17 +98,10 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       )}
 
       {/* Quick add button */}
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-fluid",
-          "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
-        )}
-      >
+      <Button className="w-full" onClick={() => fileInputRef.current?.click()}>
         <ImagePlus className="h-4 w-4" />
         {t("image.uploadButton")}
-      </button>
+      </Button>
     </div>
   );
 };

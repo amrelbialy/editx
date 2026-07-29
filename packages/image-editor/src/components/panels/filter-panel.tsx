@@ -2,6 +2,7 @@ import type React from "react";
 import { useFilterThumbnails } from "../../hooks/use-filter-thumbnails";
 import { cn } from "../../utils/cn";
 import { Spinner } from "../ui/spinner";
+import { focusRing } from "../ui/styles";
 
 export interface FilterPanelProps {
   activeFilter: string;
@@ -24,7 +25,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect
               data-testid={`filter-${thumb.name || "original"}`}
               className={cn(
                 "group w-full overflow-hidden rounded-lg transition-all",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                focusRing,
                 isActive ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-foreground/20",
               )}
             >

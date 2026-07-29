@@ -29,10 +29,12 @@ import type { PropertySidePanel } from "../../store/image-editor-store";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { IconButton } from "../ui/icon-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
 import { Slider } from "../ui/slider";
 import { controlBase, focusRing } from "../ui/styles";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface BlockPropertiesBarProps {
   engine: EditxEngine;
@@ -300,22 +302,33 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
     panel: PropertySidePanel;
     icon: React.ReactNode;
     label: string;
-  }> = ({ panel, icon, label }) => (
-    <button
-      type="button"
-      onClick={() => togglePanel(panel)}
-      className={cn(
-        "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
-        focusRing,
-        propertySidePanel === panel
-          ? "bg-primary/20 text-primary ring-1 ring-primary/30"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
+    tooltip?: string;
+  }> = ({ panel, icon, label, tooltip }) => {
+    const button = (
+      <button
+        type="button"
+        onClick={() => togglePanel(panel)}
+        aria-label={tooltip}
+        className={cn(
+          "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs transition-colors whitespace-nowrap",
+          focusRing,
+          propertySidePanel === panel
+            ? "bg-primary/20 text-primary ring-1 ring-primary/30"
+            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        )}
+      >
+        {icon}
+        {label}
+      </button>
+    );
+    if (!tooltip) return button;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="bottom">{tooltip}</TooltipContent>
+      </Tooltip>
+    );
+  };
 
   const colorSwatch = isText ? (textState?.fill ?? "#000000") : fillColor;
 
@@ -349,38 +362,48 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
           <Separator orientation="vertical" className="h-5 mx-1" />
 
           {/* Bold / Italic */}
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleBoldToggle}
-            aria-label={t("block.bold")}
-            aria-pressed={textState.fontWeight === "bold"}
-            className={cn(
-              "h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors",
-              focusRing,
-              textState.fontWeight === "bold"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            <Bold className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleItalicToggle}
-            aria-label={t("block.italic")}
-            aria-pressed={textState.fontStyle === "italic"}
-            className={cn(
-              "h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors",
-              focusRing,
-              textState.fontStyle === "italic"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            <Italic className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleBoldToggle}
+                aria-label={t("block.bold")}
+                aria-pressed={textState.fontWeight === "bold"}
+                className={cn(
+                  "h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors",
+                  focusRing,
+                  textState.fontWeight === "bold"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <Bold className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("block.bold")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleItalicToggle}
+                aria-label={t("block.italic")}
+                aria-pressed={textState.fontStyle === "italic"}
+                className={cn(
+                  "h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors",
+                  focusRing,
+                  textState.fontStyle === "italic"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <Italic className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("block.italic")}</TooltipContent>
+          </Tooltip>
 
           <Separator orientation="vertical" className="h-5 mx-1" />
 
@@ -446,24 +469,29 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
 
           {/* Alignment */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
-                  focusRing,
-                )}
-                aria-label={t("block.textAlignment")}
-              >
-                {textState.textAlign === "center" ? (
-                  <AlignCenter className="h-4 w-4" />
-                ) : textState.textAlign === "right" ? (
-                  <AlignRight className="h-4 w-4" />
-                ) : (
-                  <AlignLeft className="h-4 w-4" />
-                )}
-              </button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
+                      focusRing,
+                    )}
+                    aria-label={t("block.textAlignment")}
+                  >
+                    {textState.textAlign === "center" ? (
+                      <AlignCenter className="h-4 w-4" />
+                    ) : textState.textAlign === "right" ? (
+                      <AlignRight className="h-4 w-4" />
+                    ) : (
+                      <AlignLeft className="h-4 w-4" />
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t("block.textAlignment")}</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
               <div className="flex gap-0.5">
                 {(
@@ -498,22 +526,28 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             panel="text-advanced"
             icon={<TextCursorInput className="h-4 w-4" />}
             label=""
+            tooltip={t("panel.advanced")}
           />
 
           {/* More text options (...) */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
-                  focusRing,
-                )}
-                aria-label={t("block.moreTextOptions")}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
+                      focusRing,
+                    )}
+                    aria-label={t("block.moreTextOptions")}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t("block.moreTextOptions")}</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent className="w-auto p-1" align="start" data-text-toolbar>
               <div className="flex flex-col gap-0.5 min-w-[160px]">
                 <button
@@ -585,27 +619,23 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
 
       {/* No-fill toggle (graphic only) */}
       {!isText && !isImage && (
-        <button
-          type="button"
+        <IconButton
           onClick={() => {
             const enabled = engine.block.isFillEnabled(blockId);
             engine.block.setFillEnabled(blockId, !enabled);
             refresh();
           }}
-          aria-label={
+          label={
             engine.block.isFillEnabled(blockId) ? t("block.disableFill") : t("block.enableFill")
           }
           aria-pressed={!engine.block.isFillEnabled(blockId)}
           className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-            focusRing,
             !engine.block.isFillEnabled(blockId)
               ? "bg-primary/20 text-primary"
-              : "text-muted-foreground hover:bg-accent",
+              : "text-muted-foreground",
           )}
-        >
-          <CircleOff className="h-4 w-4" />
-        </button>
+          icon={<CircleOff className="h-4 w-4" />}
+        />
       )}
 
       {/* Background (text only) */}

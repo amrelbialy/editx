@@ -4,8 +4,8 @@ import { useRef } from "react";
 import type { AlignDirection } from "../../hooks/use-block-actions";
 import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
+import { IconButton } from "../ui/icon-button";
 import { Separator } from "../ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface BlockActionBarProps {
   blockType: string;
@@ -26,24 +26,16 @@ const ActionButton: React.FC<{
   onClick: () => void;
   variant?: "default" | "destructive";
 }> = ({ icon, label, onClick, variant = "default" }) => (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={label}
-        className={cn(
-          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-          variant === "destructive"
-            ? "text-destructive hover:bg-destructive/10"
-            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-        )}
-      >
-        {icon}
-      </button>
-    </TooltipTrigger>
-    <TooltipContent side="bottom">{label}</TooltipContent>
-  </Tooltip>
+  <IconButton
+    onClick={onClick}
+    label={label}
+    icon={icon}
+    className={cn(
+      variant === "destructive"
+        ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+        : "text-muted-foreground",
+    )}
+  />
 );
 
 export const BlockActionBar: React.FC<BlockActionBarProps> = ({

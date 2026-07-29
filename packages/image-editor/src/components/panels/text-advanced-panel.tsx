@@ -8,13 +8,13 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
-import { cn } from "../../utils/cn";
 import { ColorSwatch } from "../ui/color-swatch";
 import { IconButton } from "../ui/icon-button";
+import { Input } from "../ui/input";
 import { Section } from "../ui/section";
+import { SegmentedControl } from "../ui/segmented-control";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
-import { controlBase, focusRing } from "../ui/styles";
 
 interface TextAdvancedPanelProps {
   engine: EditxEngine;
@@ -162,7 +162,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
   ] as const;
 
   return (
-    <div className="flex flex-col gap-4" data-text-toolbar>
+    <div className="flex flex-col gap-fluid" data-text-toolbar>
       {/* Vertical Alignment */}
       <Section label="Vertical Alignment">
         <div className="flex gap-1">
@@ -189,7 +189,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
       {/* Line Height */}
       <Section label="Line Height">
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="number"
             value={state.lineHeight.toFixed(1)}
             onChange={(e) => {
@@ -202,7 +202,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
             min={0.5}
             max={4}
             step={0.1}
-            className={cn(controlBase, focusRing, "w-14 text-center tabular-nums")}
+            className="w-16 shrink-0"
           />
           <SliderField
             label=""
@@ -219,29 +219,18 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
 
       {/* Letter Case */}
       <Section label="Letter Case">
-        <div className="flex gap-1">
-          {CASE_OPTIONS.map((opt) => (
-            <button
-              type="button"
-              key={opt.value}
-              onClick={() => handleTextTransform(opt.value)}
-              className={cn(
-                "h-8 px-3 rounded-md text-fluid font-medium transition-colors",
-                state.textTransform === opt.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Letter case"
+          value={state.textTransform as "none" | "uppercase" | "lowercase" | "capitalize"}
+          onValueChange={handleTextTransform}
+          options={CASE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+        />
       </Section>
 
       {/* Letter Spacing */}
       <Section label="Letter Spacing">
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="number"
             value={state.letterSpacing.toFixed(1)}
             onChange={(e) => {
@@ -253,7 +242,7 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
               }
             }}
             step={0.5}
-            className={cn(controlBase, focusRing, "w-14 text-center tabular-nums")}
+            className="w-16 shrink-0"
           />
           <SliderField
             label=""

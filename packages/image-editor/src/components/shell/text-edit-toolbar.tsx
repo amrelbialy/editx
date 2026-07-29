@@ -2,10 +2,13 @@ import type { EditxEngine } from "@editx/engine";
 import { Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "../../i18n/i18n-context";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { IconButton } from "../ui/icon-button";
 import { controlBase, focusRing } from "../ui/styles";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface TextEditToolbarProps {
   engine: EditxEngine;
@@ -48,6 +51,8 @@ const PRESET_COLORS = [
 ];
 
 export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockId }) => {
+  const { t } = useTranslation();
+
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
@@ -107,21 +112,27 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
     >
       {/* Color swatch */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            className={cn(
-              "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
-              focusRing,
-            )}
-          >
-            <div
-              className="w-4 h-4 rounded-full border border-border"
-              style={{ backgroundColor: state.fill }}
-            />
-          </button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                aria-label={t("block.color")}
+                className={cn(
+                  "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors",
+                  focusRing,
+                )}
+              >
+                <div
+                  className="w-4 h-4 rounded-full border border-border"
+                  style={{ backgroundColor: state.fill }}
+                />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("block.color")}</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent className="w-auto p-2" align="center" data-text-toolbar>
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-6 gap-1">
@@ -159,36 +170,24 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
       </DropdownMenu>
 
       {/* Bold */}
-      <button
-        type="button"
+      <IconButton
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleBoldToggle}
-        className={cn(
-          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-          focusRing,
-          state.fontWeight === "bold"
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent",
-        )}
-      >
-        <Bold className="h-4 w-4" />
-      </button>
+        label={t("block.bold")}
+        variant={state.fontWeight === "bold" ? "default" : "ghost"}
+        className={state.fontWeight === "bold" ? undefined : "text-muted-foreground"}
+        icon={<Bold className="h-4 w-4" />}
+      />
 
       {/* Italic */}
-      <button
-        type="button"
+      <IconButton
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleItalicToggle}
-        className={cn(
-          "h-8 w-8 rounded-md flex items-center justify-center transition-colors",
-          focusRing,
-          state.fontStyle === "italic"
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent",
-        )}
-      >
-        <Italic className="h-4 w-4" />
-      </button>
+        label={t("block.italic")}
+        variant={state.fontStyle === "italic" ? "default" : "ghost"}
+        className={state.fontStyle === "italic" ? undefined : "text-muted-foreground"}
+        icon={<Italic className="h-4 w-4" />}
+      />
     </div>
   );
 };
