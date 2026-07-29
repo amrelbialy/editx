@@ -1,4 +1,4 @@
-﻿import { Github, Menu, Moon, Package, Sun, X } from "lucide-react";
+﻿import { Github, LayoutDashboard, Menu, Moon, Package, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useDarkMode } from "../hooks/use-dark-mode";
@@ -82,6 +82,18 @@ export function Navbar() {
 
         {/* Right icons — desktop */}
         <div className="hidden md:flex items-center gap-1 ml-auto">
+          {import.meta.env.DEV && (
+            <a
+              href="/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={ICON_BTN}
+              aria-label="Mission Control dashboard (dev only)"
+              title="Mission Control (dev only)"
+            >
+              <LayoutDashboard size={18} />
+            </a>
+          )}
           <button
             type="button"
             onClick={toggleDark}

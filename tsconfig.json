@@ -15,5 +15,5 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "exclude": ["node_modules", "**/dist", "**/coverage", "**/build", "temp"]
+  "exclude": ["node_modules", "**/dist", "**/coverage", "**/build", "temp", "scripts"]
 }

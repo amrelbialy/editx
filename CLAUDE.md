@@ -38,6 +38,8 @@ apps/demo → depends on image-editor, Vite
 
 Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tests.
 
+**Feature map:** `docs-private/FEATURE_MAP.md` is the index of every feature, where it lives (UI hook/panel ↔ engine API/command), and what depends on what. **Read it before touching an unfamiliar area, and update it when a feature lands, moves, or is removed.**
+
 ## File Style Rules
 
 - **Max 250 lines per file** (components, hooks, utils). Split by concern before adding more code.
@@ -90,6 +92,7 @@ Naming follows interaction-based conventions (e.g., `input-group` not `number-fi
 
 ## Key References
 
+- `docs-private/FEATURE_MAP.md` — feature tree, dependency map, extensibility surface (keep updated)
 - block-based editor API patterns (for engine API design)
 - Scaleflex UI Kit in `temp/ui-kit/` (for UI component naming/structure conventions)
 - 

@@ -12,6 +12,7 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check --write .",
+    "dashboard": "node scripts/dashboard.mjs",
     "release": "pnpm check && pnpm test && pnpm build && lerna version --conventional-commits --conventional-prerelease --yes",
     "release:graduate": "pnpm check && pnpm test && pnpm build && lerna version --conventional-commits --conventional-graduate --yes",
     "publish:packages": "lerna publish from-git --yes",
