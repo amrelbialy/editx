@@ -4,32 +4,72 @@ import * as React from "react";
 import { cn } from "../../../utils/cn";
 import { usePopoverContainer } from "../popover-container-context";
 import { focusRing } from "../styles";
+import { useSelectScrollGuard } from "./select-scroll-guard";
 
-const Select = SelectPrimitive.Root;
+// The trigger arms the scroll guard on pointerdown/keydown — before Radix locks
+// page scroll — so an inline-embedded editor doesn't jump. See
+// `useSelectScrollGuard` for the full explanation.
+const SelectGuardContext = React.createContext<(() => void) | null>(null);
+
+const Select: React.FC<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>> = ({
+  onOpenChange,
+  ...props
+}) => {
+  const { arm, disarm } = useSelectScrollGuard();
+
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      // Arm on open (covers keyboard/programmatic opens where the trigger's
+      // pointerdown/keydown capture handler never fired), disarm on close.
+      if (open) arm();
+      else disarm();
+      onOpenChange?.(open);
+    },
+    [arm, disarm, onOpenChange],
+  );
+
+  return (
+    <SelectGuardContext.Provider value={arm}>
+      <SelectPrimitive.Root onOpenChange={handleOpenChange} {...props} />
+    </SelectGuardContext.Provider>
+  );
+};
 const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 
 const SelectTrigger = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex h-8 cursor-pointer items-center justify-between gap-1 rounded-md border border-border bg-muted px-2 text-fluid text-foreground",
-      "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-      focusRing,
-      "[&>span]:line-clamp-1",
-      className,
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+>(({ className, children, onPointerDownCapture, onKeyDownCapture, ...props }, ref) => {
+  const beginGuard = React.useContext(SelectGuardContext);
+
+  return (
+    <SelectPrimitive.Trigger
+      ref={ref}
+      onPointerDownCapture={(e) => {
+        beginGuard?.();
+        onPointerDownCapture?.(e);
+      }}
+      onKeyDownCapture={(e) => {
+        if (e.key === "Enter" || e.key === " " || e.key.startsWith("Arrow")) beginGuard?.();
+        onKeyDownCapture?.(e);
+      }}
+      className={cn(
+        "flex h-8 cursor-pointer items-center justify-between gap-1 rounded-md border border-border bg-muted px-2 text-fluid text-foreground",
+        "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        focusRing,
+        "[&>span]:line-clamp-1",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  );
+});
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<
@@ -63,7 +103,7 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 const SelectContent = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "item-aligned", ...props }, ref) => {
+>(({ className, children, position = "popper", sideOffset = 4, ...props }, ref) => {
   const container = usePopoverContainer();
   const preventScrollFocus = (e: Event) => {
     e.preventDefault();
@@ -74,7 +114,8 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         ref={ref}
-        // collisionBoundary={container ?? null}
+        sideOffset={position === "popper" ? sideOffset : undefined}
+        collisionBoundary={container ?? null}
         onCloseAutoFocus={preventScrollFocus}
         className={cn(
           "relative z-50 max-h-60 min-w-[8rem] overflow-hidden rounded-lg border border-border bg-card shadow-lg",
