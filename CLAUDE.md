@@ -88,7 +88,36 @@ components/ui/{name}/
  index.ts # Barrel export
 ```
 
-Naming follows interaction-based conventions (e.g., `input-group` not `number-field`, `section` not `panel-section`).
+Naming follows interaction-based conventions (e.g., `input` not `number-field`, `section` not `panel-section`).
+
+## Design System
+
+All UI primitives live in `packages/image-editor/src/components/ui/` and must stay **pure and portable** (no `i18n/`, `engine`, `config/`, or app-hook imports) so they can be extracted into a standalone `@editx/ui` package later. App concerns (labels, handlers, icons) are injected via props. Import primitives from the `ui` barrel (`../ui`).
+
+**Use primitives, never raw elements:**
+
+- Buttons → `Button`. Icon-only buttons → `IconButton` (tooltip + `aria-label` baked in). **Never** use the native `title` attribute for icon buttons.
+- Text/number fields → `Input` (one component; switch behavior with the `type` prop — there is no separate `NumberField`).
+- Color inputs → `ColorSwatch` (never hand-roll `<input type="color">` outside `ui/`).
+- Tab/option toggles → `SegmentedControl`. Selects → `Select`. Toggles → `SwitchField`.
+
+**Shared style tokens** live in `ui/styles.ts` — compose them with `cn()`, never re-write the class strings inline:
+
+- `focusRing` — the one focus ring for every interactive control (2px ring + 2px offset).
+- `controlBase` — canonical surface for text-like controls (height, border, `bg-muted`, padding, text size).
+- `interactiveBase` — cursor/disabled behavior for custom interactive elements.
+
+**Spacing vocabulary** (use these exact tokens for consistency):
+
+| Slot | Token |
+|---|---|
+| Control height | `h-8` |
+| Control padding-x | `px-2` |
+| Panel padding | `p-3` |
+| Section gap | `gap-3` |
+| Row gap | `gap-2` |
+| Inline (label/control) | `gap-1.5` |
+| Label column | `w-12` |
 
 ## Key References
 
