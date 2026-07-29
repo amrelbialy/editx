@@ -1,0 +1,60 @@
+name: Update visual snapshots
+
+# Visual-regression baselines are OS-specific (Playwright names them
+# *-chromium-linux.png). They must be generated on the same platform CI runs on
+# (ubuntu), so run this workflow to (re)generate and commit the Linux baselines
+# whenever the editor UI changes. Windows-generated snapshots will never match.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch to update snapshots on"
+        required: false
+        default: ""
+
+concurrency:
+  group: update-snapshots-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+permissions:
+  contents: write
+
+jobs:
+  update-snapshots:
+    name: Regenerate Linux Playwright snapshots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref_name }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @editx/image-editor exec playwright install --with-deps chromium
+
+      - name: Update snapshots
+        run: pnpm --filter @editx/image-editor test:e2e:update
+
+      - name: Commit updated snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/image-editor/tests/snapshots
+          if git diff --cached --quiet; then
+            echo "No snapshot changes to commit."
+          else
+            git commit -m "test(image-editor): update Linux visual snapshots [skip ci]"
+            git push
+          fi
