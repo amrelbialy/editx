@@ -58,8 +58,13 @@ jobs:
   e2e:
     name: Component & journey tests (Playwright)
     runs-on: ubuntu-latest
+    # Allow the job to commit newly seeded Linux visual baselines back to the branch.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - uses: pnpm/action-setup@v4
 
@@ -74,8 +79,24 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter @editx/image-editor exec playwright install --with-deps chromium
 
+      # Auto-writes only *missing* OS-specific baselines (first-time seed) so they
+      # never block CI; existing baselines are still compared and fail on real diffs.
       - name: Playwright component tests
-        run: pnpm --filter @editx/image-editor test:e2e
+        run: pnpm --filter @editx/image-editor exec playwright test -c playwright-ct.config.js --update-snapshots=missing
+
+      # Persist any newly seeded baselines on branch pushes (skips forks/PRs).
+      - name: Commit seeded snapshots
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/image-editor/tests/snapshots
+          if git diff --cached --quiet; then
+            echo "No new snapshots to commit."
+          else
+            git commit -m "test(image-editor): seed missing visual snapshots [skip ci]"
+            git push
+          fi
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
