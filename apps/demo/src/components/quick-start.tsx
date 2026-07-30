@@ -121,6 +121,30 @@ function App() {
     </>
   );
 }`,
+  Vanilla: `import { createImageEditor } from "@editx/image-editor/vanilla";
+import "@editx/image-editor/styles.css";
+
+const editor = createImageEditor("#editor", {
+  src: "/your-image.jpg",
+  config: { tools: ["crop", "adjust", "filter", "text", "shapes"] },
+  onSave: (blob) => {
+    const url = URL.createObjectURL(blob);
+    console.log("Saved:", url);
+  },
+});
+
+// editor.update({ config: { tools: ["crop"] } }); // patch later
+// editor.destroy(); // tear down when done`,
+  "Web Component": `import { defineImageEditorElement } from "@editx/image-editor/element";
+import "@editx/image-editor/styles.css";
+
+// Register once, then use <editx-image-editor> anywhere in your HTML
+defineImageEditorElement();
+
+const el = document.querySelector("editx-image-editor");
+el.src = "/your-image.jpg";
+el.config = { tools: ["crop", "adjust", "filter"] };
+el.addEventListener("save", (e) => console.log("Saved:", e.detail.blob));`,
 };
 
 type TabKey = keyof typeof TABS;
@@ -132,7 +156,7 @@ export function QuickStart() {
     <section className="py-14 px-6 max-w-7xl mx-auto">
       <div className="text-center mb-10">
         <span className="text-xs font-semibold tracking-widest text-violet-600 uppercase">
-          Quick Start
+          Quick start
         </span>
         <h2 className="text-3xl font-semibold mt-2 text-zinc-900 dark:text-zinc-100">
           Up and running in minutes

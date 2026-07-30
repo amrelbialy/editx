@@ -10,6 +10,14 @@
 @source "../../../packages/image-editor/src";
 @source "../../../packages/engine/src";
 
+:root {
+  --brand-gradient: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #10b981 100%);
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;

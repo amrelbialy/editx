@@ -52,7 +52,7 @@ export function Navbar() {
             <span
               className="text-4xl bg-clip-text text-transparent"
               style={{
-                backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #10b981 100%)",
+                backgroundImage: "var(--brand-gradient)",
               }}
             >
               Editx

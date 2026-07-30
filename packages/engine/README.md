@@ -1,8 +1,12 @@
 # @editx/engine
 
+[![npm version](https://img.shields.io/npm/v/@editx/engine.svg)](https://www.npmjs.com/package/@editx/engine)
+[![npm downloads](https://img.shields.io/npm/dm/@editx/engine.svg)](https://www.npmjs.com/package/@editx/engine)
+[![license](https://img.shields.io/npm/l/@editx/engine.svg)](https://github.com/amrelbialy/editx/blob/main/LICENSE)
+
 Headless block-based creative engine with command-pattern undo/redo, Konva 10 renderer, and EventAPI.
 
-Part of the [EditX](https://github.com/amrelbialy/editx) monorepo.
+Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
 
 ## Installation
 

@@ -1,9 +1,14 @@
-import { Blocks, Github, Layers } from "lucide-react";
+import { Github, Layers, Sparkles } from "lucide-react";
 
 const STATS = [
-  { icon: Layers, label: "Tools", value: "6+", sub: "crop, adjust, filter, text, shapes, image" },
-  { icon: Blocks, label: "Architecture", value: "Block-based", sub: "command pattern · undo/redo" },
-  { icon: Github, label: "Open Source", value: "Free", sub: "MIT licensed" },
+  {
+    icon: Layers,
+    label: "Editing tools",
+    value: "6",
+    sub: "crop · adjust · filter · text · shapes · image",
+  },
+  { icon: Sparkles, label: "Filter presets", value: "30+", sub: "WebGL-accelerated" },
+  { icon: Github, label: "Open source", value: "MIT", sub: "free forever · no lock-in" },
 ];
 
 export function StatsBar() {

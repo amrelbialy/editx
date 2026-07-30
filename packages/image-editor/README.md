@@ -1,9 +1,13 @@
 # @editx/image-editor
 
+[![npm version](https://img.shields.io/npm/v/@editx/image-editor.svg)](https://www.npmjs.com/package/@editx/image-editor)
+[![npm downloads](https://img.shields.io/npm/dm/@editx/image-editor.svg)](https://www.npmjs.com/package/@editx/image-editor)
+[![license](https://img.shields.io/npm/l/@editx/image-editor.svg)](https://github.com/amrelbialy/editx/blob/main/LICENSE)
+
 The open-source, extensible image editor — crop, adjust, filter, annotate & export.
 A React 19 component on top of the headless, framework-agnostic [`@editx/engine`](https://github.com/amrelbialy/editx/tree/main/packages/engine).
 
-Part of the [EditX](https://github.com/amrelbialy/editx) monorepo.
+Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
 
 ## Installation
 

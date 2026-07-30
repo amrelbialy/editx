@@ -21,6 +21,11 @@
     "url": "https://github.com/amrelbialy/editx",
     "directory": "packages/engine"
   },
+  "homepage": "https://github.com/amrelbialy/editx/tree/main/packages/engine#readme",
+  "bugs": {
+    "url": "https://github.com/amrelbialy/editx/issues"
+  },
+  "author": "amrelbialy (https://github.com/amrelbialy)",
   "publishConfig": {
     "access": "public"
   },

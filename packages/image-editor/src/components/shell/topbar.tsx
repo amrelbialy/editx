@@ -111,9 +111,9 @@ export const Topbar: React.FC<TopbarProps> = ({
         </div>
       </div>
 
-      {/* Center: Title */}
+      {/* Center: Title — hidden on narrow containers to avoid crowding the toolbar */}
       {showTitle && (
-        <span className="text-xs font-medium text-muted-foreground @5xl/editor:text-sm">
+        <span className="hidden truncate px-2 text-xs font-medium text-muted-foreground @xl/editor:inline @5xl/editor:text-sm">
           {title}
         </span>
       )}
@@ -151,7 +151,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         <Button
           variant="default"
           size="sm"
-          className="h-7 text-xs px-2.5 @5xl/editor:h-8 @5xl/editor:px-3"
+          className="h-7 text-xs px-2 @sm/editor:px-2.5 @5xl/editor:h-8 @5xl/editor:px-3"
           onClick={onExport}
           disabled={isExporting}
           aria-busy={isExporting}
@@ -161,7 +161,9 @@ export const Topbar: React.FC<TopbarProps> = ({
           ) : (
             <Download className="h-3.5 w-3.5 @5xl/editor:h-4 @5xl/editor:w-4" />
           )}
-          {isExporting ? t("topbar.exporting") : t("topbar.export")}
+          <span className="hidden @sm/editor:inline">
+            {isExporting ? t("topbar.exporting") : t("topbar.export")}
+          </span>
         </Button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 ﻿import {
   Crop,
+  Github,
   History,
   ImagePlus,
   Palette,
@@ -8,12 +9,17 @@
   Sparkles,
   Type,
 } from "lucide-react";
+import { CopyButton } from "../components/copy-button";
 import { CtaBanner } from "../components/cta-banner";
 import { FeatureCard } from "../components/feature-card";
 import { Footer } from "../components/footer";
 import { InlineDemo } from "../components/inline-demo";
 import { QuickStart } from "../components/quick-start";
 import { StatsBar } from "../components/stats-bar";
+import { WhyEditx } from "../components/why-editx";
+
+const GITHUB_URL = "https://github.com/amrelbialy/editx";
+const INSTALL_CMD = "pnpm add @editx/image-editor";
 
 interface Feature {
   icon: React.ElementType;
@@ -26,7 +32,7 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: Crop,
-    title: "Crop & Resize",
+    title: "Crop & resize",
     desc: "Aspect ratio presets, free crop, rotate, flip, and social media resize presets.",
     from: "#8b5cf6",
     to: "#3b82f6",
@@ -41,7 +47,7 @@ const FEATURES: Feature[] = [
   {
     icon: Sparkles,
     title: "Filters",
-    desc: "Instagram-style filters with adjustable intensity.",
+    desc: "30+ filter presets with adjustable intensity, WebGL-accelerated.",
     from: "#ec4899",
     to: "#f43f5e",
   },
@@ -61,14 +67,14 @@ const FEATURES: Feature[] = [
   },
   {
     icon: ImagePlus,
-    title: "Image Overlays",
+    title: "Image overlays",
     desc: "Add image annotations on top of your canvas.",
     from: "#a855f7",
     to: "#8b5cf6",
   },
   {
     icon: History,
-    title: "Undo / Redo",
+    title: "Undo / redo",
     desc: "Full command-based history with keyboard shortcuts.",
     from: "#06b6d4",
     to: "#3b82f6",
@@ -84,14 +90,12 @@ const FEATURES: Feature[] = [
 
 export function LandingPage() {
   return (
-    <div
-      className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100"
-      style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-    >
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <HeroSection />
       <DemoSection />
-      <FeaturesSection />
       <StatsBar />
+      <FeaturesSection />
+      <WhyEditx />
       <QuickStart />
       <CtaBanner />
       <Footer />
@@ -121,12 +125,12 @@ function HeroSection() {
             className="w-2 h-2 rounded-full bg-emerald-500"
             style={{ boxShadow: "0 0 6px #34d399" }}
           />
-          @editx/image-editor
+          Open source · MIT licensed
         </span>
         <h1
           className="text-5xl md:text-7xl font-bold leading-tight tracking-tight animate-fade-in-up"
           style={{
-            background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #10b981 100%)",
+            background: "var(--brand-gradient)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}
@@ -137,8 +141,9 @@ function HeroSection() {
           className="max-w-xl text-lg leading-relaxed text-zinc-500 animate-fade-in-up"
           style={{ animationDelay: "0.1s" }}
         >
-          A block-based image editor component for React 19. Crop, adjust, filter, add text & shapes
-          — fully themeable and extensible.
+          Drop a full-featured image editor into any app — React, vanilla JS, or a Web Component.
+          Crop, adjust, filter, and annotate with text & shapes, on an extensible, themeable block
+          engine.
         </p>
 
         <div
@@ -170,8 +175,27 @@ function HeroSection() {
           >
             Playground
           </a>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all no-underline"
+          >
+            <Github size={16} aria-hidden="true" />
+            Star on GitHub
+          </a>
         </div>
-        <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-zinc-400">
+        <div
+          className="flex items-center gap-2 mt-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 pl-4 pr-1.5 py-1.5 font-mono text-sm text-zinc-700 dark:text-zinc-300 animate-fade-in-up"
+          style={{ animationDelay: "0.25s" }}
+        >
+          <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
+            $
+          </span>
+          <span className="select-all">{INSTALL_CMD}</span>
+          <CopyButton text={INSTALL_CMD} className="ml-1" />
+        </div>
+        <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-zinc-500">
           <span>React 19</span>
           <span>&middot;</span>
           <span>TypeScript</span>
@@ -192,12 +216,12 @@ function DemoSection() {
     <section className="py-14 px-6 max-w-5xl mx-auto">
       <div className="text-center mb-8">
         <span className="text-xs font-semibold tracking-widest text-violet-600 uppercase">
-          Live Demo
+          Live demo
         </span>
         <h2 className="text-3xl font-semibold mt-2 mb-2 text-zinc-900 dark:text-zinc-100">
           Try it right here
         </h2>
-        <p className="text-zinc-500">Edit a real photo with the full Editx. No setup required.</p>
+        <p className="text-zinc-500">Edit a real photo with the full editor. No setup required.</p>
       </div>
       <InlineDemo />
     </section>

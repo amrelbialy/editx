@@ -1,4 +1,4 @@
-<h1 align="center">EditX</h1>
+<h1 align="center">Editx</h1>
 
 <p align="center">
   The open-source, extensible image editor &mdash; powered by a headless block engine.<br/>
@@ -14,7 +14,7 @@
 
 ---
 
-## Why EditX
+## Why Editx
 
 - **Open source & MIT-licensed** — no per-seat fees, no vendor lock-in.
 - **Real engine underneath** — `@editx/image-editor` is a thin UI over [`@editx/engine`](./packages/engine), a headless, framework-agnostic block engine with a command-based undo/redo system. Build your own UI, or extend ours.

@@ -2,7 +2,7 @@ import { ImageEditor } from "@editx/image-editor";
 import { useMemo } from "react";
 import { useDarkMode } from "../hooks/use-dark-mode";
 
-const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=2000&q=90";
+const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1200&q=80";
 
 const TOOLS = ["crop", "adjust", "filter", "text", "shapes", "image"] as (
   | "crop"
