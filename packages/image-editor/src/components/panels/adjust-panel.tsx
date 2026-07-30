@@ -1,6 +1,7 @@
 import { ADJUSTMENT_CONFIG, type AdjustmentParam } from "@editx/engine";
 import { RotateCcw } from "lucide-react";
 import type React from "react";
+import { useConfig } from "../../config/config-context";
 import { Button } from "../ui/button";
 import { Section } from "../ui/section";
 import { SliderField } from "../ui/slider-field";
@@ -53,51 +54,44 @@ export const AdjustPanel: React.FC<AdjustPanelProps> = ({
   onCommit,
   onReset,
 }) => {
+  const config = useConfig();
+  const allowed = config.adjust?.controls;
+  const inWhitelist = (param: AdjustmentParam) => !allowed || allowed.includes(param);
+
+  const basicParams = BASIC_PARAMS.filter(inWhitelist);
+  const refinementParams = REFINEMENT_PARAMS.filter(inWhitelist);
+
+  const renderSlider = (param: AdjustmentParam) => {
+    const cfg = ADJUSTMENT_CONFIG[param];
+    return (
+      <SliderField
+        key={param}
+        label={LABELS[param]}
+        value={values[param]}
+        min={cfg.min}
+        max={cfg.max}
+        step={cfg.step}
+        onChange={(v) => onChange(param, v)}
+        onCommit={onCommit ? (v) => onCommit(param, v) : undefined}
+        formatValue={(v) => formatValue(cfg.step, v)}
+        data-testid={`adjust-${param}`}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      <Section label="Basic">
-        <div className="flex flex-col gap-2">
-          {BASIC_PARAMS.map((param) => {
-            const cfg = ADJUSTMENT_CONFIG[param];
-            return (
-              <SliderField
-                key={param}
-                label={LABELS[param]}
-                value={values[param]}
-                min={cfg.min}
-                max={cfg.max}
-                step={cfg.step}
-                onChange={(v) => onChange(param, v)}
-                onCommit={onCommit ? (v) => onCommit(param, v) : undefined}
-                formatValue={(v) => formatValue(cfg.step, v)}
-                data-testid={`adjust-${param}`}
-              />
-            );
-          })}
-        </div>
-      </Section>
+      {basicParams.length > 0 && (
+        <Section label="Basic">
+          <div className="flex flex-col gap-2">{basicParams.map(renderSlider)}</div>
+        </Section>
+      )}
 
-      <Section label="Refinements" separator>
-        <div className="flex flex-col gap-2">
-          {REFINEMENT_PARAMS.map((param) => {
-            const cfg = ADJUSTMENT_CONFIG[param];
-            return (
-              <SliderField
-                key={param}
-                label={LABELS[param]}
-                value={values[param]}
-                min={cfg.min}
-                max={cfg.max}
-                step={cfg.step}
-                onChange={(v) => onChange(param, v)}
-                onCommit={onCommit ? (v) => onCommit(param, v) : undefined}
-                formatValue={(v) => formatValue(cfg.step, v)}
-                data-testid={`adjust-${param}`}
-              />
-            );
-          })}
-        </div>
-      </Section>
+      {refinementParams.length > 0 && (
+        <Section label="Refinements" separator={basicParams.length > 0}>
+          <div className="flex flex-col gap-2">{refinementParams.map(renderSlider)}</div>
+        </Section>
+      )}
 
       <Button
         variant="outline"

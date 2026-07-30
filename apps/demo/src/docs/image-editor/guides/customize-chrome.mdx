@@ -1,0 +1,48 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Customize the Chrome
+
+Make the editor feel like part of your product. `config.ui` controls the topbar
+title and the close/back button so the frame matches the surrounding experience.
+
+## When to use this
+
+- You want the editor's title to read your product name instead of "Photo Editor".
+- The editor opens inside a multi-step flow, so a **back arrow** fits better than a close **X**.
+- You're embedding in a surface that already has a header and want to hide the title.
+
+## Configure the chrome
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onClose={() => history.back()}
+  config={{
+    ui: {
+      title: "Photo Studio",
+      showTitle: true,
+      showCloseButton: true,
+      showBackButton: true,
+    },
+  }}
+/>
+```
+
+- `title` — topbar text (defaults to the localized "Photo Editor").
+- `showTitle` — set `false` to hide the title.
+- `showCloseButton` — defaults to `true` whenever `onClose` is provided.
+- `showBackButton` — render a back arrow (labelled "Back") instead of the **X**.
+
+## Try it
+
+This editor shows a custom title:
+
+<GuideScenario config={{ ui: { title: "Photo Studio" } }} />
+
+## Next steps
+
+- [Save & Close](/docs/image-editor/guides/save-and-close) — close the editor automatically after export.
+- [Customize the Theme](/docs/image-editor/guides/custom-theme) — match brand colors and radius.
+- [Localize the UI](/docs/image-editor/guides/localize) — translate the title and every other label.
+
+> Verified by `tests/guides/customize-chrome.spec.tsx` in the `@editx/image-editor` package.

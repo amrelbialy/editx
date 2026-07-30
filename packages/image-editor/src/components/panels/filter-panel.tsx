@@ -1,4 +1,5 @@
 import type React from "react";
+import { useConfig } from "../../config/config-context";
 import { useFilterThumbnails } from "../../hooks/use-filter-thumbnails";
 import { cn } from "../../utils/cn";
 import { Spinner } from "../ui/spinner";
@@ -10,12 +11,17 @@ export interface FilterPanelProps {
 }
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({ activeFilter, onSelect }) => {
+  const config = useConfig();
   const thumbnails = useFilterThumbnails();
+
+  const presets = config.filter?.presets;
+  // Keep the "Original" (empty name) option plus any whitelisted presets.
+  const visible = thumbnails?.filter((t) => !presets || t.name === "" || presets.includes(t.name));
 
   return (
     <fieldset className="flex flex-col gap-2" aria-label="Filter presets">
-      {thumbnails ? (
-        thumbnails.map((thumb) => {
+      {visible ? (
+        visible.map((thumb) => {
           const isActive = activeFilter === thumb.name;
           return (
             <button

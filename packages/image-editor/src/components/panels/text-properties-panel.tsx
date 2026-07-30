@@ -2,6 +2,7 @@ import { type EditxEngine, TEXT_ALIGN, TEXT_LINE_HEIGHT } from "@editx/engine";
 import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorSwatch } from "../ui/color-swatch";
 import { IconButton } from "../ui/icon-button";
@@ -29,7 +30,7 @@ interface TextBlockState {
   opacity: number;
 }
 
-const FONT_FAMILIES = [
+const DEFAULT_FONT_FAMILIES = [
   "Arial",
   "Helvetica",
   "Times New Roman",
@@ -76,6 +77,9 @@ function readTextBlockState(
 export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine, blockId }) => {
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+  const config = useConfig();
+
+  const fontFamilies = config.text?.fonts ?? DEFAULT_FONT_FAMILIES;
 
   // Whether we're in inline-editing mode for this block with an active selection
   const hasCharSelection =
@@ -194,7 +198,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {FONT_FAMILIES.map((f) => (
+            {fontFamilies.map((f) => (
               <SelectItem key={f} value={f}>
                 {f}
               </SelectItem>

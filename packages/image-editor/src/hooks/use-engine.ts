@@ -211,6 +211,7 @@ export function useEngine({
         const ce = await createEngine({
           container: containerRef.current!,
         });
+        console.log("ce", ce);
         if (signal?.disposed) return;
 
         engineRef.current = ce;

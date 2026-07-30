@@ -1,0 +1,49 @@
+import { GuideVanillaMount } from "../../../components/guide-vanilla-mount";
+
+# Mount Without React
+
+Use the editor in any stack — Vue, Svelte, Angular, or no framework at all. The
+framework-agnostic entry mounts the editor into a plain DOM element, no React
+knowledge required in your app.
+
+## When to use this
+
+- Your app isn't built with React.
+- You want a single instance you can imperatively `update()` and `destroy()`.
+- You're embedding the editor into an existing non-React page.
+
+## Mount and control
+
+```ts
+import { createImageEditor } from "@editx/image-editor/vanilla";
+import "@editx/image-editor/styles.css";
+
+const editor = createImageEditor("#editor", {
+  src: "/photo.jpg",
+  onSave: (blob) => upload(blob),
+});
+
+// Patch options later (shallow-merged over the current ones):
+editor.update({ config: { tools: ["crop"] } });
+
+// Tear down when done:
+editor.destroy();
+```
+
+`createImageEditor(target, options)` accepts a DOM element or a CSS selector and
+returns an instance with `update()` and `destroy()`. `options` has the same shape
+as the React component props.
+
+## Try it
+
+The editor below is mounted with the vanilla API — no `<ImageEditor>` JSX:
+
+<GuideVanillaMount />
+
+## Next steps
+
+- [Use as a Web Component](/docs/image-editor/guides/web-component) — even less wiring, drop-in HTML.
+- [Open in a Modal](/docs/image-editor/guides/open-in-modal) — the React dialog wrapper.
+- [Getting Started](/docs/image-editor/getting-started) — CSS setup and basics.
+
+> Verified by `tests/guides/vanilla-mount.spec.tsx` in the `@editx/image-editor` package.

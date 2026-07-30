@@ -1,0 +1,68 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure the Crop Tool
+
+Ship the Crop tool with output sizes that match your product. `config.crop.resizePresets`
+adds one-click resize targets — social formats, thumbnails, print dimensions — to
+the Crop tool's **Resize** tab.
+
+## When to use this
+
+- Your users export to fixed sizes (e.g. a 1080×1080 avatar or a 1200×630 share card).
+- You want to remove guesswork by offering named, on-brand output dimensions.
+- You're building a template flow where every export must land on an exact size.
+
+## Configure the presets
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    crop: {
+      resizePresets: [
+        {
+          label: "Social",
+          presets: [
+            { label: "Square", width: 1080, height: 1080 },
+            { label: "Portrait", width: 1080, height: 1350 },
+            { label: "Story", width: 1080, height: 1920 },
+          ],
+        },
+      ],
+    },
+  }}
+/>
+```
+
+Each `ResizePresetGroup` has a `label` and a list of presets; every preset needs a
+`label`, `width`, and `height`. The first three presets in a group show up front,
+with a **More** toggle for the rest.
+
+## Try it
+
+Open **Crop → Resize** to see the configured presets:
+
+<GuideScenario
+  config={{
+    crop: {
+      resizePresets: [
+        {
+          label: "Social",
+          presets: [
+            { label: "Square", width: 1080, height: 1080 },
+            { label: "Portrait", width: 1080, height: 1350 },
+            { label: "Story", width: 1080, height: 1920 },
+          ],
+        },
+      ],
+    },
+  }}
+/>
+
+## Next steps
+
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — show only the tools you need.
+- [Control Export Formats](/docs/image-editor/guides/export-formats) — pair resize with a fixed output format.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-crop.spec.tsx` in the `@editx/image-editor` package.

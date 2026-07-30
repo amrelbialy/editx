@@ -1,0 +1,61 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure Text Fonts
+
+Swap the built-in font list for your own with `config.text.fonts`. Your list
+drives every font-family picker in the editor — the selection bar above a text
+block and the Text Properties panel — and the first entry becomes the default
+family for newly added text.
+
+## When to use this
+
+- You want on-brand typography instead of the generic system fonts.
+- You're loading custom web fonts and want them selectable in the editor.
+- You need consistent defaults (family, size, colour) for every new text block.
+
+## Configure the fonts
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    text: {
+      fonts: ["Poppins", "Roboto Mono", "Playfair Display"],
+      defaultFontFamily: "Poppins",
+      defaultFontSize: 32,
+      defaultColor: "#ffffff",
+    },
+  }}
+/>
+```
+
+- `fonts` — the ordered list shown in every font picker.
+- `defaultFontFamily` — family applied to new text (falls back to `fonts[0]`).
+- `defaultFontSize` — base size in px for new text.
+- `defaultColor` — fill colour for new text.
+
+Load the matching web fonts yourself (via a `<link>` or `@font-face`) so the
+names you list actually render.
+
+## Try it
+
+Add a text block, then open the font picker in the selection bar — it lists your
+configured fonts:
+
+<GuideScenario
+  config={{
+    text: {
+      fonts: ["Poppins", "Roboto Mono", "Playfair Display"],
+      defaultFontFamily: "Poppins",
+      defaultFontSize: 32,
+    },
+  }}
+/>
+
+## Next steps
+
+- [Customize the Theme](/docs/image-editor/guides/custom-theme) — set the UI font and colours.
+- [Configure the Adjust Tool](/docs/image-editor/guides/configure-adjustments) — trim the adjustment sliders.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-fonts.spec.tsx` in the `@editx/image-editor` package.

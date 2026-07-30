@@ -1,0 +1,50 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure the Shapes Tool
+
+Curate which shapes the **Shapes** tool offers with `config.shapes.presets`.
+Pass the shape ids you want and the panel shows only those, in the order you list
+them.
+
+## When to use this
+
+- The full shape set is more than your users need.
+- You want to enforce a small, on-brand set of primitives.
+- You're building a focused annotation flow (e.g. arrows only).
+
+## Configure the presets
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    shapes: {
+      presets: ["rect", "ellipse", "star"],
+    },
+  }}
+/>
+```
+
+Shape ids match the built-in shapes — `rect`, `ellipse`, `triangle`, `pentagon`,
+`hexagon`, `star`, `line`. They render in the order you list them. Omit `presets`
+to show every built-in shape.
+
+## Try it
+
+Open the **Shapes** tool — only the curated shapes appear:
+
+<GuideScenario
+  config={{
+    shapes: {
+      presets: ["rect", "ellipse", "star"],
+    },
+  }}
+/>
+
+## Next steps
+
+- [Configure Crop Aspect Ratios](/docs/image-editor/guides/configure-crop-ratios) — trim the ratio grid.
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — hide whole tools you don't need.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-shapes.spec.tsx` in the `@editx/image-editor` package.

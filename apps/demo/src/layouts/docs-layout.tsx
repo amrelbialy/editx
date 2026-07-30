@@ -1,6 +1,12 @@
+import { ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router";
 
-const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] = [
+type NavLink = { label: string; href: string };
+type NavSection = { heading: string; links: NavLink[] };
+type NavGroup = { heading: string; links?: NavLink[]; sections?: NavSection[] };
+
+const SIDEBAR: NavGroup[] = [
   {
     heading: "Image Editor",
     links: [
@@ -11,18 +17,66 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
     ],
   },
   {
-    heading: "Recipes",
-    links: [
-      { label: "Limit Tools", href: "/docs/image-editor/recipes/limit-tools" },
-      { label: "Custom Theme", href: "/docs/image-editor/recipes/custom-theme" },
-      { label: "Localize", href: "/docs/image-editor/recipes/localize" },
-      { label: "Export Formats", href: "/docs/image-editor/recipes/export-formats" },
-      { label: "Custom Tool", href: "/docs/image-editor/recipes/custom-tool" },
-      { label: "Inject Slots", href: "/docs/image-editor/recipes/inject-slots" },
-      { label: "Tool Change Events", href: "/docs/image-editor/recipes/track-tool-changes" },
-      { label: "Open in Modal", href: "/docs/image-editor/recipes/open-in-modal" },
-      { label: "Vanilla / No-React", href: "/docs/image-editor/recipes/vanilla-mount" },
-      { label: "Web Component", href: "/docs/image-editor/recipes/web-component" },
+    heading: "Guides",
+    sections: [
+      {
+        heading: "Customize the Editor",
+        links: [
+          { label: "Limit the Tools", href: "/docs/image-editor/guides/limit-tools" },
+          { label: "Configure the Crop Tool", href: "/docs/image-editor/guides/configure-crop" },
+          {
+            label: "Configure the Adjust Tool",
+            href: "/docs/image-editor/guides/configure-adjustments",
+          },
+          {
+            label: "Configure the Filter Tool",
+            href: "/docs/image-editor/guides/configure-filters",
+          },
+          { label: "Configure Text Fonts", href: "/docs/image-editor/guides/configure-fonts" },
+          {
+            label: "Configure the Shapes Tool",
+            href: "/docs/image-editor/guides/configure-shapes",
+          },
+          {
+            label: "Configure Crop Aspect Ratios",
+            href: "/docs/image-editor/guides/configure-crop-ratios",
+          },
+          { label: "Limit Image Uploads", href: "/docs/image-editor/guides/image-upload-limits" },
+          { label: "Set the Default Tool", href: "/docs/image-editor/guides/set-default-tool" },
+          {
+            label: "Compact the Tool Sidebar",
+            href: "/docs/image-editor/guides/compact-sidebar",
+          },
+          { label: "Add a Custom Tool", href: "/docs/image-editor/guides/custom-tool" },
+          { label: "Inject Custom UI", href: "/docs/image-editor/guides/inject-slots" },
+          { label: "Customize the Chrome", href: "/docs/image-editor/guides/customize-chrome" },
+        ],
+      },
+      {
+        heading: "Theme & Localize",
+        links: [
+          { label: "Customize the Theme", href: "/docs/image-editor/guides/custom-theme" },
+          { label: "Localize the UI", href: "/docs/image-editor/guides/localize" },
+        ],
+      },
+      {
+        heading: "Export & Events",
+        links: [
+          { label: "Control Export Formats", href: "/docs/image-editor/guides/export-formats" },
+          { label: "Add a Watermark on Save", href: "/docs/image-editor/guides/watermark-on-save" },
+          { label: "Save & Close", href: "/docs/image-editor/guides/save-and-close" },
+          { label: "React to Editor Events", href: "/docs/image-editor/guides/track-tool-changes" },
+        ],
+      },
+      {
+        heading: "Integrate Anywhere",
+        links: [
+          { label: "Save & Restore Scenes", href: "/docs/image-editor/guides/save-load-scene" },
+          { label: "Open in a Modal", href: "/docs/image-editor/guides/open-in-modal" },
+          { label: "Mount Without React", href: "/docs/image-editor/guides/vanilla-mount" },
+          { label: "Use as a Web Component", href: "/docs/image-editor/guides/web-component" },
+        ],
+      },
     ],
   },
   {
@@ -38,6 +92,56 @@ const SIDEBAR: { heading: string; links: { label: string; href: string }[] }[] =
   },
 ];
 
+const linkClass = (active: boolean) =>
+  `block px-2.5 py-1.5 rounded-md text-sm no-underline transition-colors ${
+    active
+      ? "bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 font-medium"
+      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+  }`;
+
+function NavLinks(props: { links: NavLink[]; pathname: string }) {
+  const { links, pathname } = props;
+  return (
+    <ul className="flex flex-col gap-1">
+      {links.map((link) => (
+        <li key={link.href}>
+          <Link to={link.href} className={linkClass(pathname === link.href)}>
+            {link.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AccordionSection(props: { section: NavSection; pathname: string }) {
+  const { section, pathname } = props;
+  const containsActive = section.links.some((l) => l.href === pathname);
+
+  const [open, setOpen] = useState(containsActive);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
+      >
+        <ChevronRight
+          className={`size-3.5 shrink-0 transition-transform ${open ? "rotate-90" : ""}`}
+        />
+        {section.heading}
+      </button>
+      {open && (
+        <div className="mt-1 pl-2">
+          <NavLinks links={section.links} pathname={pathname} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DocsLayout(props: { children: React.ReactNode }) {
   const { children } = props;
   const { pathname } = useLocation();
@@ -52,25 +156,14 @@ export function DocsLayout(props: { children: React.ReactNode }) {
               <h4 className="text-xs font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase mb-2">
                 {group.heading}
               </h4>
-              <ul className="flex flex-col gap-1">
-                {group.links.map((link) => {
-                  const active = pathname === link.href;
-                  return (
-                    <li key={link.href}>
-                      <Link
-                        to={link.href}
-                        className={`block px-2.5 py-1.5 rounded-md text-sm no-underline transition-colors ${
-                          active
-                            ? "bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 font-medium"
-                            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+              {group.links && <NavLinks links={group.links} pathname={pathname} />}
+              {group.sections && (
+                <div className="flex flex-col gap-2">
+                  {group.sections.map((section) => (
+                    <AccordionSection key={section.heading} section={section} pathname={pathname} />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </nav>

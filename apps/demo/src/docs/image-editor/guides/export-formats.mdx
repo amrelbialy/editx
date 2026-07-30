@@ -1,0 +1,45 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Control Export Formats
+
+Decide which output formats users can save to, and which one is selected by
+default. Restrict the choices with `export.formats` and pick the default with
+`export.defaultFormat`.
+
+## When to use this
+
+- Your pipeline only accepts certain formats (e.g. JPEG-only for uploads).
+- You want a sensible default so most users never touch the format picker.
+- You need to hide formats that don't apply to your use case.
+
+## Configure export
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    export: {
+      formats: ["png", "jpeg"],
+      defaultFormat: "jpeg",
+    },
+  }}
+/>
+```
+
+`defaultFormat` must be one of the listed `formats`. Omit `export` to offer every
+supported format.
+
+## Try it
+
+Open the export dialog — only **PNG** and **JPEG** are offered, with JPEG
+pre-selected:
+
+<GuideScenario config={{ export: { formats: ["png", "jpeg"], defaultFormat: "jpeg" } }} />
+
+## Next steps
+
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — transform the blob before save.
+- [Open in a Modal](/docs/image-editor/guides/open-in-modal) — export from a dialog flow.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/export-formats.spec.tsx` in the `@editx/image-editor` package.

@@ -63,7 +63,7 @@ export const defaultConfig: Required<
 
   ui: {
     toolSidebar: {
-      showLabels: true,
+      compact: false,
       groupSeparators: true,
     },
     contextualBar: {
@@ -74,7 +74,7 @@ export const defaultConfig: Required<
   },
 
   crop: {
-    presets: ["free", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+    presets: ["free", "original", "1:1", "4:3", "3:4", "16:9", "9:16"],
     modes: ["crop", "cover", "fit"],
     defaultMode: "crop",
     allowCustomRatio: true,
@@ -111,7 +111,7 @@ export const defaultConfig: Required<
   },
 
   shapes: {
-    presets: ["rect", "ellipse", "triangle", "star", "arrow"],
+    presets: ["rect", "ellipse", "triangle", "pentagon", "hexagon", "star", "line"],
     defaultFillMode: "filled",
     defaultColor: "#3b82f6",
   },

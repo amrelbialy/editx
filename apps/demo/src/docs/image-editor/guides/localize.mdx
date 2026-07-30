@@ -1,0 +1,88 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Localize the UI
+
+Present the editor in your users'' language. Set the active `locale` and override
+strings with `translations` — keys use dot-notation (e.g. `tools.crop`) and fall
+back to the default English copy when a key is missing, so partial translations
+degrade gracefully.
+
+## When to use this
+
+- Your app serves users in more than one language.
+- You want to reword specific labels to match your product''s voice.
+- You need a partial translation now and full coverage later — missing keys fall back to English.
+
+## Set locale and overrides
+
+Pass a map of keys to translated strings. It''s merged over the built-in copy for
+the active `locale`, so you override only the strings you care about:
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    locale: "es",
+    translations: {
+      "topbar.title": "Editor de fotos",
+      "topbar.export": "Exportar imagen",
+      "tools.crop": "Recortar",
+      "tools.adjust": "Ajustar",
+      "tools.filter": "Filtros",
+      "tools.text": "Texto",
+      "tools.shapes": "Formas",
+      "tools.image": "Imagen",
+    },
+  }}
+/>
+```
+
+Keys mirror the built-in dictionary — tool labels (`tools.*`), the topbar
+(`topbar.*`), block actions (`action.*`), panels (`panel.*`), and dialogs
+(`dialog.*`). Any key you omit stays in English.
+
+## Bring your own i18n library
+
+Already using `i18next`, `react-intl`, or similar? Skip the static map and pass
+`translateFn` — it''s called for every key, so the editor reads straight from your
+existing catalog:
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    locale: i18n.language,
+    translateFn: (key) => i18n.t(`editor.${key}`),
+  }}
+/>
+```
+
+Return an empty string to let a key fall through to the English default.
+
+## Try it
+
+The whole sidebar and topbar below are relabelled in Spanish:
+
+<GuideScenario
+  config={{
+    locale: "es",
+    translations: {
+      "topbar.title": "Editor de fotos",
+      "topbar.export": "Exportar imagen",
+      "tools.crop": "Recortar",
+      "tools.adjust": "Ajustar",
+      "tools.filter": "Filtros",
+      "tools.text": "Texto",
+      "tools.shapes": "Formas",
+      "tools.image": "Imagen",
+    },
+  }}
+/>
+
+## Next steps
+
+- [Customize the Theme](/docs/image-editor/guides/custom-theme) — apply your brand colors.
+- [Customize the Chrome](/docs/image-editor/guides/customize-chrome) — set the title and close controls.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/localize.spec.tsx` in the `@editx/image-editor` package.

@@ -23,14 +23,26 @@ interface AspectRatioPresetsProps {
   activePreset: CropPresetId;
   ariaLabel: string;
   onSelect: (preset: CropPresetId) => void;
+  /**
+   * Optional whitelist of preset ids to show, in the given order. When omitted,
+   * every built-in preset renders.
+   */
+  presetIds?: CropPresetId[];
 }
 
 export const AspectRatioPresets: React.FC<AspectRatioPresetsProps> = (props) => {
-  const { activePreset, ariaLabel, onSelect } = props;
+  const { activePreset, ariaLabel, onSelect, presetIds } = props;
+
+  const visiblePresets = presetIds
+    ? presetIds.flatMap((id) => {
+        const p = presets.find((preset) => preset.id === id);
+        return p ? [p] : [];
+      })
+    : presets;
 
   return (
     <fieldset className="grid grid-cols-2 gap-1.5 @3xl/editor:grid-cols-3" aria-label={ariaLabel}>
-      {presets.map((preset) => (
+      {visiblePresets.map((preset) => (
         <button
           type="button"
           key={preset.id}

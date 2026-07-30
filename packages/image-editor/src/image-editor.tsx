@@ -1,5 +1,6 @@
+import type { EditxEngine } from "@editx/engine";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ExportDialog } from "./components/panels/export-dialog";
 import { announce } from "./components/shell/announcer";
 import { CanvasPane } from "./components/shell/canvas-pane";
@@ -30,10 +31,26 @@ import type { ImageValidationOptions } from "./utils/validate-image";
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
 
+/**
+ * Imperative handle surfaced through {@link ImageEditorProps.onReady} once the
+ * engine is initialized. Lets embedders serialize, restore, and script the
+ * editor programmatically.
+ */
+export interface EditorHandle {
+  /** Serialize the full scene (all blocks) to a JSON string. */
+  saveScene(): string;
+  /** Restore a scene previously produced by {@link saveScene}. */
+  loadScene(json: string): Promise<void>;
+  /** The underlying engine instance, for advanced/headless use. */
+  engine: EditxEngine;
+}
+
 export interface ImageEditorProps {
   src: ImageSource;
   onSave?: (blob: Blob) => void;
   onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
+  /** Fires once when the engine is ready, exposing an imperative editor handle. */
+  onReady?: (handle: EditorHandle) => void;
   width?: string | number;
   height?: string | number;
   /** Validation options for file type, size, and dimension limits. */
@@ -53,6 +70,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     src,
     onSave,
     onClose,
+    onReady,
     width = "100%",
     height = "100vh",
     validation,
@@ -63,6 +81,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   } = props;
 
   // --- Refs & custom hooks ---
+  const onReadyFiredRef = useRef(false);
+  const defaultToolAppliedRef = useRef(false);
+
   const {
     containerRef,
     engine,
@@ -75,7 +96,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     setSelectedShapeId,
   } = useEngine({ src, validation, keepZoomOnSourceChange });
 
-  const tools = useTools({ engineRef, engine, selectedShapeId, setSelectedShapeId, events });
+  const tools = useTools({
+    engineRef,
+    engine,
+    selectedShapeId,
+    setSelectedShapeId,
+    events,
+    imageConfig: userConfig?.image,
+  });
   const zoom = useZoom({ engineRef, engine });
   const { handleExport, isExporting } = useExport({
     engineRef,
@@ -172,6 +200,28 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     return ce.event.subscribe([], () => markDirty());
     // biome-ignore lint/correctness/useExhaustiveDependencies: engine triggers re-subscribe when instance is created
   }, [engine, engineRef, markDirty]);
+
+  // Surface the imperative editor handle once the engine is ready.
+  useEffect(() => {
+    const ce = engineRef.current;
+    if (!ce || !engine || !onReady || onReadyFiredRef.current) return;
+    onReadyFiredRef.current = true;
+    onReady({
+      engine: ce,
+      saveScene: () => ce.scene.saveToString(),
+      loadScene: (json: string) => ce.scene.loadFromString(json),
+    });
+  }, [engine, engineRef, onReady]);
+
+  // Open the editor on the configured default tool (once, after load).
+  useEffect(() => {
+    if (defaultToolAppliedRef.current) return;
+    if (isLoading || error || !engine) return;
+    const defaultTool = userConfig?.defaultTool;
+    if (!defaultTool) return;
+    defaultToolAppliedRef.current = true;
+    tools.handleSidebarToolSelect(defaultTool);
+  }, [isLoading, error, engine, userConfig?.defaultTool, tools.handleSidebarToolSelect]);
 
   // Sync theme accent color to engine transformer
   useEffect(() => {

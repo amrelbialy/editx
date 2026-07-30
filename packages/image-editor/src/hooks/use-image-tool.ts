@@ -1,11 +1,16 @@
 import type { EditxEngine } from "@editx/engine";
 import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/engine";
 import { useCallback } from "react";
-import { useConfig } from "../config/config-context";
+import type { ImageToolConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseImageToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
+  /**
+   * Image-tool config. Passed explicitly (not via context) because `useTools`
+   * runs above the config provider in the editor tree.
+   */
+  imageConfig?: ImageToolConfig;
 }
 
 const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -53,10 +58,8 @@ function downscaleImage(img: HTMLImageElement, maxDim: number): string {
   return canvas.toDataURL("image/png");
 }
 
-export function useImageTool({ engineRef }: UseImageToolOptions) {
+export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
-  const config = useConfig();
-  const imageConfig = config.image;
 
   const maxFileSize = imageConfig?.maxFileSize ?? DEFAULT_MAX_FILE_SIZE;
   const maxDimension = imageConfig?.maxDimension ?? DEFAULT_MAX_DIMENSION;
@@ -67,9 +70,6 @@ export function useImageTool({ engineRef }: UseImageToolOptions) {
    */
   const handleAddImage = useCallback(
     async (file: File) => {
-      const ce = engineRef.current;
-      if (!ce || editableBlockId === null) return;
-
       // Validate file size
       if (file.size > maxFileSize) {
         const maxMB = Math.round(maxFileSize / (1024 * 1024));
@@ -80,6 +80,9 @@ export function useImageTool({ engineRef }: UseImageToolOptions) {
       if (!file.type.startsWith("image/")) {
         throw new Error("File is not an image");
       }
+
+      const ce = engineRef.current;
+      if (!ce || editableBlockId === null) return;
 
       const dataUrl = await readFileAsDataURL(file);
       const img = await loadImageElement(dataUrl);

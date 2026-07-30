@@ -1,0 +1,51 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Limit Image Uploads
+
+Guard the **Image** tool against oversized or huge uploads with `config.image`.
+Cap the file size and the maximum dimension so users can't drop in a 50 MP photo.
+
+## When to use this
+
+- You're uploading results to a backend with size limits.
+- You want predictable performance regardless of input.
+- You need to reject obviously-wrong files early, with a clear message.
+
+## Configure the limits
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    image: {
+      maxFileSize: 5 * 1024 * 1024, // 5 MB
+      maxDimension: 4096, // px, longest edge
+    },
+  }}
+/>
+```
+
+- `maxFileSize` (bytes) rejects files larger than the limit with an inline error.
+- `maxDimension` (px) downscales images whose longest edge exceeds the limit.
+
+Omit `image` to use the built-in defaults.
+
+## Try it
+
+Open the **Image** tool and add a file — oversized uploads are rejected inline:
+
+<GuideScenario
+  config={{
+    image: {
+      maxFileSize: 1 * 1024 * 1024,
+    },
+  }}
+/>
+
+## Next steps
+
+- [Configure the Shapes Tool](/docs/image-editor/guides/configure-shapes) — curate the shape set.
+- [Save & Restore Scenes](/docs/image-editor/guides/save-load-scene) — serialize the full editor state.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/image-upload-limits.spec.tsx` in the `@editx/image-editor` package.

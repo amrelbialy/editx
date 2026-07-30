@@ -1,0 +1,45 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Set the Default Tool
+
+Open the editor directly on a specific tool with `config.defaultTool`. Instead of
+landing on the neutral selection state, the editor activates the tool you name as
+soon as the image loads.
+
+## When to use this
+
+- Your flow always starts with the same action (e.g. cropping).
+- You're embedding the editor for a single, focused task.
+- You want to shave a click off the most common path.
+
+## Configure the default tool
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    defaultTool: "adjust",
+  }}
+/>
+```
+
+`defaultTool` accepts any tool id — `crop`, `adjust`, `filter`, `text`, `shapes`,
+`image`. Set it to `null` (the default) to start on the neutral selection state.
+
+## Try it
+
+The editor opens with the **Adjust** panel already active — no click required:
+
+<GuideScenario
+  config={{
+    defaultTool: "adjust",
+  }}
+/>
+
+## Next steps
+
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — hide whole tools you don't need.
+- [Compact the Tool Sidebar](/docs/image-editor/guides/compact-sidebar) — shrink the tool rail.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/set-default-tool.spec.tsx` in the `@editx/image-editor` package.

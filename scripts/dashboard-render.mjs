@@ -34,7 +34,7 @@ export function renderMarkdown(features, metrics, now) {
     "",
     `- **Branch:** \`${metrics.branch}\``,
     `- **Uncommitted files:** ${metrics.dirty}`,
-    `- **Recipes:** ${metrics.recipeDocs} docs / ${metrics.recipeSpecs} specs`,
+    `- **Guides:** ${metrics.guideDocs} docs / ${metrics.guideSpecs} specs`,
     `- **Tests:** ${metrics.engineTests} engine · ${metrics.ieTests} image-editor`,
     "",
     "### Feature status",
@@ -72,7 +72,7 @@ export function renderHtml(features, metrics, now, featureMapMd = "", tree = nul
 
   const tiles = [
     { n: `${counts.shipped}/${features.length}`, l: "Features shipped" },
-    { n: metrics.recipeDocs, l: "Recipes" },
+    { n: metrics.guideDocs, l: "Guides" },
     { n: metrics.engineTests + metrics.ieTests, l: "Test files" },
     { n: metrics.dirty, l: "Uncommitted" },
   ]

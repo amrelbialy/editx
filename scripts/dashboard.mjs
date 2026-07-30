@@ -47,7 +47,7 @@ function main() {
   writeFileSync(HTML_PATH, renderHtml(features, metrics, now, featureMap, tree, focus));
   console.log(`✓ Wrote ${HTML_PATH}`);
   console.log(
-    `  ${features.length} features · ${metrics.recipeDocs} recipes · ${metrics.engineTests + metrics.ieTests} test files · branch ${metrics.branch}`,
+    `  ${features.length} features · ${metrics.guideDocs} guides · ${metrics.engineTests + metrics.ieTests} test files · branch ${metrics.branch}`,
   );
 }
 

@@ -1,0 +1,49 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+import { stampWatermark } from "../../../components/guide-watermark";
+
+# Add a Watermark on Save
+
+Post-process the exported image before it leaves the editor. `events.onBeforeSave`
+receives the rendered `Blob` and returns a replacement — ideal for stamping a
+watermark, re-encoding, or handing off a processed copy to your backend.
+
+## When to use this
+
+- Every export must carry a watermark or logo overlay.
+- You need to re-encode, compress, or resize the blob before it's saved.
+- You upload the result to your own storage and want the processed bytes, not the raw export.
+
+## Wire up the hook
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onSave={(blob) => uploadToServer(blob)}
+  events={{
+    onBeforeSave: async (blob) => {
+      const watermarked = await stampWatermark(blob);
+      return watermarked; // return undefined to keep the original
+    },
+  }}
+/>
+```
+
+`onBeforeSave` runs after the scene renders and before `onSave` (or the built-in
+download). Return a `Blob` to replace the export, or `undefined` to keep the
+original. It can be async, so awaiting canvas work or a network call is fine.
+
+## Try it
+
+Click **Export Image → Save**. The `onBeforeSave` hook below stamps a repeating
+**© EDITX** watermark onto the rendered image, so the file you download is the
+watermarked version — not the original:
+
+<GuideScenario events={{ onBeforeSave: stampWatermark }} />
+
+## Next steps
+
+- [Control Export Formats](/docs/image-editor/guides/export-formats) — choose the format `onBeforeSave` receives.
+- [Save & Close](/docs/image-editor/guides/save-and-close) — dismiss the editor once the save completes.
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — observe tool changes as users edit.
+
+> Verified by `tests/guides/watermark-on-save.spec.tsx` in the `@editx/image-editor` package.

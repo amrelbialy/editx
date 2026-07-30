@@ -58,7 +58,7 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
   const config = useConfig();
   const { t } = useTranslation();
   const enabledTools = config.tools;
-  const showLabels = config.ui?.toolSidebar?.showLabels ?? true;
+  const compact = config.ui?.toolSidebar?.compact ?? false;
   const showSeparators = config.ui?.toolSidebar?.groupSeparators ?? true;
 
   const visibleTools = allTools.filter((t) => enabledTools.includes(t.id));
@@ -85,14 +85,17 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
             aria-keyshortcuts={tool.shortcut}
             className={cn(
               "flex flex-col items-center justify-center py-1.5 px-1.5 rounded-md transition-colors cursor-pointer",
-              "min-w-10 @xl/editor:w-16 @xl/editor:h-[58px] @xl/editor:py-0 @xl/editor:px-1",
+              "min-w-10",
+              compact
+                ? "@xl/editor:size-10 @xl/editor:p-0"
+                : "@xl/editor:w-16 @xl/editor:h-[58px] @xl/editor:py-0 @xl/editor:px-1",
               focusRing,
               "text-muted-foreground hover:text-foreground hover:bg-primary/8",
               isActive && "bg-primary/12 text-primary shadow-sm hover:bg-primary/12",
             )}
           >
             <Icon className="h-4.5 w-4.5 @5xl/editor:h-6 @5xl/editor:w-6" />
-            {showLabels && (
+            {!compact && (
               <span className="text-[10px] mt-0.5 leading-none @5xl/editor:text-xs @xl/editor:mt-1">
                 {tool.label}
               </span>
@@ -128,31 +131,49 @@ export const ToolNav: React.FC<ToolNavProps> = (props) => {
         "px-1 py-1 overflow-x-auto order-last",
         // Desktop (wide): vertical left sidebar
         "@xl/editor:flex-col @xl/editor:items-center @xl/editor:justify-start",
-        "@xl/editor:w-20 @xl/editor:py-2 @xl/editor:px-0",
+        compact ? "@xl/editor:w-14" : "@xl/editor:w-20",
+        "@xl/editor:py-2 @xl/editor:px-0",
         "@xl/editor:bg-sidebar @xl/editor:border-t-0 @xl/editor:border-r @xl/editor:border-sidebar-border",
         "@xl/editor:overflow-x-visible @xl/editor:overflow-y-auto @xl/editor:order-first",
       )}
     >
       {/* Editing tools */}
-      <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
+      <div
+        className={cn(
+          "contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full",
+          compact ? "@xl/editor:gap-1 @xl/editor:px-1" : "@xl/editor:gap-0.5 @xl/editor:px-1.5",
+        )}
+      >
         {resolvedEditing.map(renderToolButton)}
       </div>
 
       {/* Separator between groups — desktop only */}
       {showSeparators && editingTools.length > 0 && annotationTools.length > 0 && (
-        <Separator className="hidden @xl/editor:block my-2 w-10" />
+        <Separator className={cn("hidden @xl/editor:block my-2", compact ? "w-8" : "w-10")} />
       )}
 
       {/* Annotation tools */}
-      <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
+      <div
+        className={cn(
+          "contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full",
+          compact ? "@xl/editor:gap-1 @xl/editor:px-1" : "@xl/editor:gap-0.5 @xl/editor:px-1.5",
+        )}
+      >
         {resolvedAnnotation.map(renderToolButton)}
       </div>
 
       {/* Custom tools */}
       {customToolDefs.length > 0 && (
         <>
-          {showSeparators && <Separator className="hidden @xl/editor:block my-2 w-10" />}
-          <div className="contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full @xl/editor:gap-0.5 @xl/editor:px-1.5">
+          {showSeparators && (
+            <Separator className={cn("hidden @xl/editor:block my-2", compact ? "w-8" : "w-10")} />
+          )}
+          <div
+            className={cn(
+              "contents @xl/editor:flex @xl/editor:flex-col @xl/editor:items-center @xl/editor:w-full",
+              compact ? "@xl/editor:gap-1 @xl/editor:px-1" : "@xl/editor:gap-0.5 @xl/editor:px-1.5",
+            )}
+          >
             {customToolDefs.map(renderToolButton)}
           </div>
         </>

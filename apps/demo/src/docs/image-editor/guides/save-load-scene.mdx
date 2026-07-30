@@ -1,0 +1,56 @@
+import { GuideSceneIo } from "../../../components/guide-scene-io";
+
+# Save & Restore Scenes
+
+Serialize the full editing state — every block, its transforms, and the active
+page — to a JSON string, then restore it later. Grab the imperative editor handle
+from the `onReady` prop.
+
+## When to use this
+
+- You want to persist work-in-progress and resume it later.
+- You're building autosave, drafts, or undo across sessions.
+- You need to script the editor from outside (headless, tests).
+
+## Capture the handle
+
+```tsx
+import { useRef } from "react";
+import { ImageEditor, type EditorHandle } from "@editx/image-editor";
+
+function Editor() {
+  const handle = useRef<EditorHandle | null>(null);
+
+  return (
+    <>
+      <ImageEditor src="/photo.jpg" onReady={(h) => (handle.current = h)} />
+      <button onClick={() => localStorage.setItem("scene", handle.current!.saveScene())}>
+        Save
+      </button>
+      <button onClick={() => handle.current!.loadScene(localStorage.getItem("scene")!)}>
+        Restore
+      </button>
+    </>
+  );
+}
+```
+
+`onReady` fires once when the engine is ready and hands you an `EditorHandle`:
+
+- `saveScene()` returns a JSON string of the entire scene.
+- `loadScene(json)` restores a scene previously produced by `saveScene()`.
+- `engine` is the underlying engine instance for advanced/headless use.
+
+## Try it
+
+Save the scene, edit the canvas (add a shape or move things), then restore:
+
+<GuideSceneIo />
+
+## Next steps
+
+- [Open in a Modal](/docs/image-editor/guides/open-in-modal) — launch the editor in a dialog.
+- [Mount Anywhere (Vanilla)](/docs/image-editor/guides/vanilla-mount) — use the editor without React.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/save-load-scene.spec.tsx` in the `@editx/image-editor` package.

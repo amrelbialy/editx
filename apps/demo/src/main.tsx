@@ -13,16 +13,29 @@ import EngineSceneApi from "./docs/engine/scene-api.mdx";
 import IeApi from "./docs/image-editor/api.mdx";
 import IeConfiguration from "./docs/image-editor/configuration.mdx";
 import IeGettingStarted from "./docs/image-editor/getting-started.mdx";
-import IeRecipeCustomTheme from "./docs/image-editor/recipes/custom-theme.mdx";
-import IeRecipeCustomTool from "./docs/image-editor/recipes/custom-tool.mdx";
-import IeRecipeExportFormats from "./docs/image-editor/recipes/export-formats.mdx";
-import IeRecipeInjectSlots from "./docs/image-editor/recipes/inject-slots.mdx";
-import IeRecipeLimitTools from "./docs/image-editor/recipes/limit-tools.mdx";
-import IeRecipeLocalize from "./docs/image-editor/recipes/localize.mdx";
-import IeRecipeOpenInModal from "./docs/image-editor/recipes/open-in-modal.mdx";
-import IeRecipeTrackToolChanges from "./docs/image-editor/recipes/track-tool-changes.mdx";
-import IeRecipeVanillaMount from "./docs/image-editor/recipes/vanilla-mount.mdx";
-import IeRecipeWebComponent from "./docs/image-editor/recipes/web-component.mdx";
+import IeGuideCompactSidebar from "./docs/image-editor/guides/compact-sidebar.mdx";
+import IeGuideConfigureAdjustments from "./docs/image-editor/guides/configure-adjustments.mdx";
+import IeGuideConfigureCrop from "./docs/image-editor/guides/configure-crop.mdx";
+import IeGuideConfigureCropRatios from "./docs/image-editor/guides/configure-crop-ratios.mdx";
+import IeGuideConfigureFilters from "./docs/image-editor/guides/configure-filters.mdx";
+import IeGuideConfigureFonts from "./docs/image-editor/guides/configure-fonts.mdx";
+import IeGuideConfigureShapes from "./docs/image-editor/guides/configure-shapes.mdx";
+import IeGuideCustomTheme from "./docs/image-editor/guides/custom-theme.mdx";
+import IeGuideCustomTool from "./docs/image-editor/guides/custom-tool.mdx";
+import IeGuideCustomizeChrome from "./docs/image-editor/guides/customize-chrome.mdx";
+import IeGuideExportFormats from "./docs/image-editor/guides/export-formats.mdx";
+import IeGuideImageUploadLimits from "./docs/image-editor/guides/image-upload-limits.mdx";
+import IeGuideInjectSlots from "./docs/image-editor/guides/inject-slots.mdx";
+import IeGuideLimitTools from "./docs/image-editor/guides/limit-tools.mdx";
+import IeGuideLocalize from "./docs/image-editor/guides/localize.mdx";
+import IeGuideOpenInModal from "./docs/image-editor/guides/open-in-modal.mdx";
+import IeGuideSaveAndClose from "./docs/image-editor/guides/save-and-close.mdx";
+import IeGuideSaveLoadScene from "./docs/image-editor/guides/save-load-scene.mdx";
+import IeGuideSetDefaultTool from "./docs/image-editor/guides/set-default-tool.mdx";
+import IeGuideTrackToolChanges from "./docs/image-editor/guides/track-tool-changes.mdx";
+import IeGuideVanillaMount from "./docs/image-editor/guides/vanilla-mount.mdx";
+import IeGuideWatermarkOnSave from "./docs/image-editor/guides/watermark-on-save.mdx";
+import IeGuideWebComponent from "./docs/image-editor/guides/web-component.mdx";
 import IeTheming from "./docs/image-editor/theming.mdx";
 
 import "./index.css";
@@ -52,44 +65,96 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Route path="/docs/image-editor/api" element={<DocsPage component={IeApi} />} />
       <Route path="/docs/image-editor/theming" element={<DocsPage component={IeTheming} />} />
       <Route
-        path="/docs/image-editor/recipes/limit-tools"
-        element={<DocsPage component={IeRecipeLimitTools} />}
+        path="/docs/image-editor/guides/limit-tools"
+        element={<DocsPage component={IeGuideLimitTools} />}
       />
       <Route
-        path="/docs/image-editor/recipes/custom-theme"
-        element={<DocsPage component={IeRecipeCustomTheme} />}
+        path="/docs/image-editor/guides/configure-crop"
+        element={<DocsPage component={IeGuideConfigureCrop} />}
       />
       <Route
-        path="/docs/image-editor/recipes/localize"
-        element={<DocsPage component={IeRecipeLocalize} />}
+        path="/docs/image-editor/guides/configure-adjustments"
+        element={<DocsPage component={IeGuideConfigureAdjustments} />}
       />
       <Route
-        path="/docs/image-editor/recipes/export-formats"
-        element={<DocsPage component={IeRecipeExportFormats} />}
+        path="/docs/image-editor/guides/configure-filters"
+        element={<DocsPage component={IeGuideConfigureFilters} />}
       />
       <Route
-        path="/docs/image-editor/recipes/custom-tool"
-        element={<DocsPage component={IeRecipeCustomTool} />}
+        path="/docs/image-editor/guides/configure-fonts"
+        element={<DocsPage component={IeGuideConfigureFonts} />}
       />
       <Route
-        path="/docs/image-editor/recipes/inject-slots"
-        element={<DocsPage component={IeRecipeInjectSlots} />}
+        path="/docs/image-editor/guides/configure-shapes"
+        element={<DocsPage component={IeGuideConfigureShapes} />}
       />
       <Route
-        path="/docs/image-editor/recipes/track-tool-changes"
-        element={<DocsPage component={IeRecipeTrackToolChanges} />}
+        path="/docs/image-editor/guides/configure-crop-ratios"
+        element={<DocsPage component={IeGuideConfigureCropRatios} />}
       />
       <Route
-        path="/docs/image-editor/recipes/open-in-modal"
-        element={<DocsPage component={IeRecipeOpenInModal} />}
+        path="/docs/image-editor/guides/set-default-tool"
+        element={<DocsPage component={IeGuideSetDefaultTool} />}
       />
       <Route
-        path="/docs/image-editor/recipes/vanilla-mount"
-        element={<DocsPage component={IeRecipeVanillaMount} />}
+        path="/docs/image-editor/guides/compact-sidebar"
+        element={<DocsPage component={IeGuideCompactSidebar} />}
       />
       <Route
-        path="/docs/image-editor/recipes/web-component"
-        element={<DocsPage component={IeRecipeWebComponent} />}
+        path="/docs/image-editor/guides/image-upload-limits"
+        element={<DocsPage component={IeGuideImageUploadLimits} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/save-load-scene"
+        element={<DocsPage component={IeGuideSaveLoadScene} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/customize-chrome"
+        element={<DocsPage component={IeGuideCustomizeChrome} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/watermark-on-save"
+        element={<DocsPage component={IeGuideWatermarkOnSave} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/save-and-close"
+        element={<DocsPage component={IeGuideSaveAndClose} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/custom-theme"
+        element={<DocsPage component={IeGuideCustomTheme} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/localize"
+        element={<DocsPage component={IeGuideLocalize} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/export-formats"
+        element={<DocsPage component={IeGuideExportFormats} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/custom-tool"
+        element={<DocsPage component={IeGuideCustomTool} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/inject-slots"
+        element={<DocsPage component={IeGuideInjectSlots} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/track-tool-changes"
+        element={<DocsPage component={IeGuideTrackToolChanges} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/open-in-modal"
+        element={<DocsPage component={IeGuideOpenInModal} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/vanilla-mount"
+        element={<DocsPage component={IeGuideVanillaMount} />}
+      />
+      <Route
+        path="/docs/image-editor/guides/web-component"
+        element={<DocsPage component={IeGuideWebComponent} />}
       />
       <Route path="/docs/engine/overview" element={<DocsPage component={EngineOverview} />} />
       <Route path="/docs/engine/blocks" element={<DocsPage component={EngineBlocks} />} />

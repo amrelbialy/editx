@@ -1,0 +1,50 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure Crop Aspect Ratios
+
+Limit the aspect-ratio presets in the **Crop** tool with `config.crop.presets`.
+Pass the preset ids you want and the ratio grid shows only those, in the order you
+list them.
+
+## When to use this
+
+- Your output must match a fixed set of formats (e.g. social sizes).
+- The full ratio grid is more choice than users need.
+- You want to steer everyone toward one or two on-brand crops.
+
+## Configure the presets
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    crop: {
+      presets: ["1:1", "4:3", "16:9"],
+    },
+  }}
+/>
+```
+
+Preset ids match the built-in ratios — `free`, `original`, `1:1`, `4:3`, `3:4`,
+`16:9`, `9:16`. They render in the order you list them. Omit `presets` to show
+every built-in ratio.
+
+## Try it
+
+Open the **Crop** tool — only the curated ratios appear:
+
+<GuideScenario
+  config={{
+    crop: {
+      presets: ["1:1", "4:3", "16:9"],
+    },
+  }}
+/>
+
+## Next steps
+
+- [Configure the Shapes Tool](/docs/image-editor/guides/configure-shapes) — curate the shape set.
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — hide whole tools you don't need.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-crop-ratios.spec.tsx` in the `@editx/image-editor` package.

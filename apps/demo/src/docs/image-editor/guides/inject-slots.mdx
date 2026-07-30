@@ -1,0 +1,52 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Inject Custom UI
+
+Render your own React nodes into named regions of the editor chrome — a **Share**
+button, a save-status indicator, a plan badge — without forking the component. The
+`slots` prop is the extension point.
+
+## When to use this
+
+- You need app-specific actions in the editor's toolbar (share, download, upload).
+- You want to surface status (saving, synced, quota) inside the editor.
+- You need to add UI outside the tool sidebar — that's what [custom tools](/docs/image-editor/guides/custom-tool) are for.
+
+## Pass a slot
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  slots={{
+    topbarRight: <button type="button">Share</button>,
+  }}
+/>
+```
+
+Each slot accepts any React node and renders it in place — your handlers, your
+styles, your components.
+
+## Try it
+
+Look for the **Share** action in the top-right of the toolbar:
+
+<GuideScenario
+  slots={{
+    topbarRight: (
+      <button
+        type="button"
+        className="rounded-md border border-zinc-300 px-2.5 py-1 text-sm dark:border-zinc-600"
+      >
+        Share
+      </button>
+    ),
+  }}
+/>
+
+## Next steps
+
+- [Add a Custom Tool](/docs/image-editor/guides/custom-tool) — add UI to the tool sidebar.
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — trim the built-in toolset.
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — wire slot actions to editor state.
+
+> Verified by `tests/guides/inject-slots.spec.tsx` in the `@editx/image-editor` package.

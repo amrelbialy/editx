@@ -30,7 +30,7 @@ exports[`@editx/image-editor config contract > keeps a stable default-config sha
   "ui.contextualBar.show",
   "ui.showTitle",
   "ui.title",
+  "ui.toolSidebar.compact",
   "ui.toolSidebar.groupSeparators",
-  "ui.toolSidebar.showLabels",
 ]
 `;

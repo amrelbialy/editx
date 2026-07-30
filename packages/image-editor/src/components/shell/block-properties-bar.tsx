@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useTranslation } from "../../i18n/i18n-context";
 import type { PropertySidePanel } from "../../store/image-editor-store";
 import { useImageEditorStore } from "../../store/image-editor-store";
@@ -42,7 +43,7 @@ interface BlockPropertiesBarProps {
   blockType: "text" | "graphic" | "image";
 }
 
-const FONT_FAMILIES = [
+const DEFAULT_FONT_FAMILIES = [
   "Inter",
   "Arial",
   "Helvetica",
@@ -106,6 +107,8 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
   const isText = blockType === "text";
   const isImage = blockType === "image";
   const { t } = useTranslation();
+  const config = useConfig();
+  const fontFamilies = config.text?.fonts ?? DEFAULT_FONT_FAMILIES;
 
   // State
   const [textState, setTextState] = useState(() =>
@@ -351,7 +354,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {FONT_FAMILIES.map((f) => (
+              {fontFamilies.map((f) => (
                 <SelectItem key={f} value={f}>
                   {f}
                 </SelectItem>

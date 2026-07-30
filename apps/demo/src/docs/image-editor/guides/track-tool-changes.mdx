@@ -1,0 +1,64 @@
+import { GuideToolTracker } from "../../../components/guide-tool-tracker";
+
+# React to Editor Events
+
+Keep your app in sync with what the user is doing. The editor exposes lifecycle
+hooks in two places: the `events` prop for in-editor activity, and the top-level
+`onSave` / `onClose` props for the exit points of the flow.
+
+## When to use this
+
+- You want to track which tool the user is on (analytics, contextual help, UI state).
+- You need to transform or validate the exported blob before it reaches your handler.
+- You''re driving external UI (a sidebar, a progress indicator) from editor state.
+- You need to know when the editor is dismissed and whether changes were unsaved.
+
+## The event surface
+
+| Hook | Where | Fires when | Payload |
+|---|---|---|---|
+| `events.onToolChange` | `events` | The active tool changes | tool id (e.g. `"adjust"`) or `null` on deselect |
+| `events.onBeforeSave` | `events` | Just before a save, after render | the export `Blob` — return a replacement or `undefined` |
+| `onSave` | prop | An export completes | the final `Blob` handed to your app |
+| `onClose` | prop | The editor is dismissed | `reason` (`"save"` · `"close-button"` · `"back-button"` · `"escape"`) + `hasUnsavedChanges` |
+
+## Subscribe to events
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onSave={(blob) => uploadToServer(blob)}
+  onClose={(reason, hasUnsavedChanges) => {
+    console.log("closed via", reason, "· dirty:", hasUnsavedChanges);
+  }}
+  events={{
+    onToolChange: (toolId) => {
+      console.log("active tool:", toolId); // "crop" | "adjust" | … | null
+    },
+    onBeforeSave: async (blob) => {
+      // Inspect, transform, or upload — return a Blob to replace the export.
+      return undefined; // keep the original
+    },
+  }}
+/>
+```
+
+`onToolChange` fires on every tool switch, so it''s the right place to mirror
+editor state into your own UI or send analytics. `onBeforeSave` runs on the
+export path before `onSave`; see [Add a Watermark on Save](/docs/image-editor/guides/watermark-on-save)
+for a full transform example.
+
+## Try it
+
+Switch tools and then **Export** — each callback appends to the live log below
+the editor:
+
+<GuideToolTracker />
+
+## Next steps
+
+- [Add a Watermark on Save](/docs/image-editor/guides/watermark-on-save) — transform the blob in `onBeforeSave`.
+- [Save & Close](/docs/image-editor/guides/save-and-close) — react to `onClose` after a successful export.
+- [Inject Custom UI](/docs/image-editor/guides/inject-slots) — surface event state in the chrome.
+
+> Verified by `tests/guides/track-tool-changes.spec.tsx` in the `@editx/image-editor` package.

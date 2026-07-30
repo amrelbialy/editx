@@ -21,7 +21,12 @@ export interface ThemeConfig {
 
 export interface UIConfig {
   toolSidebar?: {
-    showLabels?: boolean;
+    /**
+     * Compact the tool rail to a tight, icon-only column: hides the text
+     * labels, narrows the rail, and shrinks each button to a square. Tool names
+     * move to the tooltip + `aria-label`. Defaults to `false` (roomy, labelled).
+     */
+    compact?: boolean;
     groupSeparators?: boolean;
   };
   contextualBar?: {
@@ -65,6 +70,11 @@ export interface AdjustToolConfig {
 
 export interface FilterToolConfig {
   showIntensity?: boolean;
+  /**
+   * Whitelist of filter preset names to show (in addition to the always-present
+   * "Original"). When omitted, every built-in preset is shown.
+   */
+  presets?: string[];
 }
 
 export interface TextToolConfig {

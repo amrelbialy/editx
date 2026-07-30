@@ -1,0 +1,50 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure the Filter Tool
+
+Curate the **Filters** tool down to an on-brand shortlist with
+`config.filter.presets`. Pass the preset names you want and the panel shows only
+those, plus the always-present **Original** option.
+
+## When to use this
+
+- The full filter library is overwhelming or off-brand.
+- You want a small, curated look-book (e.g. three signature filters).
+- You're standardizing output across a team or template set.
+
+## Configure the presets
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    filter: {
+      presets: ["Sepia", "Clarendon", "Moon", "Reyes"],
+    },
+  }}
+/>
+```
+
+Preset names match the built-in filter ids — for example `Sepia`, `Clarendon`,
+`Moon`, `Reyes`, `Invert`, `BlackAndWhite`, `Ludwig`, `Aden`, `1977`. They render
+in the order you list them. Omit `presets` to show the entire built-in library.
+
+## Try it
+
+Open the **Filters** tool — only the curated presets (and Original) appear:
+
+<GuideScenario
+  config={{
+    filter: {
+      presets: ["Sepia", "Clarendon", "Moon", "Reyes"],
+    },
+  }}
+/>
+
+## Next steps
+
+- [Configure the Adjust Tool](/docs/image-editor/guides/configure-adjustments) — trim the adjustment sliders.
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — hide whole tools you don't need.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-filters.spec.tsx` in the `@editx/image-editor` package.

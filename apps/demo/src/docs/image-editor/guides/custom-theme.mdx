@@ -1,0 +1,46 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Customize the Theme
+
+Match the editor to your brand by overriding individual theme colors and the
+corner radius through `config.theme`. Color overrides map to CSS variables (e.g.
+`primary` → `--primary`) and `borderRadius` maps to `--radius`.
+
+## When to use this
+
+- Your product has a brand accent color the editor should adopt.
+- You want the editor's rounding to match the rest of your UI.
+- You need a light tweak rather than a full theme — for that, see [Theming](/docs/image-editor/theming).
+
+## Override colors
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    theme: {
+      colors: { primary: "#ff3366" },
+      borderRadius: "0.75rem",
+    },
+  }}
+/>
+```
+
+Any color you omit falls back to the active preset (dark or light), so you only
+specify what you want to change.
+
+## Try it
+
+Note the pink accent color and rounded controls:
+
+<GuideScenario
+  config={{ theme: { colors: { primary: "#ff3366" }, borderRadius: "0.75rem" } }}
+/>
+
+## Next steps
+
+- [Theming](/docs/image-editor/theming) — presets, full palettes, and dark/light.
+- [Localize the UI](/docs/image-editor/guides/localize) — translate the interface.
+- [Inject Custom UI](/docs/image-editor/guides/inject-slots) — add branded controls.
+
+> Verified by `tests/guides/custom-theme.spec.tsx` in the `@editx/image-editor` package.

@@ -1,6 +1,6 @@
 import type { EditxEngine, ShapeType } from "@editx/engine";
 import { useCallback, useMemo } from "react";
-import type { EditorEventCallbacks } from "../config/config.types";
+import type { EditorEventCallbacks, ImageToolConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
 import { useAdjustmentsTool } from "./use-adjustments-tool";
 import { type UseBlockActionsReturn, useBlockActions } from "./use-block-actions";
@@ -28,6 +28,7 @@ export interface UseToolsOptions {
   selectedShapeId: number | null;
   setSelectedShapeId: (id: number | null) => void;
   events?: EditorEventCallbacks;
+  imageConfig?: ImageToolConfig;
 }
 
 export function useTools({
@@ -36,6 +37,7 @@ export function useTools({
   selectedShapeId,
   setSelectedShapeId,
   events,
+  imageConfig,
 }: UseToolsOptions) {
   const notify = useNotifications();
 
@@ -46,7 +48,7 @@ export function useTools({
   const filter = useFilterTool({ engineRef });
   const shapes = useShapesTool({ engineRef });
   const textTool = useTextTool({ engineRef });
-  const imageTool = useImageTool({ engineRef });
+  const imageTool = useImageTool({ engineRef, imageConfig });
   const blockActions = useBlockActions({
     engineRef,
     selectedBlockId: selectedShapeId,

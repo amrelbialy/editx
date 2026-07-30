@@ -1,0 +1,44 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Save & Close
+
+In modal or full-screen flows, users expect the editor to get out of the way once
+they've saved. `config.export.closeAfterSave` calls your `onClose` handler
+automatically after a successful export.
+
+## When to use this
+
+- The editor lives in a modal or overlay that should dismiss itself after save.
+- You navigate the user onward (back to a gallery, next step in a wizard) once they're done.
+- You want a single **Export** action to both save and close — no extra button.
+
+## Enable it
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onSave={(blob) => uploadToServer(blob)}
+  onClose={(reason) => {
+    if (reason === "save") closeModal();
+  }}
+  config={{ export: { closeAfterSave: true } }}
+/>
+```
+
+`onClose` receives a `reason` — `"save"`, `"close-button"`, `"back-button"`, or
+`"escape"` — plus a `hasUnsavedChanges` flag. After a successful export the reason
+is `"save"` with no unsaved changes, so you can close without a discard prompt.
+
+## Try it
+
+This editor has `closeAfterSave` enabled — export to see the save flow complete:
+
+<GuideScenario config={{ export: { closeAfterSave: true } }} />
+
+## Next steps
+
+- [Customize the Chrome](/docs/image-editor/guides/customize-chrome) — pair with a back button for wizard flows.
+- [Open in a Modal](/docs/image-editor/guides/open-in-modal) — mount the editor inside a dialog.
+- [Add a Watermark on Save](/docs/image-editor/guides/watermark-on-save) — process the blob before it's saved.
+
+> Verified by `tests/guides/save-and-close.spec.tsx` in the `@editx/image-editor` package.

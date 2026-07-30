@@ -1,0 +1,51 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Configure the Adjust Tool
+
+Trim the **Adjust** tool to the sliders your users actually need.
+`config.adjust.controls` takes an ordered list of controls and renders only
+those — hiding the rest and any group left empty.
+
+## When to use this
+
+- You want a focused "quick edit" experience (just Brightness / Contrast).
+- Your brand guidelines only permit specific adjustments.
+- You're building a guided flow and want to remove overwhelming options.
+
+## Configure the controls
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    adjust: {
+      controls: ["brightness", "contrast", "saturation"],
+    },
+  }}
+/>
+```
+
+Available controls: `brightness`, `saturation`, `contrast`, `gamma`, `clarity`,
+`exposure`, `shadows`, `highlights`, `blacks`, `whites`, `temperature`,
+`sharpness`. The **Basic** / **Refinements** grouping is preserved, and a group
+disappears when none of its controls are listed. Omit `controls` for the full set.
+
+## Try it
+
+Open the **Adjust** tool — only Brightness, Contrast, and Saturation appear:
+
+<GuideScenario
+  config={{
+    adjust: {
+      controls: ["brightness", "contrast", "saturation"],
+    },
+  }}
+/>
+
+## Next steps
+
+- [Configure the Filter Tool](/docs/image-editor/guides/configure-filters) — curate the filter library.
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — hide whole tools you don't need.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/configure-adjustments.spec.tsx` in the `@editx/image-editor` package.

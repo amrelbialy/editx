@@ -209,6 +209,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
             activePreset={cropPreset}
             ariaLabel={t("a11y.aspectRatioPresets")}
             onSelect={handleSelect}
+            presetIds={config.crop?.presets as CropPresetId[] | undefined}
           />
         </div>
       )}

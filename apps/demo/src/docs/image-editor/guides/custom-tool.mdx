@@ -1,0 +1,80 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+export const StickersIcon = (props) => (
+  <svg
+    className={props.className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9l7-7V5a2 2 0 0 0-2-2Z" />
+    <path d="M14 21v-5a2 2 0 0 1 2-2h5" />
+  </svg>
+);
+
+export const StickersPanel = () => (
+  <div style={{ padding: "1rem", fontSize: 14, lineHeight: 1.5 }}>
+    <strong>Stickers</strong>
+    <p style={{ margin: "0.5rem 0 0", opacity: 0.7 }}>
+      Your custom tool panel renders here. Wire it up to add stickers, stamps, or
+      anything else your app needs.
+    </p>
+  </div>
+);
+
+# Add a Custom Tool
+
+Extend the editor with functionality it doesn't ship with — stickers, stamps,
+brand assets, AI actions — without forking the component. Register it through
+`config.customTools` and it appears alongside the built-in tools.
+
+## When to use this
+
+- You need domain-specific functionality (e.g. a brand-asset picker or an AI action).
+- You want the new tool to feel native — same sidebar, same active-panel behaviour.
+- You'd rather compose than fork the editor.
+
+## Register the tool
+
+Each entry provides an `id`, a `label`, an `icon` component for the sidebar, and a
+`panel` component shown when the tool is active.
+
+```tsx
+const StickersTool = {
+  id: "stickers",
+  label: "Stickers",
+  icon: StickersIcon,
+  panel: StickersPanel,
+};
+
+<ImageEditor
+  src="/photo.jpg"
+  config={{ customTools: [StickersTool] }}
+/>
+```
+
+Panel components receive no props — read editor state through the exported hooks
+(`useConfig`, `useImageEditorStore`).
+
+## Try it
+
+A **Stickers** button appears in the sidebar — click it to open your panel:
+
+<GuideScenario
+  config={{
+    customTools: [
+      { id: "stickers", label: "Stickers", icon: StickersIcon, panel: StickersPanel },
+    ],
+  }}
+/>
+
+## Next steps
+
+- [Limit the Tools](/docs/image-editor/guides/limit-tools) — control which tools appear.
+- [Inject Custom UI](/docs/image-editor/guides/inject-slots) — add UI outside the sidebar.
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — respond when your tool activates.
+
+> Verified by `tests/guides/custom-tool.spec.tsx` in the `@editx/image-editor` package.

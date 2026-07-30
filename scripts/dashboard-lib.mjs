@@ -120,15 +120,15 @@ export function git(args, root) {
 }
 
 /**
- * Gather repo + test/recipe metrics.
+ * Gather repo + test/guide metrics.
  * @param {string} root
  */
 export function collectMetrics(root) {
   const ieRoot = join(root, "packages", "image-editor");
   const engineRoot = join(root, "packages", "engine");
 
-  const recipeDocs = walk(join(ieRoot, "docs", "recipes"), (n) => n.endsWith(".md"));
-  const recipeSpecs = walk(join(ieRoot, "tests", "recipes"), (n) => n.endsWith(".spec.tsx"));
+  const guideDocs = walk(join(ieRoot, "docs", "guides"), (n) => n.endsWith(".md"));
+  const guideSpecs = walk(join(ieRoot, "tests", "guides"), (n) => n.endsWith(".spec.tsx"));
   const ieTests = walk(join(ieRoot, "src"), (n) => /\.test\.tsx?$/.test(n)).concat(
     walk(join(ieRoot, "tests"), (n) => n.endsWith(".spec.tsx")),
   );
@@ -148,8 +148,8 @@ export function collectMetrics(root) {
         const [hash, subject, when] = l.split("\u001f");
         return { hash, subject, when };
       }),
-    recipeDocs: recipeDocs.length,
-    recipeSpecs: recipeSpecs.length,
+    guideDocs: guideDocs.length,
+    guideSpecs: guideSpecs.length,
     ieTests: ieTests.length,
     engineTests: engineTests.length,
   };

@@ -1,0 +1,55 @@
+import { GuideModalLauncher } from "../../../components/guide-modal-launcher";
+
+# Open in a Modal
+
+Present the editor in a controlled dialog instead of inline. `<ImageEditorModal>`
+accepts every `ImageEditor` prop plus `open` and `onOpenChange`, so you can open
+it from anywhere in your app.
+
+## When to use this
+
+- Editing is a step in a larger flow, not the whole page.
+- You want an overlay that dims the background and traps focus.
+- You need the editor to close automatically after a successful save.
+
+## Render the modal
+
+```tsx
+import { useState } from "react";
+import { ImageEditorModal } from "@editx/image-editor";
+
+function Example() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Edit image
+      </button>
+      <ImageEditorModal
+        open={open}
+        onOpenChange={setOpen}
+        src="/photo.jpg"
+        onSave={(blob) => {
+          /* upload blob */
+        }}
+      />
+    </>
+  );
+}
+```
+
+The modal closes automatically after save, and `onClose` is called with the close
+reason.
+
+## Try it
+
+<GuideModalLauncher />
+
+## Next steps
+
+- [Control Export Formats](/docs/image-editor/guides/export-formats) — configure the save step.
+- [Mount Without React](/docs/image-editor/guides/vanilla-mount) — the same editor, no React.
+- [Getting Started](/docs/image-editor/getting-started) — inline vs. modal setup.
+
+> Verified by `tests/guides/open-in-modal.spec.tsx` in the `@editx/image-editor` package.

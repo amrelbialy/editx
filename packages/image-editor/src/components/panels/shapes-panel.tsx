@@ -2,6 +2,7 @@ import type { ShapeType } from "@editx/engine";
 import { Circle, Hexagon, MoveRight, Pentagon, Square, Star, Triangle } from "lucide-react";
 import type React from "react";
 import { useCallback } from "react";
+import { useConfig } from "../../config/config-context";
 import { Section } from "../ui/section";
 import type { SelectionGridItem } from "../ui/selection-grid";
 import { SelectionGrid } from "../ui/selection-grid";
@@ -64,6 +65,11 @@ const SHAPES: ShapeDef[] = [
 ];
 
 export const ShapesPanel: React.FC<ShapesPanelProps> = ({ onAddShape }) => {
+  const config = useConfig();
+
+  const allowed = config.shapes?.presets;
+  const visibleShapes = allowed ? SHAPES.filter((s) => allowed.includes(s.id)) : SHAPES;
+
   const handleSelect = useCallback(
     (id: string) => {
       const shape = SHAPES.find((s) => s.id === id);
@@ -74,7 +80,12 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({ onAddShape }) => {
 
   return (
     <Section label="Shapes">
-      <SelectionGrid items={SHAPES} onSelect={handleSelect} columns={3} ariaLabel="Shape types" />
+      <SelectionGrid
+        items={visibleShapes}
+        onSelect={handleSelect}
+        columns={3}
+        ariaLabel="Shape types"
+      />
     </Section>
   );
 };
