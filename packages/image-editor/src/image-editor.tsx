@@ -25,6 +25,7 @@ import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
 import { useZoom } from "./hooks/use-zoom";
 import { useImageEditorStore } from "./store/image-editor-store";
+import { extractFilename } from "./utils/extract-filename";
 import type { ImageValidationOptions } from "./utils/validate-image";
 
 export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
@@ -83,6 +84,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     onClose,
     events,
     notify: tools.notify,
+    defaultFilename: extractFilename(src),
   });
 
   // --- Store selectors (grouped) ---

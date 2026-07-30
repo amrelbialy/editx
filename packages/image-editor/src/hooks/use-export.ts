@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { useCallback, useRef, useState } from "react";
 import type { CloseReason, EditorEventCallbacks, ExportConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
+import { downloadBlob } from "../utils/download-blob";
 import type { EditorNotifications } from "./use-notifications";
 
 export type ExportFormat = "png" | "jpeg" | "webp";
@@ -18,6 +19,8 @@ export interface UseExportOptions {
   onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
   events?: EditorEventCallbacks;
   notify?: EditorNotifications;
+  /** Fallback base filename for the built-in download when `onSave` is absent. */
+  defaultFilename?: string;
 }
 
 const FORMAT_NAMES: Record<ExportFormat, string> = {
@@ -33,6 +36,7 @@ export function useExport({
   onClose,
   events,
   notify,
+  defaultFilename,
 }: UseExportOptions) {
   const [isExporting, setIsExporting] = useState(false);
   // Guard against double-click while an export is in progress
@@ -61,6 +65,10 @@ export function useExport({
 
         if (onSave) {
           onSave(blob);
+        } else {
+          // No consumer handler: fall back to a browser download so the
+          // built-in Export action works out of the box.
+          downloadBlob(blob, exportConfig?.filename ?? defaultFilename);
         }
 
         markClean();
@@ -77,7 +85,7 @@ export function useExport({
         setIsExporting(false);
       }
     },
-    [engineRef, exportConfig, onSave, onClose, events, notify, markClean],
+    [engineRef, exportConfig, onSave, onClose, events, notify, markClean, defaultFilename],
   );
 
   return { handleExport, isExporting };

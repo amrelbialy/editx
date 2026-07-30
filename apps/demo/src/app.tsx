@@ -1,5 +1,6 @@
 ﻿import {
   Button,
+  downloadBlob,
   ImageEditor,
   ImageEditorModal,
   Select,
@@ -126,14 +127,7 @@ function App() {
   const config = useMemo(() => ({ theme: themeConfig }), [themeConfig]);
 
   const handleSave = useCallback((blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `edited-image.${blob.type.split("/")[1] || "png"}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, "edited-image");
   }, []);
 
   const handleClose = useCallback(() => {

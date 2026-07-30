@@ -1,4 +1,4 @@
-import type { ImageEditorConfig, ThemeConfig } from "@editx/image-editor";
+import { downloadBlob, type ImageEditorConfig, type ThemeConfig } from "@editx/image-editor";
 import { ChevronDown, ChevronUp, Code2, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useDarkMode } from "../hooks/use-dark-mode";
@@ -60,14 +60,7 @@ export function EditorPlayground() {
   );
 
   const handleSave = useCallback((blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `edited.${blob.type.split("/")[1] || "png"}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob);
   }, []);
 
   const handleReset = useCallback(() => {

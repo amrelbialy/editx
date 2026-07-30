@@ -93,6 +93,12 @@ export interface ExportConfig {
   quality?: number;
   /** Automatically close the editor after a successful save. Default: false. */
   closeAfterSave?: boolean;
+  /**
+   * Base filename (without extension) for the default download that runs when
+   * no `onSave` handler is provided. Defaults to a name derived from the source
+   * image, falling back to `"edited"`.
+   */
+  filename?: string;
 }
 
 // ── Custom tool registration ──

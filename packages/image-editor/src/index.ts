@@ -62,6 +62,7 @@ export type { BuiltInPreset, ThemePresetValues } from "./theme/presets";
 export { themePresets } from "./theme/presets";
 export { ThemeProvider } from "./theme/theme-provider";
 export { correctOrientation } from "./utils/correct-orientation";
+export { downloadBlob } from "./utils/download-blob";
 export type { DownscaleResult } from "./utils/downscale-image";
 export { downscaleIfNeeded } from "./utils/downscale-image";
 export { extractFilename } from "./utils/extract-filename";
