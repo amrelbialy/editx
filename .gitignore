@@ -49,3 +49,5 @@ pw-output.txt
 #docs
 docs-private
 temp
+# Local custom agent definitions
+.agents/
