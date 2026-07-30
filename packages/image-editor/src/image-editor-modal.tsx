@@ -40,10 +40,13 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = (props) => {
 
   return (
     <ThemeProvider theme={config?.theme}>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={onOpenChange} modal>
         <DialogContent
-          className={cn("w-250 h-150 min-w-100 min-h-100 p-0", className)}
-          overlayClassName={overlayClassName}
+          className={cn(
+            "fixed w-250 h-150 min-w-100 min-h-100 max-h-[calc(100dvh-2rem)] p-0",
+            className,
+          )}
+          overlayClassName={cn("fixed", overlayClassName)}
           hideClose
         >
           {/* <DialogTitle className="sr-only">Image editor</DialogTitle> */}

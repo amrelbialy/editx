@@ -11,6 +11,8 @@ export function useCropTool({ engineRef }: UseCropToolOptions) {
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
   const activeTool = useImageEditorStore((s) => s.activeTool);
+  const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
+  const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
 
   /** Current crop overlay dimensions (synced from overlay on every change). */
   const [cropDimensions, setCropDimensions] = useState<{ width: number; height: number } | null>(
@@ -42,13 +44,25 @@ export function useCropTool({ engineRef }: UseCropToolOptions) {
   const enterCropMode = useCallback(() => {
     const ce = engineRef.current;
     if (!ce || editableBlockId === null) return;
+    // Close any block-level UI (text editing, selection-driven bars) so it
+    // doesn't linger on top of the crop overlay.
+    setEditingTextBlockId(null);
+    setTextSelectionRange(null);
+    ce.block.deselectAll();
     ce.editor.setEditMode("Crop", { blockId: editableBlockId });
     setCropPreset("free");
     setActiveTool("crop");
     // Read initial crop dimensions
     const dims = ce.block.getCropVisualDimensions(editableBlockId);
     if (dims) setCropDimensions(dims);
-  }, [engineRef, editableBlockId, setCropPreset, setActiveTool]);
+  }, [
+    engineRef,
+    editableBlockId,
+    setCropPreset,
+    setActiveTool,
+    setEditingTextBlockId,
+    setTextSelectionRange,
+  ]);
 
   const exitCropMode = useCallback(() => {
     const ce = engineRef.current;
