@@ -1,0 +1,186 @@
+name: Release
+
+# End-to-end release flow, triggered on every push to `main`:
+#   1. Quality gate  - Biome check, unit/integration tests, build.
+#   2. Version       - lerna-lite bumps changed packages (conventional commits),
+#                      writes CHANGELOGs, commits + tags, and creates the GitHub Release.
+#   3. Publish       - lerna-lite publishes versions missing from npm.
+#   4. Deploy        - the demo app (which also serves the docs at /docs) is
+#                      deployed to Vercel production.
+#
+# Publishing from package manifests makes retries safe if npm only accepts some
+# packages before a transient failure. The demo deploy runs only after publishing
+# succeeds, so production never points at packages that failed to ship.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      graduate:
+        description: "Graduate prereleases to a stable version (e.g. 0.1.0-alpha.x -> 0.1.0)"
+        type: boolean
+        required: false
+        default: false
+
+# A constant group also serializes manual runs started from a non-main ref.
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Version, GitHub Release & npm publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Skip the automatic run that lerna's own "chore(release)" commit would create,
+    # and the snapshot-seeding commits from CI.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      ( !startsWith(github.event.head_commit.message, 'chore(release):') &&
+        !contains(github.event.head_commit.message, '[skip ci]') )
+    permissions:
+      contents: write # push the version commit + tags and create the GitHub Release
+      id-token: write # npm provenance / trusted publishing
+    outputs:
+      sha: ${{ steps.release-commit.outputs.sha }}
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          # A queued run must release the current main, not its stale event SHA.
+          # This also makes workflow_dispatch safe when launched from another ref.
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+          # Persisted GITHUB_TOKEN credentials are reused by lerna to push the
+          # release commit/tags. Pushes made with GITHUB_TOKEN do not re-trigger
+          # this workflow, so there is no release loop.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js (with npm registry auth)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Fail before creating tags if npm publishing cannot succeed.
+      - name: Verify npm authentication
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami --registry=https://registry.npmjs.org
+
+      - name: Quality gate
+        run: |
+          pnpm check:ci
+          pnpm test
+          pnpm build
+
+      # Do not release stale code if main advanced while the quality gate ran.
+      # The newer queued workflow will validate and release the combined changes.
+      - name: Verify main has not moved
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced during validation; the queued run will release the latest commit."
+            exit 1
+          fi
+
+      - name: Version and create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.graduate }}" = "true" ]; then
+            pnpm exec lerna version --conventional-commits --conventional-graduate --yes
+          else
+            pnpm exec lerna version --conventional-commits --conventional-prerelease --yes
+          fi
+
+      # Always check the registry after versioning. `from-package` only publishes
+      # versions absent from npm, so rerunning safely repairs partial publishes.
+      - name: Publish packages to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          if [ "${{ inputs.graduate }}" = "true" ]; then
+            pnpm publish:packages:stable
+          else
+            pnpm publish:packages
+          fi
+
+      - name: Record tested release commit
+        id: release-commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy demo & docs (Vercel)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: release
+    # Deploy exactly the commit that passed the quality gate and npm publish.
+    if: ${{ needs.release.result == 'success' }}
+    steps:
+      - name: Checkout tested release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Verify Vercel authentication
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel whoami --token="$VERCEL_TOKEN"
+
+      - name: Pull Vercel production environment
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build demo (uses root vercel.json -> apps/demo/dist)
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel production
+        id: deploy
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Production deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"

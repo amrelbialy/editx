@@ -12,11 +12,14 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check --write .",
+    "check:ci": "biome ci .",
     "dashboard": "node scripts/dashboard.mjs",
-    "release": "pnpm check && pnpm test && pnpm build && lerna version --conventional-commits --conventional-prerelease --yes",
-    "release:graduate": "pnpm check && pnpm test && pnpm build && lerna version --conventional-commits --conventional-graduate --yes",
-    "publish:packages": "lerna publish from-git --yes",
+    "release": "pnpm check:ci && pnpm test && pnpm build && lerna version --conventional-commits --conventional-prerelease --yes",
+    "release:graduate": "pnpm check:ci && pnpm test && pnpm build && lerna version --conventional-commits --conventional-graduate --yes",
+    "publish:packages": "lerna publish from-package --dist-tag alpha --yes",
+    "publish:packages:stable": "lerna publish from-package --dist-tag latest --yes",
     "release:publish": "pnpm release && pnpm publish:packages",
+    "release:publish:graduate": "pnpm release:graduate && pnpm publish:packages:stable",
     "deploy:demo": "vercel --prod"
   },
   "devDependencies": {
