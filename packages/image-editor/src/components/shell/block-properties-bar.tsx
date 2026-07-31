@@ -25,6 +25,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
+import { DEFAULT_FONT_FAMILIES } from "../../config/default-config";
 import { useTranslation } from "../../i18n/i18n-context";
 import type { PropertySidePanel } from "../../store/image-editor-store";
 import { useImageEditorStore } from "../../store/image-editor-store";
@@ -42,16 +43,6 @@ interface BlockPropertiesBarProps {
   blockId: number;
   blockType: "text" | "graphic" | "image";
 }
-
-const DEFAULT_FONT_FAMILIES = [
-  "Inter",
-  "Arial",
-  "Helvetica",
-  "Times New Roman",
-  "Georgia",
-  "Courier New",
-  "Verdana",
-];
 
 // ── State readers ──
 
@@ -356,7 +347,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = ({
             <SelectContent>
               {fontFamilies.map((f) => (
                 <SelectItem key={f} value={f}>
-                  {f}
+                  <span style={{ fontFamily: f }}>{f}</span>
                 </SelectItem>
               ))}
             </SelectContent>

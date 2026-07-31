@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, FILL_SOLID_COLOR, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
 
@@ -18,6 +19,8 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
 }) => {
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+
+  const config = useConfig();
 
   const isText = blockType === "text";
   const hasCharSelection =
@@ -104,6 +107,7 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
     <ColorPicker
       color={color}
       opacity={opacity}
+      swatches={config.colors}
       onChange={handleColorChange}
       onOpacityChange={handleOpacityChange}
     />

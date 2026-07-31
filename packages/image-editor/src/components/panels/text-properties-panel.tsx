@@ -3,6 +3,7 @@ import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
+import { DEFAULT_FONT_FAMILIES } from "../../config/default-config";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorSwatch } from "../ui/color-swatch";
 import { IconButton } from "../ui/icon-button";
@@ -29,15 +30,6 @@ interface TextBlockState {
   lineHeight: number;
   opacity: number;
 }
-
-const DEFAULT_FONT_FAMILIES = [
-  "Arial",
-  "Helvetica",
-  "Times New Roman",
-  "Georgia",
-  "Courier New",
-  "Verdana",
-];
 
 function readTextBlockState(
   engine: EditxEngine,
@@ -80,6 +72,8 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
   const config = useConfig();
 
   const fontFamilies = config.text?.fonts ?? DEFAULT_FONT_FAMILIES;
+  const minFontSize = config.text?.minFontSize ?? 1;
+  const maxFontSize = config.text?.maxFontSize ?? 500;
 
   // Whether we're in inline-editing mode for this block with an active selection
   const hasCharSelection =
@@ -113,12 +107,13 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseFloat(e.target.value);
       if (!Number.isNaN(val) && val > 0) {
+        const clamped = Math.min(maxFontSize, Math.max(minFontSize, val));
         const { start, end } = getStyleRange();
-        engine.block.setTextFontSize(blockId, start, end, val);
+        engine.block.setTextFontSize(blockId, start, end, clamped);
         update();
       }
     },
-    [engine, blockId, getStyleRange, update],
+    [engine, blockId, getStyleRange, update, minFontSize, maxFontSize],
   );
 
   const handleFontFamily = useCallback(
@@ -200,7 +195,7 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           <SelectContent>
             {fontFamilies.map((f) => (
               <SelectItem key={f} value={f}>
-                {f}
+                <span style={{ fontFamily: f }}>{f}</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -213,8 +208,8 @@ export const TextPropertiesPanel: React.FC<TextPropertiesPanelProps> = ({ engine
           type="number"
           value={Math.round(state.fontSize)}
           onChange={handleFontSize}
-          min={1}
-          max={500}
+          min={minFontSize}
+          max={maxFontSize}
           suffix="px"
           className="w-24"
         />

@@ -1,6 +1,6 @@
 import type { EditxEngine } from "@editx/engine";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "./components/panels/export-dialog";
 import { announce } from "./components/shell/announcer";
 import { CanvasPane } from "./components/shell/canvas-pane";
@@ -19,6 +19,7 @@ import type {
   EditorSlots,
   ImageEditorConfig,
 } from "./config/config.types";
+import { defaultConfig } from "./config/default-config";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
 import { useHistory } from "./hooks/use-history";
@@ -26,6 +27,7 @@ import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
 import { useZoom } from "./hooks/use-zoom";
 import { useImageEditorStore } from "./store/image-editor-store";
+import { deepMerge } from "./utils/deep-merge";
 import { extractFilename } from "./utils/extract-filename";
 import type { ImageValidationOptions } from "./utils/validate-image";
 
@@ -96,13 +98,25 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     setSelectedShapeId,
   } = useEngine({ src, validation, keepZoomOnSourceChange });
 
+  // Tool hooks run outside <Providers>, so `useConfig()` would return the
+  // context default. Merge the user config the same way the provider does and
+  // pass it down explicitly so tool creation honours user config.
+  const mergedConfig = useMemo<ImageEditorConfig>(
+    () =>
+      deepMerge(
+        defaultConfig as unknown as Record<string, unknown>,
+        (userConfig ?? {}) as unknown as Record<string, unknown>,
+      ) as unknown as ImageEditorConfig,
+    [userConfig],
+  );
+
   const tools = useTools({
     engineRef,
     engine,
     selectedShapeId,
     setSelectedShapeId,
     events,
-    imageConfig: userConfig?.image,
+    config: mergedConfig,
   });
   const zoom = useZoom({ engineRef, engine });
   const { handleExport, isExporting } = useExport({

@@ -24,6 +24,7 @@ export { SliderField } from "./components/ui/slider-field";
 export { SwitchField } from "./components/ui/switch-field";
 export type {
   AdjustToolConfig,
+  AspectRatioPreset,
   CloseReason,
   CropToolConfig,
   CustomTool,
@@ -34,6 +35,7 @@ export type {
   ImageEditorConfig,
   ImageEditorToolId,
   ShapesToolConfig,
+  TextStylePreset,
   TextToolConfig,
   ThemeColorKey,
   ThemeConfig,

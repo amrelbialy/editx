@@ -1,19 +1,19 @@
 import { GuideScenario } from "../../../components/guide-scenario";
 
-# Configure Text Fonts
+# Configure Text
 
-Swap the built-in font list for your own with `config.text.fonts`. Your list
-drives every font-family picker in the editor — the selection bar above a text
-block and the Text Properties panel — and the first entry becomes the default
-family for newly added text.
+Control the fonts and default styling of the **Text** tool with `config.text`.
+The font list drives every font-family picker; the `default*` values seed each new
+text block; `presets` defines the style grid; and `min/maxFontSize` bound the size
+input.
 
 ## When to use this
 
 - You want on-brand typography instead of the generic system fonts.
 - You're loading custom web fonts and want them selectable in the editor.
-- You need consistent defaults (family, size, colour) for every new text block.
+- You need consistent defaults (family, size, colour, weight, alignment…) for every new text block.
 
-## Configure the fonts
+## Configure the text tool
 
 ```tsx
 <ImageEditor
@@ -24,31 +24,84 @@ family for newly added text.
       defaultFontFamily: "Poppins",
       defaultFontSize: 32,
       defaultColor: "#ffffff",
+      defaultFontWeight: "normal",
+      defaultFontStyle: "normal",
+      defaultTextAlign: "left",
+      defaultLineHeight: 1.2,
+      defaultLetterSpacing: 0,
+      minFontSize: 8,
+      maxFontSize: 400,
+      presets: [
+        { id: "title", label: "Title", text: "Title", fontSizeScale: 3.75, fontWeight: "bold" },
+        { id: "body", label: "Body", text: "Body text", fontSizeScale: 1 },
+      ],
     },
+    // Shared swatch palette for every colour picker (text, shapes, background):
+    colors: ["#ffffff", "#111827", "#4f46e5", "#e11d48", "#16a34a", "#f59e0b"],
   }}
 />
 ```
 
-- `fonts` — the ordered list shown in every font picker.
-- `defaultFontFamily` — family applied to new text (falls back to `fonts[0]`).
-- `defaultFontSize` — base size in px for new text.
-- `defaultColor` — fill colour for new text.
+| Option | Purpose |
+|---|---|
+| `fonts` | Ordered list shown in every font picker (previewed in their own typeface). |
+| `defaultFontFamily` | Family for new text (falls back to `fonts[0]`). |
+| `defaultFontSize` | Reference size — see the scaling note below. |
+| `defaultColor` | Fill colour for new text. |
+| `defaultFontWeight` | `"normal"` or `"bold"` (a preset's own weight wins). |
+| `defaultFontStyle` | `"normal"` or `"italic"`. |
+| `defaultTextAlign` | `"left"`, `"center"`, or `"right"`. |
+| `defaultLineHeight` | Line height for new text. |
+| `defaultLetterSpacing` | Letter spacing (px) for new text. |
+| `minFontSize` / `maxFontSize` | Bounds for the font-size input (defaults `1` / `500`). |
+| `presets` | Text style grid — each `{ id, label, text?, fontSizeScale?, fontWeight? }`. |
+| `colors` | **Top-level** (sibling of `text`) — swatch palette for every colour picker. |
+
+## How `defaultFontSize` is applied
+
+`defaultFontSize` is a **reference size at a 1080px canvas**, not a literal pixel
+value. The applied size is scaled to the canvas and chosen preset:
+
+```
+appliedSize = round(defaultFontSize × preset.fontSizeScale × min(pageW, pageH) / 1080)
+```
+
+So `defaultFontSize: 32` on a large image with the Title preset lands well above
+32px — this keeps text proportionate across image resolutions. The exact px is
+editable in the Text Properties panel (bounded by `min/maxFontSize`).
 
 Load the matching web fonts yourself (via a `<link>` or `@font-face`) so the
 names you list actually render.
 
 ## Try it
 
-Add a text block, then open the font picker in the selection bar — it lists your
-configured fonts:
+Open the **Text** tool — the style grid shows your custom `presets` (just
+**Display** and **Caption**). Add one, and the new block picks up every default
+below: the **Playfair Display** family, red fill, bold weight, italic style,
+and centre alignment. Open the font picker in the selection bar and it lists only
+your configured fonts (each previewed in its own typeface); open the colour picker
+and it shows just your custom `colors` swatches:
 
 <GuideScenario
   config={{
     text: {
-      fonts: ["Poppins", "Roboto Mono", "Playfair Display"],
-      defaultFontFamily: "Poppins",
-      defaultFontSize: 32,
+      fonts: ["Playfair Display", "Poppins", "Roboto Mono"],
+      defaultFontFamily: "Playfair Display",
+      defaultFontSize: 64,
+      defaultColor: "#ff0000",
+      defaultFontWeight: "bold",
+      defaultFontStyle: "italic",
+      defaultTextAlign: "center",
+      defaultLineHeight: 1.4,
+      defaultLetterSpacing: 1,
+      minFontSize: 8,
+      maxFontSize: 400,
+      presets: [
+        { id: "display", label: "Display", text: "Display", fontSizeScale: 3, fontWeight: "bold" },
+        { id: "caption", label: "Caption", text: "Caption", fontSizeScale: 0.75 },
+      ],
     },
+    colors: ["#ff0000", "#111827", "#ffffff", "#4f46e5", "#16a34a", "#f59e0b"],
   }}
 />
 

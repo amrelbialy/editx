@@ -1,12 +1,14 @@
 import { type EditxEngine, toPrecisedFloat } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
+import type { ImageEditorConfig } from "../config/config.types";
 import { type CropPresetId, useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseCropToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
+  config: ImageEditorConfig;
 }
 
-export function useCropTool({ engineRef }: UseCropToolOptions) {
+export function useCropTool({ engineRef, config }: UseCropToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const setCropPreset = useImageEditorStore((s) => s.setCropPreset);
@@ -19,27 +21,19 @@ export function useCropTool({ engineRef }: UseCropToolOptions) {
     null,
   );
 
-  const resolveRatio = useCallback((presetId: CropPresetId): number | null => {
-    const originalImage = useImageEditorStore.getState().originalImage;
-    switch (presetId) {
-      case "free":
-        return null;
-      case "original":
+  const resolveRatio = useCallback(
+    (presetId: CropPresetId): number | null => {
+      const preset = config.crop?.aspectRatios?.find((p) => p.id === presetId);
+      const ratio = preset?.ratio;
+      if (ratio == null || ratio === "free") return null;
+      if (ratio === "original") {
+        const originalImage = useImageEditorStore.getState().originalImage;
         return originalImage ? toPrecisedFloat(originalImage.width / originalImage.height) : null;
-      case "1:1":
-        return 1;
-      case "4:3":
-        return toPrecisedFloat(4 / 3);
-      case "3:4":
-        return toPrecisedFloat(3 / 4);
-      case "16:9":
-        return toPrecisedFloat(16 / 9);
-      case "9:16":
-        return toPrecisedFloat(9 / 16);
-      default:
-        return null;
-    }
-  }, []);
+      }
+      return toPrecisedFloat(ratio);
+    },
+    [config.crop?.aspectRatios],
+  );
 
   const enterCropMode = useCallback(() => {
     const ce = engineRef.current;

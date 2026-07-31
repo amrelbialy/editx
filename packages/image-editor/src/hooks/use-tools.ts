@@ -1,6 +1,6 @@
 import type { EditxEngine, ShapeType } from "@editx/engine";
 import { useCallback, useMemo } from "react";
-import type { EditorEventCallbacks, ImageToolConfig } from "../config/config.types";
+import type { EditorEventCallbacks, ImageEditorConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
 import { useAdjustmentsTool } from "./use-adjustments-tool";
 import { type UseBlockActionsReturn, useBlockActions } from "./use-block-actions";
@@ -28,7 +28,9 @@ export interface UseToolsOptions {
   selectedShapeId: number | null;
   setSelectedShapeId: (id: number | null) => void;
   events?: EditorEventCallbacks;
-  imageConfig?: ImageToolConfig;
+  /** Fully merged config (defaults + user). Passed explicitly because tool
+   *  hooks run outside the config provider. */
+  config: ImageEditorConfig;
 }
 
 export function useTools({
@@ -37,18 +39,18 @@ export function useTools({
   selectedShapeId,
   setSelectedShapeId,
   events,
-  imageConfig,
+  config,
 }: UseToolsOptions) {
   const notify = useNotifications();
 
   // --- Individual tool hooks ---
-  const crop = useCropTool({ engineRef });
+  const crop = useCropTool({ engineRef, config });
   const rotateFlip = useRotateFlipTool({ engineRef });
   const adjustments = useAdjustmentsTool({ engineRef });
   const filter = useFilterTool({ engineRef });
-  const shapes = useShapesTool({ engineRef });
-  const textTool = useTextTool({ engineRef });
-  const imageTool = useImageTool({ engineRef, imageConfig });
+  const shapes = useShapesTool({ engineRef, config });
+  const textTool = useTextTool({ engineRef, config });
+  const imageTool = useImageTool({ engineRef, imageConfig: config.image });
   const blockActions = useBlockActions({
     engineRef,
     selectedBlockId: selectedShapeId,
