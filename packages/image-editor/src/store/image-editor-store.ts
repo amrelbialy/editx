@@ -15,7 +15,11 @@ export type PropertySidePanel =
   | "text-advanced"
   | null;
 
-export type CropPresetId = "free" | "original" | "1:1" | "4:3" | "3:4" | "16:9" | "9:16";
+/**
+ * Id of the active aspect-ratio preset. Matches an `AspectRatioPreset.id` from
+ * `config.crop.aspectRatios` — a plain string so custom presets are supported.
+ */
+export type CropPresetId = string;
 
 export interface OriginalImageInfo {
   src: string;

@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { Bold, Italic } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useTranslation } from "../../i18n/i18n-context";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
@@ -52,6 +53,8 @@ const PRESET_COLORS = [
 
 export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockId }) => {
   const { t } = useTranslation();
+  const config = useConfig();
+  const presetColors = config.colors ?? PRESET_COLORS;
 
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
@@ -136,7 +139,7 @@ export const TextEditToolbar: React.FC<TextEditToolbarProps> = ({ engine, blockI
         <DropdownMenuContent className="w-auto p-2" align="center" data-text-toolbar>
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-6 gap-1">
-              {PRESET_COLORS.map((c) => (
+              {presetColors.map((c) => (
                 <button
                   type="button"
                   key={c}

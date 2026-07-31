@@ -43,6 +43,17 @@ export interface UIConfig {
 }
 
 export interface CropToolConfig {
+  /**
+   * Aspect-ratio presets for the Aspect Ratio tab. Provide a full custom list
+   * of `{ id, label, ratio }` objects — mirrors how `resizePresets` works.
+   * When omitted, the built-in ratios are used.
+   */
+  aspectRatios?: AspectRatioPreset[];
+  /**
+   * Whitelist of aspect-ratio preset ids to show (in the given order). Applied
+   * on top of `aspectRatios`. When omitted, every preset in `aspectRatios`
+   * renders. Prefer defining `aspectRatios` directly for custom lists.
+   */
   presets?: string[];
   modes?: ("crop" | "cover" | "fit")[];
   defaultMode?: "crop" | "cover" | "fit";
@@ -51,6 +62,22 @@ export interface CropToolConfig {
   showRotateFlip?: boolean;
   /** Size presets for the Resize tab (grouped by platform). */
   resizePresets?: ResizePresetGroup[];
+}
+
+/**
+ * A selectable aspect ratio in the Crop tool's Aspect Ratio tab.
+ */
+export interface AspectRatioPreset {
+  /** Stable id used to track the active selection (also the button test id). */
+  id: string;
+  /** Display label shown under the icon. */
+  label: string;
+  /**
+   * Aspect ratio as `width / height`. Special string values:
+   * - `"free"` — unconstrained crop (also the default when omitted).
+   * - `"original"` — the source image's own ratio.
+   */
+  ratio?: number | "free" | "original";
 }
 
 export interface ResizePreset {
@@ -78,10 +105,50 @@ export interface FilterToolConfig {
 }
 
 export interface TextToolConfig {
+  /** Font families listed in every font picker. */
   fonts?: string[];
+  /** Family applied to new text (falls back to `fonts[0]`). */
   defaultFontFamily?: string;
+  /**
+   * Reference font size (px) at a 1080px canvas. The size applied to new text is
+   * scaled to the actual canvas and preset:
+   * `round(defaultFontSize × presetScale × min(pageW, pageH) / 1080)`.
+   */
   defaultFontSize?: number;
+  /** Fill colour applied to new text. */
   defaultColor?: string;
+  /** Font weight applied to new text (a preset's own weight wins). */
+  defaultFontWeight?: "normal" | "bold";
+  /** Font style applied to new text. */
+  defaultFontStyle?: "normal" | "italic";
+  /** Horizontal alignment applied to new text. */
+  defaultTextAlign?: "left" | "center" | "right";
+  /** Line height applied to new text. */
+  defaultLineHeight?: number;
+  /** Letter spacing (px) applied to new text. */
+  defaultLetterSpacing?: number;
+  /** Lower bound (px) for the font-size input. Default `1`. */
+  minFontSize?: number;
+  /** Upper bound (px) for the font-size input. Default `500`. */
+  maxFontSize?: number;
+  /** Text style presets shown in the Text tool panel. */
+  presets?: TextStylePreset[];
+}
+
+/**
+ * A selectable text style in the Text tool panel (Title, Heading, …).
+ */
+export interface TextStylePreset {
+  /** Stable id (also the grid item test id). */
+  id: string;
+  /** Label shown in the grid. */
+  label: string;
+  /** Default text content inserted for the block. */
+  text?: string;
+  /** Multiplier applied to `defaultFontSize`. Default `1`. */
+  fontSizeScale?: number;
+  /** Font weight for this preset (overrides `defaultFontWeight`). */
+  fontWeight?: "normal" | "bold";
 }
 
 export interface ShapesToolConfig {
@@ -148,6 +215,11 @@ export interface ImageEditorConfig {
   tools?: ImageEditorToolId[];
   defaultTool?: ImageEditorToolId | null;
   theme?: ThemeConfig;
+  /**
+   * Swatch palette (hex strings) shown in every colour picker — text fill,
+   * shape fill, and background colour. Users can still pick any custom colour.
+   */
+  colors?: string[];
   crop?: CropToolConfig;
   adjust?: AdjustToolConfig;
   filter?: FilterToolConfig;

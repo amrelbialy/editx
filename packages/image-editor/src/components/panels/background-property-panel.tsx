@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { ColorPicker } from "../ui/color-picker";
 import { SwitchField } from "../ui/switch-field";
 
@@ -30,6 +31,8 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
   blockId,
 }) => {
   const [state, setState] = useState(() => readFillState(engine, blockId));
+
+  const config = useConfig();
 
   useEffect(() => {
     setState(readFillState(engine, blockId));
@@ -66,7 +69,12 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
 
   return (
     <SwitchField label="Enable Background" checked={state.enabled} onChange={handleToggle}>
-      <ColorPicker color={state.color} onChange={handleColorChange} showHexInput={false} />
+      <ColorPicker
+        color={state.color}
+        swatches={config.colors}
+        onChange={handleColorChange}
+        showHexInput={false}
+      />
     </SwitchField>
   );
 };

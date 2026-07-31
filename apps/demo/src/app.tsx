@@ -124,7 +124,10 @@ function App() {
     return colors ? { preset: "custom", colors } : { preset: "dark" };
   }, [themePreset]);
 
-  const config = useMemo(() => ({ theme: themeConfig }), [themeConfig]);
+  const config = useMemo(
+    () => ({ theme: themeConfig, text: { defaultColor: "#ff0000", defaultFontSize: 64 } }),
+    [themeConfig],
+  );
 
   const handleSave = useCallback((blob: Blob) => {
     downloadBlob(blob, "edited-image");
