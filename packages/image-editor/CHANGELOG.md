@@ -4,6 +4,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.6](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.5...@editx/image-editor@0.1.0-alpha.6) (2026-07-31)
+
+### Features
+
+* **image-editor:** <editx-image-editor> Web Component over createImageEditor ([248de2c](https://github.com/amrelbialy/editx/commit/248de2c56f73a0b77ea5fc4cc2a9885d90e83622))
+* **image-editor:** framework-agnostic createImageEditor() mount API ([932fa7e](https://github.com/amrelbialy/editx/commit/932fa7edb016021b2db7fc93290aaf3f7d9e03b7))
+* **image-editor:** unify responsive editor controls ([abb6d39](https://github.com/amrelbialy/editx/commit/abb6d399564d043347158aea1b201302aef74c96))
+* regression harness, test-as-docs recipes, and live demo docs ([25191af](https://github.com/amrelbialy/editx/commit/25191aff71d58b6ff7b1034ade7480d3062a1213))
+
+### Bug Fixes
+
+* **engine:** restore rendered scene content ([5bcdc4e](https://github.com/amrelbialy/editx/commit/5bcdc4e25187eab50868bbda931b630eb4f36776))
+* **image-editor:** close block bars when entering crop mode ([e2896b3](https://github.com/amrelbialy/editx/commit/e2896b37b91709679036e2774c23779ece59ed13))
+* **image-editor:** improve mobile topbar layout and polish landing ([92d3038](https://github.com/amrelbialy/editx/commit/92d3038f3c8bd715b948070cd7b51337799bed4b))
+* **image-editor:** make tool panels scroll in narrow bottom sheet ([bae50bf](https://github.com/amrelbialy/editx/commit/bae50bf08b959a042d5e7d29494147b30b724545))
+* issues with export in demos ([0c7ae95](https://github.com/amrelbialy/editx/commit/0c7ae952fcf8bb27c6bf779dd6cb307a07af44ee))
+* **select:** prevent page scroll jump and sticky-header break on open ([1ae9c03](https://github.com/amrelbialy/editx/commit/1ae9c03b5e23fb27137488ba6d32ae6103dad4f1))
+
 ## [0.1.0-alpha.5](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.4...@editx/image-editor@0.1.0-alpha.5) (2026-04-03)
 
 ### Bug Fixes
@@ -19,6 +37,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Improvements
 
 - Improve text editor overlay with inline editing support
+
 - Show text properties in block properties bar during text editing
 
 ## [0.1.0-alpha.3](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.2...@editx/image-editor@0.1.0-alpha.3) (2026-03-30)
