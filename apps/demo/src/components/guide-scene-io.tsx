@@ -3,6 +3,83 @@ import { useRef, useState } from "react";
 import { useDarkMode } from "../hooks/use-dark-mode";
 
 const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=2000&q=90";
+const SAVED_LABEL = "SAVED LOOK";
+const UPDATED_LABEL = "NEW LOOK";
+
+interface DemoBlocks {
+  badgeId: number;
+  accentId: number;
+  textId: number;
+  pageWidth: number;
+  pageHeight: number;
+}
+
+function createSavedLook(handle: EditorHandle, pageId: number): DemoBlocks {
+  const { width: pageWidth, height: pageHeight } = handle.engine.block.getPageDimensions(pageId);
+  const unit = Math.min(pageWidth, pageHeight);
+  const badgeId = handle.engine.block.addShape(
+    pageId,
+    "rect",
+    "color",
+    pageWidth * 0.08,
+    pageHeight * 0.12,
+    unit * 0.48,
+    unit * 0.14,
+  );
+  handle.engine.block.setFillSolidColor(badgeId, { r: 0.15, g: 0.32, b: 0.95, a: 0.9 });
+
+  const accentId = handle.engine.block.addShape(
+    pageId,
+    "ellipse",
+    "color",
+    pageWidth * 0.72,
+    pageHeight * 0.68,
+    unit * 0.16,
+    unit * 0.16,
+  );
+  handle.engine.block.setFillSolidColor(accentId, { r: 0.98, g: 0.75, b: 0.14, a: 0.95 });
+
+  const textId = handle.engine.block.addText(
+    pageId,
+    pageWidth * 0.1,
+    pageHeight * 0.145,
+    unit * 0.44,
+    unit * 0.09,
+    SAVED_LABEL,
+    {
+      style: {
+        fill: "#ffffff",
+        fontSize: unit * 0.055,
+        fontWeight: "bold",
+        letterSpacing: unit * 0.004,
+      },
+    },
+  );
+
+  return { badgeId, accentId, textId, pageWidth, pageHeight };
+}
+
+function applyUpdatedLook(handle: EditorHandle, blocks: DemoBlocks): void {
+  const { badgeId, accentId, textId, pageWidth, pageHeight } = blocks;
+  const unit = Math.min(pageWidth, pageHeight);
+
+  handle.engine.block.setPosition(badgeId, pageWidth * 0.42, pageHeight * 0.67);
+  handle.engine.block.setRotation(badgeId, -8);
+  handle.engine.block.setFillSolidColor(badgeId, { r: 0.92, g: 0.2, b: 0.36, a: 0.9 });
+  handle.engine.block.setPosition(accentId, pageWidth * 0.1, pageHeight * 0.15);
+  handle.engine.block.setSize(accentId, unit * 0.24, unit * 0.24);
+  handle.engine.block.setFillSolidColor(accentId, { r: 0.1, g: 0.82, b: 0.75, a: 0.95 });
+  handle.engine.block.replaceText(textId, 0, SAVED_LABEL.length, UPDATED_LABEL);
+  handle.engine.block.setTextStyle(textId, 0, UPDATED_LABEL.length, {
+    fill: "#ffffff",
+    fontSize: unit * 0.055,
+    fontWeight: "bold",
+    letterSpacing: unit * 0.004,
+  });
+  handle.engine.block.setPosition(textId, pageWidth * 0.46, pageHeight * 0.695);
+  handle.engine.block.deselectAll();
+  requestAnimationFrame(() => handle.engine.block.deselectAll());
+}
 
 /**
  * Live demo for the save-load-scene guide: captures the imperative
@@ -11,6 +88,7 @@ const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1682687220742-aba13b6e50
  */
 export function GuideSceneIo() {
   const handleRef = useRef<EditorHandle | null>(null);
+  const demoBlocksRef = useRef<DemoBlocks | null>(null);
 
   const [dark] = useDarkMode();
 
@@ -19,17 +97,24 @@ export function GuideSceneIo() {
 
   const onSave = () => {
     const handle = handleRef.current;
-    if (!handle) return;
+    const blocks = demoBlocksRef.current;
+    if (!handle || !blocks) return;
     const json = handle.saveScene();
+
     setSaved(json);
-    setStatus(`Saved ${(json.length / 1024).toFixed(1)} KB — add or move blocks, then Restore.`);
+    applyUpdatedLook(handle, blocks);
+    setStatus(
+      `Saved ${(json.length / 1024).toFixed(1)} KB, then applied a new look. Restore the saved look.`,
+    );
   };
 
   const onRestore = async () => {
     const handle = handleRef.current;
     if (!handle || !saved) return;
     await handle.loadScene(saved);
-    setStatus("Restored the saved scene.");
+    handle.engine.block.deselectAll();
+    setSaved(null);
+    setStatus("Restored the original saved look.");
   };
 
   return (
@@ -48,6 +133,12 @@ export function GuideSceneIo() {
           }}
           onReady={(handle) => {
             handleRef.current = handle;
+            const pageId = handle.engine.scene.getCurrentPage();
+            if (pageId === null) {
+              setStatus("Could not prepare the scene demo.");
+              return;
+            }
+            demoBlocksRef.current = createSavedLook(handle, pageId);
           }}
         />
       </div>
@@ -56,9 +147,10 @@ export function GuideSceneIo() {
         <button
           type="button"
           onClick={onSave}
+          disabled={saved !== null}
           className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          Save scene
+          Save & show new look
         </button>
         <button
           type="button"
@@ -69,7 +161,7 @@ export function GuideSceneIo() {
           Restore scene
         </button>
         <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          {status || "Save the scene, edit the canvas, then restore it."}
+          {status || "Save this composition, preview a new look, then restore the original."}
         </span>
       </div>
     </div>

@@ -31,6 +31,10 @@ function Editor() {
 - `loadScene(json)` restores a scene previously produced by `saveScene()`.
 - `engine` is the underlying engine instance for advanced/headless use.
 
+Saving only captures a snapshot; it does not change the canvas. To demonstrate
+the round-trip, save a composition containing an image, shapes, and text, apply
+a visibly different layout, then load the saved JSON to restore the original.
+
 **Verified by:** [tests/guides/save-load-scene.spec.tsx](../../tests/guides/save-load-scene.spec.tsx)
 — captures the handle, saves the scene, mutates it, then restores and asserts the
 round-trip succeeds.

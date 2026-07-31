@@ -51,6 +51,19 @@ export class KonvaRendererAdapter implements RendererAdapter {
   }
 
   async createScene(_sceneBlock: BlockData, pageBlock: BlockData): Promise<void> {
+    // Tear down any previous scene before building a new one. On reload
+    // (loadScene), blocks are restored with their original IDs, so stale
+    // entries left in #nodeMap would be reused by syncBlock and never attached
+    // to the new content layer — leaving the canvas blank.
+    if (this.#stage) {
+      this.#resizeObserver?.disconnect();
+      this.#cropOverlay?.destroy();
+      this.#webgl?.dispose();
+      this.#webgl = null;
+      this.#stage.destroy();
+      this.#nodeMap.clear();
+    }
+
     const pageW = (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080;
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
 

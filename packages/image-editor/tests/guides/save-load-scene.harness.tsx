@@ -19,7 +19,11 @@ export const SaveLoadSceneHarness = () => {
     const handle = handleRef.current;
     if (!handle) return;
     const json = handle.saveScene();
+    const pageId = handle.engine.scene.getCurrentPage();
+    if (pageId === null) return;
+
     sceneRef.current = json;
+    handle.engine.block.setPageImageSrc(pageId, "");
     setSaveResult(json.includes('"version":1') ? "saved" : "invalid");
   };
 
