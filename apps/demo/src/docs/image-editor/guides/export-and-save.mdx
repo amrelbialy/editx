@@ -1,0 +1,110 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+import { stampWatermark } from "../../../components/guide-watermark";
+
+# Export & Save
+
+Control the save step end to end: which output formats users can pick, how the
+rendered blob is transformed before it leaves the editor, and whether the editor
+closes itself once the save completes.
+
+## When to use this
+
+- Your pipeline only accepts certain formats (e.g. JPEG-only uploads).
+- Every export must carry a watermark, or be re-encoded before you store it.
+- The editor lives in a modal that should dismiss itself after a successful save.
+
+## Config reference
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `export.formats` | `("png" \| "jpeg" \| "webp")[]` | all | Formats offered in the export dialog. |
+| `export.defaultFormat` | `"png" \| "jpeg" \| "webp"` | first | Pre-selected format. Must be one of `formats`. |
+| `export.quality` | `number` | `0.92` | Encoder quality (0–1) for lossy formats. |
+| `export.closeAfterSave` | `boolean` | `false` | Call `onClose` automatically after a successful export. |
+| `export.filename` | `string` | derived | Base filename for the built-in download when no `onSave` is provided. |
+| `events.onBeforeSave` | `(blob: Blob) => Blob \| Promise<Blob \| undefined> \| undefined` | — | Transform the rendered blob before `onSave`. |
+
+## Choose the output formats
+
+Restrict the choices with `export.formats` and pick the default with
+`export.defaultFormat`.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    export: {
+      formats: ["png", "jpeg"],
+      defaultFormat: "jpeg",
+    },
+  }}
+/>
+```
+
+`defaultFormat` must be one of the listed `formats`. Omit `export` to offer every
+supported format. Open the export dialog — only **PNG** and **JPEG** are offered,
+with JPEG pre-selected:
+
+<GuideScenario config={{ export: { formats: ["png", "jpeg"], defaultFormat: "jpeg" } }} />
+
+## Transform the blob before save
+
+`events.onBeforeSave` receives the rendered `Blob` and returns a replacement —
+ideal for stamping a watermark, re-encoding, or handing off a processed copy to
+your backend.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onSave={(blob) => uploadToServer(blob)}
+  events={{
+    onBeforeSave: async (blob) => {
+      const watermarked = await stampWatermark(blob);
+      return watermarked; // return undefined to keep the original
+    },
+  }}
+/>
+```
+
+`onBeforeSave` runs after the scene renders and before `onSave` (or the built-in
+download). Return a `Blob` to replace the export, or `undefined` to keep the
+original. It can be async, so awaiting canvas work or a network call is fine.
+
+Click **Export Image → Save**. The hook below stamps a repeating **© EDITX**
+watermark onto the rendered image, so the file you download is the watermarked
+version — not the original:
+
+<GuideScenario events={{ onBeforeSave: stampWatermark }} />
+
+## Close after save
+
+In modal or full-screen flows, users expect the editor to get out of the way once
+they've saved. `config.export.closeAfterSave` calls your `onClose` handler
+automatically after a successful export.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  onSave={(blob) => uploadToServer(blob)}
+  onClose={(reason) => {
+    if (reason === "save") closeModal();
+  }}
+  config={{ export: { closeAfterSave: true } }}
+/>
+```
+
+`onClose` receives a `reason` — `"save"`, `"close-button"`, `"back-button"`, or
+`"escape"` — plus a `hasUnsavedChanges` flag. After a successful export the reason
+is `"save"` with no unsaved changes, so you can close without a discard prompt.
+
+This editor has `closeAfterSave` enabled — export to see the save flow complete:
+
+<GuideScenario config={{ export: { closeAfterSave: true } }} />
+
+## Next steps
+
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — observe tool changes as users edit.
+- [Open in a Modal](/docs/image-editor/guides/open-in-modal) — export from a dialog flow.
+- [Customize the Chrome](/docs/image-editor/guides/customize-chrome) — pair with a back button for wizard flows.
+
+> Verified by `tests/guides/export-formats.spec.tsx`, `tests/guides/watermark-on-save.spec.tsx`, and `tests/guides/save-and-close.spec.tsx` in the `@editx/image-editor` package.

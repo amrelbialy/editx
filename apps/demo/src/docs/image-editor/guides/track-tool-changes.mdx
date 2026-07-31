@@ -45,7 +45,7 @@ hooks in two places: the `events` prop for in-editor activity, and the top-level
 
 `onToolChange` fires on every tool switch, so it''s the right place to mirror
 editor state into your own UI or send analytics. `onBeforeSave` runs on the
-export path before `onSave`; see [Add a Watermark on Save](/docs/image-editor/guides/watermark-on-save)
+export path before `onSave`; see [Export & Save](/docs/image-editor/guides/export-and-save)
 for a full transform example.
 
 ## Try it
@@ -57,8 +57,7 @@ the editor:
 
 ## Next steps
 
-- [Add a Watermark on Save](/docs/image-editor/guides/watermark-on-save) — transform the blob in `onBeforeSave`.
-- [Save & Close](/docs/image-editor/guides/save-and-close) — react to `onClose` after a successful export.
+- [Export & Save](/docs/image-editor/guides/export-and-save) — transform the blob in `onBeforeSave` and close after save.
 - [Inject Custom UI](/docs/image-editor/guides/inject-slots) — surface event state in the chrome.
 
 > Verified by `tests/guides/track-tool-changes.spec.tsx` in the `@editx/image-editor` package.

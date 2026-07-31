@@ -1,43 +1,73 @@
 # API Reference
 
-Complete props reference for ImageEditor and ImageEditorModal components.
+Complete props reference for the `ImageEditor` and `ImageEditorModal` components.
+For the `config` object, see [Configuration](/docs/image-editor/configuration).
 
 ## ImageEditor
 
 The main editor component. Renders inline at the given dimensions.
 
-### Props
-
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `src` | `string \| File \| Blob \| HTMLImageElement \| HTMLCanvasElement` | — | **Required.** Image source |
-| `onSave` | `(blob: Blob) => void` | — | Called when the user exports the image |
-| `onClose` | `(reason?, hasUnsavedChanges?) => void` | — | Called when the editor closes |
-| `width` | `string \| number` | `"100%"` | Editor width |
-| `height` | `string \| number` | `"100vh"` | Editor height |
-| `config` | `ImageEditorConfig` | `{}` | Editor configuration |
-| `slots` | `EditorSlots` | — | Custom UI slots |
-| `events` | `EditorEventCallbacks` | — | Event callbacks |
-| `validation` | `ImageValidationOptions` | — | File validation rules |
-| `keepZoomOnSourceChange` | `boolean` | `false` | Preserve zoom when `src` changes |
+| `src` | `string \| File \| Blob \| HTMLImageElement \| HTMLCanvasElement` | — | **Required.** Image source. |
+| `onSave` | `(blob: Blob) => void` | — | Called when the user exports the image. |
+| `onClose` | `(reason?: CloseReason, hasUnsavedChanges?: boolean) => void` | — | Called when the editor closes. |
+| `onReady` | `(handle: EditorHandle) => void` | — | Fires once when the engine is ready, exposing an imperative handle. |
+| `width` | `string \| number` | `"100%"` | Editor width. |
+| `height` | `string \| number` | `"100vh"` | Editor height. |
+| `config` | `ImageEditorConfig` | `{}` | Editor configuration. |
+| `slots` | `EditorSlots` | — | Custom UI slots. |
+| `events` | `EditorEventCallbacks` | — | Event callbacks. |
+| `validation` | `ImageValidationOptions` | — | File validation rules. |
+| `keepZoomOnSourceChange` | `boolean` | `false` | Preserve zoom/pan when `src` changes. |
+
+`CloseReason` is one of `"save"`, `"close-button"`, `"back-button"`, or `"escape"`.
 
 ## ImageEditorModal
 
-Wraps `ImageEditor` in a Radix Dialog for modal usage.
-
-### Props
-
-All `ImageEditor` props, plus:
+Wraps `ImageEditor` in a Radix Dialog for modal usage. Accepts all `ImageEditor`
+props, plus:
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `open` | `boolean` | — | **Required.** Control modal visibility |
-| `onOpenChange` | `(open: boolean) => void` | — | Called when visibility changes |
+| `open` | `boolean` | — | **Required.** Control modal visibility. |
+| `onOpenChange` | `(open: boolean) => void` | — | Called when visibility changes. |
+| `className` | `string` | — | Class for the dialog content wrapper. |
+| `overlayClassName` | `string` | — | Class for the overlay. |
 
 ## EditorSlots
 
+Inject custom UI into the editor shell. See [Inject Custom UI](/docs/image-editor/guides/inject-slots).
+
 | Slot | Type | Description |
 |---|---|---|
-| `topbarRight` | `ReactNode` | Content in the top bar, right side |
-| `sidebarBottom` | `ReactNode` | Content at the bottom of the tool sidebar |
-| `contextualBarExtra` | `ReactNode` | Extra content in the contextual bar |
+| `topbarRight` | `ReactNode` | Right side of the top bar (before export). |
+| `sidebarBottom` | `ReactNode` | Bottom of the tool sidebar (above Apps). |
+| `contextualBarExtra` | `ReactNode` | Extra content in the contextual bar. |
+
+## EditorEventCallbacks
+
+React to editor lifecycle events. See [React to Editor Events](/docs/image-editor/guides/track-tool-changes).
+
+| Callback | Type | Description |
+|---|---|---|
+| `onToolChange` | `(toolId: string \| null) => void` | Fires when the active tool changes. |
+| `onBeforeSave` | `(blob: Blob) => Promise<Blob \| undefined> \| Blob \| undefined` | Transform the export blob before save. |
+
+## ImageValidationOptions
+
+Reject or warn on unsuitable source files.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `acceptedFormats` | `string[]` | common image types | Accepted MIME types. |
+| `maxFileSize` | `number` | `50 MB` | Reject files larger than this (bytes). |
+| `warnFileSize` | `number` | `20 MB` | Warn above this size (bytes). |
+| `maxDimension` | `number` | `16000` | Reject images wider/taller than this (px). |
+| `warnDimension` | `number` | `8000` | Warn above this dimension (px). |
+
+## Next steps
+
+- [Configuration](/docs/image-editor/configuration) — the full `config` reference.
+- [Inject Custom UI](/docs/image-editor/guides/inject-slots) — use the slot props.
+- [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — use the event callbacks.

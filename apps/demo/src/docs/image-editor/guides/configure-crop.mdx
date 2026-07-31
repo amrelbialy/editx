@@ -1,18 +1,85 @@
 import { GuideScenario } from "../../../components/guide-scenario";
 
-# Configure the Crop Tool
+# Crop Tool
 
-Ship the Crop tool with output sizes that match your product. `config.crop.resizePresets`
-adds one-click resize targets — social formats, thumbnails, print dimensions — to
-the Crop tool's **Resize** tab.
+Configure the **Crop** tool with `config.crop` — the aspect-ratio grid, the
+resize presets, the crop modes, and which controls appear. Every field is
+optional; omit `crop` entirely to ship the full built-in tool.
 
 ## When to use this
 
-- Your users export to fixed sizes (e.g. a 1080×1080 avatar or a 1200×630 share card).
-- You want to remove guesswork by offering named, on-brand output dimensions.
-- You're building a template flow where every export must land on an exact size.
+- Your output must match a fixed set of formats (social sizes, print, avatars).
+- You want on-brand ratio labels ("Square", "Widescreen") instead of raw numbers.
+- You need named, one-click resize targets so exports land on exact dimensions.
 
-## Configure the presets
+## Config reference
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `aspectRatios` | `AspectRatioPreset[]` | built-ins | Full custom ratio list for the Aspect Ratio tab. |
+| `presets` | `string[]` | all | Whitelist of ratio ids to show, in order. Filters `aspectRatios`. |
+| `modes` | `("crop" \| "cover" \| "fit")[]` | all | Which crop modes are offered. |
+| `defaultMode` | `"crop" \| "cover" \| "fit"` | `"crop"` | Mode selected when the tool opens. |
+| `allowCustomRatio` | `boolean` | `true` | Allow a free, unconstrained ratio. |
+| `showStraighten` | `boolean` | `true` | Show the straighten (rotation) slider. |
+| `showRotateFlip` | `boolean` | `true` | Show the rotate / flip buttons. |
+| `resizePresets` | `ResizePresetGroup[]` | — | Grouped size presets for the Resize tab. |
+
+## Aspect ratios
+
+Define the ratios in the **Aspect Ratio** tab with `config.crop.aspectRatios`.
+Each entry is a `{ id, label, ratio }` object, so you can add fully custom
+ratios — not just the built-ins.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    crop: {
+      aspectRatios: [
+        { id: "free", label: "Free", ratio: "free" },
+        { id: "original", label: "Original", ratio: "original" },
+        { id: "1:1", label: "Square", ratio: 1 },
+        { id: "16:9", label: "Widescreen", ratio: 16 / 9 },
+        { id: "2.39:1", label: "Cinema", ratio: 2.39 },
+      ],
+    },
+  }}
+/>
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable identifier used to track the active selection. |
+| `label` | `string` | Text shown under the ratio icon. |
+| `ratio` | `number \| "free" \| "original"` | `width / height` as a number, `"free"` (unconstrained), or `"original"` (the source image's own ratio). Omitting it behaves like `"free"`. |
+
+Omit `aspectRatios` to show the built-in ratios — `free`, `original`, `1:1`,
+`4:3`, `3:4`, `16:9`, `9:16`.
+
+To simply narrow or reorder the built-ins without redefining them, pass
+`config.crop.presets` — an array of preset ids. It filters whichever list
+`aspectRatios` provides, in the order you list them.
+
+```tsx
+<ImageEditor src="/photo.jpg" config={{ crop: { presets: ["1:1", "4:3", "16:9"] } }} />
+```
+
+Open the **Crop** tool — only the curated ratios appear:
+
+<GuideScenario
+  config={{
+    crop: {
+      presets: ["1:1", "4:3", "16:9"],
+    },
+  }}
+/>
+
+## Resize presets
+
+Add ready-made output sizes with `config.crop.resizePresets`. Each group appears
+under the Crop tool's **Resize** tab so users can resize to an exact target in one
+click.
 
 ```tsx
 <ImageEditor
@@ -34,11 +101,16 @@ the Crop tool's **Resize** tab.
 />
 ```
 
-Each `ResizePresetGroup` has a `label` and a list of presets; every preset needs a
-`label`, `width`, and `height`. The first three presets in a group show up front,
-with a **More** toggle for the rest.
+| Field | Type | Description |
+|---|---|---|
+| `ResizePresetGroup.label` | `string` | Group heading in the Resize tab. |
+| `ResizePresetGroup.presets` | `ResizePreset[]` | The sizes in the group. |
+| `ResizePreset.label` | `string` | Name shown on the preset button. |
+| `ResizePreset.width` | `number` | Target width in pixels. |
+| `ResizePreset.height` | `number` | Target height in pixels. |
 
-## Try it
+The first three presets in a group show up front, with a **More** toggle for the
+rest.
 
 Open **Crop → Resize** to see the configured presets:
 
@@ -61,8 +133,8 @@ Open **Crop → Resize** to see the configured presets:
 
 ## Next steps
 
-- [Limit the Tools](/docs/image-editor/guides/limit-tools) — show only the tools you need.
-- [Control Export Formats](/docs/image-editor/guides/export-formats) — pair resize with a fixed output format.
+- [Customize the Toolbar](/docs/image-editor/guides/customize-toolbar) — show only the tools you need.
+- [Export & Save](/docs/image-editor/guides/export-and-save) — pair resize with a fixed output format.
 - [Configuration](/docs/image-editor/configuration) — the full config reference.
 
-> Verified by `tests/guides/configure-crop.spec.tsx` in the `@editx/image-editor` package.
+> Verified by `tests/guides/configure-crop.spec.tsx` and `tests/guides/configure-crop-ratios.spec.tsx` in the `@editx/image-editor` package.
