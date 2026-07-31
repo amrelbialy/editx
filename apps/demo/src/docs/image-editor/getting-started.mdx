@@ -1,4 +1,4 @@
-﻿# Getting Started
+# Getting Started
 
 Install and set up the Editx Image Editor in your React project.
 
@@ -10,9 +10,10 @@ pnpm add @editx/image-editor
 
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
-## CSS Setup
+## CSS setup
 
-Editx is styled with Tailwind CSS 4 and uses CSS Container Queries for responsive layout. In your project's main CSS file:
+Editx is styled with Tailwind CSS 4 and uses CSS Container Queries for responsive
+layout. In your project's main CSS file:
 
 ```css
 @import "tailwindcss";
@@ -21,11 +22,16 @@ Editx is styled with Tailwind CSS 4 and uses CSS Container Queries for responsiv
 @source "../node_modules/@editx/image-editor/dist";
 ```
 
-The `@source` directive tells Tailwind to scan the editor's compiled output for utility classes. Without it, container query variants like `@xl/editor:` won't be generated and you'll see mobile styles on desktop.
+The `@source` directive tells Tailwind to scan the editor's compiled output for
+utility classes. Without it, container query variants like `@xl/editor:` won't be
+generated and you'll see mobile styles on desktop.
 
-> **Note:** The path must point to `dist`, not `src` — only `dist` is included in the published package.
+> **Note:** The path must point to `dist`, not `src` — only `dist` is included in
+> the published package.
 
-## Basic Usage
+## Basic usage
+
+Render the editor inline at any size:
 
 ```tsx
 import { ImageEditor } from "@editx/image-editor";
@@ -46,7 +52,7 @@ function App() {
 }
 ```
 
-## Modal Usage
+## Modal usage
 
 Wrap the editor in a modal for overlay-style editing:
 
@@ -72,9 +78,9 @@ function App() {
 }
 ```
 
-## Next Steps
+## Next steps
 
-- [Configuration](/docs/image-editor/configuration) — customize tools, export settings, and more
-- [Theming](/docs/image-editor/theming) — built-in presets and custom color palettes
-- [API Reference](/docs/image-editor/api) — full props reference
-- [Playground](/playground) — try it live with interactive config
+- [Configuration](/docs/image-editor/configuration) — customize tools, export settings, and more.
+- [API Reference](/docs/image-editor/api) — full props reference.
+- [Theming](/docs/image-editor/theming) — built-in presets and custom palettes.
+- [Playground](/playground) — try it live with interactive config.

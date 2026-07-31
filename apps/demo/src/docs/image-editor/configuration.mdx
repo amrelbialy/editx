@@ -1,10 +1,12 @@
 # Configuration
 
-Customize the Creative Image Editor with tools, export settings, and more.
+Every aspect of the editor is driven by a single `config` object passed to
+`<ImageEditor>` or `<ImageEditorModal>`. This page is the top-level reference —
+each tool has its own guide with the full option tables.
 
 ## Overview
 
-Pass a `config` prop to `<ImageEditor>` or `<ImageEditorModal>` to customize behavior.
+Pass a `config` prop to customize behavior. Every field is optional.
 
 ```tsx
 <ImageEditor
@@ -22,7 +24,28 @@ Pass a `config` prop to `<ImageEditor>` or `<ImageEditorModal>` to customize beh
 />
 ```
 
-## Available Tools
+## ImageEditorConfig
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `tools` | `ImageEditorToolId[]` | all | Tools to show, in order. See [Customize the Toolbar](/docs/image-editor/guides/customize-toolbar). |
+| `defaultTool` | `ImageEditorToolId \| null` | `null` | Tool activated on load. |
+| `theme` | `ThemeConfig` | `{ preset: "dark" }` | Colors, radius, and font. See [Theming](/docs/image-editor/theming). |
+| `colors` | `string[]` | built-ins | Swatch palette (hex) shared by every color picker. |
+| `crop` | `CropToolConfig` | — | [Crop Tool](/docs/image-editor/guides/configure-crop) options. |
+| `adjust` | `AdjustToolConfig` | — | [Adjust Tool](/docs/image-editor/guides/configure-adjustments) options. |
+| `filter` | `FilterToolConfig` | — | [Filter Tool](/docs/image-editor/guides/configure-filters) options. |
+| `text` | `TextToolConfig` | — | [Text Tool](/docs/image-editor/guides/configure-fonts) options. |
+| `shapes` | `ShapesToolConfig` | — | [Shapes Tool](/docs/image-editor/guides/configure-shapes) options. |
+| `image` | `ImageToolConfig` | — | [Image upload](/docs/image-editor/guides/image-upload-limits) limits. |
+| `ui` | `UIConfig` | — | Chrome and sidebar options (below). |
+| `export` | `ExportConfig` | — | Output formats and save behavior. See [Export & Save](/docs/image-editor/guides/export-and-save). |
+| `customTools` | `CustomTool[]` | — | Register your own tools. See [Add a Custom Tool](/docs/image-editor/guides/custom-tool). |
+| `locale` | `string` | `"en"` | Active locale. See [Localize the UI](/docs/image-editor/guides/localize). |
+| `translations` | `Record<string, string>` | — | Override individual translation strings. |
+| `translateFn` | `(key: string) => string` | — | Custom lookup, called instead of the built-in dictionary. |
+
+## Available tools
 
 | Tool | ID | Description |
 |---|---|---|
@@ -33,6 +56,37 @@ Pass a `config` prop to `<ImageEditor>` or `<ImageEditorModal>` to customize beh
 | Shapes | `"shapes"` | Rectangles, circles, lines, arrows |
 | Image | `"image"` | Image overlay annotations |
 
-## ImageEditorConfig
+## Export
 
-Full reference coming soon. See the [Playground](/playground) to experiment with all config options live.
+`config.export` controls the save step. Full walkthrough in
+[Export & Save](/docs/image-editor/guides/export-and-save).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `formats` | `("png" \| "jpeg" \| "webp")[]` | all | Formats offered in the export dialog. |
+| `defaultFormat` | `"png" \| "jpeg" \| "webp"` | first | Pre-selected format. |
+| `quality` | `number` | `0.92` | Encoder quality (0–1) for lossy formats. |
+| `closeAfterSave` | `boolean` | `false` | Call `onClose` after a successful export. |
+| `filename` | `string` | derived | Base filename for the built-in download. |
+
+## UI
+
+`config.ui` tunes the editor chrome. See [Customize the Toolbar](/docs/image-editor/guides/customize-toolbar)
+and [Customize the Chrome](/docs/image-editor/guides/customize-chrome).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `toolSidebar.compact` | `boolean` | `false` | Collapse the tool rail to icons only. |
+| `toolSidebar.groupSeparators` | `boolean` | `true` | Dividers between tool groups. |
+| `contextualBar.show` | `boolean` | `true` | Show the contextual (selection) bar. |
+| `title` | `string` | — | Title shown in the topbar. |
+| `showTitle` | `boolean` | — | Toggle the topbar title. |
+| `showCloseButton` | `boolean` | auto | Show the close (X) button. |
+| `showBackButton` | `boolean` | `false` | Use a back arrow instead of X. |
+| `unsavedChangesWarning` | `boolean` | `true` | Confirm before closing with unsaved changes. |
+
+## Next steps
+
+- [API Reference](/docs/image-editor/api) — component props, slots, and events.
+- [Customize the Toolbar](/docs/image-editor/guides/customize-toolbar) — choose which tools appear.
+- [Playground](/playground) — experiment with every option live.

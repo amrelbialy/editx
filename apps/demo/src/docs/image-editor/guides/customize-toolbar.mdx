@@ -1,0 +1,99 @@
+import { GuideScenario } from "../../../components/guide-scenario";
+
+# Customize the Toolbar
+
+Shape the tool rail to fit your product: choose which tools appear, which one the
+editor opens on, and how compact the rail looks. These three top-level config
+fields work together.
+
+## When to use this
+
+- You want a focused editor (crop-only for avatars, adjust-only for photo tweaks).
+- Your flow always starts with the same action, so it should open on that tool.
+- Vertical space is tight and you want a minimal, icon-first rail.
+
+## Config reference
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `tools` | `ImageEditorToolId[]` | all | Tools to render, in order. Hides every tool not listed. |
+| `defaultTool` | `ImageEditorToolId \| null` | `null` | Tool activated on load. `null` starts on the neutral selection state. |
+| `ui.toolSidebar.compact` | `boolean` | `false` | Collapse the rail to an icon-only column. |
+| `ui.toolSidebar.groupSeparators` | `boolean` | `true` | Show dividers between tool groups. |
+
+Valid tool ids: `crop`, `adjust`, `filter`, `text`, `shapes`, `image`.
+
+## Limit the tools
+
+Passing `config.tools` renders the listed tools in order and hides every other
+built-in tool.
+
+```tsx
+<ImageEditor src="/photo.jpg" config={{ tools: ["crop", "adjust"] }} />
+```
+
+Omit `config.tools` entirely to show all of them. This editor exposes only
+**Crop** and **Adjust**:
+
+<GuideScenario config={{ tools: ["crop", "adjust"] }} />
+
+## Set the default tool
+
+Open the editor directly on a specific tool with `config.defaultTool`. Instead of
+landing on the neutral selection state, the editor activates the tool you name as
+soon as the image loads.
+
+```tsx
+<ImageEditor src="/photo.jpg" config={{ defaultTool: "adjust" }} />
+```
+
+`defaultTool` accepts any tool id, or `null` (the default) to start on the neutral
+selection state. The editor below opens with the **Adjust** panel already active —
+no click required:
+
+<GuideScenario config={{ defaultTool: "adjust" }} />
+
+## Compact the sidebar
+
+Switch the tool rail to a tight, icon-only column with
+`config.ui.toolSidebar.compact`. Compact mode hides the text labels, narrows the
+rail, and shrinks each button to a square.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    ui: {
+      toolSidebar: {
+        compact: true,
+        groupSeparators: false,
+      },
+    },
+  }}
+/>
+```
+
+- `compact: true` collapses the rail to icon-only, tightly-spaced buttons. Buttons
+  stay fully accessible — the tool name moves to the tooltip and `aria-label`.
+- `groupSeparators: false` removes the dividers between tool groups.
+
+The tool rail collapses to a tidy icon column — hover any button for its name:
+
+<GuideScenario
+  config={{
+    ui: {
+      toolSidebar: {
+        compact: true,
+        groupSeparators: false,
+      },
+    },
+  }}
+/>
+
+## Next steps
+
+- [Add a Custom Tool](/docs/image-editor/guides/custom-tool) — extend the rail with your own tool.
+- [Inject Custom UI](/docs/image-editor/guides/inject-slots) — render your own nodes into the chrome.
+- [Configuration](/docs/image-editor/configuration) — the full config reference.
+
+> Verified by `tests/guides/limit-tools.spec.tsx`, `tests/guides/set-default-tool.spec.tsx`, and `tests/guides/compact-sidebar.spec.tsx` in the `@editx/image-editor` package.
