@@ -5,7 +5,8 @@ import { expect, test } from "../fixtures";
  * Guide: configure-crop-ratios — see docs/guides/configure-crop-ratios.md
  *
  * `config.crop.presets` whitelists which aspect-ratio presets the Crop tool
- * offers, in the order listed.
+ * offers, in the order listed. `config.crop.aspectRatios` defines a fully
+ * custom ratio list (`{ id, label, ratio }` objects).
  */
 
 const TEST_IMAGE = "/fixtures/test-image-100x100.png";
@@ -39,5 +40,36 @@ test.describe("Guide: configure-crop-ratios", () => {
     await expect(component.getByTestId("crop-preset-free")).toHaveCount(0);
     await expect(component.getByTestId("crop-preset-original")).toHaveCount(0);
     await expect(component.getByTestId("crop-preset-9:16")).toHaveCount(0);
+  });
+
+  test("config.crop.aspectRatios renders a custom ratio list", async ({ mount }) => {
+    const component = await mount(
+      <ImageEditor
+        src={TEST_IMAGE}
+        width="900px"
+        height="600px"
+        config={{
+          crop: {
+            aspectRatios: [
+              { id: "free", label: "Free", ratio: "free" },
+              { id: "1:1", label: "Square", ratio: 1 },
+              { id: "2.39:1", label: "Cinema", ratio: 2.39 },
+            ],
+          },
+        }}
+      />,
+    );
+    await waitForEditor(component);
+
+    await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Crop").click();
+
+    // Custom presets appear, including a ratio not in the built-in set.
+    await expect(component.getByTestId("crop-preset-2.39:1")).toBeVisible({ timeout: 10_000 });
+    await expect(component.getByText("Cinema")).toBeVisible();
+    await expect(component.getByTestId("crop-preset-1:1")).toBeVisible();
+
+    // Built-in ratios omitted from the custom list are hidden.
+    await expect(component.getByTestId("crop-preset-16:9")).toHaveCount(0);
+    await expect(component.getByTestId("crop-preset-original")).toHaveCount(0);
   });
 });

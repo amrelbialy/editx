@@ -1,16 +1,16 @@
 import type { EditxEngine, ShapeType } from "@editx/engine";
 import { hexToColor } from "@editx/engine";
 import { useCallback } from "react";
-import { useConfig } from "../config/config-context";
+import type { ImageEditorConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseShapesToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
+  config: ImageEditorConfig;
 }
 
-export function useShapesTool({ engineRef }: UseShapesToolOptions) {
+export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
-  const config = useConfig();
 
   const handleAddShape = useCallback(
     (shapeType: ShapeType, sides?: number) => {
