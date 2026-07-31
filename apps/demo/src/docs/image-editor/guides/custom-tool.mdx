@@ -1,6 +1,6 @@
-import { GuideScenario } from "../../../components/guide-scenario";
+import { GuideCustomTool } from "../../../components/guide-custom-tool";
 
-export const StickersIcon = (props) => (
+export const LooksIcon = (props) => (
   <svg
     className={props.className}
     viewBox="0 0 24 24"
@@ -10,30 +10,25 @@ export const StickersIcon = (props) => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9l7-7V5a2 2 0 0 0-2-2Z" />
-    <path d="M14 21v-5a2 2 0 0 1 2-2h5" />
+    <circle cx="13.5" cy="6.5" r="2.5" />
+    <circle cx="19" cy="13" r="2.5" />
+    <circle cx="6" cy="12" r="2.5" />
+    <circle cx="10" cy="20" r="2.5" />
+    <path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2 2 2 0 0 1 2-2h1a4 4 0 0 0 4-4 10 10 0 0 0-10-10Z" />
   </svg>
-);
-
-export const StickersPanel = () => (
-  <div style={{ padding: "1rem", fontSize: 14, lineHeight: 1.5 }}>
-    <strong>Stickers</strong>
-    <p style={{ margin: "0.5rem 0 0", opacity: 0.7 }}>
-      Your custom tool panel renders here. Wire it up to add stickers, stamps, or
-      anything else your app needs.
-    </p>
-  </div>
 );
 
 # Add a Custom Tool
 
-Extend the editor with functionality it doesn't ship with — stickers, stamps,
-brand assets, AI actions — without forking the component. Register it through
-`config.customTools` and it appears alongside the built-in tools.
+Extend the editor with functionality it doesn't ship with — one-tap looks, brand
+assets, stamps, AI actions — without forking the component. Register it through
+`config.customTools` and it appears alongside the built-in tools. A custom tool
+isn't limited to inert UI: it can **mutate the image** through the same engine the
+built-in tools use, so edits are undoable and land on export.
 
 ## When to use this
 
-- You need domain-specific functionality (e.g. a brand-asset picker or an AI action).
+- You need domain-specific functionality (e.g. a signature look or an AI action).
 - You want the new tool to feel native — same sidebar, same active-panel behaviour.
 - You'd rather compose than fork the editor.
 
@@ -43,36 +38,86 @@ Each entry provides an `id`, a `label`, an `icon` component for the sidebar, and
 `panel` component shown when the tool is active.
 
 ```tsx
-const StickersTool = {
-  id: "stickers",
-  label: "Stickers",
-  icon: StickersIcon,
-  panel: StickersPanel,
+const LooksTool = {
+  id: "looks",
+  label: "Looks",
+  icon: LooksIcon,
+  panel: LooksPanel,
 };
 
 <ImageEditor
   src="/photo.jpg"
-  config={{ customTools: [StickersTool] }}
+  config={{ customTools: [LooksTool] }}
 />
 ```
 
-Panel components receive no props — read editor state through the exported hooks
-(`useConfig`, `useImageEditorStore`).
+## Reach the engine from your panel
+
+Panel components receive no props. Read editor state through the exported hooks
+(`useConfig`, `useImageEditorStore`), and get the engine from the `onReady`
+handle — share it with your panel via React context:
+
+```tsx
+import { EFFECT_FILTER_NAME } from "@editx/engine";
+import { ImageEditor, useImageEditorStore } from "@editx/image-editor";
+import { createContext, useContext, useState } from "react";
+
+const EngineContext = createContext(null);
+
+// Ensure a single, undoable filter effect on the block, then set its preset.
+function applyLook(engine, blockId, name) {
+  let eid = engine.block.getEffects(blockId).find((id) => engine.block.getKind(id) === "filter");
+  if (eid == null) {
+    engine.beginSilent();
+    eid = engine.block.createEffect("filter");
+    engine.block.appendEffect(blockId, eid);
+    engine.endSilent();
+  }
+  engine.block.setString(eid, EFFECT_FILTER_NAME, name); // "" clears the look
+}
+
+const LooksPanel = () => {
+  const engine = useContext(EngineContext);
+  const blockId = useImageEditorStore((s) => s.editableBlockId);
+
+  return (
+    <button
+      type="button"
+      disabled={!engine || blockId == null}
+      onClick={() => engine && blockId != null && applyLook(engine, blockId, "Sepia")}
+    >
+      Apply Sepia
+    </button>
+  );
+};
+
+function Editor() {
+  const [engine, setEngine] = useState(null);
+  return (
+    <EngineContext.Provider value={engine}>
+      <ImageEditor
+        src="/photo.jpg"
+        config={{ customTools: [{ id: "looks", label: "Looks", icon: LooksIcon, panel: LooksPanel }] }}
+        onReady={(handle) => setEngine(handle.engine)}
+      />
+    </EngineContext.Provider>
+  );
+}
+```
+
+Because the effect goes through the engine's command system, it participates in
+undo/redo and is baked into the exported image.
 
 ## Try it
 
-A **Stickers** button appears in the sidebar — click it to open your panel:
+A **Looks** button appears in the sidebar — open it and pick a look to watch the
+image change on the canvas:
 
-<GuideScenario
-  config={{
-    customTools: [
-      { id: "stickers", label: "Stickers", icon: StickersIcon, panel: StickersPanel },
-    ],
-  }}
-/>
+<GuideCustomTool />
 
 ## Next steps
 
+- [Configure the Filter Tool](/docs/image-editor/guides/configure-filters) — curate the built-in filter presets.
 - [Limit the Tools](/docs/image-editor/guides/limit-tools) — control which tools appear.
 - [Inject Custom UI](/docs/image-editor/guides/inject-slots) — add UI outside the sidebar.
 - [React to Editor Events](/docs/image-editor/guides/track-tool-changes) — respond when your tool activates.
