@@ -24,7 +24,7 @@
     "url": "https://github.com/amrelbialy/editx",
     "directory": "packages/image-editor"
   },
-  "homepage": "https://github.com/amrelbialy/editx/tree/main/packages/image-editor#readme",
+  "homepage": "https://editx-sdk.vercel.app/docs/image-editor/getting-started",
   "bugs": {
     "url": "https://github.com/amrelbialy/editx/issues"
   },

@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import App from "./app";
 import { EditorPlayground } from "./components/editor-playground";
 import { Navbar } from "./components/navbar";
+import { Seo } from "./components/seo";
 
 import EngineBlockApi from "./docs/engine/block-api.mdx";
 import EngineBlocks from "./docs/engine/blocks.mdx";
@@ -109,6 +110,7 @@ const DOC_REDIRECTS: { from: string; to: string }[] = [
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
+    <Seo />
     <Navbar />
     <Routes>
       <Route path="/" element={<LandingPage />} />
