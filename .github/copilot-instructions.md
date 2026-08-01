@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-See [CLAUDE.md](../../CLAUDE.md) at project root for full project rules, architecture, and conventions.
+See [CLAUDE.md](../CLAUDE.md) at project root for full project rules, architecture, and conventions.
 
 ## Critical Rules (repeated for quick reference)
 
