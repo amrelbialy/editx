@@ -1,9 +1,10 @@
 # editx Copilot Agents
 
-Specialized [GitHub Copilot CLI custom agents](https://docs.github.com/copilot) for the editx
-monorepo. Every `*.md` file in `.github/agents/` is a real agent and is auto-discovered by
-Copilot. The reusable template lives in `.github/agent-templates/`. Each agent has a scoped
-system prompt, a restricted toolset, and is anchored to [`CLAUDE.md`](../../CLAUDE.md).
+Specialized [GitHub Copilot custom agents](https://docs.github.com/copilot) for the editx
+monorepo. Every `*.agent.md` file in `.github/agents/` is a real agent and is auto-discovered
+by GitHub.com, Copilot CLI, and supported IDEs. The reusable template lives in
+`.github/agent-templates/`. Each agent has a scoped system prompt, a restricted toolset, and
+is anchored to [`CLAUDE.md`](../../CLAUDE.md).
 
 ## Design philosophy
 
@@ -36,19 +37,19 @@ All editx agents use `claude-opus-4.8`. Tool categories: `read`, `edit`, `search
 
 | Agent | File | Tools | Use when |
 |-------|------|-------|----------|
-| Engineering Lead | `engineering-lead.md` | read, search, github | Any multi-step / cross-cutting request — plan and recommend routing first |
-| Architect | `architect.md` | read, search, edit | Module boundaries, placement, new subsystem design, cross-package refactors |
-| SDK / API Designer | `sdk-api-designer.md` | read, search, edit | Engine public API: new commands, EventAPI, exported types |
-| Rendering Engineer | `rendering-engineer.md` | read, edit, search, execute | Konva/canvas, hit-testing, transforms, on-canvas performance |
-| Developer | `developer.md` | read, edit, search, execute | Implement features / fix bugs across packages |
-| Code Reviewer | `code-reviewer.md` | read, search | Review a diff before it lands (read-only) |
-| QA | `qa.md` | read, edit, search, execute | Design & run Vitest / Playwright tests |
+| Engineering Lead | `engineering-lead.agent.md` | read, search, github | Any multi-step / cross-cutting request — plan and recommend routing first |
+| Architect | `architect.agent.md` | read, search, edit | Module boundaries, placement, new subsystem design, cross-package refactors |
+| SDK / API Designer | `sdk-api-designer.agent.md` | read, search, edit | Engine public API: new commands, EventAPI, exported types |
+| Rendering Engineer | `rendering-engineer.agent.md` | read, edit, search, execute | Konva/canvas, hit-testing, transforms, on-canvas performance |
+| Developer | `developer.agent.md` | read, edit, search, execute | Implement features / fix bugs across packages |
+| Documentation Writer | `documentation-writer.agent.md` | read, edit, search, execute | Public API references, guides, examples, and README content |
+| Code Reviewer | `code-reviewer.agent.md` | read, search | Review a diff before it lands (read-only) |
+| QA | `qa.agent.md` | read, edit, search, execute | Design & run Vitest / Playwright tests |
 
 ### Tier 2 — planned (add once Tier 1 is proven)
 
 - **performance-engineer** — `__EX_PERF` profiling, render/interaction budgets, bundle size.
 - **security-engineer** — dependency/supply-chain, input handling, safe serialization.
-- **documentation-writer** — public API docs, guides, examples, and README maintenance.
 
 ### Tier 3 — process roles (thin as coding agents; start folded into Engineering Lead)
 
@@ -70,12 +71,13 @@ engineering-lead ─┬─► architect ─────► sdk-api-designer
                   │                         │
                   ├─► rendering-engineer ◄──┘
                   ├─► developer ──► qa ──► code-reviewer
-                  └─► (tier 2) performance / security / docs
+                  ├─► documentation-writer
+                  └─► (tier 2) performance / security
 ```
 
 ## Adding a new agent
 
-1. `cp .github/agent-templates/_template.md .github/agents/<role>.md`
+1. `cp .github/agent-templates/_template.md .github/agents/<role>.agent.md`
 2. Keep `model: claude-opus-4.8`, fill in `description` (this helps Copilot suggest
    the agent), and grant the **minimum** `tools`.
 3. Write the system prompt: Scope → Rules → Procedure → Output format → Constraints.
