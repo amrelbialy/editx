@@ -3,6 +3,7 @@ import { colorToHex, FILL_SOLID_COLOR, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
+import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
 
@@ -56,6 +57,8 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
   const [color, setColor] = useState(readColor);
   const [opacity, setOpacity] = useState(() => engine.block.getOpacity(blockId));
 
+  const { commit } = useCoalescedHistory(engine);
+
   useEffect(() => {
     setColor(readColor());
     setOpacity(engine.block.getOpacity(blockId));
@@ -83,24 +86,24 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
     (newColor: string) => {
       if (isText) {
         const { start, end } = getStyleRange();
-        engine.block.setTextColor(blockId, start, end, newColor);
+        commit(() => engine.block.setTextColor(blockId, start, end, newColor));
       } else {
         const fillId = engine.block.getFill(blockId);
         if (fillId != null) {
-          engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
+          commit(() => engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor)));
         }
       }
       setColor(newColor);
     },
-    [engine, blockId, isText, getStyleRange],
+    [engine, blockId, isText, getStyleRange, commit],
   );
 
   const handleOpacityChange = useCallback(
     (v: number) => {
-      engine.block.setOpacity(blockId, v);
+      commit(() => engine.block.setOpacity(blockId, v));
       setOpacity(v);
     },
-    [engine, blockId],
+    [engine, blockId, commit],
   );
 
   return (

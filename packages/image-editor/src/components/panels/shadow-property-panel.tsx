@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { ColorSwatch } from "../ui/color-swatch";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
@@ -45,6 +46,8 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
 
   const update = useCallback(() => setState(readShadow(engine, blockId)), [engine, blockId]);
 
+  const { commit, flush } = useCoalescedHistory(engine);
+
   const handleToggle = useCallback(() => {
     engine.block.setShadowEnabled(blockId, !state.enabled);
     update();
@@ -52,10 +55,11 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
 
   const handleColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      engine.block.setShadowColor(blockId, hexToColor(e.target.value));
+      const value = e.target.value;
+      commit(() => engine.block.setShadowColor(blockId, hexToColor(value)));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   const handleOffsetX = useCallback(
@@ -76,10 +80,10 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
 
   const handleBlur = useCallback(
     ([v]: number[]) => {
-      engine.block.setShadowBlur(blockId, v);
+      commit(() => engine.block.setShadowBlur(blockId, v));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   return (
@@ -120,6 +124,7 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
         max={50}
         step={1}
         onChange={(v) => handleBlur([v])}
+        onCommit={flush}
       />
     </SwitchField>
   );

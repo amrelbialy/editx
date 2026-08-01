@@ -202,7 +202,7 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
   ]);
 
   return (
-    <ToolPanel open={open} title={title} onClose={handleClose}>
+    <ToolPanel open={open} title={title} onClose={handleClose} docked={activeTool === "crop"}>
       {propertySidePanel && engine && selectedShapeId !== null ? (
         <BlockInspector
           panel={propertySidePanel}

@@ -32,7 +32,17 @@ function MdxPre(props: ComponentPropsWithoutRef<"pre">) {
   return <pre {...props} />;
 }
 
-const components = { a: MdxLink, pre: MdxPre };
+function MdxTable(props: ComponentPropsWithoutRef<"table">) {
+  // Wide tables (e.g. API references) would otherwise push the page past the
+  // viewport on small screens. Scroll them horizontally instead of overflowing.
+  return (
+    <div className="max-w-full overflow-x-auto">
+      <table {...props} />
+    </div>
+  );
+}
+
+const components = { a: MdxLink, pre: MdxPre, table: MdxTable };
 
 export function MdxProvider(props: { children: React.ReactNode }) {
   return <MDXProvider components={components}>{props.children}</MDXProvider>;

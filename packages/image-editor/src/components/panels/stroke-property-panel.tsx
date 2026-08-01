@@ -2,6 +2,7 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { ColorSwatch } from "../ui/color-swatch";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
@@ -39,6 +40,8 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
 
   const update = useCallback(() => setState(readStroke(engine, blockId)), [engine, blockId]);
 
+  const { commit, flush } = useCoalescedHistory(engine);
+
   const handleToggle = useCallback(() => {
     engine.block.setStrokeEnabled(blockId, !state.enabled);
     update();
@@ -46,18 +49,19 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
 
   const handleColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      engine.block.setStrokeColor(blockId, hexToColor(e.target.value));
+      const value = e.target.value;
+      commit(() => engine.block.setStrokeColor(blockId, hexToColor(value)));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   const handleWidth = useCallback(
     ([v]: number[]) => {
-      engine.block.setStrokeWidth(blockId, v);
+      commit(() => engine.block.setStrokeWidth(blockId, v));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   return (
@@ -79,6 +83,7 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
         max={20}
         step={0.5}
         onChange={(v) => handleWidth([v])}
+        onCommit={flush}
         formatValue={(v) => v.toFixed(1)}
       />
     </SwitchField>

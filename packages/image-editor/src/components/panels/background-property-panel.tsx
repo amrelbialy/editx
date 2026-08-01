@@ -3,6 +3,7 @@ import { colorToHex, FILL_COLOR, FILL_SOLID_COLOR, hexToColor } from "@editx/eng
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
+import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { ColorPicker } from "../ui/color-picker";
 import { SwitchField } from "../ui/switch-field";
 
@@ -45,6 +46,8 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
 
   const refresh = useCallback(() => setState(readFillState(engine, blockId)), [engine, blockId]);
 
+  const { commit } = useCoalescedHistory(engine);
+
   const handleToggle = useCallback(() => {
     engine.block.setFillEnabled(blockId, !state.enabled);
     refresh();
@@ -52,19 +55,21 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
 
   const handleColorChange = useCallback(
     (newColor: string) => {
-      const fillId = engine.block.getFill(blockId);
-      if (fillId != null) {
-        engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
-      } else {
-        // Text blocks: set fill color directly on the block
-        engine.block.setColor(blockId, FILL_COLOR, hexToColor(newColor));
-      }
-      if (!state.enabled) {
-        engine.block.setFillEnabled(blockId, true);
-      }
+      commit(() => {
+        const fillId = engine.block.getFill(blockId);
+        if (fillId != null) {
+          engine.block.setColor(fillId, FILL_SOLID_COLOR, hexToColor(newColor));
+        } else {
+          // Text blocks: set fill color directly on the block
+          engine.block.setColor(blockId, FILL_COLOR, hexToColor(newColor));
+        }
+        if (!state.enabled) {
+          engine.block.setFillEnabled(blockId, true);
+        }
+      });
       refresh();
     },
-    [engine, blockId, state.enabled, refresh],
+    [engine, blockId, state.enabled, refresh, commit],
   );
 
   return (
