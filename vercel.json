@@ -4,7 +4,8 @@
   "outputDirectory": "apps/demo/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/:path*", "destination": "/index.html" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
