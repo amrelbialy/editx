@@ -4,8 +4,41 @@
   "outputDirectory": "apps/demo/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+  "redirects": [
+    {
+      "source": "/docs/image-editor/guides/configure-crop-ratios",
+      "destination": "/docs/image-editor/guides/configure-crop",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/limit-tools",
+      "destination": "/docs/image-editor/guides/customize-toolbar",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/set-default-tool",
+      "destination": "/docs/image-editor/guides/customize-toolbar",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/compact-sidebar",
+      "destination": "/docs/image-editor/guides/customize-toolbar",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/export-formats",
+      "destination": "/docs/image-editor/guides/export-and-save",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/watermark-on-save",
+      "destination": "/docs/image-editor/guides/export-and-save",
+      "permanent": true
+    },
+    {
+      "source": "/docs/image-editor/guides/save-and-close",
+      "destination": "/docs/image-editor/guides/export-and-save",
+      "permanent": true
+    }
   ]
 }
