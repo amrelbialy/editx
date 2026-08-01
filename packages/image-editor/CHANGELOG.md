@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.7](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.6...@editx/image-editor@0.1.0-alpha.7) (2026-08-01)
+
+### Bug Fixes
+
+* **demo:** improve search engine discoverability ([3e4562b](https://github.com/amrelbialy/editx/commit/3e4562b10c00e28881839ba6446e93b4867a6c46))
+
 ## [0.1.0-alpha.6](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.5...@editx/image-editor@0.1.0-alpha.6) (2026-07-31)
 
 ### Features
