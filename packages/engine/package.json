@@ -21,7 +21,7 @@
     "url": "https://github.com/amrelbialy/editx",
     "directory": "packages/engine"
   },
-  "homepage": "https://github.com/amrelbialy/editx/tree/main/packages/engine#readme",
+  "homepage": "https://editx-sdk.vercel.app/docs/engine/overview",
   "bugs": {
     "url": "https://github.com/amrelbialy/editx/issues"
   },
