@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.8](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.7...@editx/image-editor@0.1.0-alpha.8) (2026-08-01)
+
+### Bug Fixes
+
+* **image-editor:** coalesce color drags and dock crop panel on small screens ([91df209](https://github.com/amrelbialy/editx/commit/91df2098a180f5fbd5bc948c37416d626c777ced))
+
 ## [0.1.0-alpha.7](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.6...@editx/image-editor@0.1.0-alpha.7) (2026-08-01)
 
 ### Bug Fixes
