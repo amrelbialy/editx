@@ -22,7 +22,7 @@ kept performant on the Konva 10 stage inside `packages/engine`.
 - Perf instrumentation only behind `__EX_PERF`; never leave `console.log` in production paths.
 
 ## Procedure
-1. Read `CLAUDE.md` + `docs-private/FEATURE_MAP.md`; locate the render/hit-test code paths (search first).
+1. Read `CLAUDE.md`; locate the render/hit-test code paths (search first).
 2. Make the change with correct transform math and minimal redraw scope; keep files ≤250 lines and split by concern (e.g. hit-testing vs transform vs draw).
 3. Verify visually/behaviorally where possible and with `pnpm --filter @editx/engine test`; add tests for geometry/transform math and hit-testing.
 4. Watch for regressions in undo/redo, multi-select, zoom extremes, and high-DPI.

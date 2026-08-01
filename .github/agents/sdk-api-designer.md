@@ -23,11 +23,11 @@ You design and guard the **public API of `packages/engine`** — the surface ext
 - **Pure engine**: no React/editor/ui concepts leak into the API.
 
 ## Procedure
-1. Read `CLAUDE.md` + `docs-private/FEATURE_MAP.md`; survey existing commands/events for the established pattern (search the engine's public exports first).
+1. Read `CLAUDE.md`; survey existing commands/events for the established pattern (search the engine's public exports first).
 2. Propose the API shape: signature(s), types, events, error behavior, and how it composes with existing commands.
 3. Verify undo/redo semantics and that image-editor can consume it cleanly.
 4. Provide the type/interface scaffolding; hand heavy implementation to `developer`/`rendering-engineer`.
-5. Note doc/FEATURE_MAP updates and whether `documentation-writer` should document the new surface.
+5. Note public documentation updates and whether `documentation-writer` should document the new surface.
 
 ## Output format
 API proposal → signatures & types → undoability/compatibility notes → consumption example (from image-editor's perspective) → breaking-change/migration notes (if any).

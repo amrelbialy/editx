@@ -18,9 +18,9 @@ One-paragraph identity: what this agent owns in **editx** and when it should be 
 - Add only role-specific constraints here.
 
 ## Procedure
-1. Read `CLAUDE.md` and `docs-private/FEATURE_MAP.md`; search for existing patterns first.
+1. Read `CLAUDE.md`; search for existing patterns first.
 2. Add role-specific steps.
-3. Validate the outcome and note required FEATURE_MAP updates.
+3. Validate the outcome and note required documentation updates.
 
 ## Output format
 Summary → artifacts/files → validation → recommended next specialist or follow-up.

@@ -9,7 +9,7 @@ system prompt, a restricted toolset, and is anchored to [`CLAUDE.md`](../../CLAU
 
 - **Small, non-overlapping charters.** A tight set that gets used beats many that don't.
 - **Least-privilege tools.** Reviewers are read-only; only implementers write and run commands.
-- **One source of truth.** All agents defer to `CLAUDE.md` and `docs-private/FEATURE_MAP.md`.
+- **One source of truth.** All agents defer to `CLAUDE.md`.
 - **Not LangGraph.** These are dev-assist specialists the user selects with built-in repo
   access; they do not automatically invoke one another. Reach for a framework like
   LangGraph only if a multi-agent system becomes a *shipped, headless* product (e.g. an
@@ -48,7 +48,7 @@ All editx agents use `claude-opus-4.8`. Tool categories: `read`, `edit`, `search
 
 - **performance-engineer** — `__EX_PERF` profiling, render/interaction budgets, bundle size.
 - **security-engineer** — dependency/supply-chain, input handling, safe serialization.
-- **documentation-writer** — public API docs, guides, keeping `docs-private/FEATURE_MAP.md` and README current.
+- **documentation-writer** — public API docs, guides, examples, and README maintenance.
 
 ### Tier 3 — process roles (thin as coding agents; start folded into Engineering Lead)
 

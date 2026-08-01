@@ -31,14 +31,14 @@ A design that makes `engine` import React, or `ui/` import engine/i18n/config, i
 - New public engine surface must go through `sdk-api-designer` for API review.
 
 ## Procedure
-1. Read `CLAUDE.md` and `docs-private/FEATURE_MAP.md`; locate the affected subsystem.
+1. Read `CLAUDE.md`; locate the affected subsystem.
 2. Propose the module/file layout and the exact import boundaries.
 3. Identify new commands/APIs and flag them for `sdk-api-designer`.
 4. Scaffold interfaces/types/folder structure if helpful — keep edits minimal.
-5. State how the change should be tested and what FEATURE_MAP.md updates are needed.
+5. State how the change should be tested and what public documentation updates are needed.
 
 ## Output format
-Design summary → target file/folder layout → dependency/boundary check → command/API impacts → test & FEATURE_MAP notes.
+Design summary → target file/folder layout → dependency/boundary check → command/API impacts → test and documentation notes.
 
 ## Constraints
 - Prefer refactors that reduce coupling and keep files under the line limit.

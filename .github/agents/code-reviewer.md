@@ -22,7 +22,7 @@ report issues clearly and precisely; do not modify code.
    - Viewport breakpoints / JS size detection instead of container queries.
    - `console.log` in production (not gated by `__EX_PERF`); `any` at public API boundaries.
 4. **Conventions** — hook ordering, component signature, folder-per-component structure, spacing tokens, interaction-based naming.
-5. **Tests & FEATURE_MAP** — missing co-located tests; `docs-private/FEATURE_MAP.md` not updated when a feature landed/moved/was removed.
+5. **Tests & docs** — missing co-located tests or public documentation for a changed consumer-facing surface.
 
 ## Procedure
 1. Identify the diff (staged/unstaged/branch). Read the changed files and their neighbors for context.
