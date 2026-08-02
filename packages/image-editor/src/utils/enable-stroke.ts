@@ -20,6 +20,7 @@ export function enableStrokeWithDefaults(
   blockId: number,
   defaults?: EnableStrokeDefaults,
 ): void {
+  engine.beginBatch();
   engine.block.setStrokeEnabled(blockId, true);
 
   if (engine.block.getStrokeWidth(blockId) <= 0) {
@@ -43,4 +44,5 @@ export function enableStrokeWithDefaults(
       defaults?.color ? hexToColor(defaults.color) : { r: 0, g: 0, b: 0, a: 1 },
     );
   }
+  engine.endBatch();
 }

@@ -151,9 +151,11 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
       const finalSrc = downscaleImage(img, maxDimension);
       const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
 
+      ce.beginBatch();
       ce.block.setString(blockId, IMAGE_SRC, finalSrc);
       ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, finalImg.naturalWidth);
       ce.block.setFloat(blockId, IMAGE_ORIGINAL_HEIGHT, finalImg.naturalHeight);
+      ce.endBatch();
     },
     [engineRef, maxFileSize, maxDimension],
   );
