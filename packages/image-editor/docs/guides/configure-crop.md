@@ -30,7 +30,37 @@ import { ImageEditor } from "@editx/image-editor";
 Each entry is a `ResizePresetGroup` — a `label` plus a list of presets, where
 every preset has a `label`, `width`, and `height` in pixels. Groups render in
 order; the first three presets show by default with a **More** toggle for the
-rest.
+rest. Both `ResizePreset` and `ResizePresetGroup` are exported from
+`@editx/image-editor`.
+
+## Crop controls
+
+Three booleans gate the interactive controls around the crop — all default to
+`true`:
+
+- `allowCustomRatio` — when `true`, users can crop to a free, unconstrained
+  shape and unlock the width/height fields. Set it to `false` to force a fixed
+  ratio: free presets are dropped from the ratio grid, the width/height lock
+  stays engaged (its toggle is hidden), and the active preset snaps to the first
+  constrained ratio.
+- `showRotateFlip` — controls the rotate / flip cluster in the crop contextual
+  bar above the canvas. Set it to `false` to hide those buttons.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    crop: {
+      allowCustomRatio: false,
+      showRotateFlip: false,
+    },
+  }}
+/>;
+```
+
+`crop.modes` and `crop.defaultMode` are **deprecated**: they are still accepted
+for type compatibility but are reserved / not implemented, so the Crop tool
+ignores them.
 
 **Verified by:** [tests/guides/configure-crop.spec.tsx](../../tests/guides/configure-crop.spec.tsx)
 — opens the Crop tool, switches to the Resize tab, and asserts the configured

@@ -2,7 +2,9 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
@@ -27,6 +29,8 @@ function readStroke(engine: EditxEngine, blockId: number): StrokeState {
 }
 
 export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine, blockId }) => {
+  const shapes = useConfig().shapes;
+
   const [state, setState] = useState(() => readStroke(engine, blockId));
 
   useEffect(() => {
@@ -43,9 +47,23 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
   const { commit, flush } = useCoalescedHistory(engine);
 
   const handleToggle = useCallback(() => {
-    engine.block.setStrokeEnabled(blockId, !state.enabled);
+    if (state.enabled) {
+      engine.block.setStrokeEnabled(blockId, false);
+    } else {
+      enableStrokeWithDefaults(engine, blockId, {
+        color: shapes?.defaultStrokeColor,
+        width: shapes?.defaultStrokeWidth,
+      });
+    }
     update();
-  }, [engine, blockId, state.enabled, update]);
+  }, [
+    engine,
+    blockId,
+    state.enabled,
+    update,
+    shapes?.defaultStrokeColor,
+    shapes?.defaultStrokeWidth,
+  ]);
 
   const handleColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

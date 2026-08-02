@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ImageEditorProvider } from "../../config/config-context";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { CropPanel } from "./crop-panel";
 
@@ -50,5 +51,25 @@ describe("CropPanel", () => {
     fireEvent.click(screen.getByTestId("crop-preset-free"));
     // Already active — shouldn't trigger change
     expect(onPresetChange).not.toHaveBeenCalled();
+  });
+
+  it("hides free presets and the ratio-lock toggle when custom ratios are disallowed", () => {
+    useImageEditorStore.setState({ cropPreset: "free" });
+    const onPresetChange = vi.fn();
+    render(
+      React.createElement(
+        ImageEditorProvider,
+        { config: { crop: { allowCustomRatio: false } } },
+        React.createElement(CropPanel, { onPresetChange }),
+      ),
+    );
+
+    // The free/unconstrained preset is filtered out…
+    expect(screen.queryByTestId("crop-preset-free")).toBeNull();
+    // …and the ratio-lock toggle is hidden (ratio is always fixed).
+    expect(screen.queryByTestId("resize-ratio-lock")).toBeNull();
+    // …and the active preset is forced off "free".
+    expect(useImageEditorStore.getState().cropPreset).not.toBe("free");
+    expect(onPresetChange).toHaveBeenCalled();
   });
 });

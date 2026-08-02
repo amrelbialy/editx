@@ -1,18 +1,19 @@
-import { Link, Unlink } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { ResizePreset } from "../../config/config.types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AspectRatioPreset, ResizePreset } from "../../config/config.types";
 import { useConfig } from "../../config/config-context";
 import { useTranslation } from "../../i18n/i18n-context";
 import { type CropPresetId, useImageEditorStore } from "../../store/image-editor-store";
-import { cn } from "../../utils/cn";
-import { IconButton } from "../ui/icon-button";
-import { Input } from "../ui/input";
 import { SegmentedControl } from "../ui/segmented-control";
 import { AspectRatioPresets } from "./aspect-ratio-presets";
+import { CropDimensions } from "./crop-dimensions";
 import { ResizePresets } from "./resize-presets";
 
 type CropTab = "aspectRatio" | "resize";
+
+/** A preset is "free" when its ratio is unconstrained (or omitted). */
+const isFreeRatio = (preset: AspectRatioPreset): boolean =>
+  preset.ratio === "free" || preset.ratio == null;
 
 export interface CropPanelProps {
   /** Called when user selects an aspect ratio preset. */
@@ -43,6 +44,32 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   const userEditingRef = useRef(false);
   const userEditingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const allowCustomRatio = config.crop?.allowCustomRatio !== false;
+  // When custom ratios are disallowed the crop is always ratio-constrained.
+  const effectiveRatioLocked = allowCustomRatio ? ratioLocked : true;
+
+  // The aspect-ratio presets actually shown — free/unconstrained presets are
+  // filtered out when custom ratios are disallowed.
+  const visiblePresets = useMemo(() => {
+    const all = config.crop?.aspectRatios ?? [];
+    const ordered = config.crop?.presets
+      ? config.crop.presets.flatMap((id) => {
+          const p = all.find((preset) => preset.id === id);
+          return p ? [p] : [];
+        })
+      : all;
+    return allowCustomRatio ? ordered : ordered.filter((p) => !isFreeRatio(p));
+  }, [config.crop?.aspectRatios, config.crop?.presets, allowCustomRatio]);
+
+  const handleSelect = useCallback(
+    (id: CropPresetId) => {
+      if (id === cropPreset) return;
+      setCropPreset(id);
+      onPresetChange?.(id);
+    },
+    [cropPreset, setCropPreset, onPresetChange],
+  );
+
   // Sync from overlay dimensions to inputs (when not actively typing)
   useEffect(() => {
     if (cropDimensions && !userEditingRef.current) {
@@ -60,6 +87,15 @@ export const CropPanel: React.FC<CropPanelProps> = ({
     }
   }, [tab, cropDimensions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The active preset must never remain "free" when custom ratios are disallowed.
+  useEffect(() => {
+    if (allowCustomRatio || visiblePresets.length === 0) return;
+    if (visiblePresets.some((p) => p.id === cropPreset)) return;
+    const first = visiblePresets[0].id;
+    setCropPreset(first);
+    onPresetChange?.(first);
+  }, [allowCustomRatio, visiblePresets, cropPreset, setCropPreset, onPresetChange]);
+
   const markUserEditing = useCallback(() => {
     userEditingRef.current = true;
     clearTimeout(userEditingTimer.current);
@@ -67,12 +103,6 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       userEditingRef.current = false;
     }, 500);
   }, []);
-
-  const handleSelect = (id: CropPresetId) => {
-    if (id === cropPreset) return;
-    setCropPreset(id);
-    onPresetChange?.(id);
-  };
 
   const applyResizeDimensions = useCallback(
     (w: number, h: number) => {
@@ -89,7 +119,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
     (val: number) => {
       markUserEditing();
       const w = Math.max(1, Math.round(val));
-      if (ratioLocked && resizeHeight > 0 && resizeWidth > 0) {
+      if (effectiveRatioLocked && resizeHeight > 0 && resizeWidth > 0) {
         const ratio = resizeWidth / resizeHeight;
         const h = Math.max(1, Math.round(w / ratio));
         applyResizeDimensions(w, h);
@@ -99,14 +129,14 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       }
       setActiveResizePreset(null);
     },
-    [ratioLocked, resizeWidth, resizeHeight, applyResizeDimensions, markUserEditing],
+    [effectiveRatioLocked, resizeWidth, resizeHeight, applyResizeDimensions, markUserEditing],
   );
 
   const handleHeightChange = useCallback(
     (val: number) => {
       markUserEditing();
       const h = Math.max(1, Math.round(val));
-      if (ratioLocked && resizeWidth > 0 && resizeHeight > 0) {
+      if (effectiveRatioLocked && resizeWidth > 0 && resizeHeight > 0) {
         const ratio = resizeWidth / resizeHeight;
         const w = Math.max(1, Math.round(h * ratio));
         applyResizeDimensions(w, h);
@@ -116,7 +146,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
       }
       setActiveResizePreset(null);
     },
-    [ratioLocked, resizeWidth, resizeHeight, applyResizeDimensions, markUserEditing],
+    [effectiveRatioLocked, resizeWidth, resizeHeight, applyResizeDimensions, markUserEditing],
   );
 
   const handlePresetSelect = useCallback(
@@ -133,60 +163,14 @@ export const CropPanel: React.FC<CropPanelProps> = ({
   return (
     <div className="flex flex-col gap-fluid">
       {/* Crop Area dimensions — visible in both tabs */}
-      <div>
-        <div className="text-fluid font-medium text-muted-foreground mb-2">Crop Area</div>
-        <div className="flex items-stretch gap-1.5">
-          {/* Width & Height inputs */}
-          <div className="flex-1 flex flex-col gap-2">
-            <Input
-              type="number"
-              min={1}
-              label={t("crop.width")}
-              labelClassName="w-12"
-              suffix="px"
-              value={resizeWidth || ""}
-              onChange={(e) => handleWidthChange(Number(e.target.value))}
-              data-testid="resize-width-input"
-            />
-            <Input
-              type="number"
-              min={1}
-              label={t("crop.height")}
-              labelClassName="w-12"
-              suffix="px"
-              value={resizeHeight || ""}
-              onChange={(e) => handleHeightChange(Number(e.target.value))}
-              data-testid="resize-height-input"
-            />
-          </div>
-
-          {/* Ratio lock — bracket visually connects the two fields */}
-          <div className="relative flex shrink-0 items-center">
-            <span
-              aria-hidden
-              className={cn(
-                "pointer-events-none absolute left-0 top-1/4 bottom-1/4 w-2 rounded-r-md border-y border-r transition-colors",
-                ratioLocked ? "border-primary" : "border-border",
-              )}
-            />
-            <IconButton
-              label={ratioLocked ? t("crop.unlockRatio") : t("crop.lockRatio")}
-              icon={
-                ratioLocked ? (
-                  <Link className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-                ) : (
-                  <Unlink className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />
-                )
-              }
-              tooltipSide="left"
-              onClick={() => setRatioLocked((v) => !v)}
-              aria-pressed={ratioLocked}
-              data-testid="resize-ratio-lock"
-              className={cn("ml-2", ratioLocked ? "text-primary" : "text-muted-foreground")}
-            />
-          </div>
-        </div>
-      </div>
+      <CropDimensions
+        width={resizeWidth}
+        height={resizeHeight}
+        onWidthChange={handleWidthChange}
+        onHeightChange={handleHeightChange}
+        ratioLocked={effectiveRatioLocked}
+        onToggleRatioLock={allowCustomRatio ? () => setRatioLocked((v) => !v) : undefined}
+      />
 
       {/* Tab switcher */}
       <SegmentedControl
@@ -209,8 +193,7 @@ export const CropPanel: React.FC<CropPanelProps> = ({
             activePreset={cropPreset}
             ariaLabel={t("a11y.aspectRatioPresets")}
             onSelect={handleSelect}
-            presets={config.crop?.aspectRatios ?? []}
-            presetIds={config.crop?.presets}
+            presets={visiblePresets}
           />
         </div>
       )}

@@ -40,7 +40,7 @@ export const en = {
   // Image panel
   "image.addImage": "Add Image",
   "image.dropHint": "Drop image here or click to upload",
-  "image.sizeHint": "PNG, JPG, WebP — max 5 MB",
+  "image.sizeHint": "PNG, JPG, WebP — max {max}",
   "image.uploadButton": "Upload Image",
   "image.addError": "Failed to add image",
 
@@ -90,7 +90,6 @@ export const en = {
   "crop.unlockRatio": "Unlock aspect ratio",
 
   // Rotate panel
-  "rotate.straighten": "Straighten",
   "rotate.rotate": "Rotate",
   "rotate.ccw": "Rotate 90° counter-clockwise",
   "rotate.cw": "Rotate 90° clockwise",

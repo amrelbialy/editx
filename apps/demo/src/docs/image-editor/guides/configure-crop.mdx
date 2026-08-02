@@ -3,7 +3,7 @@ import { GuideScenario } from "../../../components/guide-scenario";
 # Crop Tool
 
 Configure the **Crop** tool with `config.crop` — the aspect-ratio grid, the
-resize presets, the crop modes, and which controls appear. Every field is
+resize presets, and which controls appear. Every field is
 optional; omit `crop` entirely to ship the full built-in tool.
 
 ## When to use this
@@ -18,11 +18,8 @@ optional; omit `crop` entirely to ship the full built-in tool.
 |---|---|---|---|
 | `aspectRatios` | `AspectRatioPreset[]` | built-ins | Full custom ratio list for the Aspect Ratio tab. |
 | `presets` | `string[]` | all | Whitelist of ratio ids to show, in order. Filters `aspectRatios`. |
-| `modes` | `("crop" \| "cover" \| "fit")[]` | all | Which crop modes are offered. |
-| `defaultMode` | `"crop" \| "cover" \| "fit"` | `"crop"` | Mode selected when the tool opens. |
-| `allowCustomRatio` | `boolean` | `true` | Allow a free, unconstrained ratio. |
-| `showStraighten` | `boolean` | `true` | Show the straighten (rotation) slider. |
-| `showRotateFlip` | `boolean` | `true` | Show the rotate / flip buttons. |
+| `allowCustomRatio` | `boolean` | `true` | Allow a free, unconstrained crop. Set `false` to force a fixed ratio. |
+| `showRotateFlip` | `boolean` | `true` | Show the rotate / flip cluster in the crop contextual bar. |
 | `resizePresets` | `ResizePresetGroup[]` | — | Grouped size presets for the Resize tab. |
 
 ## Aspect ratios
@@ -130,6 +127,35 @@ Open **Crop → Resize** to see the configured presets:
     },
   }}
 />
+
+## Crop controls
+
+Three booleans gate the interactive controls around the crop. All default to
+`true`.
+
+- **`allowCustomRatio`** — when `true`, users can crop to any free,
+  unconstrained shape and unlock the width/height fields. Set it to `false` to
+  force a fixed ratio: free/unconstrained presets are dropped from the ratio
+  grid, the width/height lock stays engaged (and its toggle is hidden), and the
+  active preset is snapped to the first constrained ratio.
+- **`showRotateFlip`** — controls the rotate / flip cluster in the crop
+  contextual bar above the canvas. Set it to `false` to hide those buttons.
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{
+    crop: {
+      allowCustomRatio: false,
+      showRotateFlip: false,
+    },
+  }}
+/>
+```
+
+> **Deprecated:** `crop.modes` and `crop.defaultMode` are still accepted for
+> type compatibility but are reserved / not implemented — the Crop tool has no
+> mode switcher, so both fields are ignored.
 
 ## Next steps
 

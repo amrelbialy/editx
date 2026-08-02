@@ -38,7 +38,7 @@ const DEFAULT_WARN_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 const DEFAULT_MAX_DIMENSION = 16000; // px
 const DEFAULT_WARN_DIMENSION = 8000; // px
 
-function formatBytes(bytes: number): string {
+export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;

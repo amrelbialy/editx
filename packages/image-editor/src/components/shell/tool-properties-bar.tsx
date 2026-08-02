@@ -23,6 +23,8 @@ interface ToolPropertiesBarProps {
   onFlipVertical?: () => void;
   // Custom tool bar content
   customContent?: React.ReactNode;
+  /** Gate the rotate/flip cluster (crop/rotate tools). Default: true. */
+  showRotateFlip?: boolean;
 }
 
 export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
@@ -34,10 +36,11 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
   onFlipHorizontal,
   onFlipVertical,
   customContent,
+  showRotateFlip = true,
 }) => {
   const isCrop = activeTool === "crop";
   const isRotate = activeTool === "rotate";
-  const showRotateFlip = isCrop || isRotate;
+  const showRotateFlipCluster = (isCrop || isRotate) && showRotateFlip;
   const { t } = useTranslation();
 
   return (
@@ -49,7 +52,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
       )}
     >
       {/* Rotate/flip actions for crop & rotate tools */}
-      {showRotateFlip && (
+      {showRotateFlipCluster && (
         <>
           <IconButton
             onClick={onRotateCounterClockwise}

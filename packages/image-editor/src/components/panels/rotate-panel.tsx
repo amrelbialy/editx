@@ -3,13 +3,10 @@ import type React from "react";
 import { useTranslation } from "../../i18n/i18n-context";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { SliderField } from "../ui/slider-field";
 
 export interface RotatePanelProps {
-  rotation: number;
   flipH: boolean;
   flipV: boolean;
-  onRotationChange: (angle: number) => void;
   onRotateClockwise: () => void;
   onRotateCounterClockwise: () => void;
   onFlipHorizontal: () => void;
@@ -18,10 +15,8 @@ export interface RotatePanelProps {
 }
 
 export const RotatePanel: React.FC<RotatePanelProps> = ({
-  rotation,
   flipH,
   flipV,
-  onRotationChange,
   onRotateClockwise,
   onRotateCounterClockwise,
   onFlipHorizontal,
@@ -32,20 +27,6 @@ export const RotatePanel: React.FC<RotatePanelProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Straighten */}
-      <SliderField
-        label={t("rotate.straighten")}
-        value={rotation}
-        min={-180}
-        max={180}
-        step={1}
-        onChange={onRotationChange}
-        formatValue={(v) => `${Math.round(v)}°`}
-        data-testid="rotation-slider"
-      />
-
-      <Separator />
-
       {/* 90° rotation buttons */}
       <div>
         <div className="text-fluid font-medium text-muted-foreground mb-2">

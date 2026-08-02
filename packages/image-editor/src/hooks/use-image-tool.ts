@@ -3,6 +3,7 @@ import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/e
 import { useCallback } from "react";
 import type { ImageToolConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
+import { formatBytes } from "../utils/validate-image";
 
 export interface UseImageToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
@@ -72,8 +73,9 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
     async (file: File) => {
       // Validate file size
       if (file.size > maxFileSize) {
-        const maxMB = Math.round(maxFileSize / (1024 * 1024));
-        throw new Error(`File size exceeds ${maxMB}MB limit`);
+        throw new Error(
+          `Image is too large (${formatBytes(file.size)}). Maximum size: ${formatBytes(maxFileSize)}`,
+        );
       }
 
       // Validate file type
@@ -134,8 +136,9 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
       if (!ce) return;
 
       if (file.size > maxFileSize) {
-        const maxMB = Math.round(maxFileSize / (1024 * 1024));
-        throw new Error(`File size exceeds ${maxMB}MB limit`);
+        throw new Error(
+          `Image is too large (${formatBytes(file.size)}). Maximum size: ${formatBytes(maxFileSize)}`,
+        );
       }
 
       if (!file.type.startsWith("image/")) {

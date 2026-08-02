@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { CodeHighlight } from "../code-highlight";
+import { generatePlaygroundCode } from "./generate-code";
 import type { PlaygroundConfig } from "./playground.types";
 
 interface Props {
@@ -8,33 +9,10 @@ interface Props {
 
 export function PlaygroundCodeOutput(props: Props) {
   const { config } = props;
+
   const [copied, setCopied] = useState(false);
 
-  const code = useMemo(() => {
-    const toolsStr = config.tools.map((t) => `"${t}"`).join(", ");
-    const isBuiltIn = config.theme === "dark" || config.theme === "light";
-    const themeBlock = isBuiltIn
-      ? `{ preset: "${config.theme}" }`
-      : `{ preset: "custom", colors: demoPresets["${config.theme}"] }`;
-    return `import { ImageEditor } from "@editx/image-editor";
-
-<ImageEditor
-  src="/your-image.jpg"
-  config={{
-    tools: [${toolsStr}],
-    theme: ${themeBlock},
-    export: {
-      defaultFormat: "${config.exportFormat}",
-      quality: ${config.exportQuality},
-    },
-    ui: {
-      showTitle: ${config.showTitle},
-      unsavedChangesWarning: ${config.unsavedChangesWarning},
-    },
-  }}
-  onSave={(blob) => console.log("Saved:", blob)}
-/>`;
-  }, [config]);
+  const code = useMemo(() => generatePlaygroundCode(config), [config]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(() => {
@@ -46,7 +24,7 @@ export function PlaygroundCodeOutput(props: Props) {
   return (
     <div>
       <div
-        className="flex items-center justify-end px-4 py-1.5 border-b border-white/5"
+        className="flex items-center justify-end border-b border-white/5 px-4 py-1.5"
         style={{ background: "linear-gradient(145deg, #0c0c1d, #111118)" }}
       >
         <button

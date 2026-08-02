@@ -8,6 +8,8 @@ import {
 } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
+import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
 import { Input } from "../ui/input";
 import { Section } from "../ui/section";
@@ -89,6 +91,8 @@ function readShapeState(engine: EditxEngine, blockId: number): ShapeState {
 }
 
 export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engine, blockId }) => {
+  const shapes = useConfig().shapes;
+
   const [state, setState] = useState<ShapeState>(() => readShapeState(engine, blockId));
 
   useEffect(() => {
@@ -216,9 +220,23 @@ export const ShapePropertiesPanel: React.FC<ShapePropertiesPanelProps> = ({ engi
   );
 
   const handleStrokeToggle = useCallback(() => {
-    engine.block.setStrokeEnabled(blockId, !state.strokeEnabled);
+    if (state.strokeEnabled) {
+      engine.block.setStrokeEnabled(blockId, false);
+    } else {
+      enableStrokeWithDefaults(engine, blockId, {
+        color: shapes?.defaultStrokeColor,
+        width: shapes?.defaultStrokeWidth,
+      });
+    }
     update();
-  }, [engine, blockId, state.strokeEnabled, update]);
+  }, [
+    engine,
+    blockId,
+    state.strokeEnabled,
+    update,
+    shapes?.defaultStrokeColor,
+    shapes?.defaultStrokeWidth,
+  ]);
 
   const handleStrokeColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -34,6 +34,8 @@ export type {
   FilterToolConfig,
   ImageEditorConfig,
   ImageEditorToolId,
+  ResizePreset,
+  ResizePresetGroup,
   ShapesToolConfig,
   TextStylePreset,
   TextToolConfig,

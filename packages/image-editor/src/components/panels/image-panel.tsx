@@ -1,8 +1,10 @@
 import { ImagePlus, Upload } from "lucide-react";
 import type React from "react";
 import { useCallback, useRef, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
+import { formatBytes } from "../../utils/validate-image";
 import { Button } from "../ui/button";
 import { focusRing } from "../ui/styles";
 
@@ -10,11 +12,16 @@ export interface ImagePanelProps {
   onAddImage: (file: File) => Promise<void>;
 }
 
+const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
+  const maxFileSize = useConfig().image?.maxFileSize ?? DEFAULT_MAX_FILE_SIZE;
+
+  const sizeHint = t("image.sizeHint").replace("{max}", formatBytes(maxFileSize));
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -80,7 +87,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ onAddImage }) => {
       >
         <Upload className="h-6 w-6 text-muted-foreground @5xl/editor:h-8 @5xl/editor:w-8" />
         <span className="text-fluid text-muted-foreground">{t("image.dropHint")}</span>
-        <span className="text-fluid text-muted-foreground/60">{t("image.sizeHint")}</span>
+        <span className="text-fluid text-muted-foreground/60">{sizeHint}</span>
       </button>
 
       <input
