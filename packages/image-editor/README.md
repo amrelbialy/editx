@@ -1,13 +1,37 @@
+<div align="center">
+
 # @editx/image-editor
+
+### The open-source, framework-agnostic image editor.
+
+Crop, adjust, filter, annotate &amp; export — in **any** app. Ship it as a **Web Component**, mount it with **vanilla JS**, or use the **React** component. One package, three integrations, on top of the headless [`@editx/engine`](https://github.com/amrelbialy/editx/tree/main/packages/engine).
 
 [![npm version](https://img.shields.io/npm/v/@editx/image-editor.svg)](https://www.npmjs.com/package/@editx/image-editor)
 [![npm downloads](https://img.shields.io/npm/dm/@editx/image-editor.svg)](https://www.npmjs.com/package/@editx/image-editor)
 [![license](https://img.shields.io/npm/l/@editx/image-editor.svg)](https://github.com/amrelbialy/editx/blob/main/LICENSE)
 
-The open-source, extensible image editor — crop, adjust, filter, annotate & export.
-A React 19 component on top of the headless, framework-agnostic [`@editx/engine`](https://github.com/amrelbialy/editx/tree/main/packages/engine).
+[**Live Playground**](https://editx-sdk.vercel.app/playground) · [**Documentation**](https://editx-sdk.vercel.app/docs/image-editor/getting-started) · [**GitHub**](https://github.com/amrelbialy/editx)
 
-Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
+</div>
+
+---
+
+## Features
+
+| | Feature | Details |
+|---|---|---|
+| ✂️ | **Crop & Resize** | Freeform, aspect-ratio presets, interactive handles, social-media resize presets |
+| 🔄 | **Rotate & Flip** | 90° steps, free-angle straightening, horizontal/vertical flip |
+| 🎚️ | **Adjustments** | Brightness, contrast, saturation, temperature, exposure, shadows, highlights, and more |
+| ✨ | **Filters** | 40+ built-in presets with adjustable intensity, WebGL-accelerated |
+| 🔤 | **Text** | Rich-text annotations via Lexical — fonts, colors, formatting |
+| 🔷 | **Shapes** | Rectangles, ellipses, lines, arrows, polygons, stars — filled or outlined |
+| 🖼️ | **Image Overlays** | Add and position images on the canvas |
+| 💾 | **Export** | PNG, JPEG, WebP with quality control |
+| ↩️ | **Undo / Redo** | Full command-based history with keyboard shortcuts |
+| 🎨 | **Theming** | Built-in dark & light presets, customizable via CSS variables |
+| 📐 | **Responsive** | CSS Container Queries — adapts to its container, not the viewport |
+| 🌍 | **i18n** | Built-in translations, custom-locale support |
 
 ## Installation
 
@@ -37,6 +61,50 @@ Editx uses **Tailwind CSS 4** and CSS Container Queries for responsive layout. I
 
 ## Usage
 
+The same package works in **any framework**. It mounts the editor for you, so no framework is required in your own app.
+
+> The editor renders internally with React, which is **bundled into the package** — you never install or import React yourself when using the Web Component or vanilla builds.
+
+### As an HTML Web Component
+
+Register `<editx-image-editor>` once and use it declaratively in any HTML.
+
+```ts
+import { defineImageEditorElement } from "@editx/image-editor/element";
+import "@editx/image-editor/styles.css";
+
+defineImageEditorElement(); // registers <editx-image-editor>
+```
+
+```html
+<editx-image-editor src="/photo.jpg" width="900px" height="600px"></editx-image-editor>
+```
+
+```js
+const el = document.querySelector("editx-image-editor");
+el.config = { tools: ["crop", "adjust"] }; // complex inputs are properties
+el.addEventListener("save", (e) => upload(e.detail.blob));
+```
+
+### Vanilla JS (any framework)
+
+Mount the editor into a plain DOM element — no framework required in your app.
+
+```ts
+import { createImageEditor } from "@editx/image-editor/vanilla";
+import "@editx/image-editor/styles.css";
+
+const editor = createImageEditor("#editor", {
+  src: "/photo.jpg",
+  onSave: (blob) => upload(blob),
+});
+
+editor.update({ config: { tools: ["crop"] } }); // patch options later
+editor.destroy(); // tear down when done
+```
+
+### React component
+
 ```tsx
 import { ImageEditor } from "@editx/image-editor";
 
@@ -56,7 +124,7 @@ function App() {
 }
 ```
 
-### Modal Usage
+#### React modal
 
 ```tsx
 import { useState } from "react";
@@ -80,71 +148,35 @@ function App() {
 }
 ```
 
-### Without React (any framework)
+## Configuration
 
-Mount the editor into a plain DOM element — no React required in your app.
+Everything is driven by a single `config` object — enable only the tools you need, theme it, and localize it:
 
-```ts
-import { createImageEditor } from "@editx/image-editor/vanilla";
-import "@editx/image-editor/styles.css";
-
-const editor = createImageEditor("#editor", {
-  src: "/photo.jpg",
-  onSave: (blob) => upload(blob),
-});
-
-editor.update({ config: { tools: ["crop"] } }); // patch options later
-editor.destroy(); // tear down when done
-```
-
-### As an HTML Web Component
-
-Register `<editx-image-editor>` once and use it declaratively in any HTML.
+Everything is driven by a single `config` object — the same shape across every integration (React prop, vanilla option, or Web Component property). Enable only the tools you need, theme it, and localize it:
 
 ```ts
-import { defineImageEditorElement } from "@editx/image-editor/element";
-import "@editx/image-editor/styles.css";
+const config = {
+  tools: ["crop", "adjust", "filter", "text", "shapes", "image"],
+  defaultTool: "crop",
+  theme: { preset: "light" },
+  export: { formats: ["png", "webp"], defaultFormat: "webp" },
+};
 
-defineImageEditorElement(); // registers <editx-image-editor>
+// React:          <ImageEditor src="/photo.jpg" config={config} />
+// Vanilla:        createImageEditor("#editor", { src, config });
+// Web Component:  document.querySelector("editx-image-editor").config = config;
 ```
 
-```html
-<editx-image-editor src="/photo.jpg" width="900px" height="600px"></editx-image-editor>
-```
-
-```js
-const el = document.querySelector("editx-image-editor");
-el.config = { tools: ["crop", "adjust"] }; // complex inputs are properties
-el.addEventListener("save", (e) => upload(e.detail.blob));
-```
-
-## Features
-
-- **Crop** — freeform, aspect ratio presets, interactive handles
-- **Rotate & Flip** — 90° steps, free rotation, horizontal/vertical flip
-- **Adjustments** — brightness, contrast, saturation, exposure, shadows, highlights, and more
-- **Filters** — 30+ built-in presets with WebGL acceleration
-- **Text** — rich text annotations with Lexical editor, fonts, formatting
-- **Shapes** — rectangles, ellipses, polygons, stars, arrows
-- **Image Overlays** — add and position images on the canvas
-- **Resize** — output resolution control
-- **Export** — PNG, JPEG, WebP with quality settings
-- **Undo/Redo** — full history via command pattern
-- **Theming** — built-in presets (dark, light) + fully customizable via CSS variables
-- **Responsive** — CSS Container Queries, adapts to any container size
-- **i18n** — built-in translations, custom locale support
+Go further without forking: register **custom tools**, inject content into **UI slots** (`topbarRight`, `sidebarBottom`, `contextualBarExtra`), and hook into **editor events** (`onToolChange`, `onBeforeSave`).
 
 ## Theming
 
-Use built-in presets or provide custom theme colors:
+Use built-in presets or provide custom theme colors via the `theme` config (works in any integration):
 
-```tsx
+```ts
 import { themePresets } from "@editx/image-editor/presets";
 
-<ImageEditor
-  src="/photo.jpg"
-  config={{ theme: themePresets.dark }}
-/>
+const config = { theme: themePresets.dark };
 ```
 
 ## Exports
@@ -157,6 +189,17 @@ The package exports:
 - Hooks — `useConfig`, `useTranslation`, `useShortcuts`, `useImageEditorStore`
 - Theme — `ThemeProvider`, `themePresets`
 - Utilities — `validateImageFile`, `downscaleIfNeeded`, `correctOrientation`, etc.
+
+Additional entry points: `@editx/image-editor/vanilla`, `@editx/image-editor/element`, `@editx/image-editor/presets`, `@editx/image-editor/styles.css`.
+
+## Documentation
+
+- [Getting Started](https://editx-sdk.vercel.app/docs/image-editor/getting-started)
+- [Configuration](https://editx-sdk.vercel.app/docs/image-editor/configuration)
+- [API Reference](https://editx-sdk.vercel.app/docs/image-editor/api)
+- [Theming](https://editx-sdk.vercel.app/docs/image-editor/theming)
+
+Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
 
 ## License
 
