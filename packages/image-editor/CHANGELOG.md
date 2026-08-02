@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.10](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.9...@editx/image-editor@0.1.0-alpha.10) (2026-08-02)
+
+### Features
+
+* **playground:** full config coverage, responsive layout, and SDK fixes ([48cfbe1](https://github.com/amrelbialy/editx/commit/48cfbe1cc4131ec5fd0757ce6a3534d08ec98395))
+
 ## [0.1.0-alpha.9](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.8...@editx/image-editor@0.1.0-alpha.9) (2026-08-02)
 
 **Note:** Version bump only for package @editx/image-editor
