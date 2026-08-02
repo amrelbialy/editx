@@ -4,6 +4,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.8](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.7...@editx/engine@0.1.0-alpha.8) (2026-08-02)
+
+**Note:** Version bump only for package @editx/engine
+
 ## [0.1.0-alpha.7](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.6...@editx/engine@0.1.0-alpha.7) (2026-08-01)
 
 ### Bug Fixes
