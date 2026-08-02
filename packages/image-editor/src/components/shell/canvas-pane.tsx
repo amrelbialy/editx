@@ -1,6 +1,7 @@
 import type { EditxEngine } from "@editx/engine";
 import React, { useCallback, useEffect, useRef } from "react";
 import type { EditorSlots } from "../../config/config.types";
+import { useConfig } from "../../config/config-context";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
 import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
 import { useImageEditorStore } from "../../store/image-editor-store";
@@ -49,6 +50,7 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   } = props;
 
   const blockScreenRect = useBlockScreenRect(engine ?? null, selectedShapeId);
+  const config = useConfig();
 
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
   const editingTextClickPos = useImageEditorStore((s) => s.editingTextClickPos);
@@ -104,6 +106,7 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
         onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
         onFlipHorizontal={rotateFlip.handleFlipHorizontal}
         onFlipVertical={rotateFlip.handleFlipVertical}
+        showRotateFlip={activeTool === "crop" ? config.crop?.showRotateFlip !== false : true}
         customContent={
           activeCustomToolBar ? React.createElement(activeCustomToolBar) : slots?.contextualBarExtra
         }

@@ -1,0 +1,12 @@
+export { AdjustSection } from "./adjust-section";
+export { CropSection } from "./crop-section";
+export { ExportSection } from "./export-section";
+export { FilterSection } from "./filter-section";
+export { ImageSection } from "./image-section";
+export { ImageSourceSection } from "./image-source-section";
+export { LocaleSection } from "./locale-section";
+export { ShapesSection } from "./shapes-section";
+export { TextSection } from "./text-section";
+export { ThemeSection } from "./theme-section";
+export { ToolsSection } from "./tools-section";
+export { UISection } from "./ui-section";

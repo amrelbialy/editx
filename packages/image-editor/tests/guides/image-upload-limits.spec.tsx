@@ -39,6 +39,6 @@ test.describe("Guide: image-upload-limits", () => {
     });
 
     // The size-limit error appears inline.
-    await expect(component.getByText(/exceeds 1MB limit/i)).toBeVisible({ timeout: 10_000 });
+    await expect(component.getByText(/Maximum size: 1\.0 MB/i)).toBeVisible({ timeout: 10_000 });
   });
 });

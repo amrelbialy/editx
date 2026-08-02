@@ -7,10 +7,8 @@ afterEach(cleanup);
 
 function renderPanel(overrides: Partial<React.ComponentProps<typeof RotatePanel>> = {}) {
   const defaults = {
-    rotation: 0,
     flipH: false,
     flipV: false,
-    onRotationChange: vi.fn(),
     onRotateClockwise: vi.fn(),
     onRotateCounterClockwise: vi.fn(),
     onFlipHorizontal: vi.fn(),
@@ -25,16 +23,10 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof RotatePanel>
 describe("RotatePanel", () => {
   it("renders all interactive elements", () => {
     renderPanel();
-    expect(screen.getByTestId("rotation-slider")).toBeDefined();
     expect(screen.getByTestId("rotate-cw")).toBeDefined();
     expect(screen.getByTestId("rotate-ccw")).toBeDefined();
     expect(screen.getByTestId("flip-h")).toBeDefined();
     expect(screen.getByTestId("flip-v")).toBeDefined();
-  });
-
-  it("displays the current rotation value", () => {
-    renderPanel({ rotation: 45 });
-    expect(screen.getByText(/45°/)).toBeDefined();
   });
 
   it("calls onRotateClockwise when +90° clicked", () => {

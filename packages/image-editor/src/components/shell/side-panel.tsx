@@ -31,7 +31,6 @@ interface SidePanelProps {
   };
   rotateFlip: {
     rotationState: { rotation: number; flipH: boolean; flipV: boolean };
-    handleRotationChange: (v: number) => void;
     handleRotateClockwise: () => void;
     handleRotateCounterClockwise: () => void;
     handleFlipHorizontal: () => void;
@@ -141,10 +140,8 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
       case "rotate":
         return (
           <RotatePanel
-            rotation={rotateFlip.rotationState.rotation}
             flipH={rotateFlip.rotationState.flipH}
             flipV={rotateFlip.rotationState.flipV}
-            onRotationChange={rotateFlip.handleRotationChange}
             onRotateClockwise={rotateFlip.handleRotateClockwise}
             onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
             onFlipHorizontal={rotateFlip.handleFlipHorizontal}

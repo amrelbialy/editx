@@ -1,0 +1,73 @@
+/**
+ * Sample UI string overrides used by the playground's Locale section to
+ * demonstrate `config.translations`. The SDK ships only the English dictionary;
+ * real localization is done by merging a `translations` map over it (see
+ * docs/guides/localize.md). These cover the high-visibility chrome keys so the
+ * live preview visibly changes language. English ("en") needs no overrides.
+ */
+export const LOCALE_TRANSLATIONS: Record<string, Record<string, string>> = {
+  es: {
+    "topbar.undo": "Deshacer",
+    "topbar.redo": "Rehacer",
+    "topbar.zoomIn": "Acercar",
+    "topbar.zoomOut": "Alejar",
+    "topbar.zoomFit": "Ajustar a pantalla",
+    "topbar.export": "Exportar imagen",
+    "topbar.close": "Cerrar editor",
+    "topbar.title": "Editor de fotos",
+    "tools.crop": "Recortar",
+    "tools.adjust": "Ajustar",
+    "tools.filter": "Filtros",
+    "tools.text": "Texto",
+    "tools.shapes": "Formas",
+    "tools.image": "Imagen",
+  },
+  fr: {
+    "topbar.undo": "Annuler",
+    "topbar.redo": "Rétablir",
+    "topbar.zoomIn": "Zoom avant",
+    "topbar.zoomOut": "Zoom arrière",
+    "topbar.zoomFit": "Ajuster à l'écran",
+    "topbar.export": "Exporter l'image",
+    "topbar.close": "Fermer l'éditeur",
+    "topbar.title": "Éditeur de photos",
+    "tools.crop": "Recadrer",
+    "tools.adjust": "Ajuster",
+    "tools.filter": "Filtres",
+    "tools.text": "Texte",
+    "tools.shapes": "Formes",
+    "tools.image": "Image",
+  },
+  de: {
+    "topbar.undo": "Rückgängig",
+    "topbar.redo": "Wiederholen",
+    "topbar.zoomIn": "Vergrößern",
+    "topbar.zoomOut": "Verkleinern",
+    "topbar.zoomFit": "An Bildschirm anpassen",
+    "topbar.export": "Bild exportieren",
+    "topbar.close": "Editor schließen",
+    "topbar.title": "Fotoeditor",
+    "tools.crop": "Zuschneiden",
+    "tools.adjust": "Anpassen",
+    "tools.filter": "Filter",
+    "tools.text": "Text",
+    "tools.shapes": "Formen",
+    "tools.image": "Bild",
+  },
+  ar: {
+    "topbar.undo": "تراجع",
+    "topbar.redo": "إعادة",
+    "topbar.zoomIn": "تكبير",
+    "topbar.zoomOut": "تصغير",
+    "topbar.zoomFit": "ملاءمة الشاشة",
+    "topbar.export": "تصدير الصورة",
+    "topbar.close": "إغلاق المحرر",
+    "topbar.title": "محرر الصور",
+    "tools.crop": "قص",
+    "tools.adjust": "ضبط",
+    "tools.filter": "مرشحات",
+    "tools.text": "نص",
+    "tools.shapes": "أشكال",
+    "tools.image": "صورة",
+  },
+};

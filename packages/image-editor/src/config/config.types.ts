@@ -29,9 +29,6 @@ export interface UIConfig {
     compact?: boolean;
     groupSeparators?: boolean;
   };
-  contextualBar?: {
-    show?: boolean;
-  };
   title?: string;
   showTitle?: boolean;
   /** Show close button (X) in topbar. Default: true when onClose is provided. */
@@ -55,10 +52,17 @@ export interface CropToolConfig {
    * renders. Prefer defining `aspectRatios` directly for custom lists.
    */
   presets?: string[];
+  /**
+   * @deprecated Reserved / not implemented. The crop tool has no mode switcher;
+   * this field is retained only for type compatibility and is ignored.
+   */
   modes?: ("crop" | "cover" | "fit")[];
+  /**
+   * @deprecated Reserved / not implemented. The crop tool has no mode switcher;
+   * this field is retained only for type compatibility and is ignored.
+   */
   defaultMode?: "crop" | "cover" | "fit";
   allowCustomRatio?: boolean;
-  showStraighten?: boolean;
   showRotateFlip?: boolean;
   /** Size presets for the Resize tab (grouped by platform). */
   resizePresets?: ResizePresetGroup[];
@@ -96,7 +100,6 @@ export interface AdjustToolConfig {
 }
 
 export interface FilterToolConfig {
-  showIntensity?: boolean;
   /**
    * Whitelist of filter preset names to show (in addition to the always-present
    * "Original"). When omitted, every built-in preset is shown.
@@ -155,6 +158,16 @@ export interface ShapesToolConfig {
   presets?: string[];
   defaultFillMode?: "filled" | "outlined";
   defaultColor?: string;
+  /** Stroke color for outlined shapes. Falls back to `defaultColor` when unset. */
+  defaultStrokeColor?: string;
+  /** Stroke width for outlined shapes, in the same units as the editor stroke Width control (0–20). `0` (default) derives a canvas-relative width. */
+  defaultStrokeWidth?: number;
+  /** Starting opacity for new shapes, 0–1 (default `1`). */
+  defaultOpacity?: number;
+  /** Corner radius (canvas px) applied to new rectangles (default `0`). */
+  defaultCornerRadius?: number;
+  /** Starting size as a fraction of the smaller canvas edge, 0–1 (default `0.25`). */
+  defaultSize?: number;
 }
 
 export interface ImageToolConfig {

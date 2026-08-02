@@ -127,19 +127,13 @@ export const defaultConfig: Required<
       compact: false,
       groupSeparators: true,
     },
-    contextualBar: {
-      show: true,
-    },
     title: "Image Editor",
     showTitle: true,
   },
 
   crop: {
     aspectRatios: defaultAspectRatios,
-    modes: ["crop", "cover", "fit"],
-    defaultMode: "crop",
     allowCustomRatio: true,
-    showStraighten: true,
     showRotateFlip: true,
     resizePresets: defaultResizePresets,
   },
@@ -161,9 +155,7 @@ export const defaultConfig: Required<
     ],
   },
 
-  filter: {
-    showIntensity: true,
-  },
+  filter: {},
 
   text: {
     fonts: ["Inter", "Roboto", "Playfair Display", "Fira Code"],
@@ -183,6 +175,10 @@ export const defaultConfig: Required<
     presets: ["rect", "ellipse", "triangle", "pentagon", "hexagon", "star", "line"],
     defaultFillMode: "filled",
     defaultColor: "#3b82f6",
+    defaultStrokeWidth: 0,
+    defaultOpacity: 1,
+    defaultCornerRadius: 0,
+    defaultSize: 0.25,
   },
 
   image: {

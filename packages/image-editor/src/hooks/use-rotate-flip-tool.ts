@@ -31,16 +31,6 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
     });
   }, [engineRef, editableBlockId]);
 
-  const handleRotationChange = useCallback(
-    (angle: number) => {
-      const ce = engineRef.current;
-      if (!ce || editableBlockId === null) return;
-      ce.block.setImageRotation(editableBlockId, angle);
-      setRotationState((prev) => ({ ...prev, rotation: angle }));
-    },
-    [engineRef, editableBlockId],
-  );
-
   const handleRotateClockwise = useCallback(() => {
     const ce = engineRef.current;
     if (!ce || editableBlockId === null) return;
@@ -103,7 +93,6 @@ export function useRotateFlipTool({ engineRef }: UseRotateFlipToolOptions) {
   return {
     rotationState,
     syncRotationState,
-    handleRotationChange,
     handleRotateClockwise,
     handleRotateCounterClockwise,
     handleFlipHorizontal,
