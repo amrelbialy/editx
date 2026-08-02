@@ -1,4 +1,4 @@
-﻿import {
+import {
   Crop,
   Github,
   History,
@@ -127,23 +127,28 @@ function HeroSection() {
           />
           Open source · MIT licensed
         </span>
-        <h1
-          className="text-5xl md:text-7xl font-bold leading-tight tracking-tight animate-fade-in-up"
-          style={{
-            background: "var(--brand-gradient)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Editx
+        <h1 className="animate-fade-in-up">
+          <span
+            className="block text-5xl md:text-7xl font-bold leading-tight tracking-tight"
+            style={{
+              background: "var(--brand-gradient)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Editx
+          </span>
+          <span className="mt-3 block text-2xl md:text-3xl font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Framework-Agnostic JavaScript Image Editor
+          </span>
         </h1>
         <p
           className="max-w-xl text-lg leading-relaxed text-zinc-500 animate-fade-in-up"
           style={{ animationDelay: "0.1s" }}
         >
-          Drop a full-featured image editor into any app — React, vanilla JS, or a Web Component.
-          Crop, adjust, filter, and annotate with text & shapes, on an extensible, themeable block
-          engine.
+          Drop a full-featured image editor into any app — it's framework-agnostic, so reach for it
+          with vanilla JS, React, or as a Web Component. Crop, adjust, filter, and annotate with
+          text & shapes, on an extensible, themeable block engine.
         </p>
 
         <div
@@ -196,7 +201,7 @@ function HeroSection() {
           <CopyButton text={INSTALL_CMD} className="ml-1" />
         </div>
         <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-zinc-500">
-          <span>React 19</span>
+          <span>Framework-agnostic</span>
           <span>&middot;</span>
           <span>TypeScript</span>
           <span>&middot;</span>

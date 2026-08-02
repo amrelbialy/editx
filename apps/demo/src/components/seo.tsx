@@ -6,7 +6,7 @@ const SITE_NAME = "Editx";
 export const SITE_URL = "https://editx-sdk.vercel.app";
 export const SOCIAL_IMAGE_URL = `${SITE_URL}/og-image.svg`;
 const DEFAULT_DESCRIPTION =
-  "Open-source image editor SDK for React, vanilla JavaScript, and Web Components. Crop, filter, annotate, theme, and extend it with a block-based engine.";
+  "Open-source, framework-agnostic image editor SDK for any app — vanilla JavaScript, React, or Web Components. Crop, filter, annotate, theme, and extend it with a block-based engine.";
 
 export interface PageMetadata {
   title: string;
@@ -35,7 +35,7 @@ const PAGE_METADATA = new Map<string, PageMetadata>([
   [
     "/",
     {
-      title: "Editx | Open-Source Image Editor SDK",
+      title: "Editx - Framework-Agnostic JavaScript Image Editor",
       description: DEFAULT_DESCRIPTION,
     },
   ],

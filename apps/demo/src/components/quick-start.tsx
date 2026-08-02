@@ -162,7 +162,7 @@ export function QuickStart() {
           Up and running in minutes
         </h2>
         <p className="mt-2 text-zinc-500">
-          Add an image editor to your React app with a few lines of code.
+          Add an image editor to any app with a few lines of code.
         </p>
       </div>
 

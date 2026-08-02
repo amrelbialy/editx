@@ -23,8 +23,8 @@ export function Footer() {
         <div className="col-span-2 md:col-span-1">
           <h3 className="text-lg font-semibold text-white">Editx</h3>
           <p className="mt-2 text-sm leading-relaxed">
-            Open-source block-based image editor for React. Crop, adjust, filter, annotate &amp;
-            export.
+            Open-source, framework-agnostic block-based image editor. Crop, adjust, filter, annotate
+            &amp; export.
           </p>
         </div>
         {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
