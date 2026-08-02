@@ -151,12 +151,58 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
+      - name: Verify Vercel credentials and project access
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for variable in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
+            if [ -z "${!variable}" ]; then
+              echo "::error::$variable is not configured."
+              exit 1
+            fi
+          done
+
+          if [[ "$VERCEL_TOKEN" =~ [[:space:]] ]]; then
+            echo "::error::VERCEL_TOKEN contains whitespace. Store only the token value in the GitHub secret."
+            exit 1
+          fi
+
+          response_file=$(mktemp)
+          trap 'rm -f "$response_file"' EXIT
+          status=$(curl --silent --show-error --output "$response_file" --write-out "%{http_code}" \
+            --header "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID")
+
+          case "$status" in
+            200) ;;
+            401)
+              echo "::error::Vercel rejected VERCEL_TOKEN. The token was revoked, expired, or replaced in Vercel."
+              exit 1
+              ;;
+            403)
+              if grep -Eq '"invalidToken"[[:space:]]*:[[:space:]]*true' "$response_file"; then
+                echo "::error::Vercel rejected VERCEL_TOKEN. The token was revoked, expired, or replaced in Vercel."
+              else
+                echo "::error::VERCEL_TOKEN cannot access VERCEL_ORG_ID. Check the token's team scope."
+              fi
+              exit 1
+              ;;
+            404)
+              echo "::error::Vercel could not find VERCEL_PROJECT_ID under VERCEL_ORG_ID. Check both repository secrets."
+              exit 1
+              ;;
+            *)
+              echo "::error::Vercel credential preflight returned unexpected HTTP status $status."
+              exit 1
+              ;;
+          esac
+
       - name: Install Vercel CLI
         run: pnpm add -g vercel@latest
 
-      # `whoami` only supports user-scoped tokens. Pulling the linked project
-      # validates both authentication and project access for team-scoped tokens.
-      - name: Authenticate and pull Vercel production environment
+      - name: Pull Vercel production environment
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
