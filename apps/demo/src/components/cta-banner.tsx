@@ -4,7 +4,7 @@ export function CtaBanner() {
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Ready to build?</h2>
         <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400">
-          Add a powerful image editor to your React app in under 5 minutes.
+          Add a powerful image editor to any app in under 5 minutes.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
