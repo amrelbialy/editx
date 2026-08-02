@@ -34,6 +34,7 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
       const x = (pageW - shapeW) / 2;
       const y = (pageH - shapeH) / 2;
 
+      ce.beginBatch();
       const graphicId = ce.block.addShape(
         editableBlockId,
         shapeType,
@@ -66,6 +67,7 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
           strokeWidth > 0 ? strokeWidth : Math.max(2, Math.round(Math.min(pageW, pageH) * 0.005));
         ce.block.setStrokeWidth(graphicId, width);
       }
+      ce.endBatch();
 
       ce.block.select(graphicId);
     },

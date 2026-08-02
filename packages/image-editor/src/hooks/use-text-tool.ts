@@ -44,6 +44,7 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
       const x = (pageW - width) / 2;
       const y = (pageH - height) / 2;
 
+      ce.beginBatch();
       const textId = ce.block.addText(editableBlockId, x, y, width, height, content, {
         style: {
           fontSize,
@@ -58,6 +59,7 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
       if (text.defaultTextAlign) ce.block.setTextAlign(textId, text.defaultTextAlign);
       if (text.defaultLineHeight !== undefined)
         ce.block.setTextLineHeight(textId, text.defaultLineHeight);
+      ce.endBatch();
 
       ce.block.select(textId);
     },

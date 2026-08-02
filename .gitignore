@@ -51,3 +51,4 @@ docs-private
 temp
 # Local custom agent definitions
 .agents/
+.env*
