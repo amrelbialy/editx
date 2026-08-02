@@ -1,10 +1,22 @@
+<div align="center">
+
 # @editx/engine
+
+### Headless, framework-agnostic block engine for building image & creative editors.
+
+Command-pattern undo/redo, Konva 10 renderer, and a lifecycle EventAPI — the core that powers [`@editx/image-editor`](https://www.npmjs.com/package/@editx/image-editor).
+
+**Pure TypeScript, zero UI-framework dependency** — bring it to React, Vue, Svelte, vanilla JS, or no framework at all.
 
 [![npm version](https://img.shields.io/npm/v/@editx/engine.svg)](https://www.npmjs.com/package/@editx/engine)
 [![npm downloads](https://img.shields.io/npm/dm/@editx/engine.svg)](https://www.npmjs.com/package/@editx/engine)
 [![license](https://img.shields.io/npm/l/@editx/engine.svg)](https://github.com/amrelbialy/editx/blob/main/LICENSE)
 
-Headless block-based creative engine with command-pattern undo/redo, Konva 10 renderer, and EventAPI.
+[**Documentation**](https://editx-sdk.vercel.app/docs/engine/overview) · [**GitHub**](https://github.com/amrelbialy/editx)
+
+</div>
+
+---
 
 Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
 
@@ -13,6 +25,7 @@ Part of the [Editx](https://github.com/amrelbialy/editx) monorepo.
 ```bash
 pnpm add @editx/engine
 ```
+
 
 ### Peer Dependencies
 
@@ -23,36 +36,41 @@ pnpm add @editx/engine
 ## Usage
 
 ```ts
-import { EditxEngine } from "@editx/engine";
+import { EditxEngine, IMAGE_SRC } from "@editx/engine";
 
 const engine = new EditxEngine();
 
-// Create a scene
-const scene = engine.scene.create();
+// Create a scene — this also creates the first page
+await engine.scene.create({ width: 1080, height: 1080 });
+const page = engine.scene.getCurrentPage();
 
-// Add a page block
-const page = engine.block.create("page");
-engine.block.appendChild(scene, page);
-
-// Add an image block
-const image = engine.block.create("image");
-engine.block.setString(image, "image/src", "/photo.jpg");
-engine.block.appendChild(page, image);
+// Add an image block to the page
+if (page !== null) {
+  const image = engine.block.create("image");
+  engine.block.setString(image, IMAGE_SRC, "/photo.jpg");
+  engine.block.appendChild(page, image);
+}
 ```
 
 ### Konva Renderer
 
-If you need the Konva-based canvas renderer, import from the `/konva` subpath:
+To render to a canvas, use the `/konva` subpath. The `createEngine` helper returns an `EditxEngine` with a Konva renderer already attached to your DOM container:
 
 ```ts
-import { KonvaRenderer } from "@editx/engine/konva";
+import { createEngine } from "@editx/engine/konva";
+
+const engine = await createEngine({
+  container: document.getElementById("stage")!,
+});
 ```
+
+For advanced setups you can construct the adapter yourself with `KonvaRendererAdapter` and pass it to `new EditxEngine({ renderer })`.
 
 ## Key Concepts
 
 - **Blocks** — Everything is a block: pages, images, text, shapes. Each block has typed properties.
 - **Command Pattern** — All mutations go through commands, enabling full undo/redo history.
-- **EventAPI** — Subscribe to block lifecycle events (create, update, delete).
+- **EventAPI** — Subscribe to block lifecycle events (`created`, `updated`, `destroyed`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
 ## Exports
