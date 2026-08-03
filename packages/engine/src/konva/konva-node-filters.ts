@@ -1,4 +1,5 @@
 import type Konva from "konva";
+import type { Filter } from "konva/lib/Node";
 import type { BlockData } from "../block/block.types";
 import {
   EFFECT_ADJUSTMENTS_BLACKS,
@@ -13,11 +14,18 @@ import {
   EFFECT_ADJUSTMENTS_SHARPNESS,
   EFFECT_ADJUSTMENTS_TEMPERATURE,
   EFFECT_ADJUSTMENTS_WHITES,
+  EFFECT_ENABLED,
   EFFECT_FILTER_NAME,
 } from "../block/property-keys";
-import { type AdjustmentValues, buildFilterPipeline } from "./filters/build-filter-pipeline";
-import { getFilterPreset } from "./filters/presets";
+import { type AdjustmentValues, hasAnyAdjustment } from "./filters/build-filter-pipeline";
+import { applyFilterChain } from "./filters/cpu-chain";
+import { getPresetOps } from "./filters/presets";
 import type { FilterParams, WebGLFilterRenderer } from "./webgl-filter-renderer";
+
+/** True unless the effect block explicitly has its enabled flag set to false. */
+function isEffectEnabled(effectBlock: BlockData): boolean {
+  return effectBlock.properties[EFFECT_ENABLED] !== false;
+}
 
 /** Collect adjustment values from all adjustments-type effect blocks. */
 export function collectAdjustmentValues(
@@ -29,6 +37,7 @@ export function collectAdjustmentValues(
   for (const effectId of block.effectIds) {
     const effectBlock = resolveBlock(effectId);
     if (!effectBlock || effectBlock.kind !== "adjustments") continue;
+    if (!isEffectEnabled(effectBlock)) continue;
 
     const p = effectBlock.properties;
     return {
@@ -60,10 +69,33 @@ export function collectFilterPresetName(
   for (const effectId of block.effectIds) {
     const effectBlock = resolveBlock(effectId);
     if (!effectBlock || effectBlock.kind !== "filter") continue;
+    if (!isEffectEnabled(effectBlock)) continue;
     return (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? "";
   }
 
   return "";
+}
+
+/**
+ * Stable cache key from the effective filter inputs. Two runs with the same
+ * key AND the same source image produce identical pixels, so the pipeline can
+ * be skipped. Crop/flip are intentionally excluded — they change how the node
+ * is drawn, not the filtered pixel buffer, so the cached result stays valid.
+ */
+function computeFilterKey(values: AdjustmentValues | null, presetName: string): string {
+  if (!values) return `|${presetName}`;
+  return (
+    `${values.brightness},${values.saturation},${values.contrast},${values.gamma},` +
+    `${values.clarity},${values.exposure},${values.shadows},${values.highlights},` +
+    `${values.blacks},${values.whites},${values.temperature},${values.sharpness}` +
+    `|${presetName}`
+  );
+}
+
+function perfLog(message: string): void {
+  if (typeof window !== "undefined" && (window as { __EX_PERF?: boolean }).__EX_PERF) {
+    console.log(message);
+  }
 }
 
 /** Apply adjustment/filter effects to a Konva.Image node (WebGL or CPU fallback). */
@@ -76,45 +108,49 @@ export function applyFilters(
 ): void {
   const values = collectAdjustmentValues(block, resolveBlock);
   const presetName = collectFilterPresetName(block, resolveBlock);
-  const hasAdjustments = values != null;
   const hasPreset = presetName !== "";
+  const hasEffective = (values != null && hasAnyAdjustment(values)) || hasPreset;
+  const effectiveValues = hasEffective ? values : null;
 
-  const _perf = typeof window !== "undefined" && (window as any).__EX_PERF;
+  const sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
 
-  if (!hasAdjustments && !hasPreset) {
-    if (_perf) console.log("[perf:applyFilters] no adjustments/preset, skipping");
+  // ── Dirty check: skip when nothing that affects the pixels changed ──
+  const key = computeFilterKey(effectiveValues, presetName);
+  const lastKey = imgNode.getAttr("_lastFilterKey") as string | undefined;
+  const lastSource = imgNode.getAttr("_lastFilterSource") as HTMLImageElement | undefined;
+  if (lastKey === key && lastSource === sourceImg) {
+    perfLog("[perf:applyFilters] cache hit, skipping");
+    return;
+  }
+
+  // ── No effective filters: clear back to the original source ──
+  if (!hasEffective) {
     if (imgNode.filters()?.length) {
       imgNode.filters([]);
       imgNode.clearCache();
     }
-    const orig = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
-    if (orig && imgNode.image() !== orig) {
-      imgNode.image(orig);
+    if (sourceImg && imgNode.image() !== sourceImg) {
+      imgNode.image(sourceImg);
     }
     imgNode.setAttr("_filteredCanvas", undefined);
+    imgNode.setAttr("_lastFilterKey", key);
+    imgNode.setAttr("_lastFilterSource", sourceImg);
     return;
   }
 
   // ── WebGL path ──
   if (webgl) {
-    let sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
-    if (!sourceImg) {
+    let usedSource = sourceImg;
+    if (!usedSource) {
       const currentImg = imgNode.image();
-      if (_perf)
-        console.log(
-          "[perf:applyFilters] _sourceImage missing, imgNode.image() is:",
-          currentImg?.constructor?.name,
-          "value:",
-          currentImg,
-        );
       if (currentImg instanceof HTMLImageElement) {
-        sourceImg = currentImg;
-        imgNode.setAttr("_sourceImage", sourceImg);
+        usedSource = currentImg;
+        imgNode.setAttr("_sourceImage", usedSource);
       }
     }
-    if (sourceImg) {
-      const t0 = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
-      webgl.uploadImage(sourceImg, sourceImg.naturalWidth, sourceImg.naturalHeight);
+    if (usedSource) {
+      const t0 = typeof window !== "undefined" ? performance.now() : 0;
+      webgl.uploadImage(usedSource, usedSource.naturalWidth, usedSource.naturalHeight);
 
       const params: FilterParams = {
         brightness: values?.brightness ?? 0,
@@ -152,57 +188,43 @@ export function applyFilters(
         copyCanvas.height = filteredCanvas.height;
         imgNode.setAttr("_filteredCanvas", copyCanvas);
       }
-      const ctx2d = copyCanvas.getContext("2d")!;
-      ctx2d.clearRect(0, 0, copyCanvas.width, copyCanvas.height);
-      ctx2d.drawImage(filteredCanvas, 0, 0);
-      imgNode.image(copyCanvas);
-      if (typeof window !== "undefined" && (window as any).__EX_PERF) {
-        console.log(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
+      const ctx2d = copyCanvas.getContext("2d");
+      if (ctx2d) {
+        ctx2d.clearRect(0, 0, copyCanvas.width, copyCanvas.height);
+        ctx2d.drawImage(filteredCanvas, 0, 0);
       }
+      imgNode.image(copyCanvas);
+
+      imgNode.setAttr("_lastFilterKey", key);
+      imgNode.setAttr("_lastFilterSource", usedSource);
+      perfLog(`[perf:applyFilters] WebGL total: ${(performance.now() - t0).toFixed(2)}ms`);
       return;
     }
-    if (_perf)
-      console.log("[perf:applyFilters] WebGL path: sourceImg is null, falling through to CPU");
+    perfLog("[perf:applyFilters] WebGL path: source is null, falling through to CPU");
   } else {
-    if (_perf) console.log("[perf:applyFilters] #webgl is null, using CPU fallback");
+    perfLog("[perf:applyFilters] webgl is null, using CPU fallback");
   }
 
   // ── CPU fallback path ──
-  if (_perf) console.log("[perf:applyFilters] CPU fallback running");
-  const t1 = _perf ? performance.now() : 0;
-  const filterPresetFn = presetName ? (getFilterPreset(presetName) ?? null) : null;
+  const t1 = typeof window !== "undefined" ? performance.now() : 0;
+  const presetOps = presetName ? (getPresetOps(presetName) ?? []) : [];
 
-  const allFilters: Array<(imageData: ImageData) => void> = [];
-
-  if (values) {
-    const pipeline = buildFilterPipeline(values);
-    if (pipeline.hasFilters) {
-      for (const [key, val] of Object.entries(pipeline.attrs)) {
-        imgNode.setAttr(key, val);
-      }
-      allFilters.push(...(pipeline.filters as Array<(imageData: ImageData) => void>));
-    }
+  // Reset the node's image back to the unfiltered source so the CPU chain never
+  // double-filters a canvas left behind by a previous WebGL run.
+  if (sourceImg && imgNode.image() !== sourceImg) {
+    imgNode.image(sourceImg);
   }
 
-  if (filterPresetFn) {
-    allFilters.push(filterPresetFn);
-  }
-
-  if (allFilters.length === 0) {
-    if (imgNode.filters()?.length) {
-      imgNode.filters([]);
-      imgNode.clearCache();
-    }
-    return;
-  }
-
-  imgNode.filters(allFilters as any);
+  const runner: Filter = (imageData: ImageData): void => {
+    applyFilterChain(imageData, values, presetOps);
+  };
+  imgNode.filters([runner]);
 
   if (imgNode.image()) {
     imgNode.cache();
   }
-  if (_perf)
-    console.log(
-      `[perf:applyFilters] CPU fallback total: ${(performance.now() - t1).toFixed(2)}ms (${allFilters.length} filters)`,
-    );
+
+  imgNode.setAttr("_lastFilterKey", key);
+  imgNode.setAttr("_lastFilterSource", sourceImg);
+  perfLog(`[perf:applyFilters] CPU fallback total: ${(performance.now() - t1).toFixed(2)}ms`);
 }

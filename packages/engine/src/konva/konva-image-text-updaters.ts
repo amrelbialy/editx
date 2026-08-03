@@ -70,19 +70,49 @@ export function updateImageNode(
   else imgNode.offsetY(0);
 
   const src = (props[IMAGE_SRC] as string) ?? "";
-  if (src && imgNode.getAttr("loadedSrc") !== src) {
+  const srcChanged = src !== "" && imgNode.getAttr("loadedSrc") !== src;
+  if (srcChanged) {
     imgNode.setAttr("loadedSrc", src);
-    loadImage(src).then((htmlImg) => {
-      imgNode.setAttr("_sourceImage", htmlImg);
-      imgNode.image(htmlImg);
-      if (imgNode.filters()?.length) {
-        imgNode.cache();
-      }
-      stage?.batchDraw();
-    });
+    // Track the most recent requested src so a stale async load can't clobber
+    // a newer one when it resolves out of order.
+    imgNode.setAttr("__pendingSrc", src);
+    loadImage(src)
+      .then((htmlImg) => {
+        // Bail if a newer src load superseded this one, or the node was
+        // destroyed / detached from the stage while the image was loading.
+        if (imgNode.getAttr("__pendingSrc") !== src) return;
+        if (!imgNode.getStage()) return;
+
+        imgNode.setAttr("_sourceImage", htmlImg);
+        imgNode.image(htmlImg);
+        // Re-run filtering now that the real source is loaded — the earlier
+        // synchronous call (if any) had no source and would no-op.
+        if (block) {
+          applyFilters(imgNode, block, stage, webgl, resolveBlock);
+        } else if (imgNode.filters()?.length) {
+          imgNode.cache();
+        }
+        stage?.batchDraw();
+      })
+      .catch((error: unknown) => {
+        // Only act on the failure if this is still the pending load for the
+        // node (a newer src may have superseded it).
+        if (imgNode.getAttr("__pendingSrc") !== src) return;
+        // Clear the "loaded" marker so a subsequent sync with the same src
+        // retries the load instead of being stuck as "already loaded" with no
+        // image. This is a genuine (non-perf) error, surfaced like other
+        // user-facing load issues in image-loader.ts.
+        if (imgNode.getAttr("loadedSrc") === src) {
+          imgNode.setAttr("loadedSrc", undefined);
+        }
+        console.error(`[editx] Failed to load image: ${src}`, error);
+      });
   }
 
-  if (block) {
+  // Only filter synchronously when the source is already loaded. When the src
+  // changed, filtering happens inside the load callback above (once the source
+  // image actually exists), so WebGL/CPU filtering isn't silently skipped.
+  if (block && !srcChanged) {
     applyFilters(imgNode, block, stage, webgl, resolveBlock);
   }
 }

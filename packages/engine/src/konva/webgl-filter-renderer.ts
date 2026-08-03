@@ -6,8 +6,9 @@
  * The result is fed to Konva.Image.image() — no Konva cache() needed.
  */
 
+import { getPresetOps } from "./filters/presets";
+import { encodePresetOp, MAX_PRESET_OPS } from "./filters/presets/preset-opcodes";
 import { FRAGMENT_SRC, VERTEX_SRC } from "./glsl-filter-shaders";
-import { PRESET_UNIFORMS } from "./webgl-preset-data";
 
 // ────────────────────────────────────────────────────────
 // Public types
@@ -35,7 +36,7 @@ export interface FilterParams {
 
 /** Enable to log per-call timing to the console. Set via window.__EX_PERF = true */
 function perfEnabled(): boolean {
-  return typeof window !== "undefined" && (window as any).__EX_PERF === true;
+  return typeof window !== "undefined" && (window as { __EX_PERF?: boolean }).__EX_PERF === true;
 }
 
 export class WebGLFilterRenderer {
@@ -115,8 +116,11 @@ export class WebGLFilterRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.#texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // NEAREST sampling: the offscreen canvas is 1:1 with the source, so nearest
+    // is exact — and it aligns spatial filters (clarity/sharpness) with the CPU
+    // path, which samples nearest neighbours.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
 
     this.#uploadedSource = source;
@@ -154,8 +158,8 @@ export class WebGLFilterRenderer {
     this.#setUniform1f("u_clarity", params.clarity);
     this.#setUniform1f("u_sharpness", params.sharpness);
 
-    // Set preset uniforms
-    this.#applyPresetUniforms(params.preset);
+    // Set preset op list uniforms
+    this.#applyPresetOps(params.preset);
 
     // Draw full-screen quad
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -243,6 +247,13 @@ export class WebGLFilterRenderer {
       if (info) {
         const loc = gl.getUniformLocation(prog, info.name);
         if (loc) this.#uniformLocations.set(info.name, loc);
+        // For array uniforms the active name is e.g. "u_presetOpTypes[0]".
+        // Also store under the bare name so uniform*v() can set the whole array.
+        if (info.name.endsWith("[0]")) {
+          const bare = info.name.slice(0, -3);
+          const bareLoc = gl.getUniformLocation(prog, bare);
+          if (bareLoc) this.#uniformLocations.set(bare, bareLoc);
+        }
       }
     }
   }
@@ -262,54 +273,39 @@ export class WebGLFilterRenderer {
     if (loc) this.#gl.uniform2f(loc, x, y);
   }
 
-  #setUniform3f(name: string, x: number, y: number, z: number): void {
+  #setUniform1iv(name: string, value: Int32Array): void {
     const loc = this.#uniformLocations.get(name);
-    if (loc) this.#gl.uniform3f(loc, x, y, z);
+    if (loc) this.#gl.uniform1iv(loc, value);
   }
 
-  #setUniform4f(name: string, x: number, y: number, z: number, w: number): void {
+  #setUniform4fv(name: string, value: Float32Array): void {
     const loc = this.#uniformLocations.get(name);
-    if (loc) this.#gl.uniform4f(loc, x, y, z, w);
+    if (loc) this.#gl.uniform4fv(loc, value);
   }
 
-  #applyPresetUniforms(presetName: string): void {
-    if (!presetName) {
-      // Reset all preset uniforms to defaults
-      this.#setUniform1f("u_presetBrightness", 0);
-      this.#setUniform1f("u_presetContrast", 0);
-      this.#setUniform1f("u_presetSaturation", 0);
-      this.#setUniform1f("u_presetSepia", 0);
-      this.#setUniform1f("u_presetGrayscale", 0);
-      this.#setUniform3f("u_presetRGB", 1, 1, 1);
-      this.#setUniform4f("u_presetColorFilter", 0, 0, 0, 0);
-      this.#setUniform1f("u_presetInvert", 0);
-      this.#setUniform1f("u_presetSolarize", 0);
-      this.#setUniform1f("u_presetBlackWhite", 0);
-      return;
+  /**
+   * Upload the ordered preset op list as (opcode, vec4 params) arrays.
+   * Unused slots are zero-padded; a count uniform bounds the shader loop.
+   */
+  #applyPresetOps(presetName: string): void {
+    const ops = presetName ? getPresetOps(presetName) : undefined;
+    const count = ops ? Math.min(ops.length, MAX_PRESET_OPS) : 0;
+    const types = new Int32Array(MAX_PRESET_OPS);
+    const params = new Float32Array(MAX_PRESET_OPS * 4);
+
+    if (ops) {
+      for (let i = 0; i < count; i++) {
+        const encoded = encodePresetOp(ops[i]);
+        types[i] = encoded.type;
+        params[i * 4] = encoded.params[0];
+        params[i * 4 + 1] = encoded.params[1];
+        params[i * 4 + 2] = encoded.params[2];
+        params[i * 4 + 3] = encoded.params[3];
+      }
     }
 
-    const preset = PRESET_UNIFORMS.get(presetName);
-    if (!preset) {
-      // Unknown preset — clear
-      this.#applyPresetUniforms("");
-      return;
-    }
-
-    this.#setUniform1f("u_presetBrightness", preset.brightness);
-    this.#setUniform1f("u_presetContrast", preset.contrast);
-    this.#setUniform1f("u_presetSaturation", preset.saturation);
-    this.#setUniform1f("u_presetSepia", preset.sepia);
-    this.#setUniform1f("u_presetGrayscale", preset.grayscale);
-    this.#setUniform3f("u_presetRGB", preset.rgb[0], preset.rgb[1], preset.rgb[2]);
-    this.#setUniform4f(
-      "u_presetColorFilter",
-      preset.colorFilter[0],
-      preset.colorFilter[1],
-      preset.colorFilter[2],
-      preset.colorFilter[3],
-    );
-    this.#setUniform1f("u_presetInvert", preset.invert);
-    this.#setUniform1f("u_presetSolarize", preset.solarize);
-    this.#setUniform1f("u_presetBlackWhite", preset.blackWhite);
+    this.#setUniform1i("u_presetOpCount", count);
+    this.#setUniform1iv("u_presetOpTypes", types);
+    this.#setUniform4fv("u_presetOpParams", params);
   }
 }

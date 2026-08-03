@@ -1,3 +1,5 @@
+import { PRESET_OPCODE_GLSL } from "./filters/presets/preset-opcodes";
+
 /** Vertex shader for full-screen quad. Maps clip-space to texture coords with Y-flip. */
 export const VERTEX_SRC = `#version 300 es
 in vec2 a_position;
@@ -12,7 +14,10 @@ void main() {
 
 /**
  * Fragment shader that applies all 12 adjustments + preset color grading
- * in a single pass.
+ * in a single pass, in the canonical op order shared with the CPU chain.
+ *
+ * The preset opcode constants below are injected from `preset-opcodes.ts`
+ * so the shader and TypeScript can never drift out of sync.
  */
 export const FRAGMENT_SRC = `#version 300 es
 precision highp float;
@@ -37,29 +42,20 @@ uniform float u_whites;       // -1..1
 uniform float u_clarity;      // -1..1
 uniform float u_sharpness;    // 0..100
 
-// ── Preset uniforms ──
-uniform float u_presetBrightness;
-uniform float u_presetContrast;
-uniform float u_presetSaturation;
-uniform float u_presetSepia;
-uniform float u_presetGrayscale;
-uniform vec3  u_presetRGB;        // multiplicative, default (1,1,1)
-uniform vec4  u_presetColorFilter; // (r,g,b,a) in 0..1 range
-
-// ── Preset special modes ──
-uniform float u_presetInvert;      // 0 or 1
-uniform float u_presetSolarize;    // 0 or 1
-uniform float u_presetBlackWhite;  // 0 or 1
+// ── Preset op list (shared, ordered — see preset-opcodes.ts) ──
+${PRESET_OPCODE_GLSL}
+uniform int  u_presetOpCount;
+uniform int  u_presetOpTypes[MAX_PRESET_OPS];
+uniform vec4 u_presetOpParams[MAX_PRESET_OPS];
 
 vec3 applyBrightness(vec3 c, float val) {
   return c + val;
 }
 
+// Canonical contrast: factor = (1+v)^2; out = (c-0.5)*factor + 0.5
 vec3 applyContrast(vec3 c, float val) {
-  // Match Konva: contrast attr is -100..100, we receive -1..1
-  // Konva formula: 0.5 * (255 / (128 - contrast*128) - 1) mapped to 0..1
-  // Simplified: just use a standard contrast formula
-  return (c - 0.5) * (1.0 + val) + 0.5;
+  float f = (1.0 + val) * (1.0 + val);
+  return (c - 0.5) * f + 0.5;
 }
 
 vec3 applySaturation(vec3 c, float val) {
@@ -152,46 +148,49 @@ vec3 applyColorFilter(vec3 c, vec4 cf) {
   return c - (c - cf.rgb) * cf.a;
 }
 
+vec3 applyPresetOp(vec3 color, int type, vec4 p) {
+  if (type == OP_BRIGHTNESS)  return applyBrightness(color, p.x);
+  if (type == OP_CONTRAST)    return applyContrast(color, p.x);
+  if (type == OP_SATURATION)  return applySaturation(color, p.x);
+  if (type == OP_SEPIA)       return applySepia(color, p.x);
+  if (type == OP_GRAYSCALE)   return applyGrayscale(color);
+  if (type == OP_INVERT)      return 1.0 - color;
+  if (type == OP_SOLARIZE)    return mix(color, 1.0 - color, step(0.5, color));
+  if (type == OP_BLACKWHITE) {
+    float avg = (color.r + color.g + color.b) / 3.0;
+    return avg > p.x ? vec3(1.0) : vec3(0.0);
+  }
+  if (type == OP_RGB)         return color * p.rgb;
+  if (type == OP_COLORFILTER) return applyColorFilter(color, p);
+  return color;
+}
+
 void main() {
   vec2 texelSize = 1.0 / u_texSize;
   vec4 pixel = texture(u_image, v_texCoord);
   vec3 color = pixel.rgb;
 
-  // ── Spatial filters first (need original neighbours) ──
-  color = applySharpness(color, u_sharpness, v_texCoord, texelSize);
+  // ── Canonical order: spatial first (read original neighbours) ──
   color = applyClarity(color, u_clarity, v_texCoord, texelSize);
+  color = applySharpness(color, u_sharpness, v_texCoord, texelSize);
 
   // ── Per-pixel adjustments ──
-  if (u_brightness != 0.0) color = applyBrightness(color, u_brightness);
-  if (u_contrast != 0.0)   color = applyContrast(color, u_contrast);
-  if (u_saturation != 0.0) color = applySaturation(color, u_saturation);
-  if (u_gamma != 0.0)      color = applyGamma(color, u_gamma);
-  if (u_exposure != 0.0)   color = applyExposure(color, u_exposure);
-  if (u_temperature != 0.0) color = applyTemperature(color, u_temperature);
+  if (u_brightness != 0.0)  color = applyBrightness(color, u_brightness);
+  if (u_saturation != 0.0)  color = applySaturation(color, u_saturation);
+  if (u_contrast != 0.0)    color = applyContrast(color, u_contrast);
+  if (u_gamma != 0.0)       color = applyGamma(color, u_gamma);
+  if (u_exposure != 0.0)    color = applyExposure(color, u_exposure);
   if (u_highlights != 0.0 || u_shadows != 0.0)
     color = applyHighlightsShadows(color, u_highlights, u_shadows);
-  if (u_blacks != 0.0) color = applyBlacks(color, u_blacks);
-  if (u_whites != 0.0) color = applyWhites(color, u_whites);
+  if (u_blacks != 0.0)      color = applyBlacks(color, u_blacks);
+  if (u_whites != 0.0)      color = applyWhites(color, u_whites);
+  if (u_temperature != 0.0) color = applyTemperature(color, u_temperature);
 
-  // ── Preset effects (applied after adjustments, matches CPU order) ──
-  // Special presets
-  if (u_presetInvert > 0.5)     color = 1.0 - color;
-  if (u_presetBlackWhite > 0.5) {
-    float avg = (color.r + color.g + color.b) / 3.0;
-    color = avg > (100.0 / 255.0) ? vec3(1.0) : vec3(0.0);
+  // ── Preset ops (ordered list, applied last) ──
+  for (int i = 0; i < MAX_PRESET_OPS; i++) {
+    if (i >= u_presetOpCount) break;
+    color = applyPresetOp(color, u_presetOpTypes[i], u_presetOpParams[i]);
   }
-  if (u_presetSolarize > 0.5) {
-    color = mix(color, 1.0 - color, step(0.5, color));
-  }
-
-  // Standard preset ops
-  if (u_presetGrayscale > 0.5)   color = applyGrayscale(color);
-  if (u_presetSepia > 0.0)       color = applySepia(color, u_presetSepia);
-  if (u_presetBrightness != 0.0) color = applyBrightness(color, u_presetBrightness);
-  if (u_presetContrast != 0.0)   color = applyContrast(color, u_presetContrast);
-  if (u_presetSaturation != 0.0) color = applySaturation(color, u_presetSaturation);
-  if (u_presetRGB != vec3(1.0))  color *= u_presetRGB;
-  if (u_presetColorFilter.a > 0.0) color = applyColorFilter(color, u_presetColorFilter);
 
   color = clamp(color, 0.0, 1.0);
   fragColor = vec4(color, pixel.a);
