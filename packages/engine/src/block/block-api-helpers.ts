@@ -9,7 +9,7 @@ export function getProperty(
   id: number,
   key: string,
 ): PropertyValue | undefined {
-  return engine.getBlockStore().getProperty(id, key);
+  return engine._getBlockStore().getProperty(id, key);
 }
 
 export function setProperty(
@@ -18,12 +18,12 @@ export function setProperty(
   key: string,
   value: PropertyValue,
 ): void {
-  engine.exec(new SetPropertyCommand(engine.getBlockStore(), id, key, value));
+  engine.exec(new SetPropertyCommand(engine._getBlockStore(), id, key, value));
   engine.emit("block:stateChanged", [id]);
 }
 
 export function getFloat(engine: EngineCore, id: number, key: string): number {
-  return engine.getBlockStore().getFloat(id, key);
+  return engine._getBlockStore().getFloat(id, key);
 }
 
 export function setFloat(engine: EngineCore, id: number, key: string, value: number): void {
@@ -31,7 +31,7 @@ export function setFloat(engine: EngineCore, id: number, key: string, value: num
 }
 
 export function getBool(engine: EngineCore, id: number, key: string): boolean {
-  return engine.getBlockStore().getBool(id, key);
+  return engine._getBlockStore().getBool(id, key);
 }
 
 export function setBool(engine: EngineCore, id: number, key: string, value: boolean): void {
@@ -39,7 +39,7 @@ export function setBool(engine: EngineCore, id: number, key: string, value: bool
 }
 
 export function getString(engine: EngineCore, id: number, key: string): string {
-  return engine.getBlockStore().getString(id, key);
+  return engine._getBlockStore().getString(id, key);
 }
 
 export function setString(engine: EngineCore, id: number, key: string, value: string): void {
@@ -47,7 +47,7 @@ export function setString(engine: EngineCore, id: number, key: string, value: st
 }
 
 export function getColor(engine: EngineCore, id: number, key: string): Color {
-  return engine.getBlockStore().getColor(id, key);
+  return engine._getBlockStore().getColor(id, key);
 }
 
 export function setColor(engine: EngineCore, id: number, key: string, value: Color): void {

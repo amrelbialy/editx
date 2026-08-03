@@ -30,7 +30,7 @@ describe("Engine Integration: Sub-block & reparent lifecycle", () => {
 
   describe("reparenting a child between two parents", () => {
     it("undo restores the child to its original parent", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const pageA = exec(new CreateBlockCommand(store, "page"));
       const pageB = exec(new CreateBlockCommand(store, "page"));
@@ -55,7 +55,7 @@ describe("Engine Integration: Sub-block & reparent lifecycle", () => {
     });
 
     it("redo re-applies the reparent", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const pageA = exec(new CreateBlockCommand(store, "page"));
       const pageB = exec(new CreateBlockCommand(store, "page"));
@@ -75,7 +75,7 @@ describe("Engine Integration: Sub-block & reparent lifecycle", () => {
 
   describe("graphic with shape + fill destroy/undo", () => {
     it("undo restores the graphic and its shape/fill references", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const graphic = exec(new CreateBlockCommand(store, "graphic"));
       const shape = exec(new CreateShapeCommand(store, "rect"));
@@ -104,7 +104,7 @@ describe("Engine Integration: Sub-block & reparent lifecycle", () => {
 
   describe("effect lifecycle on a block", () => {
     it("create → append → destroy effect → undo restores the owner reference", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const graphic = exec(new CreateBlockCommand(store, "graphic"));
       const effect = exec(new CreateEffectCommand(store, "filter"));
@@ -125,7 +125,7 @@ describe("Engine Integration: Sub-block & reparent lifecycle", () => {
 
   describe("batch edge cases", () => {
     it("nested begin/end batch groups everything into a single undo step", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       engine.beginBatch();
       const a = exec(new CreateBlockCommand(store, "graphic"));

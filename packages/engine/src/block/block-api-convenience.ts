@@ -33,7 +33,7 @@ export function addImageBlock(
 export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: number): number {
   const parentId = api.getParent(blockId);
   if (parentId === null) throw new Error(`Block ${blockId} has no parent`);
-  const store = engine.getBlockStore();
+  const store = engine._getBlockStore();
   const sourceBlock = store.get(blockId);
   if (!sourceBlock) throw new Error(`Block ${blockId} not found`);
 

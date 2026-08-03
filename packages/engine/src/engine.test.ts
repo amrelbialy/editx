@@ -9,13 +9,13 @@ describe("EditxEngine", () => {
   describe("construction", () => {
     it("creates with default BlockStore when none provided", () => {
       const engine = new EditxEngine({});
-      expect(engine.getBlockStore()).toBeInstanceOf(BlockStore);
+      expect(engine._getBlockStore()).toBeInstanceOf(BlockStore);
     });
 
     it("uses provided BlockStore", () => {
       const store = new BlockStore();
       const engine = new EditxEngine({ blockStore: store });
-      expect(engine.getBlockStore()).toBe(store);
+      expect(engine._getBlockStore()).toBe(store);
     });
 
     it("renderer is null when not provided", () => {
@@ -40,7 +40,7 @@ describe("EditxEngine", () => {
     });
 
     it("executes a command and syncs to renderer", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
 
@@ -49,7 +49,7 @@ describe("EditxEngine", () => {
     });
 
     it("pushes to history (becomes undoable)", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       expect(engine.canUndo()).toBe(true);
     });
@@ -58,7 +58,7 @@ describe("EditxEngine", () => {
       const cb = vi.fn();
       engine.event.subscribe([], cb);
 
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
 
       expect(cb).toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe("EditxEngine", () => {
     });
 
     it("undo reverses a command", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
       const id = cmd.getCreatedId()!;
@@ -86,7 +86,7 @@ describe("EditxEngine", () => {
     });
 
     it("redo re-applies a command", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
       const id = cmd.getCreatedId()!;
@@ -101,7 +101,7 @@ describe("EditxEngine", () => {
       expect(engine.canUndo()).toBe(false);
       expect(engine.canRedo()).toBe(false);
 
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       expect(engine.canUndo()).toBe(true);
       expect(engine.canRedo()).toBe(false);
@@ -112,7 +112,7 @@ describe("EditxEngine", () => {
     });
 
     it("undo calls renderer.removeBlock for destroyed blocks", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
       const id = cmd.getCreatedId()!;
@@ -125,7 +125,7 @@ describe("EditxEngine", () => {
     });
 
     it("undo calls renderer.syncBlock for restored blocks", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const createCmd = new CreateBlockCommand(store, "graphic");
       engine.exec(createCmd);
       const id = createCmd.getCreatedId()!;
@@ -141,7 +141,7 @@ describe("EditxEngine", () => {
       const handler = vi.fn();
       engine.on("history:undo", handler);
 
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       engine.undo();
 
@@ -152,7 +152,7 @@ describe("EditxEngine", () => {
       const handler = vi.fn();
       engine.on("history:redo", handler);
 
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       engine.undo();
       engine.redo();
@@ -164,7 +164,7 @@ describe("EditxEngine", () => {
   describe("clearHistory", () => {
     it("clears undo/redo state", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       engine.clearHistory();
 
@@ -184,7 +184,7 @@ describe("EditxEngine", () => {
   describe("batch", () => {
     it("groups multiple commands into one undo step", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const id = store.create("graphic");
       // Create is not done via engine.exec here, so let's do it properly
@@ -206,7 +206,7 @@ describe("EditxEngine", () => {
     it("does not flush renderer during batch", () => {
       const renderer = createMockRenderer();
       const engine = new EditxEngine({ renderer });
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -222,7 +222,7 @@ describe("EditxEngine", () => {
 
     it("fires block events after endBatch", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -279,14 +279,14 @@ describe("EditxEngine", () => {
   describe("headless (no renderer)", () => {
     it("exec works without renderer", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       engine.exec(new CreateBlockCommand(store, "graphic"));
       expect(engine.canUndo()).toBe(true);
     });
 
     it("undo works without renderer", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
       const id = cmd.getCreatedId()!;
@@ -298,7 +298,7 @@ describe("EditxEngine", () => {
   describe("nested batch", () => {
     it("nested beginBatch/endBatch produces exactly one undo step", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -333,7 +333,7 @@ describe("EditxEngine", () => {
     it("inner endBatch does not flush the renderer", () => {
       const renderer = createMockRenderer();
       const engine = new EditxEngine({ renderer });
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -353,7 +353,7 @@ describe("EditxEngine", () => {
 
     it("triple-nested batch still produces one undo step", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -374,7 +374,7 @@ describe("EditxEngine", () => {
   describe("destroy with sub-blocks", () => {
     it("undo of destroy restores sub-blocks (shape, fill)", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const graphicId = store.create("graphic");
       const shapeId = store.createShape("rect");
@@ -400,7 +400,7 @@ describe("EditxEngine", () => {
   describe("selection cleanup on undo", () => {
     it("removes destroyed blocks from selection on undo", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
@@ -415,7 +415,7 @@ describe("EditxEngine", () => {
 
     it("does not change selection when undo only updates blocks", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const cmd = new CreateBlockCommand(store, "graphic");
       engine.exec(cmd);
@@ -432,7 +432,7 @@ describe("EditxEngine", () => {
   describe("silent mode", () => {
     it("skips history for exec while silent", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -446,7 +446,7 @@ describe("EditxEngine", () => {
 
     it("skips history for batch while silent", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -464,7 +464,7 @@ describe("EditxEngine", () => {
 
     it("records history again after endSilent", () => {
       const engine = new EditxEngine({});
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 
@@ -479,7 +479,7 @@ describe("EditxEngine", () => {
     it("still fires block events while silent", () => {
       const renderer = createMockRenderer();
       const engine = new EditxEngine({ renderer });
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const id = store.create("graphic");
       engine.clearHistory();
 

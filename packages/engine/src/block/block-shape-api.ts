@@ -21,23 +21,23 @@ export class BlockShapeAPI {
   }
 
   createShape(type: ShapeType): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const cmd = new CreateShapeCommand(store, type);
     this.#engine.exec(cmd);
     return cmd.getCreatedId()!;
   }
 
   setShape(blockId: number, shapeId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.exec(new SetShapeCommand(store, blockId, shapeId));
   }
 
   getShape(blockId: number): number | null {
-    return this.#engine.getBlockStore().getShape(blockId);
+    return this.#engine._getBlockStore().getShape(blockId);
   }
 
   supportsShape(blockId: number): boolean {
-    return this.#engine.getBlockStore().supportsShape(blockId);
+    return this.#engine._getBlockStore().supportsShape(blockId);
   }
 
   hasShape(blockId: number): boolean {
@@ -58,7 +58,7 @@ export class BlockShapeAPI {
     height: number,
     opts?: { sides?: number },
   ): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.beginBatch();
 
     const createCmd = new CreateBlockCommand(store, "graphic");

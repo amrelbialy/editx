@@ -12,7 +12,7 @@ export class BlockStrokeAPI {
   }
 
   supportsStroke(blockId: number): boolean {
-    const type = this.#engine.getBlockStore().getType(blockId);
+    const type = this.#engine._getBlockStore().getType(blockId);
     return type === "graphic" || type === "text";
   }
 

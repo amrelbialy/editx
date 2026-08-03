@@ -55,7 +55,7 @@ export class EditorViewport {
    * Fit the camera to show the active page, with optional padding.
    */
   fitToScreen(padding = 24, animate = false): void {
-    const store = this.#ctx.engine.getBlockStore();
+    const store = this.#ctx.engine._getBlockStore();
     const pageId = this.#ctx.engine.getActivePage();
     if (pageId === null) return;
 

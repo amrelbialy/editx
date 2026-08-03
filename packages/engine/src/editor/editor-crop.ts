@@ -62,7 +62,7 @@ export class EditorCrop {
    * Falls back to PAGE_WIDTH/HEIGHT (or SIZE_WIDTH/HEIGHT) if originals are not set.
    */
   setupCropOverlay(blockId: number): CropRect | null {
-    const store = this.#ctx.engine.getBlockStore();
+    const store = this.#ctx.engine._getBlockStore();
     const block = store.get(blockId);
     if (!block) return null;
 
@@ -124,7 +124,7 @@ export class EditorCrop {
     // Re-sync the block to restore the Konva node from any temporary
     // visual changes made during crop mode (e.g. page expansion).
     if (blockId !== null) {
-      const store = this.#ctx.engine.getBlockStore();
+      const store = this.#ctx.engine._getBlockStore();
       const block = store.get(blockId);
       if (block) {
         this.#ctx.renderer?.syncBlock(blockId, block);
@@ -142,7 +142,7 @@ export class EditorCrop {
     if (id === null) return null;
     const visualRect = this.#ctx.renderer?.getCropRect() ?? null;
     if (!visualRect) return null;
-    const store = this.#ctx.engine.getBlockStore();
+    const store = this.#ctx.engine._getBlockStore();
     return commitCropToBlock(this.#ctx.engine, store, id, visualRect, this.#initialCropState);
   }
 
@@ -171,7 +171,7 @@ export class EditorCrop {
       sourceHeight: imgH,
     } = this.#cropTransform;
 
-    const store = this.#ctx.engine.getBlockStore();
+    const store = this.#ctx.engine._getBlockStore();
 
     // Convert old visual crop → source (pre-rotation) space using OLD transform
     const sourceCrop = visualCropToSource(oldVisualCrop, imgW, imgH, oldRot, oldFlipH, oldFlipV);
@@ -208,7 +208,7 @@ export class EditorCrop {
   resetCrop(blockId?: number): void {
     const id = blockId ?? this.#cropBlockId;
     if (id === null) return;
-    resetCropBlock(this.#ctx.engine, this.#ctx.engine.getBlockStore(), id);
+    resetCropBlock(this.#ctx.engine, this.#ctx.engine._getBlockStore(), id);
   }
 
   applyCropRatio(ratio: number | null): CropRect | null {

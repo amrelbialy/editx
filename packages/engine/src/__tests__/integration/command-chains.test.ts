@@ -15,7 +15,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("create → set properties → undo → redo → destroy → undo", () => {
     it("full lifecycle with correct state at each step", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       // 1. Create block
       const createCmd = new CreateBlockCommand(store, "graphic");
@@ -53,7 +53,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("batch operations", () => {
     it("groups multiple commands into a single undo step", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const createCmd = new CreateBlockCommand(store, "graphic");
       engine.exec(createCmd);
@@ -82,7 +82,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("parent-child hierarchy", () => {
     it("creates page with children and undoes correctly", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const pageCmd = new CreateBlockCommand(store, "page");
       engine.exec(pageCmd);
@@ -118,7 +118,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("destroy cascades to children", () => {
     it("destroying parent removes children and undo restores all", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const pageCmd = new CreateBlockCommand(store, "page");
       engine.exec(pageCmd);
@@ -149,7 +149,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("multiple undo-redo cycles", () => {
     it("handles 5 actions → undo 3 → redo 1 correctly", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const createCmd = new CreateBlockCommand(store, "graphic");
       engine.exec(createCmd);
@@ -183,7 +183,7 @@ describe("Engine Integration: Command Chains", () => {
 
   describe("destroy child restores parent references", () => {
     it("undoing destroy of a child restores parent's children array", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const pageCmd = new CreateBlockCommand(store, "page");
       engine.exec(pageCmd);
@@ -219,7 +219,7 @@ describe("Engine Integration: Command Chains", () => {
     });
 
     it("undoing destroy of an effect restores owner's effectIds", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
 
       const blockCmd = new CreateBlockCommand(store, "graphic");
       engine.exec(blockCmd);

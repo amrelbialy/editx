@@ -19,6 +19,31 @@ describe("@editx/engine public API", () => {
     expect(engine).toHaveProperty("EditxEngine");
     expect(engine).toHaveProperty("BlockAPI");
     expect(engine).toHaveProperty("EventAPI");
-    expect(engine).toHaveProperty("BlockStore");
+  });
+
+  describe("mutable-store side door is sealed", () => {
+    it("does not export the mutable BlockStore runtime class", () => {
+      // Direct BlockStore access would bypass the command/undo pipeline.
+      expect(engine).not.toHaveProperty("BlockStore");
+    });
+
+    it("does not export the EngineCore internal type/runtime", () => {
+      expect(engine).not.toHaveProperty("EngineCore");
+    });
+
+    it("EditxEngine has no public getBlockStore method", () => {
+      const instance = new engine.EditxEngine({});
+      // The public API must not expose a mutable store accessor.
+      expect("getBlockStore" in instance).toBe(false);
+      expect((instance as Record<string, unknown>).getBlockStore).toBeUndefined();
+    });
+
+    it("EditxEngine still exposes the sanctioned internal accessor", () => {
+      const instance = new engine.EditxEngine({});
+      // Internal-only escape hatch (marked @internal) remains for engine wiring.
+      expect(typeof (instance as unknown as { _getBlockStore: unknown })._getBlockStore).toBe(
+        "function",
+      );
+    });
   });
 });

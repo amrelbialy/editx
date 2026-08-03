@@ -58,7 +58,7 @@ export class BlockCropAPI {
   }
 
   supportsCrop(id: number): boolean {
-    const type = this.#engine.getBlockStore().getType(id);
+    const type = this.#engine._getBlockStore().getType(id);
     return type === "image" || type === "page";
   }
 
@@ -156,7 +156,7 @@ export class BlockCropAPI {
     H.setBool(this.#engine, id, CROP_FLIP_HORIZONTAL, false);
     H.setBool(this.#engine, id, CROP_FLIP_VERTICAL, false);
     H.setBool(this.#engine, id, CROP_ASPECT_RATIO_LOCKED, false);
-    const blockType = this.#engine.getBlockStore().getType(id);
+    const blockType = this.#engine._getBlockStore().getType(id);
     if (blockType === "page") {
       const origW = H.getFloat(this.#engine, id, IMAGE_ORIGINAL_WIDTH);
       const origH = H.getFloat(this.#engine, id, IMAGE_ORIGINAL_HEIGHT);

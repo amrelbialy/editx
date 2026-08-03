@@ -12,6 +12,7 @@ import type {
   EffectType,
   FillType,
   PropertyValue,
+  ReadonlyBlockData,
   ShapeType,
   TextRun,
   TextRunStyle,
@@ -132,46 +133,46 @@ export class BlockAPI {
   // ── Lifecycle ─────────────────────────────────────
 
   create(type: BlockType): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, type);
     this.#engine.exec(cmd);
     return cmd.getCreatedId()!;
   }
 
   destroy(id: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.exec(new DestroyBlockCommand(store, id));
   }
 
   // ── Type / Kind ───────────────────────────────────
 
   getType(id: number): BlockType | undefined {
-    return this.#engine.getBlockStore().getType(id);
+    return this.#engine._getBlockStore().getType(id);
   }
 
   getKind(id: number): string {
-    return this.#engine.getBlockStore().getKind(id);
+    return this.#engine._getBlockStore().getKind(id);
   }
 
   setKind(id: number, kind: string): void {
-    this.#engine.exec(new SetKindCommand(this.#engine.getBlockStore(), id, kind));
+    this.#engine.exec(new SetKindCommand(this.#engine._getBlockStore(), id, kind));
   }
 
   // ── Hierarchy ─────────────────────────────────────
 
   appendChild(parent: number, child: number): void {
-    this.#engine.exec(new AppendChildCommand(this.#engine.getBlockStore(), parent, child));
+    this.#engine.exec(new AppendChildCommand(this.#engine._getBlockStore(), parent, child));
   }
 
   removeChild(parent: number, child: number): void {
-    this.#engine.exec(new RemoveChildCommand(this.#engine.getBlockStore(), parent, child));
+    this.#engine.exec(new RemoveChildCommand(this.#engine._getBlockStore(), parent, child));
   }
 
   getParent(id: number): number | null {
-    return this.#engine.getBlockStore().getParent(id);
+    return this.#engine._getBlockStore().getParent(id);
   }
   getChildren(id: number): number[] {
-    return this.#engine.getBlockStore().getChildren(id);
+    return this.#engine._getBlockStore().getChildren(id);
   }
 
   // ── Property ──────────────────────────────────────
@@ -210,34 +211,42 @@ export class BlockAPI {
   // ── Query ─────────────────────────────────────────
 
   isValid(id: number): boolean {
-    return this.#engine.getBlockStore().exists(id);
+    return this.#engine._getBlockStore().exists(id);
   }
   exists(id: number): boolean {
-    return this.#engine.getBlockStore().exists(id);
+    return this.#engine._getBlockStore().exists(id);
   }
   findAll(): number[] {
     return this.#engine
-      .getBlockStore()
+      ._getBlockStore()
       .findByType("page")
-      .concat(this.#engine.getBlockStore().findByType("graphic"))
-      .concat(this.#engine.getBlockStore().findByType("text"))
-      .concat(this.#engine.getBlockStore().findByType("image"))
-      .concat(this.#engine.getBlockStore().findByType("scene"));
+      .concat(this.#engine._getBlockStore().findByType("graphic"))
+      .concat(this.#engine._getBlockStore().findByType("text"))
+      .concat(this.#engine._getBlockStore().findByType("image"))
+      .concat(this.#engine._getBlockStore().findByType("scene"));
   }
   findByType(type: BlockType): number[] {
-    return this.#engine.getBlockStore().findByType(type);
+    return this.#engine._getBlockStore().findByType(type);
   }
   findByKind(kind: string): number[] {
-    return this.#engine.getBlockStore().findByKind(kind);
+    return this.#engine._getBlockStore().findByKind(kind);
   }
   findAllProperties(id: number): string[] {
     return this.#property.findAllProperties(id);
   }
+  /**
+   * Returns a deep read-only snapshot of a block's data, or `null` if it
+   * does not exist. Mutating the store directly is not supported — use the
+   * `set*` / command APIs to make changes.
+   */
+  getSnapshot(id: number): ReadonlyBlockData | null {
+    return this.#engine._getBlockStore().snapshot(id) as ReadonlyBlockData | null;
+  }
   getName(id: number): string {
-    return this.#engine.getBlockStore().getName(id);
+    return this.#engine._getBlockStore().getName(id);
   }
   setName(id: number, name: string): void {
-    this.#engine.getBlockStore().setName(id, name);
+    this.#engine._getBlockStore().setName(id, name);
   }
 
   // ── Layout ────────────────────────────────────────

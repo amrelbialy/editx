@@ -4,6 +4,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.9](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.8...@editx/engine@0.1.0-alpha.9) (2026-08-03)
+
+### ⚠ BREAKING CHANGES
+
+* **engine:** the public `BlockStore` mutation side-door has been closed. Direct store access is no longer part of the supported public API.
+
+### Removed
+
+* **engine:** removed the public `BlockStore` runtime export. There is no supported way to mutate the store directly.
+* **engine:** removed the `EngineCore` type from public type exports.
+* **engine:** removed the public `EditxEngine.getBlockStore()` method (now internal `_getBlockStore()`, marked `@internal`).
+
+### Added
+
+* **engine:** `engine.block.getSnapshot(id: number): ReadonlyBlockData | null` — returns a deep-cloned, read-only projection of a block's full data.
+* **engine:** new public types `ReadonlyBlockData` and `DeepReadonly<T>`.
+
+### Migration
+
+* Read block state via the typed getters (`engine.block.getString` / `getFloat` / …) or `engine.block.getSnapshot(id)` instead of reaching into the store.
+* Type against `EditxEngine` instead of the removed `EngineCore` interface.
+* All mutation must go through commands — `engine.exec(...)` or `engine.block.set*` — which are undoable and emit lifecycle events. Do not hold or mutate a direct store reference.
+
+### Bug Fixes
+
+* **engine:** the Konva `onAutoSize` auto text-height reflow now routes through the command system (wrapped in `beginSilent()`/`endSilent()` so it does not create a spurious undo step) instead of mutating the store directly. This closes a non-undoable side-door and fixes a latent infinite-loop edge case in the height-clamp path. Auto-height changes now emit `block:stateChanged` / lifecycle "updated" events, which previously did not fire.
+
 ## [0.1.0-alpha.8](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.7...@editx/engine@0.1.0-alpha.8) (2026-08-02)
 
 **Note:** Version bump only for package @editx/engine

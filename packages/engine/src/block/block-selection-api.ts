@@ -85,7 +85,7 @@ export class BlockSelectionAPI {
     const renderer = this.#engine.getRenderer();
     if (ids.length > 0 && this.#transformerEnabled) {
       const blockType: BlockType | undefined =
-        ids.length === 1 ? this.#engine.getBlockStore().getType(ids[0]) : undefined;
+        ids.length === 1 ? this.#engine._getBlockStore().getType(ids[0]) : undefined;
       renderer?.showTransformer(ids, blockType);
     } else {
       renderer?.hideTransformer();
