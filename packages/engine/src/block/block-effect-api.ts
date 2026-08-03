@@ -76,40 +76,40 @@ export class BlockEffectAPI {
   }
 
   createEffect(type: EffectType): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const cmd = new CreateEffectCommand(store, type);
     this.#engine.exec(cmd);
     return cmd.getCreatedId()!;
   }
 
   appendEffect(blockId: number, effectId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.exec(new AppendEffectCommand(store, blockId, effectId));
   }
 
   insertEffect(blockId: number, effectId: number, index: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.exec(new InsertEffectCommand(store, blockId, effectId, index));
   }
 
   removeEffect(blockId: number, index: number): number | null {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const cmd = new RemoveEffectCommand(store, blockId, index);
     this.#engine.exec(cmd);
     return cmd.getRemovedEffectId();
   }
 
   getEffects(blockId: number): number[] {
-    return this.#engine.getBlockStore().getEffects(blockId);
+    return this.#engine._getBlockStore().getEffects(blockId);
   }
 
   supportsEffects(blockId: number): boolean {
-    const type = this.#engine.getBlockStore().getType(blockId);
+    const type = this.#engine._getBlockStore().getType(blockId);
     return type === "page" || type === "image" || type === "graphic";
   }
 
   hasEffects(blockId: number): boolean {
-    return this.#engine.getBlockStore().getEffects(blockId).length > 0;
+    return this.#engine._getBlockStore().getEffects(blockId).length > 0;
   }
 
   setEffectEnabled(effectId: number, enabled: boolean): void {

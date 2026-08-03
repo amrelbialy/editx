@@ -13,23 +13,23 @@ export class BlockFillAPI {
   }
 
   createFill(type: FillType): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const cmd = new CreateFillCommand(store, type);
     this.#engine.exec(cmd);
     return cmd.getCreatedId()!;
   }
 
   setFill(blockId: number, fillId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.exec(new SetFillCommand(store, blockId, fillId));
   }
 
   getFill(blockId: number): number | null {
-    return this.#engine.getBlockStore().getFill(blockId);
+    return this.#engine._getBlockStore().getFill(blockId);
   }
 
   supportsFill(blockId: number): boolean {
-    return this.#engine.getBlockStore().supportsFill(blockId);
+    return this.#engine._getBlockStore().supportsFill(blockId);
   }
 
   hasFill(blockId: number): boolean {

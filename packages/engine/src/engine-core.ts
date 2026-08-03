@@ -11,7 +11,8 @@ import type { RendererAdapter } from "./render-adapter";
  */
 export interface EngineCore {
   readonly event: EventAPI;
-  getBlockStore(): BlockStore;
+  /** @internal — direct BlockStore access for sub-APIs; not part of the public surface. */
+  _getBlockStore(): BlockStore;
   getRenderer(): RendererAdapter | null;
   exec(command: Command): void;
   beginBatch(): void;

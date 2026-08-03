@@ -27,7 +27,7 @@ export class EditxEngine implements EngineCore {
   #activePageId: number | null = null;
   #batchDepth = 0;
   #batchPatches: Patch[] = [];
-  #silent = false;
+  #silentDepth = 0;
   #disposed = false;
 
   // ── Typed listener sets for public callbacks
@@ -53,7 +53,8 @@ export class EditxEngine implements EngineCore {
     this.scene = new SceneAPI(this, this.block);
   }
 
-  getBlockStore(): BlockStore {
+  /** @internal — direct BlockStore access for sub-APIs; not part of the public surface. */
+  _getBlockStore(): BlockStore {
     return this.#blockStore;
   }
   getRenderer(): RendererAdapter | null {
@@ -77,11 +78,16 @@ export class EditxEngine implements EngineCore {
     return this.#activePageId;
   }
 
+  /**
+   * Suppresses history recording for mutations executed while active. Depth-counted so
+   * re-entrant callers (e.g. a command whose flush triggers another silent-wrapped write)
+   * compose correctly instead of the inner scope prematurely re-enabling history.
+   */
   beginSilent() {
-    this.#silent = true;
+    this.#silentDepth++;
   }
   endSilent() {
-    this.#silent = false;
+    if (this.#silentDepth > 0) this.#silentDepth--;
   }
 
   beginBatch() {
@@ -94,7 +100,7 @@ export class EditxEngine implements EngineCore {
     this.#batchDepth--;
     if (this.#batchDepth === 0) {
       if (this.#batchPatches.length > 0) {
-        if (!this.#silent) {
+        if (this.#silentDepth === 0) {
           this.#history.push(this.#batchPatches);
           for (const cb of this.#historyListeners) cb();
         }
@@ -112,7 +118,7 @@ export class EditxEngine implements EngineCore {
       if (this.#batchDepth > 0) {
         this.#batchPatches.push(...patches);
       } else {
-        if (!this.#silent) {
+        if (this.#silentDepth === 0) {
           this.#history.push(patches);
           for (const cb of this.#historyListeners) cb();
         }

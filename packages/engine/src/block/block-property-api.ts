@@ -65,6 +65,6 @@ export class BlockPropertyAPI {
   }
 
   findAllProperties(id: number): string[] {
-    return this.#engine.getBlockStore().findAllProperties(id);
+    return this.#engine._getBlockStore().findAllProperties(id);
   }
 }

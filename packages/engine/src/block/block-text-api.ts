@@ -213,7 +213,7 @@ export class BlockTextAPI {
     initialText?: string,
     opts?: { style?: Partial<TextRunStyle> },
   ): number {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     this.#engine.beginBatch();
 
     const cmd = new CreateBlockCommand(store, "text");

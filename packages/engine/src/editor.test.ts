@@ -228,7 +228,7 @@ describe("EditorAPI — Edit Mode Management", () => {
 
   describe("Crop mode via setEditMode", () => {
     it("shows crop overlay when entering Crop with selected block", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
@@ -247,7 +247,7 @@ describe("EditorAPI — Edit Mode Management", () => {
     });
 
     it("uses first selected block when blockId not provided", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
@@ -261,7 +261,7 @@ describe("EditorAPI — Edit Mode Management", () => {
     });
 
     it("hides crop overlay when leaving Crop mode", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
@@ -276,7 +276,7 @@ describe("EditorAPI — Edit Mode Management", () => {
     });
 
     it("auto-commits crop properties when exiting Crop mode", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
@@ -299,7 +299,7 @@ describe("EditorAPI — Edit Mode Management", () => {
     });
 
     it("cancel = exit + undo discards the auto-committed crop", () => {
-      const store = engine.getBlockStore();
+      const store = engine._getBlockStore();
       const cmd = new CreateBlockCommand(store, "image");
       engine.exec(cmd);
       const blockId = cmd.getCreatedId()!;
@@ -359,7 +359,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
 
   /** Helper: create a page block with an image and original dimensions. */
   function createPageWithImage(w: number, h: number) {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -392,7 +392,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
     // Exit crop mode — auto-commits
     editor.setEditMode("Transform");
 
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(960);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(540);
     expect(store.getFloat(pageId, CROP_X)).toBe(100);
@@ -403,7 +403,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
   });
 
   it("auto-commit does NOT resize non-page blocks", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "image");
     engine.exec(cmd);
     const imgId = cmd.getCreatedId()!;
@@ -429,7 +429,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 100, y: 100, width: 800, height: 600 });
     editor.setEditMode("Transform");
 
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(800);
     expect(store.getBool(pageId, CROP_ENABLED)).toBe(true);
 
@@ -444,7 +444,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
 
   it("setupCropOverlay uses original image dims when available", () => {
     const pageId = createPageWithImage(1920, 1080);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     // Simulate a previous crop that resized the page
     store.setProperty(pageId, PAGE_WIDTH, 960);
@@ -468,7 +468,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
   });
 
   it("setupCropOverlay falls back to page dims when originals are 0", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const pageId = cmd.getCreatedId()!;
@@ -488,7 +488,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
   });
 
   it("setupCropOverlay swaps imageRect dims after 90° rotation", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     // Create a portrait page with original dims 640×960
     const pageId = createPageWithImage(640, 960);
 
@@ -514,7 +514,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
   });
 
   it("setupCropOverlay transforms existing crop to visual space after rotation", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const pageId = createPageWithImage(640, 960);
 
     // Simulate: previous crop in source space, then rotation
@@ -548,7 +548,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
 
   it("block.resetCrop restores page to original dimensions", () => {
     const pageId = createPageWithImage(1920, 1080);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     // Simulate a committed crop
     store.setProperty(pageId, PAGE_WIDTH, 960);
@@ -572,7 +572,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
 
   it("block.resetCrop is a single undo operation", () => {
     const pageId = createPageWithImage(1920, 1080);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     // Simulate a committed crop
     store.setProperty(pageId, PAGE_WIDTH, 960);
@@ -603,7 +603,7 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
     vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1080, height: 607 });
     editor.setEditMode("Transform");
 
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(607);
 
@@ -660,7 +660,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
     editor._setBlockAPI(block);
 
     // Create a page (1920 × 1080 landscape image)
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     pageId = cmd.getCreatedId()!;
@@ -694,7 +694,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 
   it("rotateClockwise rotates by +90° and swaps page dims", () => {
     block.rotateClockwise(pageId);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(90);
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
@@ -703,7 +703,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
   it("rotateClockwise wraps from 90→180 without dim swap", () => {
     block.rotateClockwise(pageId);
     block.rotateClockwise(pageId);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     // 180° normalizes to -180 or 180
     const rot = block.getImageRotation(pageId);
     expect(Math.abs(rot)).toBe(180);
@@ -718,7 +718,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 
     editor.undo();
     expect(block.getImageRotation(pageId)).toBe(0);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1920);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1080);
   });
@@ -727,7 +727,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 
   it("rotateCounterClockwise rotates by -90° and swaps page dims", () => {
     block.rotateCounterClockwise(pageId);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(-90);
     expect(store.getFloat(pageId, PAGE_WIDTH)).toBe(1080);
     expect(store.getFloat(pageId, PAGE_HEIGHT)).toBe(1920);
@@ -736,7 +736,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
   // --- flipCropHorizontal / flipCropVertical ---
 
   it("flipCropHorizontal toggles the flip flag", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
 
     block.flipCropHorizontal(pageId);
@@ -747,7 +747,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
   });
 
   it("flipCropVertical toggles the flip flag", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
 
     block.flipCropVertical(pageId);
@@ -765,7 +765,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
     block.flipCropVertical(pageId);
 
     block.resetRotationAndFlip(pageId);
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     expect(block.getImageRotation(pageId)).toBe(0);
     expect(store.getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(false);
     expect(store.getBool(pageId, CROP_FLIP_VERTICAL)).toBe(false);
@@ -783,7 +783,7 @@ describe("BlockAPI — Image Rotation & Flip", () => {
 
     editor.undo();
     expect(block.getImageRotation(pageId)).toBe(90);
-    expect(engine.getBlockStore().getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(true);
+    expect(engine._getBlockStore().getBool(pageId, CROP_FLIP_HORIZONTAL)).toBe(true);
   });
 });
 
@@ -796,7 +796,7 @@ describe("EditorCrop — applyCropDimensions & getCropVisualDimensions", () => {
   let renderer: RendererAdapter;
 
   function createPageWithImage(w: number, h: number) {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "page");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;

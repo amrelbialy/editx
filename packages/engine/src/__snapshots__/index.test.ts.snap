@@ -6,7 +6,6 @@ exports[`@editx/engine public API > exports a stable set of runtime members 1`] 
   "ADJUSTMENT_CONFIG",
   "ADJUSTMENT_PARAMS",
   "BlockAPI",
-  "BlockStore",
   "CROP_ASPECT_RATIO_LOCKED",
   "CROP_ENABLED",
   "CROP_FLIP_HORIZONTAL",

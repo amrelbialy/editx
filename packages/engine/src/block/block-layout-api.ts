@@ -68,7 +68,7 @@ export class BlockLayoutAPI {
   // ── Z-order (layer ordering) ──────────────────────
 
   bringForward(blockId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const parentId = store.getParent(blockId);
     if (parentId === null) return;
     const children = store.getChildren(parentId);
@@ -78,7 +78,7 @@ export class BlockLayoutAPI {
   }
 
   sendBackward(blockId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const parentId = store.getParent(blockId);
     if (parentId === null) return;
     const children = store.getChildren(parentId);
@@ -88,7 +88,7 @@ export class BlockLayoutAPI {
   }
 
   bringToFront(blockId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const parentId = store.getParent(blockId);
     if (parentId === null) return;
     const children = store.getChildren(parentId);
@@ -98,7 +98,7 @@ export class BlockLayoutAPI {
   }
 
   sendToBack(blockId: number): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const parentId = store.getParent(blockId);
     if (parentId === null) return;
     const children = store.getChildren(parentId);
@@ -113,7 +113,7 @@ export class BlockLayoutAPI {
     blockId: number,
     alignment: "left" | "center" | "right" | "top" | "middle" | "bottom",
   ): void {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const parentId = store.getParent(blockId);
     if (parentId === null) return;
 

@@ -119,7 +119,7 @@ export class BlockPageAPI {
     const newAngle = normalizeRotation(current + 90);
     this.#engine.beginBatch();
     H.setFloat(this.#engine, id, IMAGE_ROTATION, newAngle);
-    const blockType = this.#engine.getBlockStore().getType(id);
+    const blockType = this.#engine._getBlockStore().getType(id);
     if (blockType === "page") {
       const pageW = H.getFloat(this.#engine, id, PAGE_WIDTH);
       const pageH = H.getFloat(this.#engine, id, PAGE_HEIGHT);
@@ -134,7 +134,7 @@ export class BlockPageAPI {
     const newAngle = normalizeRotation(current - 90);
     this.#engine.beginBatch();
     H.setFloat(this.#engine, id, IMAGE_ROTATION, newAngle);
-    const blockType = this.#engine.getBlockStore().getType(id);
+    const blockType = this.#engine._getBlockStore().getType(id);
     if (blockType === "page") {
       const pageW = H.getFloat(this.#engine, id, PAGE_WIDTH);
       const pageH = H.getFloat(this.#engine, id, PAGE_HEIGHT);
@@ -149,7 +149,7 @@ export class BlockPageAPI {
     H.setFloat(this.#engine, id, IMAGE_ROTATION, 0);
     H.setBool(this.#engine, id, CROP_FLIP_HORIZONTAL, false);
     H.setBool(this.#engine, id, CROP_FLIP_VERTICAL, false);
-    const blockType = this.#engine.getBlockStore().getType(id);
+    const blockType = this.#engine._getBlockStore().getType(id);
     if (blockType === "page") {
       const origW = H.getFloat(this.#engine, id, IMAGE_ORIGINAL_WIDTH);
       const origH = H.getFloat(this.#engine, id, IMAGE_ORIGINAL_HEIGHT);

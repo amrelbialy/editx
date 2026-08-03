@@ -1,3 +1,4 @@
+import { SIZE_HEIGHT } from "../block/property-keys";
 import { EditxEngine } from "../editx-engine";
 import { KonvaRendererAdapter } from "./konva-renderer-adapter";
 
@@ -64,13 +65,18 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
   };
 
   adapter.onAutoSize = (blockId, computedHeight) => {
-    const store = engine.getBlockStore();
-    const current = store.getFloat(blockId, "transform/size/height");
-    if (Math.abs(current - computedHeight) > 0.5) {
-      store.setProperty(blockId, "transform/size/height", Math.max(computedHeight, 10));
+    const target = Math.max(computedHeight, 10);
+    const current = engine.block.getFloat(blockId, SIZE_HEIGHT);
+    if (Math.abs(current - target) <= 0.5) return;
+
+    engine.beginSilent();
+    try {
+      engine.block.setFloat(blockId, SIZE_HEIGHT, target);
+    } finally {
+      engine.endSilent();
     }
   };
-  adapter.resolveBlock = (id) => engine.getBlockStore().get(id);
+  adapter.resolveBlock = (id) => engine._getBlockStore().get(id);
 
   return engine;
 }

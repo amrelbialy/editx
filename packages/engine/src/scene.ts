@@ -46,7 +46,7 @@ export class SceneAPI {
     this.#engine.setActivePage(pageId);
 
     // Tell renderer to set up the canvas
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const sceneBlock = store.get(sceneId);
     const pageBlock = store.get(pageId);
     if (sceneBlock && pageBlock) {
@@ -167,7 +167,7 @@ export class SceneAPI {
 
   /** Serialize the entire scene (all blocks) to a JSON string. */
   saveToString(): string {
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     const blocks: BlockData[] = [];
 
     for (const id of store.getAllBlockIds()) {
@@ -194,7 +194,7 @@ export class SceneAPI {
       throw new Error("Invalid scene data: missing blocks array");
     }
 
-    const store = this.#engine.getBlockStore();
+    const store = this.#engine._getBlockStore();
     store.clear();
 
     // Restore all blocks

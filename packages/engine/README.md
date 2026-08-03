@@ -73,14 +73,42 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **EventAPI** — Subscribe to block lifecycle events (`created`, `updated`, `destroyed`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+## Reading vs. mutating block state
+
+Reading and writing block state go through two different, clearly separated paths:
+
+- **Reading** — Use the typed getters (`engine.block.getString`, `getFloat`, `getColor`, …) for
+  individual properties, or `engine.block.getSnapshot(id)` for a deep, read-only projection of a
+  block's full data.
+- **Mutating** — All changes must go through commands: `engine.exec(...)` or the typed setters
+  (`engine.block.setString`, `setFloat`, `setColor`, …). Only commands are undoable and emit the
+  correct lifecycle events. There is no supported way to mutate the store directly.
+
+```ts
+// Read a deep, read-only snapshot of a block's full data.
+const snapshot = engine.block.getSnapshot(image); // ReadonlyBlockData | null
+if (snapshot !== null) {
+  console.log(snapshot.type, snapshot.properties);
+  // snapshot is DeepReadonly — every field (including nested arrays/objects) is readonly.
+}
+
+// Mutate through a command so the change is undoable and emits events.
+engine.block.setFloat(image, POSITION_X, 120);
+```
+
+> `getSnapshot` returns a `ReadonlyBlockData` (a `DeepReadonly<BlockData>`). It is a clone, so
+> assigning to its fields has no effect on engine state — always route mutations through commands.
+
 ## Exports
 
 The package exports:
 
 - `EditxEngine` — Main engine class
-- `BlockAPI` / `BlockStore` — Block manipulation and storage
+- `BlockAPI` — Block manipulation, queries, and read-only snapshots
 - `EventAPI` — Block event subscriptions
 - Property keys — `POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, `CROP_*`, `EFFECT_*`, etc.
+- Types — `ReadonlyBlockData`, `DeepReadonly<T>` (for read-only snapshots), and the public
+  `EditxEngine` type (type against `EditxEngine`, not internal core interfaces).
 - Utilities — `loadImage`, `colorToHex`, `hexToColor`, `CROP_PRESETS`, `FILTER_PRESETS`, etc.
 
 ## License

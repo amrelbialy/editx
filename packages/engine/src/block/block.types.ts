@@ -67,3 +67,13 @@ export interface BlockData {
   fillId: number | null;
   properties: Record<string, PropertyValue>;
 }
+
+/** Recursively marks every property of `T` as readonly. */
+export type DeepReadonly<T> = T extends (infer U)[]
+  ? ReadonlyArray<DeepReadonly<U>>
+  : T extends object
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+    : T;
+
+/** A read-only projection of {@link BlockData} returned by query APIs. */
+export type ReadonlyBlockData = DeepReadonly<BlockData>;

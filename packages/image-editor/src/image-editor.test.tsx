@@ -104,6 +104,7 @@ const createMockEngine = () => {
     endBatch: vi.fn(),
     renderDirty: vi.fn(),
     getBlockStore: vi.fn().mockReturnValue({ exists: vi.fn().mockReturnValue(true) }),
+    _getBlockStore: vi.fn().mockReturnValue({ exists: vi.fn().mockReturnValue(true) }),
     onHistoryChanged: vi.fn().mockReturnValue(() => {}),
     onZoomChanged: vi.fn().mockReturnValue(() => {}),
     onEditModeChanged: vi.fn().mockReturnValue(() => {}),

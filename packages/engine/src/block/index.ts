@@ -2,10 +2,12 @@ export type {
   BlockData,
   BlockType,
   Color,
+  DeepReadonly,
   EffectType,
   FillType,
   PageLayoutMode,
   PropertyValue,
+  ReadonlyBlockData,
   ShapeType,
   TextRun,
   TextRunStyle,
@@ -18,7 +20,6 @@ export {
   getFillDefaults,
   getShapeDefaults,
 } from "./block-defaults";
-export { BlockStore } from "./block-store";
 export {
   $restoreSelectionFromOffsets,
   cssStringToRunStyle,

@@ -20,7 +20,7 @@ describe("Engine Integration: Event Ordering", () => {
     const events: BlockEvent[] = [];
     engine.event.subscribe([], (evts) => events.push(...evts));
 
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
 
@@ -30,7 +30,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("delivers 'updated' event on property change", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -45,7 +45,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("delivers 'destroyed' event on block destruction", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -60,7 +60,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("delivers events only after batch ends", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -83,7 +83,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("dedupes events within a batch (same block → single event)", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -104,7 +104,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("filtered subscription receives only matching block events", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     const cmd1 = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd1);
@@ -127,7 +127,7 @@ describe("Engine Integration: Event Ordering", () => {
   });
 
   it("unsubscribe stops event delivery", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -153,7 +153,7 @@ describe("Engine Integration: Effect Chains", () => {
   });
 
   it("creates effect, appends to block, sets properties, and undoes all", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     // Create a graphic block
     const blockCmd = new CreateBlockCommand(store, "graphic");
@@ -188,7 +188,7 @@ describe("Engine Integration: Effect Chains", () => {
   });
 
   it("remove effect and undo restores it", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
 
     const blockCmd = new CreateBlockCommand(store, "graphic");
     engine.exec(blockCmd);
@@ -221,7 +221,7 @@ describe("Engine Integration: Renderer Sync", () => {
   });
 
   it("syncs blocks to renderer after each command", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
 
@@ -230,7 +230,7 @@ describe("Engine Integration: Renderer Sync", () => {
   });
 
   it("removes blocks from renderer on destroy", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
@@ -242,7 +242,7 @@ describe("Engine Integration: Renderer Sync", () => {
   });
 
   it("syncs + renders after undo/redo", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
 
@@ -258,7 +258,7 @@ describe("Engine Integration: Renderer Sync", () => {
   });
 
   it("batched commands result in a single render frame", () => {
-    const store = engine.getBlockStore();
+    const store = engine._getBlockStore();
     const cmd = new CreateBlockCommand(store, "graphic");
     engine.exec(cmd);
     const id = cmd.getCreatedId()!;
