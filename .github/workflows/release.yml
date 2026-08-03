@@ -46,7 +46,7 @@ jobs:
       ( !startsWith(github.event.head_commit.message, 'chore(release):') &&
         !contains(github.event.head_commit.message, '[skip ci]') )
     permissions:
-      contents: write # push the version commit + tags and create the GitHub Release
+      contents: read
       id-token: write # npm provenance / trusted publishing
     outputs:
       sha: ${{ steps.release-commit.outputs.sha }}
@@ -59,10 +59,7 @@ jobs:
           ref: main
           fetch-depth: 0
           fetch-tags: true
-          # Persisted GITHUB_TOKEN credentials are reused by lerna to push the
-          # release commit/tags. Pushes made with GITHUB_TOKEN do not re-trigger
-          # this workflow, so there is no release loop.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
 
@@ -103,11 +100,24 @@ jobs:
             exit 1
           fi
 
+      # GITHUB_TOKEN cannot bypass branch protection. This installation token
+      # identifies the release app configured in the main ruleset bypass list.
+      - name: Create release app token
+        id: release-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Version and create GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
+          RELEASE_APP_TOKEN: ${{ steps.release-token.outputs.token }}
         run: |
+          git config --local credential.helper \
+            '!f() { echo username=x-access-token; echo "password=$RELEASE_APP_TOKEN"; }; f'
           if [ "${{ inputs.graduate }}" = "true" ]; then
             pnpm exec lerna version --conventional-commits --conventional-graduate --yes
           else
