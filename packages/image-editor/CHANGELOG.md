@@ -4,6 +4,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.11](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.10...@editx/image-editor@0.1.0-alpha.11) (2026-08-03)
+
+### Bug Fixes
+
+* **engine:** remove public BlockStore mutation side-door ([94a2e01](https://github.com/amrelbialy/editx/commit/94a2e01ec50392ca614066da7ca5184facf8943c)), closes [#silentDepth](https://github.com/amrelbialy/editx/issues/silentDepth)
+* **image-editor:** batch tool mutations into single undo steps ([9052485](https://github.com/amrelbialy/editx/commit/9052485e225710c91016edc25a2d231cff35c00b))
+
 ## [0.1.0-alpha.10](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.9...@editx/image-editor@0.1.0-alpha.10) (2026-08-02)
 
 ### Features

@@ -6,6 +6,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [0.1.0-alpha.9](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.8...@editx/engine@0.1.0-alpha.9) (2026-08-03)
 
+### Bug Fixes
+
+* **engine:** reconcile Konva WebGL/CPU filter pipeline parity ([2b7e174](https://github.com/amrelbialy/editx/commit/2b7e1746a8731dd0bff4fdac21c5e37090e2eb74))
+* **engine:** remove public BlockStore mutation side-door ([94a2e01](https://github.com/amrelbialy/editx/commit/94a2e01ec50392ca614066da7ca5184facf8943c)), closes [#silentDepth](https://github.com/amrelbialy/editx/issues/silentDepth)
+
+## [0.1.0-alpha.9](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.8...@editx/engine@0.1.0-alpha.9) (2026-08-03)
+
 ### ⚠ BREAKING CHANGES
 
 * **engine:** the public `BlockStore` mutation side-door has been closed. Direct store access is no longer part of the supported public API.
