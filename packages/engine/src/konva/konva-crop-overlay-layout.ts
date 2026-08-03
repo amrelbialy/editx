@@ -93,7 +93,7 @@ export function normalizeCutoutTransform(
   return { x: cx, y: cy, width: w, height: h };
 }
 
-interface Box {
+export interface Box {
   x: number;
   y: number;
   width: number;
@@ -101,7 +101,42 @@ interface Box {
   rotation: number;
 }
 
-/** boundBoxFunc for the crop transformer — constrains resize within image bounds. */
+/**
+ * Convert a Konva transformer box (absolute/stage-space, as fed into
+ * `boundBoxFunc`) into the crop overlay's world space. The overlay lives on the
+ * zoom-scaled `uiLayer`, so world = (abs - pan) / zoom. `scale` is the uniform
+ * layer zoom; `pan` is the layer position.
+ */
+export function absBoxToWorld(box: Box, scale: number, pan: { x: number; y: number }): Box {
+  return {
+    x: (box.x - pan.x) / scale,
+    y: (box.y - pan.y) / scale,
+    width: box.width / scale,
+    height: box.height / scale,
+    rotation: box.rotation,
+  };
+}
+
+/** Inverse of {@link absBoxToWorld}: world → absolute/stage space. */
+export function worldBoxToAbs(box: Box, scale: number, pan: { x: number; y: number }): Box {
+  return {
+    x: box.x * scale + pan.x,
+    y: box.y * scale + pan.y,
+    width: box.width * scale,
+    height: box.height * scale,
+    rotation: box.rotation,
+  };
+}
+
+/**
+ * boundBoxFunc for the crop transformer — constrains resize within image bounds.
+ *
+ * Coordinate-space contract: ALL boxes here (`oldBox`, `newBox`, return value)
+ * and `imageRect` are in the overlay's WORLD space (page coordinates). Konva
+ * feeds `boundBoxFunc` absolute/stage-space boxes, so the caller MUST convert
+ * incoming boxes with {@link absBoxToWorld} before calling this and convert the
+ * result back with {@link worldBoxToAbs}. `minSize` is therefore in world units.
+ */
 export function cropBoundBoxFunc(
   imageRect: CropRect,
   ratio: number | null,

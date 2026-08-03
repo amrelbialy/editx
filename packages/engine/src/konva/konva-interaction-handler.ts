@@ -1,11 +1,13 @@
 import Konva from "konva";
+import type { BlockClickEvent } from "../render-adapter";
 import type { KonvaCamera } from "./konva-camera";
 
 export interface InteractionCallbacks {
-  onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
+  onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
 }
 
 export interface InteractionDeps {
@@ -47,6 +49,16 @@ export function setupInteraction(deps: InteractionDeps): void {
     x2 = 0,
     y2 = 0;
   let selecting = false;
+
+  // Live drag/resize — fires every frame while a block is moved or transformed,
+  // so consumers can track its on-screen geometry without polling. Konva bubbles
+  // `dragmove`/`transform` from the target node up to the stage.
+  stage.on("dragmove transform", (e) => {
+    const node = findBlockNode(e.target as Konva.Node);
+    const blockId = node?.getAttr("blockId") as number | undefined;
+    if (blockId === undefined || node?.getAttr("isPage")) return;
+    callbacks.onBlockTransform?.(blockId, e.type === "dragmove" ? "drag" : "resize");
+  });
 
   // Double-click on a block → enter edit mode (text inline editing)
   stage.on("dblclick dbltap", (e) => {
@@ -147,7 +159,8 @@ export function setupInteraction(deps: InteractionDeps): void {
       }
       if (selectedIds.length > 0) {
         for (const id of selectedIds) {
-          callbacks.onBlockClick?.(id, { shiftKey: true });
+          // Marquee selection is purely additive — never toggles/removes.
+          callbacks.onBlockClick?.(id, { shiftKey: true, additive: true });
         }
       }
     }
@@ -178,9 +191,7 @@ export function setupInteraction(deps: InteractionDeps): void {
       const sensitivity = 0.0015;
       const newZoom = oldZoom * (1 + delta * sensitivity);
 
-      // Clamp zoom between 0.05 (5%) and 20 (2000%)
-      const clamped = Math.min(Math.max(newZoom, 0.05), 20);
-
+      // Zoom bounds are clamped inside the camera (single source of truth).
       const pointer = stage.getPointerPosition();
       if (pointer) {
         // If the pointer is outside the page/image, zoom toward the page center instead
@@ -206,10 +217,11 @@ export function setupInteraction(deps: InteractionDeps): void {
           }
         }
 
-        camera.zoomAtPoint(clamped, zoomAnchor);
+        camera.zoomAtPoint(newZoom, zoomAnchor);
       }
 
-      callbacks.onZoomChange?.(clamped);
+      // Report the actual (clamped) zoom the camera settled on.
+      callbacks.onZoomChange?.(camera.getZoom());
     },
     { passive: false },
   );

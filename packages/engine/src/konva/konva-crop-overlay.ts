@@ -2,11 +2,17 @@ import Konva from "konva";
 import type { CropRect } from "../utils/crop-math";
 import {
   clampCutoutPosition,
-  cropBoundBoxFunc,
   layoutDarkRects,
   layoutGridLines,
   normalizeCutoutTransform,
 } from "./konva-crop-overlay-layout";
+import {
+  applyCropStrokeScale,
+  CROP_ANCHORS_ALL,
+  CROP_ANCHORS_CORNERS,
+  createCropTransformer,
+  makeCropBoundBoxFunc,
+} from "./konva-crop-overlay-viewport";
 
 export class KonvaCropOverlay {
   #layer: Konva.Layer;
@@ -21,6 +27,7 @@ export class KonvaCropOverlay {
 
   #imageRect: CropRect = { x: 0, y: 0, width: 0, height: 0 };
   #ratio: number | null = null;
+  #viewportZoom = 1;
   #onChange?: (rect: CropRect) => void;
   #onLiveUpdate?: (rect: CropRect) => void;
 
@@ -67,31 +74,13 @@ export class KonvaCropOverlay {
       );
     }
 
-    this.#transformer = new Konva.Transformer({
-      rotateEnabled: false,
-      flipEnabled: false,
-      centeredScaling: false,
-      anchorSize: 12,
-      anchorCornerRadius: 6,
-      anchorStroke: "#2563eb",
-      anchorFill: "#ffffff",
-      anchorStrokeWidth: 2,
-      borderStroke: "#2563eb",
-      borderStrokeWidth: 2,
-      keepRatio: false,
-      enabledAnchors: [
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-        "middle-left",
-        "middle-right",
-        "top-center",
-        "bottom-center",
-      ],
-      boundBoxFunc: (oldBox, newBox) =>
-        cropBoundBoxFunc(this.#imageRect, this.#ratio, oldBox, newBox),
-    });
+    this.#transformer = createCropTransformer(
+      makeCropBoundBoxFunc(
+        this.#layer,
+        () => this.#imageRect,
+        () => this.#ratio,
+      ),
+    );
 
     this.#cutout.on("dragmove", () => this.#onDragMove());
     this.#cutout.on("dragend", () => this.#onDragEnd());
@@ -122,6 +111,7 @@ export class KonvaCropOverlay {
     this.#transformer.nodes([this.#cutout]);
     this.#transformer.forceUpdate();
     this.#applyRatioConfig();
+    this.#applyStrokeScale();
 
     this.#group.visible(true);
     this.#group.moveToTop();
@@ -180,6 +170,26 @@ export class KonvaCropOverlay {
     this.#layer.batchDraw();
   }
 
+  /**
+   * Keep the cutout stroke, grid lines, and crop handles screen-constant by
+   * counter-scaling their pixel sizes by 1/zoom (the overlay is on the
+   * zoom-scaled uiLayer). Positions/bounds are unchanged.
+   */
+  applyViewportScale(zoom: number): void {
+    this.#viewportZoom = zoom || 1;
+    this.#applyStrokeScale();
+    this.#transformer.forceUpdate();
+    this.#layer.batchDraw();
+  }
+
+  #applyStrokeScale(): void {
+    applyCropStrokeScale(this.#viewportZoom, {
+      cutout: this.#cutout,
+      gridLines: this.#gridLines.children as unknown as Konva.Line[],
+      transformer: this.#transformer,
+    });
+  }
+
   destroy(): void {
     this.#cutout.off("dragmove dragend transform transformend");
     this.#group.destroy();
@@ -212,19 +222,10 @@ export class KonvaCropOverlay {
   #applyRatioConfig(): void {
     if (this.#ratio !== null) {
       this.#transformer.keepRatio(true);
-      this.#transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
+      this.#transformer.enabledAnchors(CROP_ANCHORS_CORNERS);
     } else {
       this.#transformer.keepRatio(false);
-      this.#transformer.enabledAnchors([
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-        "middle-left",
-        "middle-right",
-        "top-center",
-        "bottom-center",
-      ]);
+      this.#transformer.enabledAnchors(CROP_ANCHORS_ALL);
     }
   }
 

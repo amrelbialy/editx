@@ -102,6 +102,77 @@ interface EngineNode {
 
 ---
 
+## Viewport clamping, live events & additive selection
+
+These sections describe implemented public behavior layered on top of the concept API above.
+
+### Zoom & pan clamping
+
+The Konva camera funnels every viewport mutation (`setZoom`, `zoomAtPoint`, `panTo`, `panBy`, `fitToScreen`, `fitToRect`, `centerOnRect`) through a single clamp so bounds are applied consistently:
+
+- Zoom is clamped to `[MIN_ZOOM, MAX_ZOOM]` (`0.05`–`20`).
+- Pan is clamped so page content stays reasonably in view.
+
+The shared bounds and helper are exported from the Konva camera module:
+
+```ts
+export const MIN_ZOOM = 0.05;
+export const MAX_ZOOM = 20;
+export function clampZoom(zoom: number): number;
+```
+
+> These are internal to the Konva renderer implementation (not re-exported from the package root). Consumers configure zoom bounds indirectly via `editor.setZoom()`, which clamps internally.
+
+> **Behavior note:** pan is now clamped by *every* camera method. Previously some methods (notably `fitToScreen` and `centerOnRect`) applied pan without clamping.
+
+### Event-driven viewport & transform callbacks
+
+`EditxEngine` exposes typed subscription methods alongside the existing `onHistoryChanged` / `onZoomChanged` / `onEditModeChanged` callbacks. Each returns an unsubscribe function.
+
+```ts
+// Fires whenever the camera pan changes.
+const offPan = engine.onPanChanged((pan: { x: number; y: number }) => {
+  // pan.x / pan.y
+});
+
+// Fires continuously (live, pre-commit) while a block is dragged or resized on-canvas.
+const offTransform = engine.onBlockTransform((e: BlockTransformEvent) => {
+  // e.block, e.phase === "drag" | "resize"
+});
+
+offPan();
+offTransform();
+```
+
+New exported types:
+
+```ts
+type BlockTransformPhase = "drag" | "resize";
+interface BlockTransformEvent { block: number; phase: BlockTransformPhase }
+interface ViewportState { zoom: number; pan: { x: number; y: number } }
+interface EditModeChange { mode: string; previousMode: string }
+```
+
+> `onBlockTransform` is a **live notification stream only** — it emits during the gesture and creates no undo/history entry. The committed mutation still arrives separately as an `updated` `BlockEvent` through `engine.event.subscribe(...)`.
+
+### Additive (marquee) selection
+
+The renderer reports block clicks with a `BlockClickEvent` (from `render-adapter.ts`):
+
+```ts
+interface BlockClickEvent {
+  shiftKey: boolean;
+  additive?: boolean;
+}
+```
+
+> `BlockClickEvent` is an internal renderer-adapter type (not re-exported from the package root) used to distinguish marquee-drag selection from a single shift-click.
+
+- `additive: true` — union the block into the current selection (used by marquee-drag selection); never toggles or removes.
+- `shiftKey: true` (without `additive`) — toggles a single block's selection membership (unchanged behavior).
+
+---
+
 ## Implementation skeleton
 
 The following TypeScript skeleton is intentionally small and focused — it gives you a working Engine with commands, history, selection, event bus, and a renderer adapter hook. Extend it to your needs.

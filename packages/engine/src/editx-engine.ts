@@ -4,6 +4,14 @@ import type { Command } from "./controller/commands";
 import { EditorAPI } from "./editor/editor-api";
 import type { ExportOptions } from "./editor-types";
 import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./editx-engine-flush";
+import {
+  type BlockTransformEvent,
+  type EditModeChange,
+  EngineCallbacks,
+  isBlockTransform,
+  isEditModeChange,
+  isPoint,
+} from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
@@ -30,10 +38,8 @@ export class EditxEngine implements EngineCore {
   #silentDepth = 0;
   #disposed = false;
 
-  // ── Typed listener sets for public callbacks
-  #historyListeners = new Set<() => void>();
-  #zoomListeners = new Set<(zoom: number) => void>();
-  #editModeListeners = new Set<(info: { mode: string; previousMode: string }) => void>();
+  // Typed public callback registrations (history / zoom / pan / edit-mode / live transform)
+  #callbacks = new EngineCallbacks();
 
   constructor(opts?: { renderer?: RendererAdapter; blockStore?: BlockStore }) {
     this.#blockStore = opts?.blockStore ?? new BlockStore();
@@ -102,7 +108,7 @@ export class EditxEngine implements EngineCore {
       if (this.#batchPatches.length > 0) {
         if (this.#silentDepth === 0) {
           this.#history.push(this.#batchPatches);
-          for (const cb of this.#historyListeners) cb();
+          this.#callbacks.fireHistory();
         }
         this.#enqueueBlockEvents(this.#batchPatches);
       }
@@ -120,7 +126,7 @@ export class EditxEngine implements EngineCore {
       } else {
         if (this.#silentDepth === 0) {
           this.#history.push(patches);
-          for (const cb of this.#historyListeners) cb();
+          this.#callbacks.fireHistory();
         }
         this.#enqueueBlockEvents(patches);
       }
@@ -142,7 +148,7 @@ export class EditxEngine implements EngineCore {
     this.#applyPatches(patches);
     this.#cleanupSelections(patches);
     this.#events.emit("history:undo");
-    for (const cb of this.#historyListeners) cb();
+    this.#callbacks.fireHistory();
     this.#flush();
   }
 
@@ -152,7 +158,7 @@ export class EditxEngine implements EngineCore {
     this.#applyPatches(patches);
     this.#cleanupSelections(patches);
     this.#events.emit("history:redo");
-    for (const cb of this.#historyListeners) cb();
+    this.#callbacks.fireHistory();
     this.#flush();
   }
 
@@ -171,7 +177,7 @@ export class EditxEngine implements EngineCore {
   clearHistory() {
     this.#history.clear();
     this.#events.emit("history:clear");
-    for (const cb of this.#historyListeners) cb();
+    this.#callbacks.fireHistory();
   }
 
   /** Render all dirty blocks now. */
@@ -197,41 +203,34 @@ export class EditxEngine implements EngineCore {
   emit(event: string, ...args: unknown[]) {
     this.#events.emit(event, ...args);
     if (event === "zoom:changed" && typeof args[0] === "number") {
-      for (const cb of this.#zoomListeners) cb(args[0]);
-    }
-    if (
-      event === "editMode:changed" &&
-      args[0] &&
-      typeof args[0] === "object" &&
-      "mode" in args[0] &&
-      "previousMode" in args[0]
-    ) {
-      for (const cb of this.#editModeListeners)
-        cb(args[0] as { mode: string; previousMode: string });
-    }
-    if (event === "block:dblclick" && typeof args[0] === "number") {
-      const screenPos = args[1] as { x: number; y: number } | undefined;
-      this.block._notifyBlockDoubleClick(args[0], screenPos);
+      this.#callbacks.fireZoom(args[0]);
+    } else if (event === "pan:changed" && isPoint(args[0])) {
+      this.#callbacks.firePan(args[0]);
+    } else if (event === "editMode:changed" && isEditModeChange(args[0])) {
+      this.#callbacks.fireEditMode(args[0]);
+    } else if (event === "block:transform" && isBlockTransform(args[0])) {
+      this.#callbacks.fireBlockTransform(args[0]);
+    } else if (event === "block:dblclick" && typeof args[0] === "number") {
+      this.block._notifyBlockDoubleClick(args[0], args[1] as { x: number; y: number } | undefined);
     }
   }
 
   // ── Typed event subscriptions ──────────────────────────
 
-  #subscribe<T extends (...args: any[]) => void>(set: Set<T>, cb: T): () => void {
-    set.add(cb);
-    return () => {
-      set.delete(cb);
-    };
-  }
-
   onHistoryChanged(cb: () => void) {
-    return this.#subscribe(this.#historyListeners, cb);
+    return this.#callbacks.onHistoryChanged(cb);
   }
   onZoomChanged(cb: (zoom: number) => void) {
-    return this.#subscribe(this.#zoomListeners, cb);
+    return this.#callbacks.onZoomChanged(cb);
   }
-  onEditModeChanged(cb: (info: { mode: string; previousMode: string }) => void) {
-    return this.#subscribe(this.#editModeListeners, cb);
+  onPanChanged(cb: (pan: { x: number; y: number }) => void) {
+    return this.#callbacks.onPanChanged(cb);
+  }
+  onEditModeChanged(cb: (info: EditModeChange) => void) {
+    return this.#callbacks.onEditModeChanged(cb);
+  }
+  onBlockTransform(cb: (event: BlockTransformEvent) => void) {
+    return this.#callbacks.onBlockTransform(cb);
   }
 
   dispose(): void {

@@ -13,7 +13,11 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
   const engine = new EditxEngine({ renderer: adapter });
 
   adapter.onBlockClick = (blockId, event) => {
-    if (event.shiftKey) {
+    if (event.additive) {
+      // Marquee selection always adds hit blocks to the current selection.
+      engine.block.setSelected(blockId, true);
+    } else if (event.shiftKey) {
+      // Shift-click on a single block toggles its membership.
       engine.block.setSelected(blockId, !engine.block.isSelected(blockId));
     } else {
       engine.block.select(blockId);
@@ -26,6 +30,9 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     engine.emit("stage:click", worldPos);
   };
   adapter.onZoomChange = (zoom) => engine.emit("zoom:changed", zoom);
+  adapter.onPanChange = (pan) => engine.emit("pan:changed", pan);
+  adapter.onBlockTransform = (blockId, phase) =>
+    engine.emit("block:transform", { block: blockId, phase });
   adapter.onBlockDragEnd = (blockId, x, y) => engine.block.setPosition(blockId, x, y);
   const CORNER_ANCHORS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
 

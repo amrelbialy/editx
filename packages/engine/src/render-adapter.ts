@@ -2,6 +2,16 @@ import type { BlockData } from "./block/block.types";
 import type { CursorType, ExportOptions } from "./editor-types";
 import type { CropRect } from "./utils/crop-math";
 
+/**
+ * Payload for a block-click interaction reported by the renderer.
+ * `additive` marks marquee/multi-select clicks that should only ever add to the
+ * current selection (never toggle/remove), distinct from a plain shift-click.
+ */
+export interface BlockClickEvent {
+  shiftKey: boolean;
+  additive?: boolean;
+}
+
 export interface RendererAdapter {
   //
   // Initialization
@@ -109,7 +119,7 @@ export interface RendererAdapter {
   //
   // Interaction callbacks (renderer → engine)
   //
-  onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
@@ -119,4 +129,16 @@ export interface RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   /** Called when the user drags/resizes the crop overlay. */
   onCropChange?: (rect: CropRect) => void;
+  /**
+   * Called on every frame while a block is being dragged or resized on-canvas
+   * (live, before the gesture is committed). Lets consumers track a block's
+   * geometry without polling.
+   */
+  onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
+  /**
+   * Called whenever the camera pan changes (programmatic pan, zoom
+   * re-centering, fit, resize, or animation frame). Mirrors {@link onZoomChange}
+   * — together they cover every viewport change that moves a block on-screen.
+   */
+  onPanChange?: (pan: { x: number; y: number }) => void;
 }

@@ -71,6 +71,7 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Blocks** — Everything is a block: pages, images, text, shapes. Each block has typed properties.
 - **Command Pattern** — All mutations go through commands, enabling full undo/redo history.
 - **EventAPI** — Subscribe to block lifecycle events (`created`, `updated`, `destroyed`).
+- **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
 ## Reading vs. mutating block state
@@ -106,6 +107,7 @@ The package exports:
 - `EditxEngine` — Main engine class
 - `BlockAPI` — Block manipulation, queries, and read-only snapshots
 - `EventAPI` — Block event subscriptions
+- Event/viewport types — `BlockTransformEvent`, `BlockTransformPhase`, `ViewportState`, `EditModeChange`
 - Property keys — `POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, `CROP_*`, `EFFECT_*`, etc.
 - Types — `ReadonlyBlockData`, `DeepReadonly<T>` (for read-only snapshots), and the public
   `EditxEngine` type (type against `EditxEngine`, not internal core interfaces).
