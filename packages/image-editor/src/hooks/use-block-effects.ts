@@ -1,26 +1,7 @@
-import {
-  ADJUSTMENT_PARAMS,
-  type AdjustmentParam,
-  type EditxEngine,
-  EFFECT_FILTER_NAME,
-} from "@editx/engine";
+import { type AdjustmentParam, type EditxEngine, EFFECT_FILTER_NAME } from "@editx/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdjustmentValues } from "../components/panels/adjust-panel";
-
-const DEFAULT_ADJUSTMENTS: AdjustmentValues = {
-  brightness: 0,
-  saturation: 0,
-  contrast: 0,
-  gamma: 0,
-  clarity: 0,
-  exposure: 0,
-  shadows: 0,
-  highlights: 0,
-  blacks: 0,
-  whites: 0,
-  temperature: 0,
-  sharpness: 0,
-};
+import { DEFAULT_ADJUSTMENTS, syncFromEngine } from "./block-effects-sync";
 
 export interface UseBlockEffectsOptions {
   engineRef: React.RefObject<EditxEngine | null>;
@@ -44,6 +25,16 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
 
   // Sync state when blockId changes
   useEffect(() => {
+    // If an adjustment batch from the previous block is still open, commit it
+    // before repointing the effect refs. Otherwise the `!inBatchRef.current`
+    // guard in handleAdjustChange would skip re-opening and the old block's
+    // batch would leak forever — the same defect class as the unmount leak,
+    // just triggered by a blockId change mid-drag. (commitRef is assigned
+    // below; effects run after render so it is always populated here.)
+    if (inBatchRef.current) {
+      commitRef.current();
+    }
+
     const ce = engineRef.current;
     if (!ce || blockId === null) {
       adjustEffectIdRef.current = null;
@@ -53,34 +44,12 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
       return;
     }
 
-    // Find existing adjust effect
-    const effects = ce.block.getEffects(blockId);
-    let foundAdjust = false;
-    let foundFilter = false;
-    for (const eid of effects) {
-      const kind = ce.block.getKind(eid);
-      if (kind === "adjustments") {
-        adjustEffectIdRef.current = eid;
-        const vals = {} as AdjustmentValues;
-        for (const param of ADJUSTMENT_PARAMS) {
-          vals[param] = ce.block.getAdjustmentValue(eid, param);
-        }
-        setAdjustValues(vals);
-        foundAdjust = true;
-      } else if (kind === "filter") {
-        filterEffectIdRef.current = eid;
-        setActiveFilter(ce.block.getString(eid, EFFECT_FILTER_NAME));
-        foundFilter = true;
-      }
-    }
-    if (!foundAdjust) {
-      adjustEffectIdRef.current = null;
-      setAdjustValues(DEFAULT_ADJUSTMENTS);
-    }
-    if (!foundFilter) {
-      filterEffectIdRef.current = null;
-      setActiveFilter("");
-    }
+    syncFromEngine(
+      ce,
+      blockId,
+      { adjust: adjustEffectIdRef, filter: filterEffectIdRef },
+      { setAdjustValues, setActiveFilter },
+    );
   }, [engineRef, blockId]);
 
   // --- Adjustments ---
@@ -157,6 +126,12 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     }
   }, [engineRef, flushPending]);
 
+  // Keep the latest commit in a ref so the unmount effect can call it without
+  // re-subscribing. `handleAdjustCommit` already cancels the pending rAF via
+  // `flushPending`, so this both flushes and closes any open batch.
+  const commitRef = useRef(handleAdjustCommit);
+  commitRef.current = handleAdjustCommit;
+
   const handleAdjustReset = useCallback(() => {
     const ce = engineRef.current;
     if (!ce || blockId === null) return;
@@ -200,47 +175,20 @@ export function useBlockEffects({ engineRef, blockId }: UseBlockEffectsOptions) 
     [engineRef, ensureFilterEffect],
   );
 
-  // Clean up rAF on unmount
-  useEffect(() => {
-    return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
+  // Never leave an adjustment batch open when the hook unmounts.
+  useEffect(() => () => commitRef.current(), []);
 
   // Re-sync when undo/redo changes engine state
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce || blockId === null) return;
     return ce.onHistoryChanged(() => {
-      const effects = ce.block.getEffects(blockId);
-      let foundAdjust = false;
-      let foundFilter = false;
-      for (const eid of effects) {
-        const kind = ce.block.getKind(eid);
-        if (kind === "adjustments") {
-          adjustEffectIdRef.current = eid;
-          const vals = {} as AdjustmentValues;
-          for (const param of ADJUSTMENT_PARAMS) {
-            vals[param] = ce.block.getAdjustmentValue(eid, param);
-          }
-          setAdjustValues(vals);
-          foundAdjust = true;
-        } else if (kind === "filter") {
-          filterEffectIdRef.current = eid;
-          setActiveFilter(ce.block.getString(eid, EFFECT_FILTER_NAME));
-          foundFilter = true;
-        }
-      }
-      if (!foundAdjust) {
-        adjustEffectIdRef.current = null;
-        setAdjustValues(DEFAULT_ADJUSTMENTS);
-      }
-      if (!foundFilter) {
-        filterEffectIdRef.current = null;
-        setActiveFilter("");
-      }
+      syncFromEngine(
+        ce,
+        blockId,
+        { adjust: adjustEffectIdRef, filter: filterEffectIdRef },
+        { setAdjustValues, setActiveFilter },
+      );
     });
   }, [engineRef, blockId]);
 
