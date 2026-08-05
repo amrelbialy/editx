@@ -27,7 +27,8 @@ export class EditorViewport {
   }
 
   zoomOut(step = 0.1): void {
-    this.setZoom(Math.max(0.1, this.getZoom() - step));
+    // Zoom bounds are clamped by the camera (single source of truth); no local clamp.
+    this.setZoom(this.getZoom() - step);
   }
 
   resetZoom(): void {

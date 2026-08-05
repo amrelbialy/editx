@@ -1,4 +1,5 @@
 import Konva from "konva";
+import type { BlockClickEvent } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { KonvaCamera } from "./konva-camera";
 import { KonvaCropOverlay } from "./konva-crop-overlay";
@@ -21,11 +22,12 @@ export interface SceneComponents {
 }
 
 export interface SceneCallbacks {
-  onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onCropChange?: (rect: CropRect) => void;
+  onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
 }
 
 export function createKonvaScene(
@@ -87,7 +89,16 @@ export function createKonvaScene(
       onBlockDblClick: (blockId, screenPos) => callbacks.onBlockDblClick?.(blockId, screenPos),
       onStageClick: (worldPos) => callbacks.onStageClick?.(worldPos),
       onZoomChange: (zoom) => callbacks.onZoomChange?.(zoom),
+      onBlockTransform: (blockId, phase) => callbacks.onBlockTransform?.(blockId, phase),
     },
+  });
+
+  // The transformer (block + crop) counter-scales itself for zoom via Konva, so
+  // its handles are already screen-constant. Only the plain overlay shapes that
+  // live directly on the zoom-scaled uiLayer need manual 1/zoom stroke sizing.
+  camera.setZoomChangeListener((zoom) => {
+    selectionRect.strokeWidth(1 / zoom);
+    cropOverlay.applyViewportScale(zoom);
   });
 
   camera.setPageSize(pageW, pageH);

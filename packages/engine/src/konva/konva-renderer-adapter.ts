@@ -2,7 +2,7 @@ import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { ExportOptions } from "../editor-types";
-import type { RendererAdapter } from "../render-adapter";
+import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
 import type { KonvaCamera } from "./konva-camera";
@@ -12,6 +12,7 @@ import { exportScene } from "./konva-export";
 import { KonvaHoverOutline } from "./konva-hover-outline";
 import type { KonvaNodeFactory } from "./konva-node-factory";
 import { createKonvaScene } from "./konva-scene-setup";
+import { observeViewportResize } from "./konva-viewport-resize";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export class KonvaRendererAdapter implements RendererAdapter {
@@ -32,7 +33,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #updateAccentColor?: (color: string) => void;
   #hoverOutline!: KonvaHoverOutline;
 
-  onBlockClick?: (blockId: number, event: { shiftKey: boolean }) => void;
+  onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
@@ -43,6 +44,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
   onZoomChange?: (zoom: number) => void;
+  onPanChange?: (pan: { x: number; y: number }) => void;
+  onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
   onAutoSize?: (blockId: number, computedHeight: number) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
 
@@ -72,6 +75,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       onBlockDblClick: (blockId, screenPos) => this.onBlockDblClick?.(blockId, screenPos),
       onStageClick: (worldPos) => this.onStageClick?.(worldPos),
       onZoomChange: (zoom) => this.onZoomChange?.(zoom),
+      onBlockTransform: (blockId, phase) => this.onBlockTransform?.(blockId, phase),
       onCropChange: (rect) => this.onCropChange?.(rect),
     });
 
@@ -81,6 +85,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#transformer = scene.transformer;
     this.#selectionRect = scene.selectionRect;
     this.#camera = scene.camera;
+    this.#camera.setPanChangeListener((pan) => this.onPanChange?.(pan));
     this.#nodeFactory = scene.nodeFactory;
     this.#cropOverlay = scene.cropOverlay;
     this.#webgl = scene.webgl;
@@ -96,17 +101,24 @@ export class KonvaRendererAdapter implements RendererAdapter {
     );
 
     this.#resizeObserver?.disconnect();
-    this.#resizeObserver = new ResizeObserver(() => {
-      const w = this.#rootEl.clientWidth;
-      const h = this.#rootEl.clientHeight;
-      if (w === 0 || h === 0) return;
-      this.#stage.width(w);
-      this.#stage.height(h);
-      if (this.#lastPageSize) {
-        this.#camera.fitToScreen({ ...this.#lastPageSize, padding: 48 });
-      }
+    this.#resizeObserver = observeViewportResize({
+      rootEl: this.#rootEl,
+      stage: this.#stage,
+      camera: this.#camera,
+      getPageSize: () => this.#lastPageSize,
+      getCropFitRect: () => this.#getCropFitRect(),
     });
-    this.#resizeObserver.observe(this.#rootEl);
+  }
+
+  /**
+   * The rect the camera should stay fitted to while crop mode is active, or
+   * `null` when not cropping. Mirrors the fit target chosen in
+   * {@link EditorCrop.setupCropOverlay} (`crop ?? image`) so a resize keeps the
+   * same framing the crop entry established.
+   */
+  #getCropFitRect(): CropRect | null {
+    if (!this.#cropOverlay?.isVisible()) return null;
+    return this.#cropOverlay.getCropRect() ?? this.#cropOverlay.getImageRect();
   }
 
   syncBlock(id: number, block: BlockData): void {
@@ -266,14 +278,39 @@ export class KonvaRendererAdapter implements RendererAdapter {
     },
   ): void {
     this.hideTransformer();
+    // expandPageNodeForCrop mutates page nodes on the content layer; the crop
+    // overlay itself lives on (and redraws) the UI layer via #cropOverlay.show.
     expandPageNodeForCrop(this.#nodeMap, blockId, imageRect, transform);
+    // Crop mode renders the full original image (imageRect), not the committed
+    // crop. Point the camera's pan-clamp bounds at that expanded canvas so the
+    // fitToRect(crop) that follows can center the crop instead of being clamped
+    // back to the (smaller) committed page size.
+    this.#camera.setPageSize(imageRect.width, imageRect.height);
+    this.#cropOverlay.applyViewportScale(this.#camera.getZoom());
     this.#cropOverlay.show(imageRect, initialCrop);
-    this.#stage.batchDraw();
+    this.#contentLayer.batchDraw();
   }
 
   hideCropOverlay(): void {
     this.#cropOverlay.hide();
     clearCropOverlayFlags(this.#nodeMap);
+    // Restore pan-clamp bounds to the committed page size now that the full
+    // image is no longer shown.
+    if (this.#lastPageSize) {
+      this.#camera.setPageSize(this.#lastPageSize.width, this.#lastPageSize.height);
+    }
+  }
+
+  offsetCropChildNodes(childIds: number[], dx: number, dy: number): void {
+    if (dx === 0 && dy === 0) return;
+    for (const childId of childIds) {
+      const node = this.#nodeMap.get(childId);
+      if (node) {
+        node.x(node.x() + dx);
+        node.y(node.y() + dy);
+      }
+    }
+    this.#contentLayer.batchDraw();
   }
 
   setCropRect(rect: CropRect): void {
@@ -290,8 +327,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   }
 
   renderFrame(): void {
-    this.#contentLayer?.draw();
-    this.#uiLayer?.draw();
+    // Scoped, batched redraws — avoid synchronous full-stage draws.
+    this.#contentLayer?.batchDraw();
+    this.#uiLayer?.batchDraw();
   }
 
   setAccentColor(color: string): void {

@@ -112,6 +112,13 @@ export {
 export type { CursorType, EditMode, EditModeConfig, ExportOptions } from "./editor-types";
 export { EDIT_MODE_DEFAULTS } from "./editor-types";
 export { EditxEngine } from "./editx-engine";
+export type {
+  BlockTransformEvent,
+  BlockTransformPhase,
+  EditModeChange,
+  ViewportState,
+} from "./engine-callbacks";
+export type { EngineCore } from "./engine-core";
 export type { BlockEvent, BlockEventType } from "./event-api";
 export { EventAPI } from "./event-api";
 export type { FilterPresetInfo } from "./konva/filters/presets";

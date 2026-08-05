@@ -1,5 +1,5 @@
 import type { EditxEngine } from "@editx/engine";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface ScreenRect {
   x: number;
@@ -10,14 +10,16 @@ export interface ScreenRect {
 
 /**
  * Tracks the screen-pixel bounding rect of the currently selected block.
- * Polls via requestAnimationFrame so it stays updated during drag, zoom, and pan.
+ *
+ * Event-driven: recomputes only when something that can move the rect happens —
+ * pan, zoom, a live on-canvas transform (drag/resize), or a committed geometry
+ * change (including undo/redo). No polling.
  */
 export function useBlockScreenRect(
   engine: EditxEngine | null,
   selectedBlockId: number | null,
 ): ScreenRect | null {
   const [rect, setRect] = useState<ScreenRect | null>(null);
-  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     if (!engine || selectedBlockId === null) {
@@ -25,13 +27,13 @@ export function useBlockScreenRect(
       return;
     }
 
-    function tick() {
-      // Try transformer rect first; fall back to direct block rect
+    const update = () => {
+      // Try transformer rect first; fall back to direct block rect.
       const r =
-        engine!.editor.getSelectedBlockScreenRect() ??
-        engine!.editor.getBlockScreenRect(selectedBlockId!);
+        engine.editor.getSelectedBlockScreenRect() ??
+        engine.editor.getBlockScreenRect(selectedBlockId);
       setRect((prev) => {
-        if (!r) return prev ? null : prev;
+        if (!r) return null;
         if (
           prev &&
           prev.x === r.x &&
@@ -43,11 +45,23 @@ export function useBlockScreenRect(
         }
         return r;
       });
-      rafRef.current = requestAnimationFrame(tick);
-    }
+    };
 
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    // Compute immediately so the overlay is positioned before the first event.
+    update();
+
+    const unsubscribers = [
+      engine.onPanChanged(update),
+      engine.onZoomChanged(update),
+      engine.onBlockTransform((event) => {
+        if (event.block === selectedBlockId) update();
+      }),
+      engine.event.subscribe([selectedBlockId], update),
+    ];
+
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
   }, [engine, selectedBlockId]);
 
   return rect;

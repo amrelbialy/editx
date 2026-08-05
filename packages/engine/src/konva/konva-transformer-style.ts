@@ -1,4 +1,7 @@
 import Konva from "konva";
+import { setupEdgeHover } from "./konva-transformer-edge-hover";
+import { rotaterSceneFunc } from "./konva-transformer-rotater";
+import { EDGE_HIT_WIDTH } from "./konva-transformer-scale";
 
 // ── Design tokens ──────────────────────────────────────────────────
 const DEFAULT_ACCENT = "#2563eb";
@@ -11,7 +14,6 @@ const PILL_SHORT = 6;
 const ROTATE_SIZE = 24;
 
 const HOVER_STROKE = "#ffffff";
-const EDGE_HIT_WIDTH = 12;
 
 // ── Anchor name helpers ────────────────────────────────────────────
 const CORNER_ANCHORS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
@@ -20,60 +22,6 @@ const HORIZONTAL_PILL_ANCHORS = new Set(["top-center", "bottom-center"]);
 
 function anchorId(anchor: Konva.Rect): string {
   return (anchor.name() || "").replace(" _anchor", "").trim();
-}
-
-// ── Rotater sceneFunc ──────────────────────────────────────────────
-// Draw the circle background + Lucide refresh-cw icon in one pass.
-// Uses Path2D with the raw SVG path data for pixel-perfect rendering.
-
-const REFRESH_CW_PATHS = [
-  "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",
-  "M21 3v5h-5",
-  "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16",
-  "M8 16H3v5",
-];
-
-// Pre-build Path2D objects once (supported in all modern browsers)
-let cachedPaths: Path2D[] | null = null;
-function getRefreshPaths(): Path2D[] {
-  if (!cachedPaths) {
-    cachedPaths = REFRESH_CW_PATHS.map((d) => new Path2D(d));
-  }
-  return cachedPaths;
-}
-
-function rotaterSceneFunc(ctx: Konva.Context, shape: Konva.Rect) {
-  const w = shape.width();
-  const h = shape.height();
-
-  // Circle background
-  ctx.beginPath();
-  ctx.arc(w / 2, h / 2, w / 2, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.fillStrokeShape(shape);
-
-  // Lucide refresh-cw icon (24×24 viewBox → scaled to ~14px)
-  const native = ctx._context;
-  native.save();
-
-  const iconSize = 14;
-  const scale = iconSize / 24;
-  native.translate((w - iconSize) / 2, (h - iconSize) / 2);
-  native.scale(scale, scale);
-
-  // Use contrasting color: when hovered, fill is accent so draw icon in white
-  const hovered = shape.getAttr("_hovered");
-  const accent = shape.getAttr("_accent") || DEFAULT_ACCENT;
-  native.strokeStyle = hovered ? HOVER_STROKE : accent;
-  native.lineWidth = 2;
-  native.lineCap = "round";
-  native.lineJoin = "round";
-
-  for (const p of getRefreshPaths()) {
-    native.stroke(p);
-  }
-
-  native.restore();
 }
 
 // ── Main setup ─────────────────────────────────────────────────────
@@ -124,6 +72,8 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
       const id = anchorId(anchor);
       anchorMap.set(id, anchor);
 
+      // Konva neutralizes the layer zoom on the transformer, so these sizes are
+      // already screen-constant px — no 1/zoom compensation.
       anchor.strokeWidth(ANCHOR_STROKE_W);
       if (anchor.getAttr("_hovered")) {
         anchor.fill(accent);
@@ -204,18 +154,15 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
 
       // Expand pill hit areas to cover the border edge minus corner zones (set once, not in anchorStyleFunc).
       // Inset by CORNER_SIZE on each end so corners keep their own resize behavior.
+      // Sizes are raw screen px — the transformer's local space is already 1:1 with screen.
       if (VERTICAL_PILL_ANCHORS.has(id)) {
         child.hitFunc((ctx: any, shape: any) => {
           const back = transformer.findOne(".back") as Konva.Shape | undefined;
           const edgeH = back ? back.height() : PILL_LONG;
           const insetH = Math.max(edgeH - CORNER_SIZE * 2, PILL_LONG);
+          const hitW = EDGE_HIT_WIDTH;
           ctx.beginPath();
-          ctx.rect(
-            (PILL_SHORT - EDGE_HIT_WIDTH) / 2,
-            (PILL_LONG - insetH) / 2,
-            EDGE_HIT_WIDTH,
-            insetH,
-          );
+          ctx.rect((PILL_SHORT - hitW) / 2, (PILL_LONG - insetH) / 2, hitW, insetH);
           ctx.closePath();
           ctx.fillStrokeShape(shape);
         });
@@ -224,13 +171,9 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
           const back = transformer.findOne(".back") as Konva.Shape | undefined;
           const edgeW = back ? back.width() : PILL_LONG;
           const insetW = Math.max(edgeW - CORNER_SIZE * 2, PILL_LONG);
+          const hitH = EDGE_HIT_WIDTH;
           ctx.beginPath();
-          ctx.rect(
-            (PILL_LONG - insetW) / 2,
-            (PILL_SHORT - EDGE_HIT_WIDTH) / 2,
-            insetW,
-            EDGE_HIT_WIDTH,
-          );
+          ctx.rect((PILL_LONG - insetW) / 2, (PILL_SHORT - hitH) / 2, insetW, hitH);
           ctx.closePath();
           ctx.fillStrokeShape(shape);
         });
@@ -266,92 +209,4 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
   }
 
   return { transformer, updateAccent };
-}
-
-// ── Border edge hover detection ────────────────────────────────────
-
-/**
- * Detect when the cursor is near a transformer border edge and:
- * - Show a move cursor.
- * - Highlight the corresponding center pill anchor.
- *
- * This uses a mousemove listener on the stage (not on the back shape)
- * to avoid stealing mouse events from the resize anchors. The underlying
- * block is already draggable, so clicking near the border naturally
- * allows moving the block.
- */
-function setupEdgeHover(
-  transformer: Konva.Transformer,
-  uiLayer: Konva.Layer,
-  setHovered: (id: string, hovered: boolean) => void,
-) {
-  const stage = uiLayer.getStage();
-  if (!stage) return;
-
-  let lastPill = "";
-  let wasOnEdge = false;
-
-  stage.on("mousemove.transformerEdge", () => {
-    // Only active when the transformer has nodes
-    if (transformer.nodes().length === 0) {
-      if (wasOnEdge) clearEdgeState();
-      return;
-    }
-
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const back = transformer.findOne(".back") as Konva.Shape | undefined;
-    if (!back) return;
-
-    // Convert screen position to back-local coordinates
-    const absTransform = back.getAbsoluteTransform().copy().invert();
-    const local = absTransform.point(pointer);
-    const w = back.width();
-    const h = back.height();
-
-    // Check if cursor is within EDGE_HIT_WIDTH of a border edge
-    const distTop = Math.abs(local.y);
-    const distBottom = Math.abs(local.y - h);
-    const distLeft = Math.abs(local.x);
-    const distRight = Math.abs(local.x - w);
-
-    const threshold = EDGE_HIT_WIDTH;
-    const inBoundsX = local.x >= -threshold && local.x <= w + threshold;
-    const inBoundsY = local.y >= -threshold && local.y <= h + threshold;
-
-    let nearestPill = "";
-
-    if (inBoundsX && distTop < threshold && inBoundsY) nearestPill = "top-center";
-    else if (inBoundsX && distBottom < threshold && inBoundsY) nearestPill = "bottom-center";
-    else if (inBoundsY && distLeft < threshold && inBoundsX) nearestPill = "middle-left";
-    else if (inBoundsY && distRight < threshold && inBoundsX) nearestPill = "middle-right";
-
-    if (nearestPill) {
-      wasOnEdge = true;
-
-      if (nearestPill !== lastPill) {
-        if (lastPill) setHovered(lastPill, false);
-        setHovered(nearestPill, true);
-        lastPill = nearestPill;
-        uiLayer.batchDraw();
-      }
-    } else if (wasOnEdge) {
-      clearEdgeState();
-    }
-  });
-
-  function clearEdgeState() {
-    if (lastPill) {
-      setHovered(lastPill, false);
-      lastPill = "";
-    }
-    wasOnEdge = false;
-    // Don't reset cursor here — let Konva's anchor mouseout handle it
-    // Only reset if no anchor is being hovered
-    if (stage.content && !(transformer as any)._cursorChange) {
-      stage.content.style.cursor = "";
-    }
-    uiLayer.batchDraw();
-  }
 }

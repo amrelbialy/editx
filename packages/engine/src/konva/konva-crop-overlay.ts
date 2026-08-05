@@ -1,12 +1,19 @@
-import Konva from "konva";
+import type Konva from "konva";
 import type { CropRect } from "../utils/crop-math";
 import {
   clampCutoutPosition,
-  cropBoundBoxFunc,
   layoutDarkRects,
   layoutGridLines,
   normalizeCutoutTransform,
 } from "./konva-crop-overlay-layout";
+import {
+  applyCropStrokeScale,
+  CROP_ANCHORS_ALL,
+  CROP_ANCHORS_CORNERS,
+  createCropOverlayNodes,
+  createCropTransformer,
+  makeCropBoundBoxFunc,
+} from "./konva-crop-overlay-viewport";
 
 export class KonvaCropOverlay {
   #layer: Konva.Layer;
@@ -21,6 +28,7 @@ export class KonvaCropOverlay {
 
   #imageRect: CropRect = { x: 0, y: 0, width: 0, height: 0 };
   #ratio: number | null = null;
+  #viewportZoom = 1;
   #onChange?: (rect: CropRect) => void;
   #onLiveUpdate?: (rect: CropRect) => void;
 
@@ -33,73 +41,29 @@ export class KonvaCropOverlay {
     this.#onChange = onChange;
     this.#onLiveUpdate = onLiveUpdate;
 
-    this.#group = new Konva.Group({ name: "crop-overlay", visible: false });
+    const nodes = createCropOverlayNodes();
+    this.#group = nodes.group;
+    this.#darkTop = nodes.darkTop;
+    this.#darkBottom = nodes.darkBottom;
+    this.#darkLeft = nodes.darkLeft;
+    this.#darkRight = nodes.darkRight;
+    this.#cutout = nodes.cutout;
+    this.#gridLines = nodes.gridLines;
 
-    const darkFill = "rgba(0, 0, 0, 0.5)";
-    this.#darkTop = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkBottom = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkLeft = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkRight = new Konva.Rect({ fill: darkFill, listening: false });
-
-    this.#cutout = new Konva.Rect({
-      fill: "transparent",
-      stroke: "#ffffff",
-      strokeWidth: 2,
-      draggable: true,
-      name: "crop-cutout",
-      hitFunc: (ctx, shape) => {
-        ctx.beginPath();
-        ctx.rect(0, 0, shape.width(), shape.height());
-        ctx.closePath();
-        ctx.fillStrokeShape(shape);
-      },
-    });
-
-    this.#gridLines = new Konva.Group({ listening: false });
-    for (let i = 0; i < 4; i++) {
-      this.#gridLines.add(
-        new Konva.Line({
-          points: [0, 0, 0, 0],
-          stroke: "rgba(255, 255, 255, 0.4)",
-          strokeWidth: 1,
-          listening: false,
-        }),
-      );
-    }
-
-    this.#transformer = new Konva.Transformer({
-      rotateEnabled: false,
-      flipEnabled: false,
-      centeredScaling: false,
-      anchorSize: 12,
-      anchorCornerRadius: 6,
-      anchorStroke: "#2563eb",
-      anchorFill: "#ffffff",
-      anchorStrokeWidth: 2,
-      borderStroke: "#2563eb",
-      borderStrokeWidth: 2,
-      keepRatio: false,
-      enabledAnchors: [
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-        "middle-left",
-        "middle-right",
-        "top-center",
-        "bottom-center",
-      ],
-      boundBoxFunc: (oldBox, newBox) =>
-        cropBoundBoxFunc(this.#imageRect, this.#ratio, oldBox, newBox),
-    });
+    this.#transformer = createCropTransformer(
+      makeCropBoundBoxFunc(
+        this.#layer,
+        () => this.#imageRect,
+        () => this.#ratio,
+      ),
+    );
 
     this.#cutout.on("dragmove", () => this.#onDragMove());
     this.#cutout.on("dragend", () => this.#onDragEnd());
     this.#cutout.on("transform", () => this.#onTransform());
     this.#cutout.on("transformend", () => this.#onTransformEnd());
 
-    this.#group.add(this.#darkTop, this.#darkBottom, this.#darkLeft, this.#darkRight);
-    this.#group.add(this.#cutout, this.#gridLines, this.#transformer);
+    this.#group.add(this.#transformer);
     this.#layer.add(this.#group);
   }
 
@@ -120,8 +84,11 @@ export class KonvaCropOverlay {
     this.#updateDarkRects();
     this.#updateGridLines();
     this.#transformer.nodes([this.#cutout]);
-    this.#transformer.forceUpdate();
     this.#applyRatioConfig();
+    // Keep the plain overlay strokes screen-constant at the current zoom, then
+    // let the transformer re-fit its (already screen-constant) handles.
+    this.#applyStrokeScale();
+    this.#transformer.forceUpdate();
 
     this.#group.visible(true);
     this.#group.moveToTop();
@@ -180,24 +147,39 @@ export class KonvaCropOverlay {
     this.#layer.batchDraw();
   }
 
+  /** Counter-scale the plain overlay strokes (cutout + grid) by 1/zoom. */
+  applyViewportScale(zoom: number): void {
+    this.#viewportZoom = zoom || 1;
+    this.#applyStrokeScale();
+    this.#layer.batchDraw();
+  }
+
+  #applyStrokeScale(): void {
+    applyCropStrokeScale(this.#effectiveZoom(), {
+      cutout: this.#cutout,
+      gridLines: this.#gridLines.children as unknown as Konva.Line[],
+    });
+  }
+
+  /**
+   * Source of truth for the counter-scale factor: the overlay lives on the
+   * zoom-scaled uiLayer, so the layer's own scale *is* the current zoom. Reading
+   * it directly avoids depending on {@link applyViewportScale} call ordering.
+   */
+  #effectiveZoom(): number {
+    const layerScale = typeof this.#layer.scaleX === "function" ? this.#layer.scaleX() : 0;
+    return layerScale || this.#viewportZoom || 1;
+  }
+
   destroy(): void {
     this.#cutout.off("dragmove dragend transform transformend");
     this.#group.destroy();
   }
 
-  #getCutoutRect(): CropRect {
-    return {
-      x: this.#cutout.x(),
-      y: this.#cutout.y(),
-      width: this.#cutout.width() * this.#cutout.scaleX(),
-      height: this.#cutout.height() * this.#cutout.scaleY(),
-    };
-  }
-
   #updateDarkRects(): void {
     layoutDarkRects(
       this.#imageRect,
-      this.#getCutoutRect(),
+      this.getCropRect(),
       this.#darkTop,
       this.#darkBottom,
       this.#darkLeft,
@@ -206,25 +188,16 @@ export class KonvaCropOverlay {
   }
 
   #updateGridLines(): void {
-    layoutGridLines(this.#getCutoutRect(), this.#gridLines.children as unknown as Konva.Line[]);
+    layoutGridLines(this.getCropRect(), this.#gridLines.children as unknown as Konva.Line[]);
   }
 
   #applyRatioConfig(): void {
     if (this.#ratio !== null) {
       this.#transformer.keepRatio(true);
-      this.#transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
+      this.#transformer.enabledAnchors(CROP_ANCHORS_CORNERS);
     } else {
       this.#transformer.keepRatio(false);
-      this.#transformer.enabledAnchors([
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-        "middle-left",
-        "middle-right",
-        "top-center",
-        "bottom-center",
-      ]);
+      this.#transformer.enabledAnchors(CROP_ANCHORS_ALL);
     }
   }
 
