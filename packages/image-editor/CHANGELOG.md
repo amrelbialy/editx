@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.15](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.14...@editx/image-editor@0.1.0-alpha.15) (2026-08-05)
+
+### Bug Fixes
+
+* **image-editor:** scope toast notifications inside editor container ([463f776](https://github.com/amrelbialy/editx/commit/463f7765fdcf80ac72eefae3bc0602c5549ee30e))
+
 ## [0.1.0-alpha.14](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.13...@editx/image-editor@0.1.0-alpha.14) (2026-08-05)
 
 **Note:** Version bump only for package @editx/image-editor
