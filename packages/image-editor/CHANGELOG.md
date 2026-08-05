@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.13](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.12...@editx/image-editor@0.1.0-alpha.13) (2026-08-05)
+
+### Bug Fixes
+
+* **engine:** remediate rendering interaction defects ([9119875](https://github.com/amrelbialy/editx/commit/9119875d0525b11942d04ecfe6ed2df917a5417f))
+
 ## [0.1.0-alpha.12](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.11...@editx/image-editor@0.1.0-alpha.12) (2026-08-04)
 
 ### Bug Fixes

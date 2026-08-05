@@ -4,6 +4,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.10](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.9...@editx/engine@0.1.0-alpha.10) (2026-08-05)
+
+### Bug Fixes
+
+* **engine:** keep crop children anchored and refine crop/zoom rendering ([88e76bb](https://github.com/amrelbialy/editx/commit/88e76bb4deabf3c44138ef40db5520eca9a20a67))
+* **engine:** remediate rendering interaction defects ([9119875](https://github.com/amrelbialy/editx/commit/9119875d0525b11942d04ecfe6ed2df917a5417f))
+
 ## [0.1.0-alpha.9](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.8...@editx/engine@0.1.0-alpha.9) (2026-08-03)
 
 ### Bug Fixes
