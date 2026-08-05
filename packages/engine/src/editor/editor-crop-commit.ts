@@ -120,7 +120,13 @@ function translateChildrenForCrop(
   store: BlockStore,
   pageId: number,
   visualRect: CropRect,
-  initialCropState: { enabled: boolean; x: number; y: number; width: number; height: number } | null,
+  initialCropState: {
+    enabled: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null,
   imgW: number,
   imgH: number,
   rotation: number,
@@ -133,11 +139,7 @@ function translateChildrenForCrop(
   // Previous page origin (crop top-left) in visual space; (0,0) when uncropped.
   let oldX = 0;
   let oldY = 0;
-  if (
-    initialCropState?.enabled &&
-    initialCropState.width > 0 &&
-    initialCropState.height > 0
-  ) {
+  if (initialCropState?.enabled && initialCropState.width > 0 && initialCropState.height > 0) {
     const oldVisual = sourceCropToVisual(
       {
         x: initialCropState.x,
