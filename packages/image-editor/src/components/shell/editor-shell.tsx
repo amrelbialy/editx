@@ -26,7 +26,7 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
       aria-label={t("a11y.imageEditor")}
       style={style}
       className={cn(
-        "@container/editor flex flex-col h-full w-full overflow-clip",
+        "@container/editor relative flex flex-col h-full w-full overflow-clip",
         "bg-background text-foreground",
         className,
       )}
@@ -36,6 +36,7 @@ export const EditorShell: React.FC<EditorShellProps> = ({ children, className, s
         <LiveRegion />
         <Toaster
           position="bottom-right"
+          className="absolute!"
           toastOptions={{
             className: "!bg-card !text-foreground !border-border !shadow-lg",
           }}
