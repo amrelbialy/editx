@@ -54,6 +54,24 @@
   },
   "overrides": [
     {
+      "includes": ["packages/engine/src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react": "The engine package must stay React-free (see CLAUDE.md Architecture).",
+                  "react-dom": "The engine package must stay React-free (see CLAUDE.md Architecture)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/image-editor/src/components/ui/slider/**"],
       "linter": {
         "rules": {

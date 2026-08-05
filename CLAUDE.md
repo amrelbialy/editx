@@ -38,6 +38,15 @@ apps/demo → depends on image-editor, Vite
 
 Toolchain: pnpm 10.23 + turborepo, TypeScript strict, Vitest + happy-dom for tests.
 
+### Architecture boundaries
+
+The one-directional dependency graph above is enforced by automated tests. Contributors must keep these four rules intact — violations fail `pnpm test`/CI:
+
+- **Engine stays React-free** — `packages/engine` must not import or depend on `react`/`react-dom`. Enforced by [`packages/engine/src/__tests__/boundaries.react-free.test.ts`](packages/engine/src/__tests__/boundaries.react-free.test.ts) and a Biome `noRestrictedImports` rule scoped to `packages/engine/src/**` in root `biome.json`.
+- **Import the engine via its public barrel** — `packages/image-editor` may only reach the engine through `@editx/engine` (or `@editx/engine/konva`), never deep internals or relative reach-arounds. Enforced by [`packages/image-editor/src/__tests__/boundaries.engine-imports.test.ts`](packages/image-editor/src/__tests__/boundaries.engine-imports.test.ts).
+- **UI primitives stay pure** — `packages/image-editor/src/components/ui/` must not import `@editx/engine`, `i18n/`, `config/`, `store/`, or `hooks/`. Enforced by [`packages/image-editor/src/components/ui/__tests__/boundaries.ui-purity.test.ts`](packages/image-editor/src/components/ui/__tests__/boundaries.ui-purity.test.ts).
+- **Demo uses only public entry points** — `apps/demo` may import `@editx/image-editor` (root, `/vanilla`, `/element`, `/presets`, `/styles.css`) and the bare `@editx/engine` root barrel (a documented exception: the demo declares it as a direct dependency and `guide-custom-tool.tsx` demonstrates the public engine API), but never deep engine subpaths, deep image-editor `/src` internals, or relative reach-arounds into package source. Enforced by [`apps/demo/src/__tests__/boundaries.demo-imports.test.ts`](apps/demo/src/__tests__/boundaries.demo-imports.test.ts).
+
 ## File Style Rules
 
 - **Max 250 lines per file** (components, hooks, utils). Split by concern before adding more code.
@@ -90,7 +99,7 @@ Naming follows interaction-based conventions (e.g., `input` not `number-field`, 
 
 ## Design System
 
-All UI primitives live in `packages/image-editor/src/components/ui/` and must stay **pure and portable** (no `i18n/`, `engine`, `config/`, or app-hook imports) so they can be extracted into a standalone `@editx/ui` package later. App concerns (labels, handlers, icons) are injected via props. Import primitives from the `ui` barrel (`../ui`).
+All UI primitives live in `packages/image-editor/src/components/ui/` and must stay **pure and portable** (no `i18n/`, `engine`, `config/`, or app-hook imports) so they can be extracted into a standalone `@editx/ui` package later. App concerns (labels, handlers, icons) are injected via props. Import primitives from the `ui` barrel (`../ui`). This purity rule is enforced by [`boundaries.ui-purity.test.ts`](packages/image-editor/src/components/ui/__tests__/boundaries.ui-purity.test.ts) (see [Architecture boundaries](#architecture-boundaries)).
 
 **Use primitives, never raw elements:**
 

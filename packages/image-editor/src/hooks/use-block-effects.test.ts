@@ -58,14 +58,12 @@ describe("useBlockEffects — adjustment batch lifecycle", () => {
 
     const { result, unmount } = renderHook(() => useBlockEffects({ engineRef, blockId: 5 }));
 
-    // Start an adjustment drag → opens exactly one batch, not yet closed.
     act(() => {
       result.current.handleAdjustChange("brightness", 0.5);
     });
     expect(engine.beginBatch).toHaveBeenCalledTimes(1);
     expect(engine.endBatch).not.toHaveBeenCalled();
 
-    // Unmount mid-drag (no commit) — the flush-on-unmount effect must close it.
     unmount();
     expect(engine.endBatch).toHaveBeenCalledTimes(1);
   });
@@ -85,7 +83,6 @@ describe("useBlockEffects — adjustment batch lifecycle", () => {
     expect(engine.beginBatch).toHaveBeenCalledTimes(1);
     expect(engine.endBatch).toHaveBeenCalledTimes(1);
 
-    // Unmount afterwards must be a no-op — no leaked / double endBatch.
     unmount();
     expect(engine.endBatch).toHaveBeenCalledTimes(1);
   });
@@ -96,7 +93,6 @@ describe("useBlockEffects — adjustment batch lifecycle", () => {
 
     const { unmount } = renderHook(() => useBlockEffects({ engineRef, blockId: 5 }));
 
-    // No handleAdjustChange call → nothing to flush.
     unmount();
     expect(engine.beginBatch).not.toHaveBeenCalled();
     expect(engine.endBatch).not.toHaveBeenCalled();
@@ -113,7 +109,6 @@ describe("useBlockEffects — adjustment batch lifecycle", () => {
       result.current.handleAdjustChange("brightness", 0.2);
       result.current.handleAdjustChange("brightness", 0.3);
     });
-    // Batch is opened once for the whole burst.
     expect(engine.beginBatch).toHaveBeenCalledTimes(1);
 
     unmount();
@@ -129,15 +124,12 @@ describe("useBlockEffects — adjustment batch lifecycle", () => {
       { initialProps: { blockId: 5 } },
     );
 
-    // Start an adjustment drag on block A → one open batch, not yet closed.
     act(() => {
       result.current.handleAdjustChange("brightness", 0.5);
     });
     expect(engine.beginBatch).toHaveBeenCalledTimes(1);
     expect(engine.endBatch).not.toHaveBeenCalled();
 
-    // Switch to block B mid-drag → the blockId-change effect must close block
-    // A's batch exactly once (not leak it, not double-close it).
     act(() => {
       rerender({ blockId: 6 });
     });
