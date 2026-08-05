@@ -1,7 +1,7 @@
 import Konva from "konva";
 import { setupEdgeHover } from "./konva-transformer-edge-hover";
 import { rotaterSceneFunc } from "./konva-transformer-rotater";
-import { EDGE_HIT_WIDTH, layerInvScale } from "./konva-transformer-scale";
+import { EDGE_HIT_WIDTH } from "./konva-transformer-scale";
 
 // ── Design tokens ──────────────────────────────────────────────────
 const DEFAULT_ACCENT = "#2563eb";
@@ -35,8 +35,6 @@ function anchorId(anchor: Konva.Rect): string {
 export interface StyledTransformerResult {
   transformer: Konva.Transformer;
   updateAccent: (color: string) => void;
-  /** Re-apply zoom-invariant handle/stroke sizing for the given zoom factor. */
-  updateViewportScale: (zoom: number) => void;
 }
 
 export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformerResult {
@@ -74,14 +72,9 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
       const id = anchorId(anchor);
       anchorMap.set(id, anchor);
 
-      // Counter-scale by 1/zoom so handles stay a constant on-screen size.
-      const inv = layerInvScale(anchor);
-      const cornerSize = CORNER_SIZE * inv;
-      const pillLong = PILL_LONG * inv;
-      const pillShort = PILL_SHORT * inv;
-      const rotateSize = ROTATE_SIZE * inv;
-
-      anchor.strokeWidth(ANCHOR_STROKE_W * inv);
+      // Konva neutralizes the layer zoom on the transformer, so these sizes are
+      // already screen-constant px — no 1/zoom compensation.
+      anchor.strokeWidth(ANCHOR_STROKE_W);
       if (anchor.getAttr("_hovered")) {
         anchor.fill(accent);
         anchor.stroke(HOVER_STROKE);
@@ -91,29 +84,29 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
       }
 
       if (CORNER_ANCHORS.has(id)) {
-        anchor.width(cornerSize);
-        anchor.height(cornerSize);
-        anchor.cornerRadius(cornerSize / 2);
-        anchor.offsetX(cornerSize / 2);
-        anchor.offsetY(cornerSize / 2);
+        anchor.width(CORNER_SIZE);
+        anchor.height(CORNER_SIZE);
+        anchor.cornerRadius(CORNER_SIZE / 2);
+        anchor.offsetX(CORNER_SIZE / 2);
+        anchor.offsetY(CORNER_SIZE / 2);
       } else if (VERTICAL_PILL_ANCHORS.has(id)) {
-        anchor.width(pillShort);
-        anchor.height(pillLong);
-        anchor.cornerRadius(pillShort / 2);
-        anchor.offsetX(pillShort / 2);
-        anchor.offsetY(pillLong / 2);
+        anchor.width(PILL_SHORT);
+        anchor.height(PILL_LONG);
+        anchor.cornerRadius(PILL_SHORT / 2);
+        anchor.offsetX(PILL_SHORT / 2);
+        anchor.offsetY(PILL_LONG / 2);
       } else if (HORIZONTAL_PILL_ANCHORS.has(id)) {
-        anchor.width(pillLong);
-        anchor.height(pillShort);
-        anchor.cornerRadius(pillShort / 2);
-        anchor.offsetX(pillLong / 2);
-        anchor.offsetY(pillShort / 2);
+        anchor.width(PILL_LONG);
+        anchor.height(PILL_SHORT);
+        anchor.cornerRadius(PILL_SHORT / 2);
+        anchor.offsetX(PILL_LONG / 2);
+        anchor.offsetY(PILL_SHORT / 2);
       } else if (id === "rotater") {
-        anchor.width(rotateSize);
-        anchor.height(rotateSize);
-        anchor.cornerRadius(rotateSize / 2);
-        anchor.offsetX(rotateSize / 2);
-        anchor.offsetY(rotateSize / 2);
+        anchor.width(ROTATE_SIZE);
+        anchor.height(ROTATE_SIZE);
+        anchor.cornerRadius(ROTATE_SIZE / 2);
+        anchor.offsetX(ROTATE_SIZE / 2);
+        anchor.offsetY(ROTATE_SIZE / 2);
         // Draw the circle + icon in one pass — no separate overlay needed
         anchor.sceneFunc(rotaterSceneFunc as any);
       }
@@ -161,27 +154,26 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
 
       // Expand pill hit areas to cover the border edge minus corner zones (set once, not in anchorStyleFunc).
       // Inset by CORNER_SIZE on each end so corners keep their own resize behavior.
+      // Sizes are raw screen px — the transformer's local space is already 1:1 with screen.
       if (VERTICAL_PILL_ANCHORS.has(id)) {
         child.hitFunc((ctx: any, shape: any) => {
-          const inv = layerInvScale(child);
           const back = transformer.findOne(".back") as Konva.Shape | undefined;
-          const edgeH = back ? back.height() : PILL_LONG * inv;
-          const insetH = Math.max(edgeH - CORNER_SIZE * inv * 2, PILL_LONG * inv);
-          const hitW = EDGE_HIT_WIDTH * inv;
+          const edgeH = back ? back.height() : PILL_LONG;
+          const insetH = Math.max(edgeH - CORNER_SIZE * 2, PILL_LONG);
+          const hitW = EDGE_HIT_WIDTH;
           ctx.beginPath();
-          ctx.rect((PILL_SHORT * inv - hitW) / 2, (PILL_LONG * inv - insetH) / 2, hitW, insetH);
+          ctx.rect((PILL_SHORT - hitW) / 2, (PILL_LONG - insetH) / 2, hitW, insetH);
           ctx.closePath();
           ctx.fillStrokeShape(shape);
         });
       } else if (HORIZONTAL_PILL_ANCHORS.has(id)) {
         child.hitFunc((ctx: any, shape: any) => {
-          const inv = layerInvScale(child);
           const back = transformer.findOne(".back") as Konva.Shape | undefined;
-          const edgeW = back ? back.width() : PILL_LONG * inv;
-          const insetW = Math.max(edgeW - CORNER_SIZE * inv * 2, PILL_LONG * inv);
-          const hitH = EDGE_HIT_WIDTH * inv;
+          const edgeW = back ? back.width() : PILL_LONG;
+          const insetW = Math.max(edgeW - CORNER_SIZE * 2, PILL_LONG);
+          const hitH = EDGE_HIT_WIDTH;
           ctx.beginPath();
-          ctx.rect((PILL_LONG * inv - insetW) / 2, (PILL_SHORT * inv - hitH) / 2, insetW, hitH);
+          ctx.rect((PILL_LONG - insetW) / 2, (PILL_SHORT - hitH) / 2, insetW, hitH);
           ctx.closePath();
           ctx.fillStrokeShape(shape);
         });
@@ -216,18 +208,5 @@ export function createStyledTransformer(uiLayer: Konva.Layer): StyledTransformer
     uiLayer.batchDraw();
   }
 
-  /**
-   * Keep border stroke width and the rotater offset screen-constant by
-   * counter-scaling them by 1/zoom, then re-run the anchor style pass.
-   */
-  function updateViewportScale(zoom: number) {
-    const inv = 1 / (zoom || 1);
-    transformer.borderStrokeWidth(2 * inv);
-    transformer.anchorStrokeWidth(ANCHOR_STROKE_W * inv);
-    transformer.rotateAnchorOffset(30 * inv);
-    transformer.forceUpdate();
-    uiLayer.batchDraw();
-  }
-
-  return { transformer, updateAccent, updateViewportScale };
+  return { transformer, updateAccent };
 }

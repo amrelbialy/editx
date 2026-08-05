@@ -106,7 +106,19 @@ export class KonvaRendererAdapter implements RendererAdapter {
       stage: this.#stage,
       camera: this.#camera,
       getPageSize: () => this.#lastPageSize,
+      getCropFitRect: () => this.#getCropFitRect(),
     });
+  }
+
+  /**
+   * The rect the camera should stay fitted to while crop mode is active, or
+   * `null` when not cropping. Mirrors the fit target chosen in
+   * {@link EditorCrop.setupCropOverlay} (`crop ?? image`) so a resize keeps the
+   * same framing the crop entry established.
+   */
+  #getCropFitRect(): CropRect | null {
+    if (!this.#cropOverlay?.isVisible()) return null;
+    return this.#cropOverlay.getCropRect() ?? this.#cropOverlay.getImageRect();
   }
 
   syncBlock(id: number, block: BlockData): void {
@@ -269,6 +281,11 @@ export class KonvaRendererAdapter implements RendererAdapter {
     // expandPageNodeForCrop mutates page nodes on the content layer; the crop
     // overlay itself lives on (and redraws) the UI layer via #cropOverlay.show.
     expandPageNodeForCrop(this.#nodeMap, blockId, imageRect, transform);
+    // Crop mode renders the full original image (imageRect), not the committed
+    // crop. Point the camera's pan-clamp bounds at that expanded canvas so the
+    // fitToRect(crop) that follows can center the crop instead of being clamped
+    // back to the (smaller) committed page size.
+    this.#camera.setPageSize(imageRect.width, imageRect.height);
     this.#cropOverlay.applyViewportScale(this.#camera.getZoom());
     this.#cropOverlay.show(imageRect, initialCrop);
     this.#contentLayer.batchDraw();
@@ -277,6 +294,23 @@ export class KonvaRendererAdapter implements RendererAdapter {
   hideCropOverlay(): void {
     this.#cropOverlay.hide();
     clearCropOverlayFlags(this.#nodeMap);
+    // Restore pan-clamp bounds to the committed page size now that the full
+    // image is no longer shown.
+    if (this.#lastPageSize) {
+      this.#camera.setPageSize(this.#lastPageSize.width, this.#lastPageSize.height);
+    }
+  }
+
+  offsetCropChildNodes(childIds: number[], dx: number, dy: number): void {
+    if (dx === 0 && dy === 0) return;
+    for (const childId of childIds) {
+      const node = this.#nodeMap.get(childId);
+      if (node) {
+        node.x(node.x() + dx);
+        node.y(node.y() + dy);
+      }
+    }
+    this.#contentLayer.batchDraw();
   }
 
   setCropRect(rect: CropRect): void {

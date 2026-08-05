@@ -108,6 +108,15 @@ export class EditorCrop {
 
     this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
 
+    // Child blocks (text, shapes) are stored relative to the committed crop's
+    // top-left. The overlay shows the full image (origin (0,0)), so nudge the
+    // child nodes by the committed crop offset to keep them anchored to the
+    // same image content while cropping. Undone by re-syncing on teardown.
+    if (initialCrop && (initialCrop.x !== 0 || initialCrop.y !== 0)) {
+      const children = store.getChildren(blockId);
+      this.#ctx.renderer?.offsetCropChildNodes?.(children, initialCrop.x, initialCrop.y);
+    }
+
     // Fit the camera to the crop area (or the full image when no crop exists)
     const fitRect = initialCrop ?? imageRect;
     this.#ctx.renderer?.fitToRect(fitRect, 24);
@@ -128,6 +137,15 @@ export class EditorCrop {
       const block = store.get(blockId);
       if (block) {
         this.#ctx.renderer?.syncBlock(blockId, block);
+      }
+      // Re-sync children too: this restores the temporary overlay offset
+      // applied in setupCropOverlay and reflects any crop-commit translation
+      // that re-anchored them to the new page origin.
+      for (const childId of store.getChildren(blockId)) {
+        const childBlock = store.get(childId);
+        if (childBlock) {
+          this.#ctx.renderer?.syncBlock(childId, childBlock);
+        }
       }
     }
     this.#cropBlockId = null;

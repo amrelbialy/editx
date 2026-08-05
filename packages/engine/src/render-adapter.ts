@@ -111,6 +111,13 @@ export interface RendererAdapter {
     },
   ): void;
   hideCropOverlay(): void;
+  /**
+   * Temporarily offset child block nodes while the crop overlay is active so
+   * they stay anchored to the full image being shown (the overlay expands the
+   * page node to the full original image, moving the page origin). The offset
+   * is visual-only and is undone when children are re-synced on teardown.
+   */
+  offsetCropChildNodes?(childIds: number[], dx: number, dy: number): void;
   setCropRect(rect: CropRect): void;
   setCropRatio(ratio: number | null): void;
   getCropRect(): CropRect | null;

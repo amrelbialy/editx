@@ -69,17 +69,74 @@ export function createCropTransformer(
   });
 }
 
-/** Nodes whose stroke/handle sizes must stay screen-constant across zoom. */
+/** Plain overlay shapes whose stroke must stay screen-constant across zoom. */
 export interface CropStrokeNodes {
   cutout: Konva.Rect;
   gridLines: Konva.Line[];
-  transformer: Konva.Transformer;
+}
+
+/** The static (non-transformer) scene nodes that make up the crop overlay. */
+export interface CropOverlayNodes {
+  group: Konva.Group;
+  darkTop: Konva.Rect;
+  darkBottom: Konva.Rect;
+  darkLeft: Konva.Rect;
+  darkRight: Konva.Rect;
+  cutout: Konva.Rect;
+  gridLines: Konva.Group;
 }
 
 /**
- * Counter-scale the cutout stroke, grid lines, and crop handles by 1/zoom so
- * they stay a constant on-screen size (the overlay lives on the zoom-scaled
- * uiLayer). Positions/bounds are unchanged.
+ * Build the crop overlay's scene nodes (the four dark mask rects, the draggable
+ * cutout, and the rule-of-thirds grid) and assemble them into a hidden group.
+ * The transformer is added by the overlay itself since it needs the boundBoxFunc.
+ */
+export function createCropOverlayNodes(): CropOverlayNodes {
+  const group = new Konva.Group({ name: "crop-overlay", visible: false });
+
+  const darkFill = "rgba(0, 0, 0, 0.5)";
+  const darkTop = new Konva.Rect({ fill: darkFill, listening: false });
+  const darkBottom = new Konva.Rect({ fill: darkFill, listening: false });
+  const darkLeft = new Konva.Rect({ fill: darkFill, listening: false });
+  const darkRight = new Konva.Rect({ fill: darkFill, listening: false });
+
+  const cutout = new Konva.Rect({
+    fill: "transparent",
+    stroke: "#ffffff",
+    strokeWidth: 2,
+    draggable: true,
+    name: "crop-cutout",
+    hitFunc: (ctx, shape) => {
+      ctx.beginPath();
+      ctx.rect(0, 0, shape.width(), shape.height());
+      ctx.closePath();
+      ctx.fillStrokeShape(shape);
+    },
+  });
+
+  const gridLines = new Konva.Group({ listening: false });
+  for (let i = 0; i < 4; i++) {
+    gridLines.add(
+      new Konva.Line({
+        points: [0, 0, 0, 0],
+        stroke: "rgba(255, 255, 255, 0.4)",
+        strokeWidth: 1,
+        listening: false,
+      }),
+    );
+  }
+
+  group.add(darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines);
+  return { group, darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines };
+}
+
+/**
+ * Counter-scale the cutout stroke and grid lines by 1/zoom so they stay a
+ * constant on-screen size (they are plain shapes on the zoom-scaled uiLayer).
+ *
+ * The crop `Konva.Transformer` is deliberately left untouched: Konva already
+ * neutralizes the layer zoom on transformers, so its anchors/border are screen-
+ * constant with their base sizes. Positions/bounds are unchanged.
  */
 export function applyCropStrokeScale(zoom: number, nodes: CropStrokeNodes): void {
   const inv = 1 / (zoom || 1);
@@ -87,8 +144,4 @@ export function applyCropStrokeScale(zoom: number, nodes: CropStrokeNodes): void
   for (const line of nodes.gridLines) {
     line.strokeWidth(1 * inv);
   }
-  nodes.transformer.anchorSize(12 * inv);
-  nodes.transformer.anchorCornerRadius(6 * inv);
-  nodes.transformer.anchorStrokeWidth(2 * inv);
-  nodes.transformer.borderStrokeWidth(2 * inv);
 }

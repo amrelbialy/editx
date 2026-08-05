@@ -1,354 +1,237 @@
 ---
-## title: Engine Design & Implementation
-
-# Engine Design — Editx
-
-This document contains: 1) a concise design spec for the Engine (replacing Controller), and 2) a ready-to-drop TypeScript implementation skeleton (Engine, Command pattern, HistoryManager, SelectionManager, RendererAdapter interface) you can iterate on.
+title: Engine Design & Architecture
 ---
 
-## Goals
+# Engine Design — editx
 
-- Keep **CreativeDocument** pure (serializable JSON) and free of runtime/rendering state.
-- Provide a single **Engine** class that exposes a deterministic, testable API for UI + plugins.
-- Implement a **Command** pattern for consistent undo/redo and auditability.
-- Keep **RendererAdapter** replaceable; Engine must not leak renderer handles.
-- Provide fine-grained dirty-tracking so adapters can batch updates and render efficiently.
+This is an **internal architecture guide** for contributors to `packages/engine`. It describes
+how the engine is structured, how responsibilities are divided, and how a change flows from a
+mutation to a rendered frame. It is intentionally distinct from the package
+[`README.md`](./README.md), which covers installation and the public consumer API.
 
----
+Everything below reflects the implementation that exists today. Interfaces are summarised, not
+copied verbatim — read the linked source for the authoritative signatures.
 
-## High-level responsibilities
+## Design goals
 
-- **Document management:** load/save/validate versions
-- **Command execution:** create/update/delete nodes via commands
-- **History & undo/redo:** diff-based history with command reversal
-- **Selection management:** maintain selection state, multi-select, range select
-- **Event bus:** publish events for node change, selection change, history change
-- **Dirty tracking:** mark nodes dirty, expose dirty set for renderer adapters
-- **Plugin system:** allow plugins to register commands, listeners, middleware
-- **Renderer orchestration:** notify adapter of changes; adapter handles DOM/GL
+- Keep block state a plain, serialisable data model (`BlockData`) with no renderer handles.
+- Route **all** document mutations through commands so history and events stay consistent.
+- Make the renderer replaceable behind a single `RendererAdapter` boundary — the engine never
+  touches Konva types directly.
+- Deliver block lifecycle changes to consumers as batched, deduplicated events at the end of
+  each update cycle.
+- Keep viewport (zoom/pan) behaviour deterministic by funnelling every camera mutation through
+  shared clamp helpers.
 
----
+## Module map & dependency direction
 
-## Engine public API (concept)
+Dependencies point inward toward the data model. Sub-APIs depend on the `EngineCore` interface
+rather than the concrete `EditxEngine` class to avoid circular imports.
 
-```ts
-interface EngineOptions {
-  document: CreativeDocument;
-  renderer: RendererAdapter;
-}
-
-class Engine {
-  constructor(options: EngineOptions);
-
-  // document
-  loadDocument(doc: CreativeDocument): void;
-  getDocument(): CreativeDocument;
-
-  // commands
-  exec(commandName: string, payload: any): CommandResult;
-  registerCommand(commandName: string, command: CommandFactory);
-
-  // selection
-  getSelection(): string[];
-  setSelection(ids: string[]): void;
-
-  // history
-  undo(): void;
-  redo(): void;
-
-  // events
-  on(event: EngineEvent, cb: Function): Unsub;
-  off(event: EngineEvent, cb: Function): void;
-}
+```
+consumers (apps/demo, image-editor)
+        │  engine.block / engine.editor / engine.scene / engine.event
+        ▼
+   EditxEngine  ──────────────►  RendererAdapter (boundary)  ──► Konva impl
+   (coordinator)                                                 (src/konva/)
+     │  exec(command)                    ▲
+     ▼                                   │ interaction callbacks
+  Commands (src/controller/commands/)    │ (onBlockClick, onBlockTransform, onPanChange…)
+     │  produce Patch[]                   │
+     ▼                                    │
+  BlockStore (src/block/)  ◄──────────────┘
+     │                     HistoryManager + EventAPI observe patches
+     ▼
+  BlockData (plain serialisable state)
 ```
 
----
+Key source files:
 
-## Core interfaces
+- [`src/editx-engine.ts`](./src/editx-engine.ts) — `EditxEngine`, the runtime coordinator.
+- [`src/engine-core.ts`](./src/engine-core.ts) — `EngineCore`, the internal contract sub-APIs use.
+- [`src/block/`](./src/block/) — `BlockStore`, `BlockAPI` facade, typed property keys.
+- [`src/controller/commands/`](./src/controller/commands/) — command implementations.
+- [`src/history-manager.ts`](./src/history-manager.ts) — patch-based undo/redo stack.
+- [`src/event-api.ts`](./src/event-api.ts) — batched block lifecycle events.
+- [`src/render-adapter.ts`](./src/render-adapter.ts) — the `RendererAdapter` boundary.
+- [`src/editor/`](./src/editor/) — crop, cursor, viewport, and edit-mode helpers.
+- [`src/konva/`](./src/konva/) — the concrete Konva renderer, camera, and interaction handling.
 
-### RendererAdapter
+## Responsibilities
 
-```ts
-export interface RendererAdapter {
-  init(options: { rootEl: HTMLElement }): Promise<void>;
-  createNode(node: EngineNode): RendererHandle;
-  updateNode(handle: RendererHandle, node: EngineNode): void;
-  removeNode(handle: RendererHandle): void;
-  renderFrame(): void; // request a render
-  dispose(): void;
-}
+### EditxEngine — coordinator
+
+`EditxEngine` owns the runtime wiring and exposes four sub-APIs: `block`, `editor`, `scene`, and
+`event`. It does not mutate block state directly; instead it:
+
+- executes commands (`exec`) and collects the `Patch[]` they return;
+- pushes patches to `HistoryManager` and enqueues corresponding `BlockEvent`s;
+- tracks a dirty set and flushes it to the renderer at the end of each cycle;
+- supports `beginBatch`/`endBatch` (coalesce many patches into one history entry) and
+  `beginSilent`/`endSilent` (mutate without recording history), both depth-counted for re-entrancy;
+- bridges an internal string-keyed `EventBus` to the typed public callbacks
+  (`onHistoryChanged`, `onZoomChanged`, `onPanChanged`, `onEditModeChanged`, `onBlockTransform`).
+
+### Block state & typed properties
+
+Block state lives in `BlockStore` as a map of `BlockData` — plain, serialisable records with an
+`id`, `type` (`scene | page | graphic | text | image | group | effect | shape | fill`), `kind`,
+children, and a typed `properties` bag. `PropertyValue` is a closed union
+(`number | string | boolean | Color | TextRun[]`). Property access uses exported string
+constants (e.g. `POSITION_X`, `SIZE_WIDTH`, `TEXT_RUNS`) rather than ad-hoc keys, keeping reads
+and writes discoverable and consistent. `BlockAPI` is a thin facade delegating to focused
+sub-APIs (property, selection, layout, crop, page, shape, fill, stroke, shadow, effect, text).
+
+### Commands — the only mutation path
+
+Every document mutation is a `Command` with a single `do(): Patch[]` method (see
+[`commands.types.ts`](./src/controller/commands/commands.types.ts)). A `Patch` records
+`{ id, before, after }` snapshots of a block; `after === null` means destroyed and
+`before === null` means created. Because commands are the sole writers, history, events, and
+dirty tracking are derived uniformly from the patches they emit. Sub-APIs never write to
+`BlockStore` directly — they construct a command and call `engine.exec(...)`.
+
+### EventAPI — committed lifecycle changes
+
+`engine.event.subscribe(blocks, cb)` reports `created | updated | destroyed` events for blocks
+(pass an empty array to observe all). Events are queued during command execution and delivered
+**once per update cycle**, after the renderer flush, deduplicated per block with the precedence
+`destroyed > created > updated`. This is the committed lifecycle stream — undo/redo re-emit the
+inverse events, so subscribers stay in sync without polling.
+
+### RendererAdapter — the rendering boundary
+
+`RendererAdapter` is the only surface the engine uses to draw. It exposes scene setup
+(`createScene`), block lifecycle (`syncBlock`, `removeBlock`, `syncChildOrder`), the transformer,
+camera/viewport methods, coordinate transforms, export, crop overlay control, and a set of
+optional `on*` interaction callbacks the renderer invokes back into the engine. The engine holds
+no Konva references; swapping renderers means implementing this interface.
+
+### Konva implementation — camera & interaction
+
+`src/konva/` provides the shipped adapter. It builds the Konva stage/layers, maps `BlockData`
+to Konva nodes, manages the transformer and crop overlay, and owns the camera. Pointer gestures
+are translated into the adapter's `on*` callbacks, which the engine turns into commands or typed
+notifications.
+
+## Architecture & data flow
+
+### Mutation path (consumer → rendered frame)
+
+```mermaid
+flowchart LR
+  A[engine.block.* call] --> B[Command.do returns Patch array]
+  B --> C[EditxEngine.exec]
+  C --> D[HistoryManager.push]
+  C --> E[EventAPI enqueue]
+  C --> F[mark dirty]
+  F --> G[flush dirty to RendererAdapter.syncBlock]
+  G --> H[renderFrame]
+  H --> I[EventAPI flush -> subscribers]
 ```
 
-### EngineNode (document-facing node)
+Under `beginBatch`/`endBatch`, patches accumulate and produce a single history entry and one
+flush on `endBatch`. Under `beginSilent`/`endSilent`, patches still update state, dirty tracking,
+and events, but are not pushed to history.
 
-```ts
-interface EngineNode {
-  id: string;
-  type: string;
-  children?: string[]; // IDs to other nodes (engine stores nodes map)
-  props?: Record<string, any>;
-  transform?: {
-    x: number;
-    y: number;
-    scaleX?: number;
-    scaleY?: number;
-    rotation?: number;
-  };
-  metadata?: Record<string, any>;
-  locked?: boolean;
-  undeletable?: boolean;
-}
+### Renderer-originated interaction path
+
+```mermaid
+flowchart LR
+  A[pointer gesture on Konva stage] --> B[adapter on* callback]
+  B --> C{kind of interaction}
+  C -->|drag/resize end| D[engine.block.* -> Command -> exec]
+  C -->|live drag/resize| E[emit block:transform -> onBlockTransform]
+  C -->|pan/zoom| F[emit pan:changed / zoom:changed -> onPanChanged/onZoomChanged]
+  D --> G[history + events + flush]
 ```
 
----
+Committed geometry changes (drag/transform end) go through commands like any other mutation.
+Live and viewport signals are notifications only — they never touch history.
 
 ## Viewport clamping, live events & additive selection
 
-These sections describe implemented public behavior layered on top of the concept API above.
-
 ### Zoom & pan clamping
 
-The Konva camera funnels every viewport mutation (`setZoom`, `zoomAtPoint`, `panTo`, `panBy`, `fitToScreen`, `fitToRect`, `centerOnRect`) through a single clamp so bounds are applied consistently:
+The Konva camera funnels every viewport mutation (`setZoom`, `zoomAtPoint`, `panTo`, `panBy`,
+`fitToScreen`, `fitToRect`, `centerOnRect`) through shared clamp helpers in
+[`konva-camera-clamp.ts`](./src/konva/konva-camera-clamp.ts), so bounds are applied uniformly:
 
-- Zoom is clamped to `[MIN_ZOOM, MAX_ZOOM]` (`0.05`–`20`).
-- Pan is clamped so page content stays reasonably in view.
+- Zoom is clamped to `[MIN_ZOOM, MAX_ZOOM]` (`0.05`–`20`) via `clampZoom`.
+- Pan is clamped by `clampPan`: the page is centred when it fits the viewport, and cannot be
+  dragged past its edges when zoomed in. Every camera method — including `fitToScreen` and
+  `centerOnRect` — runs this clamp.
 
-The shared bounds and helper are exported from the Konva camera module:
+These bounds are internal to the Konva renderer (not re-exported from the package root).
+Consumers set zoom indirectly through the editor/viewport API, which clamps internally.
 
-```ts
-export const MIN_ZOOM = 0.05;
-export const MAX_ZOOM = 20;
-export function clampZoom(zoom: number): number;
-```
+### Live transform & pan callbacks
 
-> These are internal to the Konva renderer implementation (not re-exported from the package root). Consumers configure zoom bounds indirectly via `editor.setZoom()`, which clamps internally.
+`EditxEngine` exposes typed subscriptions alongside `onHistoryChanged` / `onZoomChanged` /
+`onEditModeChanged`; each returns an unsubscribe function:
 
-> **Behavior note:** pan is now clamped by *every* camera method. Previously some methods (notably `fitToScreen` and `centerOnRect`) applied pan without clamping.
+- `onPanChanged((pan: { x: number; y: number }) => void)` — fires whenever the camera pan
+  changes (programmatic pan, zoom re-centering, fit, resize, or animation frame).
+- `onBlockTransform((e: BlockTransformEvent) => void)` — fires continuously while a block is
+  dragged or resized on-canvas (`e.phase` is `"drag"` or `"resize"`).
 
-### Event-driven viewport & transform callbacks
-
-`EditxEngine` exposes typed subscription methods alongside the existing `onHistoryChanged` / `onZoomChanged` / `onEditModeChanged` callbacks. Each returns an unsubscribe function.
-
-```ts
-// Fires whenever the camera pan changes.
-const offPan = engine.onPanChanged((pan: { x: number; y: number }) => {
-  // pan.x / pan.y
-});
-
-// Fires continuously (live, pre-commit) while a block is dragged or resized on-canvas.
-const offTransform = engine.onBlockTransform((e: BlockTransformEvent) => {
-  // e.block, e.phase === "drag" | "resize"
-});
-
-offPan();
-offTransform();
-```
-
-New exported types:
-
-```ts
-type BlockTransformPhase = "drag" | "resize";
-interface BlockTransformEvent { block: number; phase: BlockTransformPhase }
-interface ViewportState { zoom: number; pan: { x: number; y: number } }
-interface EditModeChange { mode: string; previousMode: string }
-```
-
-> `onBlockTransform` is a **live notification stream only** — it emits during the gesture and creates no undo/history entry. The committed mutation still arrives separately as an `updated` `BlockEvent` through `engine.event.subscribe(...)`.
+`onBlockTransform` is a **live, pre-commit notification stream only** — it creates no history
+entry. The committed mutation still arrives separately as an `updated` `BlockEvent` through
+`engine.event.subscribe(...)`. Exported types: `BlockTransformEvent`, `BlockTransformPhase`,
+`ViewportState`, `EditModeChange`.
 
 ### Additive (marquee) selection
 
-The renderer reports block clicks with a `BlockClickEvent` (from `render-adapter.ts`):
+The renderer reports block clicks with an internal `BlockClickEvent`
+(from [`render-adapter.ts`](./src/render-adapter.ts)) carrying `shiftKey` and optional
+`additive` flags:
 
-```ts
-interface BlockClickEvent {
-  shiftKey: boolean;
-  additive?: boolean;
-}
-```
+- `additive: true` — union the block into the current selection (marquee-drag); never toggles
+  or removes.
+- `shiftKey: true` without `additive` — toggles a single block's selection membership.
 
-> `BlockClickEvent` is an internal renderer-adapter type (not re-exported from the package root) used to distinguish marquee-drag selection from a single shift-click.
+`BlockClickEvent` is an internal renderer-adapter type, not re-exported from the package root.
 
-- `additive: true` — union the block into the current selection (used by marquee-drag selection); never toggles or removes.
-- `shiftKey: true` (without `additive`) — toggles a single block's selection membership (unchanged behavior).
+## Architectural invariants
 
----
+- Block state is plain, serialisable `BlockData`; it holds no renderer handles.
+- Mutations happen only through commands returning `Patch[]`; nothing writes `BlockStore` directly.
+- History, `BlockEvent`s, and dirty tracking are all derived from those patches.
+- The engine depends on `RendererAdapter`, never on Konva types.
+- Sub-APIs depend on `EngineCore`, not on the concrete `EditxEngine`, to keep imports acyclic.
+- Lifecycle events are delivered once per cycle, after flush, deduplicated per block.
+- Every camera mutation passes through `clampZoom` and `clampPan`.
 
-## Implementation skeleton
+## Extension checklist
 
-The following TypeScript skeleton is intentionally small and focused — it gives you a working Engine with commands, history, selection, event bus, and a renderer adapter hook. Extend it to your needs.
+Adding a new document mutation:
 
-```ts
-// packages/engine/src/types.ts
-export type ID = string;
+1. Add a `Command` in [`src/controller/commands/`](./src/controller/commands/) whose `do()`
+   snapshots before/after and returns `Patch[]`.
+2. Expose it from the relevant `BlockAPI` sub-API, calling `engine.exec(...)` (use
+   `beginBatch`/`endBatch` for compound edits).
+3. Add typed property keys in [`property-keys.ts`](./src/block/property-keys.ts) if introducing
+   new properties, and defaults in [`block-defaults.ts`](./src/block/block-defaults.ts).
 
-export interface CreativeDocument {
-  id: string;
-  version: number;
-  scene: {
-    width: number;
-    height: number;
-    background?: string;
-    root: ID; // id of root group
-  };
-  nodes: Record<ID, EngineNode>;
-}
+Adding renderer behaviour:
 
-export interface EngineNode {
-  /* as defined above */
-}
+1. Extend `RendererAdapter` in [`src/render-adapter.ts`](./src/render-adapter.ts) with a
+   minimal, renderer-agnostic method or `on*` callback.
+2. Implement it in [`src/konva/`](./src/konva/); route camera changes through the clamp helpers.
+3. Surface committed interactions as commands and live/viewport signals as typed callbacks.
 
-// packages/engine/src/events.ts
-export class EventBus {
-  private listeners = new Map<string, Set<Function>>();
-  on(event: string, fn: Function) {
-    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event)!.add(fn);
-  }
-  off(event: string, fn: Function) {
-    this.listeners.get(event)?.delete(fn);
-  }
-  emit(event: string, payload?: any) {
-    this.listeners.get(event)?.forEach((fn) => fn(payload));
-  }
-}
+Before finishing, run the engine test suite (`vitest`) covering the touched area and update this
+guide plus the [`README.md`](./README.md) if the public surface changed.
 
-// packages/engine/src/history.ts
-export interface Patch {
-  id: ID;
-  before: any;
-  after: any;
-}
-export class HistoryManager {
-  private stack: Patch[][] = [];
-  private idx = -1;
-  push(patches: Patch[]) {
-    this.stack = this.stack.slice(0, this.idx + 1);
-    this.stack.push(patches);
-    this.idx++;
-  }
-  canUndo() {
-    return this.idx >= 0;
-  }
-  undo(document: CreativeDocument) {
-    if (!this.canUndo()) return;
-    const patches = this.stack[this.idx--]; /* apply reverse */
-  }
-  redo(document: CreativeDocument) {
-    /* ... */
-  }
-}
+## Authoritative sources
 
-// packages/engine/src/commands.ts
-export interface Command {
-  do(doc: CreativeDocument): Patch[]; // returns patches applied
-  undo(doc: CreativeDocument): Patch[];
-}
-
-// example createNode command
-export class CreateNodeCommand implements Command {
-  constructor(private node: EngineNode) {}
-  do(doc: CreativeDocument) {
-    doc.nodes[this.node.id] = this.node;
-    return [{ id: this.node.id, before: null, after: this.node }];
-  }
-  undo(doc: CreativeDocument) {
-    delete doc.nodes[this.node.id];
-    return [{ id: this.node.id, before: this.node, after: null }];
-  }
-}
-
-// packages/engine/src/engine.ts
-export class Engine {
-  private doc: CreativeDocument;
-  private events = new EventBus();
-  private history = new HistoryManager();
-  private renderer?: RendererAdapter;
-  private dirty = new Set<ID>();
-  private selection: ID[] = [];
-
-  constructor(opts: { document: CreativeDocument; renderer?: RendererAdapter }) {
-    this.doc = opts.document;
-    this.renderer = opts.renderer;
-  }
-
-  loadDocument(doc: CreativeDocument) {
-    this.doc = doc;
-    this.events.emit('document:loaded', doc);
-  }
-  getDocument() {
-    return this.doc;
-  }
-
-  exec(command: Command) {
-    const patches = command.do(this.doc);
-    this.history.push(patches);
-    patches.forEach((p) => this.dirty.add(p.id));
-    this.events.emit(
-      'nodes:updated',
-      patches.map((p) => p.id)
-    );
-    this.flush();
-  }
-
-  undo() {
-    this.history.undo(this.doc); /* emit & flush */
-  }
-  redo() {
-    this.history.redo(this.doc);
-  }
-
-  setSelection(ids: ID[]) {
-    this.selection = ids;
-    this.events.emit('selection:changed', ids);
-  }
-  getSelection() {
-    return this.selection;
-  }
-
-  on(evt: string, cb: Function) {
-    this.events.on(evt, cb);
-  }
-  off(evt: string, cb: Function) {
-    this.events.off(evt, cb);
-  }
-
-  private flush() {
-    if (!this.renderer) return;
-    const dirtyIds = Array.from(this.dirty);
-    dirtyIds.forEach((id) => {
-      const node = this.doc.nodes[id];
-      // adapter signaling
-      // renderer.updateNode(handleMap[id], node) // handleMap lives inside adapter
-    });
-    this.dirty.clear();
-    this.renderer.renderFrame();
-  }
-}
-```
-
----
-
-## Next steps / integration notes
-
-- Wire renderer adapters to the engine by listening to `nodes:updated` and `document:loaded` events.
-- Keep renderer handles inside the adapter. Adapter maps Engine node IDs to renderer handles.
-- Ensure commands return patches for history. Prefer patches over full copies.
-- Add JSON schema validation in `engine.loadDocument` to guarantee version compatibility.
-- Build visual regression tests for adapter parity.
-
----
-
-## Appendix: Common commands to implement first
-
-- createNode
-- deleteNode
-- updateNodeProps
-- moveNode (reparent + position)
-- setSelection
-- group/ungroup
-- setLayerOrder
-- applyAdjustment
-- importImage
-- exportScene
-
----
+- Runtime coordinator: [`src/editx-engine.ts`](./src/editx-engine.ts) /
+  [`src/engine-core.ts`](./src/engine-core.ts)
+- Block model & API: [`src/block/`](./src/block/)
+- Commands: [`src/controller/commands/`](./src/controller/commands/)
+- History: [`src/history-manager.ts`](./src/history-manager.ts)
+- Events: [`src/event-api.ts`](./src/event-api.ts)
+- Renderer boundary: [`src/render-adapter.ts`](./src/render-adapter.ts)
+- Editor helpers: [`src/editor/`](./src/editor/)
+- Konva renderer & camera: [`src/konva/`](./src/konva/)
+- Consumer API & install: [`README.md`](./README.md)

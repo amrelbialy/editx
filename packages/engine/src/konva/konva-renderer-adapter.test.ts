@@ -17,8 +17,13 @@ const scene = vi.hoisted(() => {
   const uiLayer = layer();
   const stage = { batchDraw: vi.fn(), draw: vi.fn(), destroy: vi.fn() };
   const transformer = { nodes: vi.fn(), moveToTop: vi.fn() };
-  const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5) };
-  const cropOverlay = { applyViewportScale: vi.fn(), show: vi.fn(), destroy: vi.fn() };
+  const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5), setPageSize: vi.fn() };
+  const cropOverlay = {
+    applyViewportScale: vi.fn(),
+    show: vi.fn(),
+    hide: vi.fn(),
+    destroy: vi.fn(),
+  };
   return { contentLayer, uiLayer, stage, transformer, camera, cropOverlay };
 });
 
@@ -93,5 +98,30 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     expect(scene.contentLayer.batchDraw).toHaveBeenCalledTimes(1);
     expect(scene.stage.batchDraw).not.toHaveBeenCalled();
     expect(scene.stage.draw).not.toHaveBeenCalled();
+  });
+
+  it("points the camera pan-clamp bounds at the full image rect while cropping", async () => {
+    const adapter = await makeAdapter();
+    scene.camera.setPageSize.mockClear();
+
+    // Crop mode renders the full original image, so pan clamping must use those
+    // bounds — otherwise fitToRect(crop) gets clamped back to the (smaller)
+    // committed page size and the crop can't be centered in the viewport.
+    const imageRect: CropRect = { x: 0, y: 0, width: 2000, height: 1333 };
+    adapter.showCropOverlay(7, imageRect);
+
+    expect(scene.camera.setPageSize).toHaveBeenCalledWith(2000, 1333);
+  });
+
+  it("restores the committed page size for pan clamping when cropping ends", async () => {
+    const adapter = await makeAdapter();
+    // createScene seeds #lastPageSize from the page block (defaults to 1080×1080).
+    adapter.showCropOverlay(7, { x: 0, y: 0, width: 2000, height: 1333 });
+    scene.camera.setPageSize.mockClear();
+
+    adapter.hideCropOverlay();
+
+    expect(scene.camera.setPageSize).toHaveBeenCalledWith(1080, 1080);
+    expect(scene.cropOverlay.hide).toHaveBeenCalledTimes(1);
   });
 });

@@ -15,6 +15,8 @@ import {
   IMAGE_SRC,
   PAGE_HEIGHT,
   PAGE_WIDTH,
+  POSITION_X,
+  POSITION_Y,
   SIZE_HEIGHT,
   SIZE_WIDTH,
 } from "./block/property-keys";
@@ -642,6 +644,134 @@ describe("EditorAPI — Block Lifecycle crop (page resize)", () => {
       expect.objectContaining({ width: 640, height: 960 }),
       { rotation: 0, flipH: false, flipV: false, sourceWidth: 640, sourceHeight: 960 },
     );
+  });
+});
+
+describe("EditorAPI — crop keeps child blocks anchored to image content", () => {
+  let engine: EditxEngine;
+  let editor: EditorAPI;
+  let block: BlockAPI;
+  let renderer: RendererAdapter;
+
+  function createPageWithImage(w: number, h: number) {
+    const store = engine._getBlockStore();
+    const cmd = new CreateBlockCommand(store, "page");
+    engine.exec(cmd);
+    const id = cmd.getCreatedId()!;
+    store.setProperty(id, PAGE_WIDTH, w);
+    store.setProperty(id, PAGE_HEIGHT, h);
+    store.setProperty(id, IMAGE_SRC, "test.png");
+    store.setProperty(id, IMAGE_ORIGINAL_WIDTH, w);
+    store.setProperty(id, IMAGE_ORIGINAL_HEIGHT, h);
+    return id;
+  }
+
+  beforeEach(() => {
+    renderer = createMockRenderer();
+    engine = new EditxEngine({ renderer });
+    block = new BlockAPI(engine);
+    editor = new EditorAPI(engine);
+    editor._setBlockAPI(block);
+    block._setApplyCropRatioHandler((ratio) => editor._getCrop().applyCropRatio(ratio));
+  });
+
+  it("translates child positions by the crop offset on commit", () => {
+    const pageId = createPageWithImage(2000, 1333);
+    const textId = block.addText(pageId, 753, 583, 494, 141, "Title");
+    const store = engine._getBlockStore();
+
+    block.select(pageId);
+    editor.setEditMode("Crop");
+
+    // Crop that removes 100px from the left and 50px from the top.
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 100, y: 50, width: 1600, height: 900 });
+    editor.setEditMode("Transform");
+
+    // Child stays glued to the same image content: shifted by −(cropTopLeft).
+    expect(store.getFloat(textId, POSITION_X)).toBeCloseTo(653, 3);
+    expect(store.getFloat(textId, POSITION_Y)).toBeCloseTo(533, 3);
+  });
+
+  it("re-anchors children relative to a previous crop origin on re-commit", () => {
+    const pageId = createPageWithImage(2000, 1333);
+    const store = engine._getBlockStore();
+    // Simulate a committed 16:9 crop: page origin is at visual (0, 104).
+    store.setProperty(pageId, PAGE_WIDTH, 2000);
+    store.setProperty(pageId, PAGE_HEIGHT, 1125);
+    store.setProperty(pageId, CROP_ENABLED, true);
+    store.setProperty(pageId, CROP_X, 0);
+    store.setProperty(pageId, CROP_Y, 104);
+    store.setProperty(pageId, CROP_WIDTH, 2000);
+    store.setProperty(pageId, CROP_HEIGHT, 1125);
+    // Child stored relative to the 16:9 page origin.
+    const textId = block.addText(pageId, 753, 479, 494, 141, "Title");
+
+    block.select(pageId);
+    editor.setEditMode("Crop");
+
+    // New crop (visual space) with origin (333, 0) — e.g. a centered square.
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 333, y: 0, width: 1333, height: 1333 });
+    editor.setEditMode("Transform");
+
+    // delta = oldTopLeft(0,104) − newTopLeft(333,0) = (−333, +104)
+    expect(store.getFloat(textId, POSITION_X)).toBeCloseTo(420, 3);
+    expect(store.getFloat(textId, POSITION_Y)).toBeCloseTo(583, 3);
+  });
+
+  it("does not move children when the committed crop is unchanged", () => {
+    const pageId = createPageWithImage(1000, 1000);
+    const textId = block.addText(pageId, 400, 400, 200, 80, "Body");
+    const store = engine._getBlockStore();
+
+    block.select(pageId);
+    editor.setEditMode("Crop");
+
+    // Exit with the full image (no crop) — nothing should shift.
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 0, y: 0, width: 1000, height: 1000 });
+    editor.setEditMode("Transform");
+
+    expect(store.getFloat(textId, POSITION_X)).toBe(400);
+    expect(store.getFloat(textId, POSITION_Y)).toBe(400);
+  });
+
+  it("offsets child nodes to the full image while re-entering crop", () => {
+    const pageId = createPageWithImage(2000, 1333);
+    const store = engine._getBlockStore();
+    // Committed crop with a non-zero origin.
+    store.setProperty(pageId, PAGE_WIDTH, 1600);
+    store.setProperty(pageId, PAGE_HEIGHT, 900);
+    store.setProperty(pageId, CROP_ENABLED, true);
+    store.setProperty(pageId, CROP_X, 100);
+    store.setProperty(pageId, CROP_Y, 50);
+    store.setProperty(pageId, CROP_WIDTH, 1600);
+    store.setProperty(pageId, CROP_HEIGHT, 900);
+    const textId = block.addText(pageId, 300, 300, 200, 80, "Title");
+
+    block.select(pageId);
+    editor.setEditMode("Crop");
+
+    // Children get nudged by the committed crop top-left so they line up with
+    // the full image the overlay renders.
+    expect(renderer.offsetCropChildNodes).toHaveBeenCalledWith([textId], 100, 50);
+  });
+
+  it("child translation is part of the same undo entry as the crop", () => {
+    const pageId = createPageWithImage(2000, 1333);
+    const textId = block.addText(pageId, 753, 583, 494, 141, "Title");
+    const store = engine._getBlockStore();
+
+    block.select(pageId);
+    editor.setEditMode("Crop");
+    vi.mocked(renderer.getCropRect).mockReturnValue({ x: 100, y: 50, width: 1600, height: 900 });
+    editor.setEditMode("Transform");
+
+    expect(store.getFloat(textId, POSITION_X)).toBeCloseTo(653, 3);
+
+    // A single undo restores both the page crop and the child position.
+    editor.undo();
+    expect(store.getFloat(textId, POSITION_X)).toBe(753);
+    expect(store.getFloat(textId, POSITION_Y)).toBe(583);
+    expect(store.getBool(pageId, CROP_ENABLED)).toBe(false);
   });
 });
 

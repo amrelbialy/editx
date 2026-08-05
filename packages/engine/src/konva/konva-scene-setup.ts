@@ -49,7 +49,7 @@ export function createKonvaScene(
   const uiLayer = new Konva.Layer();
   stage.add(uiLayer);
 
-  const { transformer, updateAccent, updateViewportScale } = createStyledTransformer(uiLayer);
+  const { transformer, updateAccent } = createStyledTransformer(uiLayer);
   uiLayer.add(transformer);
 
   const selectionRect = new Konva.Rect({
@@ -93,9 +93,10 @@ export function createKonvaScene(
     },
   });
 
-  // Keep UI-overlay handle/stroke sizes screen-constant as the user zooms.
+  // The transformer (block + crop) counter-scales itself for zoom via Konva, so
+  // its handles are already screen-constant. Only the plain overlay shapes that
+  // live directly on the zoom-scaled uiLayer need manual 1/zoom stroke sizing.
   camera.setZoomChangeListener((zoom) => {
-    updateViewportScale(zoom);
     selectionRect.strokeWidth(1 / zoom);
     cropOverlay.applyViewportScale(zoom);
   });

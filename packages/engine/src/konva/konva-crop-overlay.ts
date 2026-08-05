@@ -1,4 +1,4 @@
-import Konva from "konva";
+import type Konva from "konva";
 import type { CropRect } from "../utils/crop-math";
 import {
   clampCutoutPosition,
@@ -10,6 +10,7 @@ import {
   applyCropStrokeScale,
   CROP_ANCHORS_ALL,
   CROP_ANCHORS_CORNERS,
+  createCropOverlayNodes,
   createCropTransformer,
   makeCropBoundBoxFunc,
 } from "./konva-crop-overlay-viewport";
@@ -40,39 +41,14 @@ export class KonvaCropOverlay {
     this.#onChange = onChange;
     this.#onLiveUpdate = onLiveUpdate;
 
-    this.#group = new Konva.Group({ name: "crop-overlay", visible: false });
-
-    const darkFill = "rgba(0, 0, 0, 0.5)";
-    this.#darkTop = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkBottom = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkLeft = new Konva.Rect({ fill: darkFill, listening: false });
-    this.#darkRight = new Konva.Rect({ fill: darkFill, listening: false });
-
-    this.#cutout = new Konva.Rect({
-      fill: "transparent",
-      stroke: "#ffffff",
-      strokeWidth: 2,
-      draggable: true,
-      name: "crop-cutout",
-      hitFunc: (ctx, shape) => {
-        ctx.beginPath();
-        ctx.rect(0, 0, shape.width(), shape.height());
-        ctx.closePath();
-        ctx.fillStrokeShape(shape);
-      },
-    });
-
-    this.#gridLines = new Konva.Group({ listening: false });
-    for (let i = 0; i < 4; i++) {
-      this.#gridLines.add(
-        new Konva.Line({
-          points: [0, 0, 0, 0],
-          stroke: "rgba(255, 255, 255, 0.4)",
-          strokeWidth: 1,
-          listening: false,
-        }),
-      );
-    }
+    const nodes = createCropOverlayNodes();
+    this.#group = nodes.group;
+    this.#darkTop = nodes.darkTop;
+    this.#darkBottom = nodes.darkBottom;
+    this.#darkLeft = nodes.darkLeft;
+    this.#darkRight = nodes.darkRight;
+    this.#cutout = nodes.cutout;
+    this.#gridLines = nodes.gridLines;
 
     this.#transformer = createCropTransformer(
       makeCropBoundBoxFunc(
@@ -87,8 +63,7 @@ export class KonvaCropOverlay {
     this.#cutout.on("transform", () => this.#onTransform());
     this.#cutout.on("transformend", () => this.#onTransformEnd());
 
-    this.#group.add(this.#darkTop, this.#darkBottom, this.#darkLeft, this.#darkRight);
-    this.#group.add(this.#cutout, this.#gridLines, this.#transformer);
+    this.#group.add(this.#transformer);
     this.#layer.add(this.#group);
   }
 
@@ -109,9 +84,11 @@ export class KonvaCropOverlay {
     this.#updateDarkRects();
     this.#updateGridLines();
     this.#transformer.nodes([this.#cutout]);
-    this.#transformer.forceUpdate();
     this.#applyRatioConfig();
+    // Keep the plain overlay strokes screen-constant at the current zoom, then
+    // let the transformer re-fit its (already screen-constant) handles.
     this.#applyStrokeScale();
+    this.#transformer.forceUpdate();
 
     this.#group.visible(true);
     this.#group.moveToTop();
@@ -170,24 +147,28 @@ export class KonvaCropOverlay {
     this.#layer.batchDraw();
   }
 
-  /**
-   * Keep the cutout stroke, grid lines, and crop handles screen-constant by
-   * counter-scaling their pixel sizes by 1/zoom (the overlay is on the
-   * zoom-scaled uiLayer). Positions/bounds are unchanged.
-   */
+  /** Counter-scale the plain overlay strokes (cutout + grid) by 1/zoom. */
   applyViewportScale(zoom: number): void {
     this.#viewportZoom = zoom || 1;
     this.#applyStrokeScale();
-    this.#transformer.forceUpdate();
     this.#layer.batchDraw();
   }
 
   #applyStrokeScale(): void {
-    applyCropStrokeScale(this.#viewportZoom, {
+    applyCropStrokeScale(this.#effectiveZoom(), {
       cutout: this.#cutout,
       gridLines: this.#gridLines.children as unknown as Konva.Line[],
-      transformer: this.#transformer,
     });
+  }
+
+  /**
+   * Source of truth for the counter-scale factor: the overlay lives on the
+   * zoom-scaled uiLayer, so the layer's own scale *is* the current zoom. Reading
+   * it directly avoids depending on {@link applyViewportScale} call ordering.
+   */
+  #effectiveZoom(): number {
+    const layerScale = typeof this.#layer.scaleX === "function" ? this.#layer.scaleX() : 0;
+    return layerScale || this.#viewportZoom || 1;
   }
 
   destroy(): void {
@@ -195,19 +176,10 @@ export class KonvaCropOverlay {
     this.#group.destroy();
   }
 
-  #getCutoutRect(): CropRect {
-    return {
-      x: this.#cutout.x(),
-      y: this.#cutout.y(),
-      width: this.#cutout.width() * this.#cutout.scaleX(),
-      height: this.#cutout.height() * this.#cutout.scaleY(),
-    };
-  }
-
   #updateDarkRects(): void {
     layoutDarkRects(
       this.#imageRect,
-      this.#getCutoutRect(),
+      this.getCropRect(),
       this.#darkTop,
       this.#darkBottom,
       this.#darkLeft,
@@ -216,7 +188,7 @@ export class KonvaCropOverlay {
   }
 
   #updateGridLines(): void {
-    layoutGridLines(this.#getCutoutRect(), this.#gridLines.children as unknown as Konva.Line[]);
+    layoutGridLines(this.getCropRect(), this.#gridLines.children as unknown as Konva.Line[]);
   }
 
   #applyRatioConfig(): void {

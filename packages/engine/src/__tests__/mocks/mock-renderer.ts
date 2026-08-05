@@ -30,6 +30,7 @@ export function createMockRenderer(): RendererAdapter {
     setCursor: vi.fn(),
     showCropOverlay: vi.fn(),
     hideCropOverlay: vi.fn(),
+    offsetCropChildNodes: vi.fn(),
     setCropRect: vi.fn(),
     setCropRatio: vi.fn(),
     getCropRect: vi.fn().mockReturnValue(null),

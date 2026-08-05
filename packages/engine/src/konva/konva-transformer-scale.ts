@@ -1,14 +1,9 @@
-import type Konva from "konva";
-
-/** Hit-detection width (px) around a transformer border edge. */
-export const EDGE_HIT_WIDTH = 12;
-
 /**
- * Screen-constant sizing helper: the transformer lives on the (zoom-scaled)
- * uiLayer, so multiply local sizes by 1/scale to keep handles/strokes a
- * constant on-screen pixel size regardless of world zoom.
+ * Hit-detection width (px) around a transformer border edge.
+ *
+ * A `Konva.Transformer` counter-scales itself by 1/layerScale on every update
+ * (via each node's `absoluteTransformChange`), so its local coordinate space is
+ * already 1:1 with screen pixels. Handle/anchor/border sizes are therefore
+ * specified in raw screen px — no manual zoom compensation is needed or wanted.
  */
-export function layerInvScale(node: Konva.Node): number {
-  const s = node.getLayer()?.scaleX() || 1;
-  return 1 / s;
-}
+export const EDGE_HIT_WIDTH = 12;

@@ -25,7 +25,8 @@ const realResizeObserver = globalThis.ResizeObserver;
 function makeDeps(overrides?: Partial<ViewportResizeDeps>) {
   const fitToScreen = vi.fn();
   const reapplyViewport = vi.fn();
-  const camera = { fitToScreen, reapplyViewport } as unknown as KonvaCamera;
+  const fitToRect = vi.fn();
+  const camera = { fitToScreen, reapplyViewport, fitToRect } as unknown as KonvaCamera;
   const width = vi.fn();
   const height = vi.fn();
   const stage = { width, height } as unknown as Konva.Stage;
@@ -37,7 +38,15 @@ function makeDeps(overrides?: Partial<ViewportResizeDeps>) {
     getPageSize: () => ({ width: 1080, height: 720 }),
     ...overrides,
   };
-  return { deps, fitToScreen, reapplyViewport, stageWidth: width, stageHeight: height, rootEl };
+  return {
+    deps,
+    fitToScreen,
+    reapplyViewport,
+    fitToRect,
+    stageWidth: width,
+    stageHeight: height,
+    rootEl,
+  };
 }
 
 function fireResize() {
@@ -104,5 +113,45 @@ describe("observeViewportResize", () => {
     const { deps } = makeDeps();
     const observer = observeViewportResize(deps) as unknown as FakeResizeObserver;
     expect(observer.observe).toHaveBeenCalledWith(deps.rootEl);
+  });
+
+  it("re-fits to the crop rect on resize while crop mode is active", () => {
+    // Opening the crop panel shrinks the canvas *after* the initial crop fit,
+    // so the resize must re-fit to the crop rect (not preserve the stale fit
+    // computed against the pre-panel, wider stage).
+    const cropRect = { x: 10, y: 20, width: 300, height: 200 };
+    const { deps, fitToScreen, reapplyViewport, fitToRect } = makeDeps({
+      getCropFitRect: () => cropRect,
+    });
+    observeViewportResize(deps);
+
+    fireResize(); // first: initial page fit
+    fireResize(); // second: crop-mode resize → re-fit to crop rect
+
+    expect(fitToScreen).toHaveBeenCalledTimes(1);
+    expect(fitToRect).toHaveBeenCalledTimes(1);
+    expect(fitToRect).toHaveBeenCalledWith(cropRect, 24);
+    expect(reapplyViewport).not.toHaveBeenCalled();
+  });
+
+  it("preserves the viewport once crop mode ends (getCropFitRect returns null)", () => {
+    let cropRect: { x: number; y: number; width: number; height: number } | null = {
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    };
+    const { deps, fitToRect, reapplyViewport } = makeDeps({
+      getCropFitRect: () => cropRect,
+    });
+    observeViewportResize(deps);
+
+    fireResize(); // first: page fit
+    fireResize(); // crop active → fitToRect
+    cropRect = null; // crop mode exits
+    fireResize(); // → preserve viewport
+
+    expect(fitToRect).toHaveBeenCalledTimes(1);
+    expect(reapplyViewport).toHaveBeenCalledTimes(1);
   });
 });

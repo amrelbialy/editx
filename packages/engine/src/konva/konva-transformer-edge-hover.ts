@@ -1,5 +1,5 @@
 import type Konva from "konva";
-import { EDGE_HIT_WIDTH, layerInvScale } from "./konva-transformer-scale";
+import { EDGE_HIT_WIDTH } from "./konva-transformer-scale";
 
 /**
  * Detect when the cursor is near a transformer border edge and:
@@ -47,7 +47,9 @@ export function setupEdgeHover(
     const distLeft = Math.abs(local.x);
     const distRight = Math.abs(local.x - w);
 
-    const threshold = EDGE_HIT_WIDTH * layerInvScale(back);
+    // The transformer's local space is already 1:1 with screen px (Konva
+    // neutralizes the layer zoom), so the edge threshold is a raw px value.
+    const threshold = EDGE_HIT_WIDTH;
     const inBoundsX = local.x >= -threshold && local.x <= w + threshold;
     const inBoundsY = local.y >= -threshold && local.y <= h + threshold;
 
