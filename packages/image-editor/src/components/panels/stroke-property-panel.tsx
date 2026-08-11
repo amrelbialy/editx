@@ -4,14 +4,17 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { useImageEditorStore } from "../../store/image-editor-store";
 import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
+import { TextStrokeSection } from "./text-stroke-section.component";
 
 interface StrokePropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
+  blockType: "text" | "graphic" | "image";
 }
 
 interface StrokeState {
@@ -28,8 +31,17 @@ function readStroke(engine: EditxEngine, blockId: number): StrokeState {
   };
 }
 
-export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine, blockId }) => {
+export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({
+  engine,
+  blockId,
+  blockType,
+}) => {
   const shapes = useConfig().shapes;
+
+  const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
+  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+
+  const isText = blockType === "text";
 
   const [state, setState] = useState(() => readStroke(engine, blockId));
 
@@ -45,6 +57,18 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
   const update = useCallback(() => setState(readStroke(engine, blockId)), [engine, blockId]);
 
   const { commit, flush } = useCoalescedHistory(engine);
+
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
+
+  const getStyleRange = useCallback((): { start: number; end: number } => {
+    if (hasCharSelection && textSelectionRange) {
+      return { start: textSelectionRange.from, end: textSelectionRange.to };
+    }
+    return { start: 0, end: engine.block.getTextContent(blockId).length };
+  }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
   const handleToggle = useCallback(() => {
     if (state.enabled) {
@@ -81,6 +105,20 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine
     },
     [engine, blockId, update, commit],
   );
+
+  // Text blocks store stroke in the run style (single source of truth); the
+  // existing per-run section handles read/write selection-aware. Graphic/image
+  // keep the block-level Konva stroke below.
+  if (isText) {
+    return (
+      <TextStrokeSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+      />
+    );
+  }
 
   return (
     <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>

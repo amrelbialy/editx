@@ -16,6 +16,8 @@ export interface ShortcutActions {
   onSendBackward?: () => void;
   onBringToFront?: () => void;
   onSendToBack?: () => void;
+  onGroup?: () => void;
+  onUngroup?: () => void;
   enabled?: boolean;
 }
 
@@ -62,6 +64,17 @@ export function useShortcuts(actions: ShortcutActions) {
       if ((e.ctrlKey || e.metaKey) && e.key === "d") {
         e.preventDefault();
         actions.onDuplicate?.();
+        return;
+      }
+
+      // Ctrl/Cmd + G = Group, Ctrl/Cmd + Shift + G = Ungroup
+      if ((e.ctrlKey || e.metaKey) && (e.key === "g" || e.key === "G")) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          actions.onUngroup?.();
+        } else {
+          actions.onGroup?.();
+        }
         return;
       }
 

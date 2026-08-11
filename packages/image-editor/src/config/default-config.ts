@@ -1,10 +1,7 @@
-import type {
-  AspectRatioPreset,
-  ImageEditorConfig,
-  ResizePresetGroup,
-  TextStylePreset,
-} from "./config.types";
+import type { AspectRatioPreset, ImageEditorConfig, ResizePresetGroup } from "./config.types";
 import { TOOL_IDS } from "./config.types";
+
+export { DEFAULT_SHAPE_PRESET_GROUPS, DEFAULT_TEXT_PRESET_GROUPS } from "./presets";
 
 /** Font families offered in every font picker when config omits `text.fonts`. */
 export const DEFAULT_FONT_FAMILIES = [
@@ -35,19 +32,6 @@ export const DEFAULT_COLOR_SWATCHES = [
   "#06B6D4",
   "#F97316",
   "#84CC16",
-];
-
-const defaultTextPresets: TextStylePreset[] = [
-  { id: "title", label: "Title", text: "Title", fontSizeScale: 3.75, fontWeight: "bold" },
-  { id: "heading", label: "Heading", text: "Heading", fontSizeScale: 2.625, fontWeight: "bold" },
-  {
-    id: "subheading",
-    label: "Subheading",
-    text: "Subheading",
-    fontSizeScale: 1.75,
-    fontWeight: "bold",
-  },
-  { id: "body", label: "Body Text", text: "Body text", fontSizeScale: 1, fontWeight: "normal" },
 ];
 
 const defaultAspectRatios: AspectRatioPreset[] = [
@@ -164,15 +148,19 @@ export const defaultConfig: Required<
     defaultFontWeight: "normal",
     defaultFontStyle: "normal",
     defaultTextAlign: "left",
-    defaultLineHeight: 1.2,
+    defaultLineHeight: 1.1,
     defaultLetterSpacing: 0,
     minFontSize: 1,
     maxFontSize: 500,
-    presets: defaultTextPresets,
+    // No legacy `presets` seed: the gallery shows the built-in rich catalogs
+    // (DEFAULT_TEXT_PRESET_GROUPS) by default. A consumer-supplied `text.presets`
+    // is treated as a real legacy override and mapped to a single category.
   },
 
   shapes: {
-    presets: ["rect", "ellipse", "triangle", "pentagon", "hexagon", "star", "line"],
+    // No legacy `presets` seed — see the note on `text` above. Built-in
+    // DEFAULT_SHAPE_PRESET_GROUPS render by default; consumer `shapes.presets`
+    // maps to a single legacy category.
     defaultFillMode: "filled",
     defaultColor: "#3b82f6",
     defaultStrokeWidth: 0,

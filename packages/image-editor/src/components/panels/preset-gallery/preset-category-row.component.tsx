@@ -1,0 +1,81 @@
+import type React from "react";
+import type { PresetPreview } from "../../../config/config.types";
+import { useTranslation } from "../../../i18n/i18n-context";
+import { Button, CarouselRow, PresetCard } from "../../ui";
+import { PresetThumbnail } from "./preset-thumbnail.component";
+
+/** Minimal shape the gallery needs from a text or shape preset. */
+export interface GalleryPreset {
+  id: string;
+  label: string;
+  preview: PresetPreview;
+}
+
+interface PresetCategoryRowProps {
+  label: string;
+  presets: GalleryPreset[];
+  expanded: boolean;
+  onToggleExpand: () => void;
+  onSelect: (id: string) => void;
+}
+
+/** How many tiles a collapsed row shows before "More (N)". */
+export const VISIBLE_COUNT = 3;
+
+/**
+ * One gallery category: a header with a "More (N)" / "Less" toggle, a collapsed
+ * horizontal carousel (VISIBLE_COUNT cap), and an expanded container-query grid.
+ * Ports the expand/collapse idiom from `resize-presets.tsx`.
+ */
+export const PresetCategoryRow: React.FC<PresetCategoryRowProps> = (props) => {
+  const { label, presets, expanded, onToggleExpand, onSelect } = props;
+
+  const { t } = useTranslation();
+
+  const hasMore = presets.length > VISIBLE_COUNT;
+  const visible = expanded ? presets : presets.slice(0, VISIBLE_COUNT);
+
+  const cards = visible.map((preset) => (
+    <PresetCard
+      key={preset.id}
+      ariaLabel={preset.label}
+      label={preset.label}
+      onClick={() => onSelect(preset.id)}
+      className={expanded ? "min-w-0" : "w-24 shrink-0"}
+    >
+      <PresetThumbnail preview={preset.preview} />
+    </PresetCard>
+  ));
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-fluid font-medium text-foreground">{label}</span>
+        {hasMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto px-2 py-0.5 text-fluid text-muted-foreground"
+            onClick={onToggleExpand}
+          >
+            {expanded
+              ? t("gallery.less")
+              : `${t("gallery.more")} (${presets.length - VISIBLE_COUNT})`}
+          </Button>
+        )}
+      </div>
+
+      {expanded ? (
+        <div className="grid grid-cols-2 gap-2 @3xl/editor:grid-cols-3">{cards}</div>
+      ) : (
+        <CarouselRow
+          ariaLabel={label}
+          leftLabel={t("gallery.scrollLeft")}
+          rightLabel={t("gallery.scrollRight")}
+        >
+          {cards}
+        </CarouselRow>
+      )}
+    </div>
+  );
+};

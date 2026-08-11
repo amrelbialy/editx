@@ -10,6 +10,7 @@ import { FilterPanel } from "../panels/filter-panel";
 import { ImageFillPanel } from "../panels/image-fill-panel";
 import { PositionPropertyPanel } from "../panels/position-property-panel";
 import { ShadowPropertyPanel } from "../panels/shadow-property-panel";
+import { ShapeFillPanel } from "../panels/shape-fill-panel";
 import { StrokePropertyPanel } from "../panels/stroke-property-panel";
 import { TextAdvancedPanel } from "../panels/text-advanced-panel";
 
@@ -51,11 +52,32 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
         />
       );
     case "background":
-      return <BackgroundPropertyPanel engine={engine} blockId={blockId} />;
+      return (
+        <BackgroundPropertyPanel
+          engine={engine}
+          blockId={blockId}
+          blockType={blockType as "text" | "graphic" | "image"}
+        />
+      );
     case "shadow":
-      return <ShadowPropertyPanel engine={engine} blockId={blockId} />;
+      return (
+        <ShadowPropertyPanel
+          engine={engine}
+          blockId={blockId}
+          blockType={blockType as "text" | "graphic" | "image"}
+        />
+      );
     case "stroke":
-      return <StrokePropertyPanel engine={engine} blockId={blockId} />;
+      return (
+        <StrokePropertyPanel
+          engine={engine}
+          blockId={blockId}
+          blockType={blockType as "text" | "graphic" | "image"}
+        />
+      );
+    case "fill":
+      if (blockType !== "graphic") return null;
+      return <ShapeFillPanel engine={engine} blockId={blockId} />;
     case "position":
       return (
         <PositionPropertyPanel

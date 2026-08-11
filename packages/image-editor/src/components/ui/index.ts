@@ -2,6 +2,7 @@
 
 // Primitives
 export * from "./button";
+export * from "./carousel-row";
 export * from "./color-palette";
 export * from "./color-picker";
 export * from "./color-swatch";
@@ -11,7 +12,9 @@ export * from "./icon-button";
 export * from "./input";
 export * from "./popover";
 export * from "./popover-container-context";
+export * from "./preset-card";
 export * from "./scroll-area";
+export * from "./search-input";
 export * from "./section";
 export * from "./segmented-control";
 export * from "./select";

@@ -24,10 +24,12 @@ export interface SceneComponents {
 export interface SceneCallbacks {
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onCropChange?: (rect: CropRect) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
+  getGroupContext?: () => number[];
 }
 
 export function createKonvaScene(
@@ -84,9 +86,11 @@ export function createKonvaScene(
     uiLayer,
     nodeMap,
     camera,
+    getGroupContext: callbacks.getGroupContext ?? (() => []),
     callbacks: {
       onBlockClick: (blockId, event) => callbacks.onBlockClick?.(blockId, event),
       onBlockDblClick: (blockId, screenPos) => callbacks.onBlockDblClick?.(blockId, screenPos),
+      onEnterGroup: (groupId, childId) => callbacks.onEnterGroup?.(groupId, childId),
       onStageClick: (worldPos) => callbacks.onStageClick?.(worldPos),
       onZoomChange: (zoom) => callbacks.onZoomChange?.(zoom),
       onBlockTransform: (blockId, phase) => callbacks.onBlockTransform?.(blockId, phase),

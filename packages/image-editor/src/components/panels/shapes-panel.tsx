@@ -1,91 +1,39 @@
 import type { ShapeType } from "@editx/engine";
-import { Circle, Hexagon, MoveRight, Pentagon, Square, Star, Triangle } from "lucide-react";
 import type React from "react";
-import { useCallback } from "react";
+import { useMemo } from "react";
 import { useConfig } from "../../config/config-context";
-import { Section } from "../ui/section";
-import type { SelectionGridItem } from "../ui/selection-grid";
-import { SelectionGrid } from "../ui/selection-grid";
+import { DEFAULT_SHAPE_PRESET_GROUPS } from "../../config/presets";
+import { resolveShapePresetGroups } from "../../config/resolve-presets";
+import { PresetGallery } from "./preset-gallery";
 
 export interface ShapesPanelProps {
+  /** Legacy shape-kind insertion (retained for API compatibility). */
   onAddShape: (shapeType: ShapeType, sides?: number) => void;
+  /** Gallery insertion by preset id. */
+  onAddShapePreset?: (id: string) => void;
 }
 
-interface ShapeDef extends SelectionGridItem {
-  type: ShapeType;
-  sides?: number;
-}
+/**
+ * Thin wrapper: resolves the shape preset catalog (built-in rich catalog by
+ * default; consumer `presetGroups` / `additionalPresetGroups` / legacy
+ * `presets` honoured) and delegates browsing + insertion to the gallery.
+ */
+export const ShapesPanel: React.FC<ShapesPanelProps> = (props) => {
+  const { onAddShape, onAddShapePreset } = props;
 
-const SHAPES: ShapeDef[] = [
-  {
-    id: "rect",
-    type: "rect",
-    label: "Rectangle",
-    icon: <Square className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-  },
-  {
-    id: "ellipse",
-    type: "ellipse",
-    label: "Ellipse",
-    icon: <Circle className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-  },
-  {
-    id: "triangle",
-    type: "polygon",
-    label: "Triangle",
-    icon: <Triangle className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-    sides: 3,
-  },
-  {
-    id: "pentagon",
-    type: "polygon",
-    label: "Pentagon",
-    icon: <Pentagon className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-    sides: 5,
-  },
-  {
-    id: "hexagon",
-    type: "polygon",
-    label: "Hexagon",
-    icon: <Hexagon className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-    sides: 6,
-  },
-  {
-    id: "star",
-    type: "star",
-    label: "Star",
-    icon: <Star className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-  },
-  {
-    id: "line",
-    type: "line",
-    label: "Arrow",
-    icon: <MoveRight className="h-5 w-5 @5xl/editor:h-6 @5xl/editor:w-6" />,
-  },
-];
-
-export const ShapesPanel: React.FC<ShapesPanelProps> = ({ onAddShape }) => {
   const config = useConfig();
 
-  const allowed = config.shapes?.presets;
-  const visibleShapes = allowed ? SHAPES.filter((s) => allowed.includes(s.id)) : SHAPES;
+  const groups = useMemo(() => {
+    const shapes = config.shapes ?? {};
+    return resolveShapePresetGroups({
+      builtIn: DEFAULT_SHAPE_PRESET_GROUPS,
+      presetGroups: shapes.presetGroups,
+      additionalPresetGroups: shapes.additionalPresetGroups,
+      legacyPresets: shapes.presets,
+    });
+  }, [config.shapes]);
 
-  const handleSelect = useCallback(
-    (id: string) => {
-      const shape = SHAPES.find((s) => s.id === id);
-      if (shape) onAddShape(shape.type, shape.sides);
-    },
-    [onAddShape],
-  );
+  const handleSelect = onAddShapePreset ?? ((id: string) => onAddShape(id as ShapeType));
 
-  return (
-    <Section label="Shapes">
-      <SelectionGrid
-        items={visibleShapes}
-        onSelect={handleSelect}
-        columns={3}
-        ariaLabel="Shape types"
-      />
-    </Section>
-  );
+  return <PresetGallery groups={groups} onSelect={handleSelect} />;
 };

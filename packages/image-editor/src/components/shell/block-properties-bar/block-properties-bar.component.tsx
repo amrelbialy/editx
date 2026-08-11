@@ -6,7 +6,9 @@ import { DEFAULT_FONT_FAMILIES } from "../../../config/default-config";
 import type { PropertySidePanel } from "../../../store/image-editor-store";
 import { useImageEditorStore } from "../../../store/image-editor-store";
 import { cn } from "../../../utils/cn";
+import { textGradientToCss } from "../../../utils/text-gradient-css";
 import { BlockPropertyButtons } from "./block-property-buttons.component";
+import { GroupControls } from "./group-controls.component";
 import { TextFormatToolbar } from "./text-format-toolbar.component";
 import { useBlockPropertiesState } from "./use-block-properties-state";
 import { useBlockTextFormat } from "./use-block-text-format";
@@ -53,7 +55,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     [propertySidePanel, setPropertySidePanel],
   );
 
-  const colorSwatch = isText ? (textState?.fill ?? "#000000") : fillColor;
+  const textSwatch = textState?.fillGradient
+    ? textGradientToCss(textState.fillGradient)
+    : (textState?.fill ?? "#000000");
+  const colorSwatch = isText ? textSwatch : fillColor;
 
   return (
     <div
@@ -95,6 +100,8 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
         onOpacityChange={handleOpacityChange}
         refresh={refresh}
       />
+
+      <GroupControls engine={engine} blockId={blockId} />
     </div>
   );
 };

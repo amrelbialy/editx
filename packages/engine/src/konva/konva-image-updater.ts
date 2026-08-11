@@ -1,5 +1,5 @@
 import type Konva from "konva";
-import type { BlockData, Color, TextRun } from "../block/block.types";
+import type { BlockData } from "../block/block.types";
 import {
   CROP_ENABLED,
   CROP_FLIP_HORIZONTAL,
@@ -8,29 +8,9 @@ import {
   CROP_WIDTH,
   CROP_X,
   CROP_Y,
-  FILL_COLOR,
-  FILL_ENABLED,
-  FILL_SOLID_COLOR,
-  FONT_FAMILY,
-  FONT_SIZE,
   IMAGE_SRC,
-  SHADOW_BLUR,
-  SHADOW_COLOR,
-  SHADOW_ENABLED,
-  SHADOW_OFFSET_X,
-  SHADOW_OFFSET_Y,
-  TEXT_ALIGN,
-  TEXT_AUTO_HEIGHT,
-  TEXT_CONTENT,
-  TEXT_LINE_HEIGHT,
-  TEXT_PADDING,
-  TEXT_RUNS,
-  TEXT_VERTICAL_ALIGN,
-  TEXT_WRAP,
 } from "../block/property-keys";
-import { colorToHex } from "../utils/color";
 import { loadImage } from "../utils/image-loader";
-import type { FormattedText } from "./formatted-text";
 import { applyFilters } from "./konva-node-filters";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
@@ -115,81 +95,4 @@ export function updateImageNode(
   if (block && !srcChanged) {
     applyFilters(imgNode, block, stage, webgl, resolveBlock);
   }
-}
-
-export function updateTextNode(
-  textNode: FormattedText,
-  props: Record<string, unknown>,
-  width: number,
-  height: number,
-  block?: BlockData,
-  resolveBlock?: (id: number) => BlockData | undefined,
-): { computedHeight: number | null } {
-  let runs = props[TEXT_RUNS] as TextRun[] | undefined;
-  if (!runs || !Array.isArray(runs) || runs.length === 0) {
-    const text = (props[TEXT_CONTENT] as string) ?? "Text";
-    const fillColor = props[FILL_COLOR];
-    const fill =
-      fillColor && typeof fillColor === "object" ? colorToHex(fillColor as Color) : "#000000";
-    runs = [
-      {
-        text,
-        style: {
-          fontSize: (props[FONT_SIZE] as number) ?? 24,
-          fontFamily: (props[FONT_FAMILY] as string) ?? "Arial",
-          fill,
-        },
-      },
-    ];
-  }
-  textNode.textRuns(runs);
-  textNode.width(width);
-  textNode.align((props[TEXT_ALIGN] as string) ?? "left");
-  textNode.lineHeight((props[TEXT_LINE_HEIGHT] as number) ?? 1.2);
-  textNode.verticalAlign((props[TEXT_VERTICAL_ALIGN] as string) ?? "top");
-  textNode.padding((props[TEXT_PADDING] as number) ?? 0);
-  textNode.wrap((props[TEXT_WRAP] as string) ?? "word");
-
-  let bgFill = "";
-  const fillEnabled = (props[FILL_ENABLED] as boolean) ?? false;
-  if (fillEnabled) {
-    let bgColor: Color | undefined;
-    if (block?.fillId != null && resolveBlock) {
-      const fillBlock = resolveBlock(block.fillId);
-      if (fillBlock) {
-        const c = fillBlock.properties[FILL_SOLID_COLOR];
-        if (c && typeof c === "object") bgColor = c as Color;
-      }
-    }
-    if (!bgColor) {
-      const fc = props[FILL_COLOR];
-      if (fc && typeof fc === "object") bgColor = fc as Color;
-    }
-    if (bgColor) bgFill = colorToHex(bgColor);
-  }
-  textNode.setAttr("backgroundFill", bgFill);
-
-  const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
-  if (shadowEnabled) {
-    const sc = props[SHADOW_COLOR];
-    textNode.shadowColor(
-      sc && typeof sc === "object" ? colorToHex(sc as Color) : "rgba(0,0,0,0.5)",
-    );
-    textNode.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
-    textNode.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
-    textNode.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
-    textNode.shadowEnabled(true);
-    textNode.shadowForStrokeEnabled(false);
-  } else {
-    textNode.shadowEnabled(false);
-  }
-
-  const autoHeight = (props[TEXT_AUTO_HEIGHT] as boolean) ?? true;
-  if (autoHeight) {
-    const computed = textNode.getComputedHeight();
-    textNode.height(Math.max(computed, 10));
-    return { computedHeight: computed };
-  }
-  textNode.height(height);
-  return { computedHeight: null };
 }

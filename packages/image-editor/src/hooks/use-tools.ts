@@ -79,6 +79,22 @@ export function useTools({
     [textTool, notify],
   );
 
+  const addTextPreset = useCallback(
+    (id: string) => {
+      textTool.handleAddTextPreset(id);
+      notify.success("Text added");
+    },
+    [textTool, notify],
+  );
+
+  const addShapePreset = useCallback(
+    (id: string) => {
+      shapes.handleAddShapePreset(id);
+      notify.success("Shape added");
+    },
+    [shapes, notify],
+  );
+
   const addImage = useCallback(
     async (file: File) => {
       await imageTool.handleAddImage(file);
@@ -151,6 +167,8 @@ export function useTools({
     // Notification-wrapped callbacks
     addShape,
     addText,
+    addTextPreset,
+    addShapePreset,
     addImage,
     replaceImage,
     duplicate,

@@ -1,7 +1,16 @@
-import Konva from "konva";
+import type Konva from "konva";
 import type { TextRun } from "../block/block.types";
+import { FormattedTextAttrs } from "./formatted-text-attrs";
+import {
+  computedTextHeight,
+  computedTextWidth,
+  readBackgroundBox,
+  type TextRect,
+  textBoxBleedRect,
+} from "./formatted-text-bounds";
+import { type CurvedTextLayout, computeCurvedLayout } from "./formatted-text-curve";
 import { computeTextLines } from "./formatted-text-layout";
-import { renderFormattedText } from "./formatted-text-render";
+import { renderCurvedText, renderFormattedText } from "./formatted-text-render";
 import type { TextLine } from "./formatted-text-utils";
 
 export interface FormattedTextConfig extends Konva.ShapeConfig {
@@ -16,18 +25,14 @@ export interface FormattedTextConfig extends Konva.ShapeConfig {
 }
 
 /**
- * Custom Konva.Shape that renders multi-run styled text.
- * Each TextRun can have its own fontSize, fontFamily, fontWeight, fontStyle, fill,
- * letterSpacing, and textDecoration.
- *
- * Adapted from a reference formatted text implementation, simplified:
- * - No baselineShift/cap-height trimming (DEP-2)
- * - Binary search line breaking (IMP-1)
- * - Proportional text decoration (IMP-7)
- * - Cached plainText (IMP-10)
+ * Custom Konva.Shape that renders multi-run styled text, flat or along an arc.
+ * Curved rendering is gated behind `curveRadius > 0`; when flat, the original
+ * layout/render path runs unchanged. Attribute accessors live on
+ * {@link FormattedTextAttrs}.
  */
-export class FormattedText extends Konva.Shape {
+export class FormattedText extends FormattedTextAttrs {
   private _textLines: TextLine[] = [];
+  private _curvedLayout: CurvedTextLayout | null = null;
   private _plainTextCache: string | null = null;
 
   constructor(config?: FormattedTextConfig) {
@@ -42,63 +47,16 @@ export class FormattedText extends Konva.Shape {
       "wrap",
       "width",
       "height",
+      "curveRadius",
+      "curveDirection",
     ];
     watchAttrs.forEach((attr) => {
       this.on(`${attr}Change.konva`, () => {
         this._textLines = [];
+        this._curvedLayout = null;
         this._plainTextCache = null;
       });
     });
-  }
-
-  // ── Attribute accessors ─────────────────────────────
-
-  textRuns(): TextRun[];
-  textRuns(val: TextRun[]): this;
-  textRuns(val?: TextRun[]): TextRun[] | this {
-    if (val === undefined) return this.getAttr("textRuns") ?? [];
-    this.setAttr("textRuns", val);
-    return this;
-  }
-
-  align(): string;
-  align(val: string): this;
-  align(val?: string): string | this {
-    if (val === undefined) return this.getAttr("align") ?? "left";
-    this.setAttr("align", val);
-    return this;
-  }
-
-  verticalAlign(): string;
-  verticalAlign(val: string): this;
-  verticalAlign(val?: string): string | this {
-    if (val === undefined) return this.getAttr("verticalAlign") ?? "top";
-    this.setAttr("verticalAlign", val);
-    return this;
-  }
-
-  lineHeight(): number;
-  lineHeight(val: number): this;
-  lineHeight(val?: number): number | this {
-    if (val === undefined) return this.getAttr("lineHeight") ?? 1.2;
-    this.setAttr("lineHeight", val);
-    return this;
-  }
-
-  padding(): number;
-  padding(val: number): this;
-  padding(val?: number): number | this {
-    if (val === undefined) return this.getAttr("padding") ?? 0;
-    this.setAttr("padding", val);
-    return this;
-  }
-
-  wrap(): string;
-  wrap(val: string): this;
-  wrap(val?: string): string | this {
-    if (val === undefined) return this.getAttr("wrap") ?? "word";
-    this.setAttr("wrap", val);
-    return this;
   }
 
   // ── Cached plain text ─────────────────────────────
@@ -110,19 +68,6 @@ export class FormattedText extends Konva.Shape {
         .join("");
     }
     return this._plainTextCache;
-  }
-
-  findRunAtIndex(charIndex: number): { runIndex: number; offsetInRun: number } | null {
-    const runs = this.textRuns();
-    let offset = 0;
-    for (let i = 0; i < runs.length; i++) {
-      const end = offset + runs[i].text.length;
-      if (charIndex < end) {
-        return { runIndex: i, offsetInRun: charIndex - offset };
-      }
-      offset = end;
-    }
-    return null;
   }
 
   // ── Text layout (delegated) ───────────────────────
@@ -139,18 +84,36 @@ export class FormattedText extends Konva.Shape {
     return this._textLines;
   }
 
-  // ── Rendering ──────────────────────────────────────
+  /** Curved layout (memoized). Only reached when curveRadius > 0. */
+  private _computeCurvedLayout(): CurvedTextLayout {
+    if (this._curvedLayout) return this._curvedLayout;
+    this._curvedLayout = computeCurvedLayout(this.textRuns(), {
+      radius: this.curveRadius(),
+      direction: this.curveDirection(),
+      padding: this.padding(),
+    });
+    return this._curvedLayout;
+  }
 
   _sceneFunc(context: Konva.Context): void {
     const ctx = context._context;
+
+    // Curved path is fully gated: flat text below runs byte-for-byte unchanged.
+    if (this.curveRadius() > 0) {
+      renderCurvedText(ctx, this._computeCurvedLayout());
+      return;
+    }
+
     const w = this.width() || 0;
     const h = this.height() || 0;
+    const box = readBackgroundBox(this);
 
-    // Clip text to the container bounds so it doesn't overflow on resize
+    // Clip text to the container bounds (plus any box bleed) so it doesn't overflow on resize
     if (w > 0 && h > 0) {
+      const clip = textBoxBleedRect(box, w, h);
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, w, h);
+      ctx.rect(clip.x, clip.y, clip.width, clip.height);
       ctx.clip();
     }
 
@@ -161,6 +124,7 @@ export class FormattedText extends Konva.Shape {
       align: this.align(),
       verticalAlign: this.verticalAlign(),
       backgroundFill: this.getAttr("backgroundFill") as string | undefined,
+      backgroundBox: box,
     });
 
     if (w > 0 && h > 0) {
@@ -170,25 +134,64 @@ export class FormattedText extends Konva.Shape {
 
   _hitFunc(context: Konva.Context): void {
     const ctx = context._context;
+    if (this.curveRadius() > 0) {
+      const rect = this._computeCurvedLayout().bbox;
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.width, rect.height);
+      ctx.closePath();
+      context.fillStrokeShape(this);
+      return;
+    }
     const w = this.width() || 0;
     const h = this.height() || this.getComputedHeight();
+    // Same rect as the scene clip: everything the block can paint is clickable,
+    // so the box's own padding hits the block instead of falling through.
+    const hit = textBoxBleedRect(readBackgroundBox(this), w, h);
     ctx.beginPath();
-    ctx.rect(0, 0, w, h);
+    ctx.rect(hit.x, hit.y, hit.width, hit.height);
     ctx.closePath();
     context.fillStrokeShape(this);
   }
 
+  /**
+   * Arc bounding box when curved (grows with radius), else the plain container
+   * rect — NOT the bleed rect. The Transformer sizes its frame from this, and
+   * the pill-anchor resize turns that frame into a width, so inflating it would
+   * both unhug the selection frame and make a drag of d px move the edge by
+   * less than d. The paint bleed reaches the cache / export path via
+   * {@link cache} instead.
+   */
+  getSelfRect(): TextRect {
+    if (this.curveRadius() > 0) return { ...this._computeCurvedLayout().bbox };
+    return { x: 0, y: 0, width: this.width() || 0, height: this.height() || 0 };
+  }
+
+  /**
+   * Cache the bleed rect rather than Konva's default (`getSelfRect`), so a
+   * cached or exported node keeps the box shadow / stroke that `_sceneFunc`
+   * paints outside the container. An explicit size from the caller wins.
+   */
+  cache(config?: Parameters<Konva.Node["cache"]>[0]): this | undefined {
+    const w = this.width() || 0;
+    const h = this.height() || 0;
+    if (this.curveRadius() > 0 || w <= 0 || h <= 0 || config?.width != null) {
+      return super.cache(config);
+    }
+    return super.cache({ ...config, ...textBoxBleedRect(readBackgroundBox(this), w, h) });
+  }
+
   getComputedHeight(): number {
-    const lines = this._computeTextLines();
-    const pad = this.padding();
-    return lines.reduce((sum, l) => sum + l.height, 0) + pad * 2;
+    if (this.curveRadius() > 0) {
+      return this._computeCurvedLayout().bbox.height;
+    }
+    return computedTextHeight(this._computeTextLines(), this.padding());
   }
 
   getComputedWidth(): number {
-    const lines = this._computeTextLines();
-    const pad = this.padding();
-    const maxLineWidth = lines.reduce((max, l) => Math.max(max, l.width), 0);
-    return maxLineWidth + pad * 2;
+    if (this.curveRadius() > 0) {
+      return this._computeCurvedLayout().bbox.width;
+    }
+    return computedTextWidth(this._computeTextLines(), this.padding());
   }
 
   getClassName(): string {

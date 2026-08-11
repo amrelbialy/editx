@@ -16,7 +16,7 @@ const sizeClass = {
  */
 export const ColorSwatch = React.forwardRef<HTMLInputElement, ColorSwatchProps>((props, ref) => {
   const { value, size = "md", className, ...rest } = props;
-
+  console.log("ColorSwatch value:", value); // Debugging line to log the value prop
   return (
     <input
       ref={ref}

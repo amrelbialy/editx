@@ -1,4 +1,4 @@
-import { SIZE_HEIGHT } from "../block/property-keys";
+import { POSITION_X, SIZE_HEIGHT, SIZE_WIDTH, TEXT_ALIGN } from "../block/property-keys";
 import { EditxEngine } from "../editx-engine";
 import { KonvaRendererAdapter } from "./konva-renderer-adapter";
 
@@ -20,15 +20,29 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
       // Shift-click on a single block toggles its membership.
       engine.block.setSelected(blockId, !engine.block.isSelected(blockId));
     } else {
+      // A plain click on a block OUTSIDE the active context exits the context.
+      if (!event.insideContext && engine.block.getGroupContext().length > 0) {
+        engine.block._clearGroupContext();
+      }
       engine.block.select(blockId);
     }
   };
   adapter.onBlockDblClick = (blockId, screenPos) =>
     engine.emit("block:dblclick", blockId, screenPos);
+  adapter.onEnterGroup = (groupId, childId) => {
+    engine.block.enterGroup(groupId);
+    if (childId != null) {
+      engine.block.select(childId);
+    } else {
+      engine.block.deselectAll();
+    }
+  };
   adapter.onStageClick = (worldPos) => {
+    engine.block._clearGroupContext();
     engine.block.deselectAll();
     engine.emit("stage:click", worldPos);
   };
+  engine.block.onGroupContextChanged((stack) => adapter.setGroupContext?.(stack));
   adapter.onZoomChange = (zoom) => engine.emit("zoom:changed", zoom);
   adapter.onPanChange = (pan) => engine.emit("pan:changed", pan);
   adapter.onBlockTransform = (blockId, phase) =>
@@ -63,10 +77,15 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     }
 
     engine.block.setPosition(blockId, transform.x, transform.y);
-    engine.block.setSize(blockId, transform.width, transform.height);
+    // Group size derives from children — never write a size onto the group block.
+    if (engine.block.getType(blockId) !== "group") {
+      engine.block.setSize(blockId, transform.width, transform.height);
+    }
     engine.block.setRotation(blockId, transform.rotation);
     if (isText) {
       engine.block.setBool(blockId, "text/autoHeight", false);
+      // An explicit width resize should stick, so disable content auto-width.
+      engine.block.setBool(blockId, "text/autoWidth", false);
     }
     engine.endBatch();
   };
@@ -79,6 +98,35 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     engine.beginSilent();
     try {
       engine.block.setFloat(blockId, SIZE_HEIGHT, target);
+    } finally {
+      engine.endSilent();
+    }
+  };
+
+  adapter.onAutoWidth = (blockId, computedWidth) => {
+    const target = Math.max(computedWidth, 10);
+    const current = engine.block.getFloat(blockId, SIZE_WIDTH);
+    if (Math.abs(current - target) <= 0.5) return;
+
+    // An auto-width box grows from its left edge, so centre/right aligned text
+    // would visually drift as it resizes. Re-anchor x by the width delta so the
+    // aligned edge stays put; "left" (the default) needs no move.
+    const align = engine.block.getString(blockId, TEXT_ALIGN);
+    const shift =
+      align === "center" ? (current - target) / 2 : align === "right" ? current - target : 0;
+
+    engine.beginSilent();
+    try {
+      // Position and size move together inside one silent block: atomic on
+      // screen, and no undo entry for either.
+      if (shift !== 0) {
+        engine.block.setFloat(
+          blockId,
+          POSITION_X,
+          engine.block.getFloat(blockId, POSITION_X) + shift,
+        );
+      }
+      engine.block.setFloat(blockId, SIZE_WIDTH, target);
     } finally {
       engine.endSilent();
     }

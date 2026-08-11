@@ -5,6 +5,7 @@ export type ImageEditorTool = ImageEditorToolId | "select" | "rotate" | "resize"
 
 export type PropertySidePanel =
   | "color"
+  | "fill"
   | "background"
   | "shadow"
   | "position"

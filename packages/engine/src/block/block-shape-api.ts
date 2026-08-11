@@ -8,9 +8,18 @@ import {
   SetShapeCommand,
 } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
-import type { FillType, ShapeType } from "./block.types";
+import type { FillType, PathViewBox, ShapeType } from "./block.types";
 import * as H from "./block-api-helpers";
-import { SHAPE_POLYGON_SIDES, STROKE_COLOR, STROKE_ENABLED, STROKE_WIDTH } from "./property-keys";
+import {
+  SHAPE_PATH_DATA,
+  SHAPE_PATH_VIEWBOX_HEIGHT,
+  SHAPE_PATH_VIEWBOX_WIDTH,
+  SHAPE_POLYGON_SIDES,
+  STROKE_COLOR,
+  STROKE_ENABLED,
+  STROKE_WIDTH,
+} from "./property-keys";
+import { validateSvgPathData } from "./svg-path-validation";
 
 /** Shape sub-block CRUD and shape placement convenience. */
 export class BlockShapeAPI {
@@ -56,9 +65,14 @@ export class BlockShapeAPI {
     y: number,
     width: number,
     height: number,
-    opts?: { sides?: number },
+    opts?: { sides?: number; pathData?: string; viewBox?: PathViewBox },
   ): number {
     const store = this.#engine._getBlockStore();
+
+    // Validate the `d` string up front (single write boundary, fail-fast) so a
+    // rejection throws before any batch/command is opened — no partial undo.
+    const pathData = shapeKind === "path" ? validateSvgPathData(opts?.pathData ?? "") : undefined;
+
     this.#engine.beginBatch();
 
     const createCmd = new CreateBlockCommand(store, "graphic");
@@ -78,6 +92,14 @@ export class BlockShapeAPI {
 
     if (opts?.sides != null && shapeKind === "polygon") {
       H.setFloat(this.#engine, shapeId, SHAPE_POLYGON_SIDES, opts.sides);
+    }
+
+    if (shapeKind === "path") {
+      H.setString(this.#engine, shapeId, SHAPE_PATH_DATA, pathData ?? "");
+      if (opts?.viewBox) {
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_WIDTH, opts.viewBox.width);
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_HEIGHT, opts.viewBox.height);
+      }
     }
 
     const fillCmd = new CreateFillCommand(store, fillKind);

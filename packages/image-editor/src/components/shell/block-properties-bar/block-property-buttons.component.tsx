@@ -5,6 +5,7 @@ import {
   Grid2x2,
   ImageIcon,
   Move,
+  PaintBucket,
   Paintbrush,
   Palette,
   SlidersHorizontal,
@@ -63,7 +64,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
 
   const fillEnabled = engine.block.isFillEnabled(blockId);
   const styleActive = propertySidePanel === "adjust" || propertySidePanel === "filter";
-
   return (
     <>
       {/* Color (text + graphic only) */}
@@ -73,7 +73,7 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
           icon={
             <div
               className="w-4 h-4 rounded-full border border-border"
-              style={{ backgroundColor: colorSwatch }}
+              style={{ background: colorSwatch }}
             />
           }
           label={t("block.color")}
@@ -93,6 +93,17 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
           aria-pressed={!fillEnabled}
           className={cn(!fillEnabled ? "bg-primary/20 text-primary" : "text-muted-foreground")}
           icon={<CircleOff className="h-4 w-4" />}
+        />
+      )}
+
+      {/* Fill kind (graphic only — Color / Gradient / Image) */}
+      {!isText && !isImage && (
+        <PanelButton
+          panel="fill"
+          icon={<PaintBucket className="h-4 w-4" />}
+          label={t("fill.kind")}
+          active={propertySidePanel === "fill"}
+          onToggle={onTogglePanel}
         />
       )}
 

@@ -3,14 +3,17 @@ import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorSwatch } from "../ui/color-swatch";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
+import { TextShadowSection } from "./text-shadow-section.component";
 
 interface ShadowPropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
+  blockType: "text" | "graphic" | "image";
 }
 
 interface ShadowState {
@@ -32,7 +35,16 @@ function readShadow(engine: EditxEngine, blockId: number): ShadowState {
   };
 }
 
-export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine, blockId }) => {
+export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({
+  engine,
+  blockId,
+  blockType,
+}) => {
+  const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
+  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+
+  const isText = blockType === "text";
+
   const [state, setState] = useState(() => readShadow(engine, blockId));
 
   useEffect(() => {
@@ -47,6 +59,18 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
   const update = useCallback(() => setState(readShadow(engine, blockId)), [engine, blockId]);
 
   const { commit, flush } = useCoalescedHistory(engine);
+
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
+
+  const getStyleRange = useCallback((): { start: number; end: number } => {
+    if (hasCharSelection && textSelectionRange) {
+      return { start: textSelectionRange.from, end: textSelectionRange.to };
+    }
+    return { start: 0, end: engine.block.getTextContent(blockId).length };
+  }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
   const handleToggle = useCallback(() => {
     engine.block.setShadowEnabled(blockId, !state.enabled);
@@ -64,18 +88,20 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
 
   const handleOffsetX = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      engine.block.setShadowOffsetX(blockId, parseFloat(e.target.value));
+      const v = parseFloat(e.target.value) || 0;
+      commit(() => engine.block.setShadowOffsetX(blockId, v));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   const handleOffsetY = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      engine.block.setShadowOffsetY(blockId, parseFloat(e.target.value));
+      const v = parseFloat(e.target.value) || 0;
+      commit(() => engine.block.setShadowOffsetY(blockId, v));
       update();
     },
-    [engine, blockId, update],
+    [engine, blockId, update, commit],
   );
 
   const handleBlur = useCallback(
@@ -85,6 +111,20 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
     },
     [engine, blockId, update, commit],
   );
+
+  // Text blocks store shadow in the run style (single source of truth) so the
+  // panel and the per-run renderer never disagree; graphic/image keep the
+  // block-level Konva shadow below.
+  if (isText) {
+    return (
+      <TextShadowSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+      />
+    );
+  }
 
   return (
     <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
@@ -106,12 +146,14 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({ engine
             label="X"
             value={Math.round(state.offsetX)}
             onChange={handleOffsetX}
+            onBlur={flush}
           />
           <Input
             type="number"
             label="Y"
             value={Math.round(state.offsetY)}
             onChange={handleOffsetY}
+            onBlur={flush}
           />
         </div>
       </div>

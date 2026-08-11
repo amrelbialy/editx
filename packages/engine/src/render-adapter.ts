@@ -10,6 +10,8 @@ import type { CropRect } from "./utils/crop-math";
 export interface BlockClickEvent {
   shiftKey: boolean;
   additive?: boolean;
+  /** True when the resolved block lies within the active group context. */
+  insideContext?: boolean;
 }
 
 export interface RendererAdapter {
@@ -31,6 +33,12 @@ export interface RendererAdapter {
 
   /** Reorder child Konva nodes to match the given child ID order (bottom→top). */
   syncChildOrder?(childIds: number[]): void;
+
+  /**
+   * Apply the active group-context stack (outermost-first). Drives the
+   * draggable-scoping, dimming, and dashed-outline affordance in the renderer.
+   */
+  setGroupContext?(stack: number[]): void;
 
   //
   // Transformer
@@ -128,6 +136,8 @@ export interface RendererAdapter {
   //
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  /** Called on a double-click that should descend into a group (child under cursor, if any). */
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
     blockId: number,

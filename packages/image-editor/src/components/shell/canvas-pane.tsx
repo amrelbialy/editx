@@ -60,11 +60,28 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const editingRef = useRef(editingTextBlockId);
   editingRef.current = editingTextBlockId;
 
-  // Subscribe to dblclick on text blocks to enter inline editing
+  // Subscribe to dblclick on text blocks to enter inline editing.
+  // Gate on group context: only open the editor when the resolved text block is
+  // a DIRECT CHILD of the active group context. An ungrouped text block (top
+  // level, no group parent) still opens on the FIRST dblclick.
   useEffect(() => {
     if (!engine) return;
     return engine.block.onBlockDoubleClick((blockId: number, screenPos) => {
-      if (engine.block.getType(blockId) === "text") {
+      if (engine.block.getType(blockId) !== "text") return;
+
+      const stack = engine.block.getGroupContext();
+      const parent = engine.block.getParent(blockId);
+
+      if (stack.length === 0) {
+        // Top level: open only when the block is not nested in a group.
+        if (parent == null || engine.block.getType(parent) !== "group") {
+          setEditingTextBlockId(blockId, screenPos);
+        }
+        return;
+      }
+
+      // Inside a group: open only for direct children of the active context.
+      if (parent === stack[stack.length - 1]) {
         setEditingTextBlockId(blockId, screenPos);
       }
     });

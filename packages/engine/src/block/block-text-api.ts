@@ -1,8 +1,27 @@
-import { AppendChildCommand, CreateBlockCommand } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
-import type { TextRun, TextRunStyle } from "./block.types";
+import type {
+  TextBackground,
+  TextBackgroundOptions,
+  TextCurve,
+  TextCurveDirection,
+  TextGradient,
+  TextRun,
+  TextRunStyle,
+  TextRunStyleUpdate,
+  TextTransform,
+} from "./block.types";
 import * as H from "./block-api-helpers";
-import { TEXT_ALIGN, TEXT_LINE_HEIGHT, TEXT_RUNS, TEXT_VERTICAL_ALIGN } from "./property-keys";
+import { BlockTextBackgroundAPI } from "./block-text-background-api";
+import { createTextBlock } from "./block-text-placement";
+import {
+  TEXT_ALIGN,
+  TEXT_AUTO_WIDTH,
+  TEXT_CURVE_DIRECTION,
+  TEXT_CURVE_RADIUS,
+  TEXT_LINE_HEIGHT,
+  TEXT_RUNS,
+  TEXT_VERTICAL_ALIGN,
+} from "./property-keys";
 import { TextEditorSession } from "./text-editor-session";
 import {
   getPlainText as utilGetPlainText,
@@ -15,10 +34,12 @@ import {
 /** Text editing sessions, range-based text editing, and text block placement. */
 export class BlockTextAPI {
   #engine: EngineCore;
+  #background: BlockTextBackgroundAPI;
   #textEditingSessions = new Map<number, TextEditorSession>();
 
   constructor(engine: EngineCore) {
     this.#engine = engine;
+    this.#background = new BlockTextBackgroundAPI(engine);
   }
 
   // ── Text editing session lifecycle ────────────────
@@ -75,12 +96,8 @@ export class BlockTextAPI {
     H.setProperty(this.#engine, blockId, TEXT_RUNS, newRuns);
   }
 
-  setTextStyle(
-    blockId: number,
-    start: number,
-    end: number,
-    styleUpdate: Partial<TextRunStyle>,
-  ): void {
+  /** Applies a partial style to [start, end). `null` on a field clears it. */
+  setTextStyle(blockId: number, start: number, end: number, styleUpdate: TextRunStyleUpdate): void {
     const session = this.#textEditingSessions.get(blockId);
     if (session) {
       session.setTextStyle(start, end, styleUpdate);
@@ -94,15 +111,12 @@ export class BlockTextAPI {
   setTextColor(blockId: number, start: number, end: number, color: string): void {
     this.setTextStyle(blockId, start, end, { fill: color });
   }
-
   setTextFontSize(blockId: number, start: number, end: number, fontSize: number): void {
     this.setTextStyle(blockId, start, end, { fontSize });
   }
-
   setTextFontFamily(blockId: number, start: number, end: number, fontFamily: string): void {
     this.setTextStyle(blockId, start, end, { fontFamily });
   }
-
   setTextFontWeight(blockId: number, start: number, end: number, fontWeight: string): void {
     this.setTextStyle(blockId, start, end, { fontWeight });
   }
@@ -112,17 +126,8 @@ export class BlockTextAPI {
     if (session) {
       session.toggleBold(start, end);
     } else {
-      const runs = this.getTextRuns(blockId);
-      let currentWeight = "normal";
-      let offset = 0;
-      for (const run of runs) {
-        if (offset + run.text.length > start) {
-          currentWeight = run.style.fontWeight ?? "normal";
-          break;
-        }
-        offset += run.text.length;
-      }
-      const newWeight = currentWeight === "bold" ? "normal" : "bold";
+      const current = this.#styleValueAt(blockId, start, "fontWeight", "normal");
+      const newWeight = current === "bold" ? "normal" : "bold";
       this.setTextStyle(blockId, start, end, { fontWeight: newWeight });
     }
   }
@@ -132,48 +137,80 @@ export class BlockTextAPI {
     if (session) {
       session.toggleItalic(start, end);
     } else {
-      const runs = this.getTextRuns(blockId);
-      let currentStyle = "normal";
-      let offset = 0;
-      for (const run of runs) {
-        if (offset + run.text.length > start) {
-          currentStyle = run.style.fontStyle ?? "normal";
-          break;
-        }
-        offset += run.text.length;
-      }
-      const newStyle = currentStyle === "italic" ? "normal" : "italic";
+      const current = this.#styleValueAt(blockId, start, "fontStyle", "normal");
+      const newStyle = current === "italic" ? "normal" : "italic";
       this.setTextStyle(blockId, start, end, { fontStyle: newStyle });
     }
+  }
+
+  /** Resolve a run style value at char `start`, falling back when unset. */
+  #styleValueAt(blockId: number, start: number, key: keyof TextRunStyle, fallback: string): string {
+    let offset = 0;
+    for (const run of this.getTextRuns(blockId)) {
+      if (offset + run.text.length > start) return (run.style[key] as string) ?? fallback;
+      offset += run.text.length;
+    }
+    return fallback;
   }
 
   setTextAlign(blockId: number, align: string): void {
     H.setProperty(this.#engine, blockId, TEXT_ALIGN, align);
   }
-
   setTextLineHeight(blockId: number, lineHeight: number): void {
     H.setProperty(this.#engine, blockId, TEXT_LINE_HEIGHT, lineHeight);
   }
-
   setTextVerticalAlign(blockId: number, align: string): void {
     H.setProperty(this.#engine, blockId, TEXT_VERTICAL_ALIGN, align);
   }
 
-  setTextBackgroundColor(
-    blockId: number,
-    start: number,
-    end: number,
-    color: string | undefined,
-  ): void {
+  /** Auto-width hugs the text to its content; off keeps the stored width. */
+  setTextAutoWidth(blockId: number, enabled: boolean): void {
+    H.setBool(this.#engine, blockId, TEXT_AUTO_WIDTH, enabled);
+  }
+  getTextAutoWidth(blockId: number): boolean {
+    return H.getBool(this.#engine, blockId, TEXT_AUTO_WIDTH);
+  }
+
+  /** radius > 0 curves; radius <= 0 clears (flat). One batched undo entry. */
+  setTextCurve(blockId: number, radius: number, direction: TextCurveDirection): void {
+    this.#engine.beginBatch();
+    H.setProperty(this.#engine, blockId, TEXT_CURVE_RADIUS, radius > 0 ? radius : 0);
+    H.setProperty(this.#engine, blockId, TEXT_CURVE_DIRECTION, direction);
+    this.#engine.endBatch();
+  }
+
+  /** Returns null when flat (radius <= 0 / absent). */
+  getTextCurve(blockId: number): TextCurve | null {
+    const radius = H.getFloat(this.#engine, blockId, TEXT_CURVE_RADIUS);
+    if (!(radius > 0)) return null;
+    const dir = H.getString(this.#engine, blockId, TEXT_CURVE_DIRECTION);
+    return { radius, direction: dir === "down" ? "down" : "up" };
+  }
+
+  // ── Text background box ───────────────────────────
+
+  supportsTextBackground(blockId: number): boolean {
+    return this.#background.supportsTextBackground(blockId);
+  }
+  setTextBackground(blockId: number, opts: TextBackgroundOptions): void {
+    this.#background.setTextBackground(blockId, opts);
+  }
+  getTextBackground(blockId: number): TextBackground {
+    return this.#background.getTextBackground(blockId);
+  }
+  setTextBackgroundEnabled(blockId: number, enabled: boolean): void {
+    this.#background.setTextBackgroundEnabled(blockId, enabled);
+  }
+  isTextBackgroundEnabled(blockId: number): boolean {
+    return this.#background.isTextBackgroundEnabled(blockId);
+  }
+
+  /** Per-run pill highlight behind [start, end) — unrelated to the block-level box. */
+  setTextBackgroundColor(blockId: number, start: number, end: number, color?: string): void {
     this.setTextStyle(blockId, start, end, { backgroundColor: color });
   }
 
-  setTextTransform(
-    blockId: number,
-    start: number,
-    end: number,
-    transform: "none" | "uppercase" | "lowercase" | "capitalize",
-  ): void {
+  setTextTransform(blockId: number, start: number, end: number, transform: TextTransform): void {
     this.setTextStyle(blockId, start, end, { textTransform: transform });
   }
 
@@ -203,6 +240,11 @@ export class BlockTextAPI {
     });
   }
 
+  /** Fills [start, end) with a linear/radial gradient; `null` restores solid fill. Undoable. */
+  setTextGradient(blockId: number, start: number, end: number, grad: TextGradient | null): void {
+    this.setTextStyle(blockId, start, end, { fillGradient: grad });
+  }
+
   /** Creates a text block with optional initial text, appends to parent. Single undo step. */
   addText(
     parentId: number,
@@ -213,27 +255,6 @@ export class BlockTextAPI {
     initialText?: string,
     opts?: { style?: Partial<TextRunStyle> },
   ): number {
-    const store = this.#engine._getBlockStore();
-    this.#engine.beginBatch();
-
-    const cmd = new CreateBlockCommand(store, "text");
-    this.#engine.exec(cmd);
-    const textId = cmd.getCreatedId()!;
-
-    H.setFloat(this.#engine, textId, "transform/position/x", x);
-    H.setFloat(this.#engine, textId, "transform/position/y", y);
-    H.setFloat(this.#engine, textId, "transform/size/width", width);
-    H.setFloat(this.#engine, textId, "transform/size/height", height);
-
-    if (initialText !== undefined) {
-      const baseStyle: TextRunStyle = { fontSize: 24, fontFamily: "Arial", fill: "#000000" };
-      const mergedStyle: TextRunStyle = opts?.style ? { ...baseStyle, ...opts.style } : baseStyle;
-      const runs: TextRun[] = [{ text: initialText, style: mergedStyle }];
-      H.setProperty(this.#engine, textId, TEXT_RUNS, runs);
-    }
-
-    this.#engine.exec(new AppendChildCommand(store, parentId, textId));
-    this.#engine.endBatch();
-    return textId;
+    return createTextBlock(this.#engine, parentId, x, y, width, height, initialText, opts);
   }
 }

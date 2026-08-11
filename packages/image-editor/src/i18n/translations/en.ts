@@ -30,6 +30,8 @@ export const en = {
   "action.sendToBack": "Send to Back",
   "action.duplicate": "Duplicate",
   "action.delete": "Delete",
+  "action.group": "Group",
+  "action.ungroup": "Ungroup",
   "action.alignLeft": "Align Left",
   "action.alignCenter": "Align Center",
   "action.alignRight": "Align Right",
@@ -139,6 +141,68 @@ export const en = {
   "a11y.blockActions": "Block actions",
   "a11y.cropMode": "Crop mode",
   "a11y.aspectRatioPresets": "Aspect ratio presets",
+
+  // Preset gallery
+  "gallery.search": "Search presets",
+  "gallery.noResults": "No presets found",
+  "gallery.more": "More",
+  "gallery.less": "Less",
+  "gallery.clear": "Clear search",
+  "gallery.scrollLeft": "Scroll left",
+  "gallery.scrollRight": "Scroll right",
+
+  // Text preset categories
+  "presets.text.plain": "Plain Text",
+  "presets.text.styles": "Text Styles",
+  "presets.text.combinations": "Text Combinations",
+  "presets.text.curved": "Curved Text",
+  "presets.text.legacy": "Text",
+
+  // Shape preset categories
+  "presets.shapes.filled": "Filled",
+  "presets.shapes.outline": "Outline",
+  "presets.shapes.gradient": "Gradient",
+  "presets.shapes.image": "Image",
+  "presets.shapes.path": "Shapes",
+  "presets.shapes.legacy": "Shapes",
+
+  // Shape fill panel
+  "fill.kind": "Fill",
+  "fill.color": "Color",
+  "fill.gradient": "Gradient",
+  "fill.image": "Image",
+  "fill.angle": "Angle",
+  "fill.stops": "Colors",
+  "fill.source": "Source",
+  "fill.fit": "Fit",
+  "fill.fitCover": "Cover",
+  "fill.fitContain": "Contain",
+  "fill.fitTile": "Tile",
+  "fill.fitStretch": "Stretch",
+
+  // Curved text
+  "curve.title": "Curve",
+  "curve.radius": "Radius",
+  "curve.up": "Up",
+  "curve.down": "Down",
+
+  // Text background (per-run highlight + block-level box)
+  "textBackground.highlight": "Highlight",
+  "textBackground.highlightHint": "Painted behind the selected characters.",
+  "textBackground.enableHighlight": "Enable Background",
+  "textBackground.box": "Background Box",
+  "textBackground.boxHint": "Painted behind the whole text block.",
+  "textBackground.enableBox": "Enable Box",
+  "textBackground.cornerRadius": "Corner Radius",
+  "textBackground.padding": "Padding",
+  "textBackground.paddingAll": "All",
+  "textBackground.paddingTop": "Top",
+  "textBackground.paddingRight": "Right",
+  "textBackground.paddingBottom": "Bottom",
+  "textBackground.paddingLeft": "Left",
+  "textBackground.linkPadding": "Link padding sides",
+  "textBackground.unlinkPadding": "Edit padding sides separately",
+  "textBackground.curvedNotice": "The background box is not shown on curved text.",
 } as const;
 
 export type TranslationKey = keyof typeof en;

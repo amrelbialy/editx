@@ -142,12 +142,19 @@
   }
 }
 
-/* Text editor overlay: force all span text transparent so only the caret/selection shows.
-   Inline styles (color: #000) on spans would otherwise override the parent color. */
+/* Text editor overlay: neutralise all glyph paint so the overlay is a pure
+   caret/selection layer and the live styled canvas text shows through.
+   Per-node inline styles from the Lexical bridge (color, background-color for
+   Highlight/Sticker, text-shadow, text-stroke) would otherwise double-render
+   opaquely on top of the canvas. Font metrics (size/family/spacing) are kept
+   so the caret stays aligned with the canvas glyphs. */
 [data-text-editor-overlay],
 [data-text-editor-overlay] *:not([data-text-toolbar] *):not([data-text-toolbar]) {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
+  background-color: transparent !important;
+  text-shadow: none !important;
+  -webkit-text-stroke-width: 0 !important;
 }
 
 /* Lexical renders <p> nodes — remove default paragraph margin for tight layout */

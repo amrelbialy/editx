@@ -176,7 +176,7 @@ export class SceneAPI {
     }
 
     const payload: SerializedScene = {
-      version: 1,
+      version: 2,
       blocks,
       activeSceneId: this.#engine.getActiveScene(),
       activePageId: this.#engine.getActivePage(),
@@ -187,7 +187,12 @@ export class SceneAPI {
   /** Deserialize a JSON string and restore the full scene. */
   async loadFromString(json: string): Promise<void> {
     const payload = JSON.parse(json) as SerializedScene;
-    if (payload.version !== 1) {
+    // Accept v1 and v2 for back-compat. A v1 payload loads as v2 unchanged:
+    // the new fill / shape / text keys are simply absent and fall back to
+    // block-defaults.ts / typed-getter zero values (curve radius 0, path data
+    // "", gradient/image getters null), so a v1 doc renders identically to
+    // pre-feature behavior. No migration module or offline conversion needed.
+    if (payload.version !== 1 && payload.version !== 2) {
       throw new Error(`Unsupported scene version: ${payload.version}`);
     }
     if (!Array.isArray(payload.blocks)) {

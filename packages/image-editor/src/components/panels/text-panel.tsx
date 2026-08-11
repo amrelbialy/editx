@@ -1,43 +1,49 @@
-import { AlignLeft, Heading, Heading1, Type } from "lucide-react";
 import type React from "react";
+import { useMemo } from "react";
 import { useConfig } from "../../config/config-context";
+import { DEFAULT_TEXT_PRESET_GROUPS } from "../../config/presets";
+import { resolveTextPreview } from "../../config/presets/derive-text-preview";
+import { resolveTextPresetGroups } from "../../config/resolve-presets";
 import type { TextPreset } from "../../hooks/use-text-tool";
-import { Section } from "../ui/section";
-import type { SelectionGridItem } from "../ui/selection-grid";
-import { SelectionGrid } from "../ui/selection-grid";
+import { PresetGallery } from "./preset-gallery";
 
 export interface TextPanelProps {
-  onAddText: (preset: TextPreset) => void;
+  /** Legacy single-preset insertion (retained for API compatibility). */
+  onAddText: (preset?: TextPreset) => void;
+  /** Gallery insertion by preset id. */
+  onAddTextPreset?: (id: string) => void;
 }
 
-/** Icons keyed by the built-in preset ids, with a generic fallback. */
-const PRESET_ICONS: Record<string, React.ReactNode> = {
-  title: <Heading1 className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  heading: <Heading className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  subheading: <Type className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-  body: <AlignLeft className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />,
-};
+/**
+ * Thin wrapper: resolves the text preset catalog (built-in rich catalog by
+ * default; consumer `presetGroups` / `additionalPresetGroups` / legacy
+ * `presets` honoured) and delegates browsing + insertion to the gallery.
+ */
+export const TextPanel: React.FC<TextPanelProps> = (props) => {
+  const { onAddText, onAddTextPreset } = props;
 
-const FALLBACK_ICON = <Type className="h-4 w-4 @5xl/editor:h-5 @5xl/editor:w-5" />;
-
-export const TextPanel: React.FC<TextPanelProps> = ({ onAddText }) => {
   const config = useConfig();
 
-  const presets = config.text?.presets ?? [];
-  const items: SelectionGridItem[] = presets.map((p) => ({
-    id: p.id,
-    label: p.label,
-    icon: PRESET_ICONS[p.id] ?? FALLBACK_ICON,
-  }));
+  const groups = useMemo(() => {
+    const text = config.text ?? {};
+    const resolved = resolveTextPresetGroups({
+      builtIn: DEFAULT_TEXT_PRESET_GROUPS,
+      presetGroups: text.presetGroups,
+      additionalPresetGroups: text.additionalPresetGroups,
+      legacyPresets: text.presets,
+    });
+    // Derive each thumbnail from the block's real style (consumer-supplied
+    // `preview.style` is honoured) so previews track the inserted result.
+    return resolved.map((group) => ({
+      ...group,
+      presets: group.presets.map((preset) => ({
+        ...preset,
+        preview: resolveTextPreview(preset),
+      })),
+    }));
+  }, [config.text]);
 
-  return (
-    <Section label="Text styles">
-      <SelectionGrid
-        items={items}
-        onSelect={(id) => onAddText(id)}
-        columns={2}
-        ariaLabel="Text presets"
-      />
-    </Section>
-  );
+  const handleSelect = onAddTextPreset ?? ((id: string) => onAddText(id));
+
+  return <PresetGallery groups={groups} onSelect={handleSelect} />;
 };

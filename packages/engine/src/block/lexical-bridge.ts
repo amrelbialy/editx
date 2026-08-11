@@ -15,7 +15,7 @@ import {
   type LexicalEditor,
   type ParagraphNode,
 } from "lexical";
-import type { TextRun, TextRunStyle } from "./block.types";
+import type { TextGradient, TextRun, TextRunStyle, TextRunStyleUpdate } from "./block.types";
 import { mergeAdjacentRuns } from "./text-run-utils";
 
 // ── TextRun[] → Lexical EditorState ─────────────────────────────────
@@ -259,6 +259,12 @@ export function runStyleToCssString(style: TextRunStyle): string {
     parts.push(`--text-stroke-color: ${style.textStrokeColor}`);
   }
   if (style.textStrokeWidth != null) parts.push(`--text-stroke-width: ${style.textStrokeWidth}`);
+  if (style.fillGradient != null) {
+    // JSON is URI-encoded so the CSS var value stays free of ';', ':', '{', '}'
+    // and quotes — keeps the flat contenteditable overlay's inline style valid
+    // AND round-trips the gradient losslessly so editing never drops it.
+    parts.push(`--text-fill-gradient: ${encodeURIComponent(JSON.stringify(style.fillGradient))}`);
+  }
   return parts.join("; ");
 }
 
@@ -312,6 +318,9 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
       case "--text-stroke-width":
         style.textStrokeWidth = parseFloat(val);
         break;
+      case "--text-fill-gradient":
+        style.fillGradient = parseGradientValue(val);
+        break;
     }
   }
 
@@ -321,10 +330,9 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
 /**
  * Convert a partial TextRunStyle update to a CSS patch object for $patchStyleText.
  * Only includes CSS-stored properties (not format-flag ones like fontWeight/fontStyle/textDecoration).
+ * A `null` value maps to a `null` patch entry, which removes the declaration.
  */
-export function textRunStyleToCssPatch(
-  update: Partial<TextRunStyle>,
-): Record<string, string | null> {
+export function textRunStyleToCssPatch(update: TextRunStyleUpdate): Record<string, string | null> {
   const patch: Record<string, string | null> = {};
   if (update.fill !== undefined) patch.color = update.fill;
   if (update.fontSize !== undefined)
@@ -350,5 +358,21 @@ export function textRunStyleToCssPatch(
   if (update.textStrokeWidth !== undefined)
     patch["--text-stroke-width"] =
       update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
+  if (update.fillGradient !== undefined)
+    patch["--text-fill-gradient"] =
+      update.fillGradient != null ? encodeURIComponent(JSON.stringify(update.fillGradient)) : null;
   return patch;
+}
+
+/** Decode a URI-encoded JSON gradient from a CSS var; undefined when invalid. */
+function parseGradientValue(val: string): TextGradient | undefined {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(val));
+    if (parsed && Array.isArray(parsed.stops) && typeof parsed.type === "string") {
+      return parsed as TextGradient;
+    }
+  } catch {
+    // Malformed value — treat as no gradient rather than throwing during parse.
+  }
+  return undefined;
 }

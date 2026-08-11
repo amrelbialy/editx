@@ -4,12 +4,15 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
 import { SwitchField } from "../ui/switch-field";
+import { TextBackgroundSection } from "./text-background-section.component";
 
 interface BackgroundPropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
+  blockType: "text" | "graphic" | "image";
 }
 
 function readFillState(engine: EditxEngine, blockId: number) {
@@ -30,7 +33,13 @@ function readFillState(engine: EditxEngine, blockId: number) {
 export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = ({
   engine,
   blockId,
+  blockType,
 }) => {
+  const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
+  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+
+  const isText = blockType === "text";
+
   const [state, setState] = useState(() => readFillState(engine, blockId));
 
   const config = useConfig();
@@ -47,6 +56,18 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
   const refresh = useCallback(() => setState(readFillState(engine, blockId)), [engine, blockId]);
 
   const { commit } = useCoalescedHistory(engine);
+
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
+
+  const getStyleRange = useCallback((): { start: number; end: number } => {
+    if (hasCharSelection && textSelectionRange) {
+      return { start: textSelectionRange.from, end: textSelectionRange.to };
+    }
+    return { start: 0, end: engine.block.getTextContent(blockId).length };
+  }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
   const handleToggle = useCallback(() => {
     engine.block.setFillEnabled(blockId, !state.enabled);
@@ -71,6 +92,21 @@ export const BackgroundPropertyPanel: React.FC<BackgroundPropertyPanelProps> = (
     },
     [engine, blockId, state.enabled, refresh, commit],
   );
+
+  // Text blocks store the highlight as the RUN's `backgroundColor` (the pill
+  // behind the glyphs), selection-aware — distinct from a graphic block's
+  // whole-box fill handled below.
+  if (isText) {
+    return (
+      <TextBackgroundSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+        swatches={config.colors}
+      />
+    );
+  }
 
   return (
     <SwitchField label="Enable Background" checked={state.enabled} onChange={handleToggle}>

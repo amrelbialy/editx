@@ -13,7 +13,7 @@ import type Konva from "konva";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BlockData } from "../block/block.types";
 import { EFFECT_ADJUSTMENTS_BRIGHTNESS, IMAGE_SRC } from "../block/property-keys";
-import { updateImageNode } from "./konva-image-text-updaters";
+import { updateImageNode } from "./konva-image-updater";
 
 const { loadImageMock } = vi.hoisted(() => ({ loadImageMock: vi.fn() }));
 vi.mock("../utils/image-loader", () => ({ loadImage: loadImageMock }));

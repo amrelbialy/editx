@@ -6,6 +6,7 @@ import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
+import { TextColorSection } from "./text-color-section.component";
 
 interface ColorPropertyPanelProps {
   engine: EditxEngine;
@@ -105,6 +106,22 @@ export const ColorPropertyPanel: React.FC<ColorPropertyPanelProps> = ({
     },
     [engine, blockId, commit],
   );
+
+  // Text: run-level colour with Solid / Gradient modes (selection-aware).
+  // Graphic: whole-block solid fill (shapes use ShapeFillPanel for gradients).
+  if (isText) {
+    return (
+      <TextColorSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+        opacity={opacity}
+        onOpacityChange={handleOpacityChange}
+        swatches={config.colors}
+      />
+    );
+  }
 
   return (
     <ColorPicker

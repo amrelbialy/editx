@@ -26,6 +26,7 @@ export function readTextState(engine: EditxEngine, blockId: number, selectionSta
     fontWeight: targetStyle.fontWeight ?? "normal",
     fontStyle: targetStyle.fontStyle ?? "normal",
     fill: targetStyle.fill ?? "#000000",
+    fillGradient: targetStyle.fillGradient,
     textDecoration: targetStyle.textDecoration ?? "",
     textAlign: align || "left",
     opacity: engine.block.getOpacity(blockId),

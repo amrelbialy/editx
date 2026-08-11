@@ -1,9 +1,22 @@
 import type React from "react";
-import type { BuiltInPreset } from "../theme/presets";
+import type { BuiltInPreset, ThemeColorKey } from "../theme/presets";
+import type { PresetGroup, ShapePreset, TextPreset, TextStylePreset } from "./preset.types";
 
 export type { ThemeColorKey } from "../theme/presets";
-
-import type { ThemeColorKey } from "../theme/presets";
+export type {
+  PresetGroup,
+  PresetPreview,
+  PreviewBoxStyle,
+  PreviewStyle,
+  ShapePreset,
+  TextBackgroundBoxSpec,
+  TextBoxPadding,
+  TextLayoutSpec,
+  TextPreset,
+  TextPresetBlock,
+  TextStylePreset,
+  TextStyleSpec,
+} from "./preset.types";
 
 export type CloseReason = "save" | "close-button" | "back-button" | "escape";
 
@@ -134,28 +147,21 @@ export interface TextToolConfig {
   minFontSize?: number;
   /** Upper bound (px) for the font-size input. Default `500`. */
   maxFontSize?: number;
-  /** Text style presets shown in the Text tool panel. */
+  /** @deprecated Legacy flat list. Mapped to one gallery category. Prefer `presetGroups`. */
   presets?: TextStylePreset[];
-}
-
-/**
- * A selectable text style in the Text tool panel (Title, Heading, …).
- */
-export interface TextStylePreset {
-  /** Stable id (also the grid item test id). */
-  id: string;
-  /** Label shown in the grid. */
-  label: string;
-  /** Default text content inserted for the block. */
-  text?: string;
-  /** Multiplier applied to `defaultFontSize`. Default `1`. */
-  fontSizeScale?: number;
-  /** Font weight for this preset (overrides `defaultFontWeight`). */
-  fontWeight?: "normal" | "bold";
+  /** Categorized text presets. **Replaces** the built-in catalog when set. */
+  presetGroups?: PresetGroup<TextPreset>[];
+  /** Extra categories **appended** to built-ins (matching `id` merges presets). */
+  additionalPresetGroups?: PresetGroup<TextPreset>[];
 }
 
 export interface ShapesToolConfig {
+  /** @deprecated Legacy shape-kind allowlist. Mapped to one gallery category. Prefer `presetGroups`. */
   presets?: string[];
+  /** Categorized shape presets. **Replaces** the built-in catalog when set. */
+  presetGroups?: PresetGroup<ShapePreset>[];
+  /** Extra categories **appended** to built-ins (matching `id` merges presets). */
+  additionalPresetGroups?: PresetGroup<ShapePreset>[];
   defaultFillMode?: "filled" | "outlined";
   defaultColor?: string;
   /** Stroke color for outlined shapes. Falls back to `defaultColor` when unset. */

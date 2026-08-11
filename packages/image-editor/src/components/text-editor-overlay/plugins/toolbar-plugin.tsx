@@ -1,3 +1,4 @@
+import { cssStringToRunStyle } from "@editx/engine";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelectionStyleValueForProperty } from "@lexical/selection";
 import {
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "../../../i18n/i18n-context";
 import { useImageEditorStore } from "../../../store/image-editor-store";
 import { cn } from "../../../utils/cn";
+import { textGradientToCss } from "../../../utils/text-gradient-css";
 import { IconButton } from "../../ui";
 
 // ── ToolbarPlugin ───────────────────────────────────────────────────
@@ -26,6 +28,7 @@ export function ToolbarPlugin({ zoom }: { zoom: number }) {
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [fontColor, setFontColor] = useState("#000000");
+  const [fontGradient, setFontGradient] = useState<string | null>(null);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
 
@@ -38,6 +41,14 @@ export function ToolbarPlugin({ zoom }: { zoom: number }) {
       setIsUnderline(sel.hasFormat("underline"));
       setIsStrikethrough(sel.hasFormat("strikethrough"));
       setFontColor($getSelectionStyleValueForProperty(sel, "color", "#000000"));
+      // A gradient fill is stored as a URI-encoded CSS var, so read + parse it
+      // (via the engine's tested parser) and prefer it over the solid `color`
+      // for the swatch — mirrors the run's `fillGradient` overriding `fill`.
+      const gradientVar = $getSelectionStyleValueForProperty(sel, "--text-fill-gradient", "");
+      const gradient = gradientVar
+        ? cssStringToRunStyle(`--text-fill-gradient: ${gradientVar}`).fillGradient
+        : undefined;
+      setFontGradient(gradient ? textGradientToCss(gradient) : null);
     }
   }, []);
 
@@ -144,7 +155,7 @@ export function ToolbarPlugin({ zoom }: { zoom: number }) {
           icon={
             <div
               className="w-4 h-4 rounded-full border border-border"
-              style={{ backgroundColor: fontColor }}
+              style={{ background: fontGradient ?? fontColor }}
             />
           }
         />

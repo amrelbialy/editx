@@ -49,6 +49,8 @@ interface SidePanelProps {
   };
   addShape: (shape: ShapeType, sides?: number) => void;
   addText: (preset?: TextPreset) => void;
+  addTextPreset: (id: string) => void;
+  addShapePreset: (id: string) => void;
   addImage: (file: File) => Promise<void>;
   replaceImage: (file: File, blockId: number) => Promise<void>;
   blockEffects: {
@@ -76,6 +78,8 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     filter,
     addShape,
     addText,
+    addTextPreset,
+    addShapePreset,
     addImage,
     replaceImage,
     blockEffects,
@@ -175,9 +179,9 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
           <FilterPanel activeFilter={filter.activeFilter} onSelect={filter.handleFilterSelect} />
         );
       case "shapes":
-        return <ShapesPanel onAddShape={addShape} />;
+        return <ShapesPanel onAddShape={addShape} onAddShapePreset={addShapePreset} />;
       case "text":
-        return <TextPanel onAddText={addText} />;
+        return <TextPanel onAddText={addText} onAddTextPreset={addTextPreset} />;
       case "image":
         return <ImagePanel onAddImage={addImage} />;
       default:
@@ -192,6 +196,8 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     filter,
     addShape,
     addText,
+    addTextPreset,
+    addShapePreset,
     addImage,
     CustomPanel,
     isImageBlockSelected,

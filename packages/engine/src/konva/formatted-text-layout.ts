@@ -1,9 +1,11 @@
-import type { TextRun, TextRunStyle } from "../block/block.types";
+import type { TextRun } from "../block/block.types";
+import { gradientsEqual } from "../block/text-run-utils";
 import {
   applyTextTransform,
   formatFont,
   getDummyContext,
   type LinePart,
+  type ResolvedTextRunStyle,
   resolveStyle,
   type TextLine,
 } from "./formatted-text-utils";
@@ -16,11 +18,18 @@ export interface TextLayoutConfig {
   plainText: string;
 }
 
+/**
+ * Sub-pixel slack on fit checks: a line sized to exactly its own measured width
+ * (e.g. an auto-width box) must not wrap because a re-measure lands a fraction
+ * of a pixel over. Kept tiny — this is float-safety, not the width fit itself.
+ */
+const FIT_EPS = 0.5;
+
 /** Measure text width, accounting for letter spacing. */
 function measureText(
   ctx: CanvasRenderingContext2D,
   text: string,
-  style: Required<TextRunStyle>,
+  style: ResolvedTextRunStyle,
   trailingSpacing = false,
 ): number {
   ctx.font = formatFont(style);
@@ -86,7 +95,8 @@ function buildParts(
       charStyle.textShadowOffsetX === currentStyle.textShadowOffsetX &&
       charStyle.textShadowOffsetY === currentStyle.textShadowOffsetY &&
       charStyle.textStrokeColor === currentStyle.textStrokeColor &&
-      charStyle.textStrokeWidth === currentStyle.textStrokeWidth;
+      charStyle.textStrokeWidth === currentStyle.textStrokeWidth &&
+      gradientsEqual(charStyle.fillGradient, currentStyle.fillGradient);
 
     if (!sameStyle && currentText.length > 0) {
       const w = measureText(ctx, currentText, currentStyle, true);
@@ -122,7 +132,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
   const fullText = config.plainText;
   const lines = fullText.split("\n");
 
-  const resolvedStyles: Required<TextRunStyle>[] = [];
+  const resolvedStyles: ResolvedTextRunStyle[] = [];
   for (const run of runs) {
     const s = resolveStyle(run.style);
     for (let i = 0; i < run.text.length; i++) {
@@ -164,7 +174,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
       const fullParts = buildParts(ctx, remaining, remainingStart, runs);
       const fullWidth = fullParts.reduce((sum, p) => sum + p.width, 0);
 
-      if (fullWidth <= maxWidth) {
+      if (fullWidth <= maxWidth + FIT_EPS) {
         const lineH = Math.max(...fullParts.map((p) => p.style.fontSize)) * config.lineHeight;
         result.push({ parts: fullParts, width: fullWidth, height: lineH });
         globalCharIdx += remaining.length;
@@ -181,7 +191,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
         const substr = remaining.slice(0, mid);
         const subParts = buildParts(ctx, substr, remainingStart, runs);
         const subW = subParts.reduce((sum, p) => sum + p.width, 0);
-        if (subW <= maxWidth) {
+        if (subW <= maxWidth + FIT_EPS) {
           low = mid;
           bestLen = mid;
         } else {

@@ -1,10 +1,13 @@
 import Konva from "konva";
 import type { BlockClickEvent } from "../render-adapter";
 import type { KonvaCamera } from "./konva-camera";
+import { directChildUnderTarget, isMarqueeCandidate, resolveHit } from "./konva-context-resolver";
+import { setupWheelZoom } from "./konva-wheel-zoom";
 
 export interface InteractionCallbacks {
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
@@ -17,32 +20,22 @@ export interface InteractionDeps {
   nodeMap: Map<number, Konva.Node>;
   camera: KonvaCamera;
   callbacks: InteractionCallbacks;
+  /** Active group-context stack (outermost-first); `[]` = top level. */
+  getGroupContext: () => number[];
 }
 
-/**
- * Binds mouse/touch interaction events to the Konva stage:
- * click-to-select, marquee selection rectangle, and stage click.
- */
 /** Returns true if the target is a background element (stage or page background). */
 function isBackground(target: Konva.Node, stage: Konva.Stage): boolean {
   return target === stage || target.getAttr("isPageBackground") === true;
 }
 
 /**
- * Walk up from a clicked Konva node to find the nearest ancestor (or self)
- * that has a `blockId` attribute. Returns null if none found.
+ * Binds mouse/touch interaction to the Konva stage. Every gesture (click,
+ * double-click, drag, transform, marquee) resolves the hit through ONE shared
+ * context-aware resolver so they can never disagree about which block is meant.
  */
-function findBlockNode(target: Konva.Node): Konva.Node | null {
-  let current: Konva.Node | null = target;
-  while (current) {
-    if (current.getAttr("blockId") !== undefined) return current;
-    current = current.getParent();
-  }
-  return null;
-}
-
 export function setupInteraction(deps: InteractionDeps): void {
-  const { stage, selectionRect, uiLayer, nodeMap, camera, callbacks } = deps;
+  const { stage, selectionRect, uiLayer, nodeMap, camera, callbacks, getGroupContext } = deps;
 
   let x1 = 0,
     y1 = 0,
@@ -50,36 +43,37 @@ export function setupInteraction(deps: InteractionDeps): void {
     y2 = 0;
   let selecting = false;
 
-  // Live drag/resize — fires every frame while a block is moved or transformed,
-  // so consumers can track its on-screen geometry without polling. Konva bubbles
-  // `dragmove`/`transform` from the target node up to the stage.
+  // Live drag/resize — fires every frame while a block is moved or transformed.
   stage.on("dragmove transform", (e) => {
-    const node = findBlockNode(e.target as Konva.Node);
-    const blockId = node?.getAttr("blockId") as number | undefined;
-    if (blockId === undefined || node?.getAttr("isPage")) return;
-    callbacks.onBlockTransform?.(blockId, e.type === "dragmove" ? "drag" : "resize");
+    const r = resolveHit(e.target as Konva.Node, getGroupContext());
+    if (!r || r.node.getAttr("isPage")) return;
+    callbacks.onBlockTransform?.(r.blockId, e.type === "dragmove" ? "drag" : "resize");
   });
 
-  // Double-click on a block → enter edit mode (text inline editing)
+  // Double-click → enter a group (first) or edit its member (second).
   stage.on("dblclick dbltap", (e) => {
     if (isBackground(e.target, stage)) return;
-    const clickNode = findBlockNode(e.target as Konva.Node);
-    const blockId = clickNode?.getAttr("blockId") as number | undefined;
-    if (blockId !== undefined && !clickNode?.getAttr("isPage")) {
-      const pointer = stage.getPointerPosition();
-      const container = stage.container().getBoundingClientRect();
-      const screenPos = pointer
-        ? { x: container.left + pointer.x, y: container.top + pointer.y }
-        : { x: 0, y: 0 };
-      callbacks.onBlockDblClick?.(blockId, screenPos);
-    }
-  });
+    const stack = getGroupContext();
+    const r = resolveHit(e.target as Konva.Node, stack);
+    if (!r || r.node.getAttr("isPage")) return;
 
-  // Click on stage background → deselect
-  stage.on("click tap", (e) => {
-    if (selectionRect.visible() && selectionRect.width() > 0) {
+    const activeId = stack.length > 0 ? stack[stack.length - 1] : null;
+    if (r.isGroup && r.blockId !== activeId) {
+      const childId = directChildUnderTarget(e.target as Konva.Node, r.node);
+      callbacks.onEnterGroup?.(r.blockId, childId);
       return;
     }
+    const pointer = stage.getPointerPosition();
+    const container = stage.container().getBoundingClientRect();
+    const screenPos = pointer
+      ? { x: container.left + pointer.x, y: container.top + pointer.y }
+      : { x: 0, y: 0 };
+    callbacks.onBlockDblClick?.(r.blockId, screenPos);
+  });
+
+  // Single click → select the resolved block (or deselect on background).
+  stage.on("click tap", (e) => {
+    if (selectionRect.visible() && selectionRect.width() > 0) return;
 
     if (isBackground(e.target, stage)) {
       const pos = stage.getPointerPosition();
@@ -88,23 +82,18 @@ export function setupInteraction(deps: InteractionDeps): void {
       return;
     }
 
-    // Check if click was on a block node (skip pages — they aren't selectable)
-    const target = e.target as Konva.Node;
-    const clickNode = findBlockNode(target);
-    const blockId = clickNode?.getAttr("blockId") as number | undefined;
-    if (blockId !== undefined && !clickNode?.getAttr("isPage")) {
-      const shiftKey =
-        (e.evt as MouseEvent).shiftKey ||
-        (e.evt as MouseEvent).ctrlKey ||
-        (e.evt as MouseEvent).metaKey;
-      callbacks.onBlockClick?.(blockId, { shiftKey });
-    }
+    const r = resolveHit(e.target as Konva.Node, getGroupContext());
+    if (!r || r.node.getAttr("isPage")) return;
+    const shiftKey =
+      (e.evt as MouseEvent).shiftKey ||
+      (e.evt as MouseEvent).ctrlKey ||
+      (e.evt as MouseEvent).metaKey;
+    callbacks.onBlockClick?.(r.blockId, { shiftKey, insideContext: r.insideContext });
   });
 
-  // Selection rectangle — mousedown
+  // Marquee — mousedown
   stage.on("mousedown touchstart", (e) => {
     if (!isBackground(e.target, stage)) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
     const world = camera.screenToWorld(pos);
@@ -113,26 +102,17 @@ export function setupInteraction(deps: InteractionDeps): void {
     x2 = world.x;
     y2 = world.y;
     selecting = true;
-
-    selectionRect.setAttrs({
-      x: x1,
-      y: y1,
-      width: 0,
-      height: 0,
-      visible: true,
-    });
+    selectionRect.setAttrs({ x: x1, y: y1, width: 0, height: 0, visible: true });
   });
 
-  // Selection rectangle — mousemove
+  // Marquee — mousemove
   stage.on("mousemove touchmove", () => {
     if (!selecting) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
     const world = camera.screenToWorld(pos);
     x2 = world.x;
     y2 = world.y;
-
     selectionRect.setAttrs({
       x: Math.min(x1, x2),
       y: Math.min(y1, y2),
@@ -142,25 +122,20 @@ export function setupInteraction(deps: InteractionDeps): void {
     uiLayer.batchDraw();
   });
 
-  // Selection rectangle — mouseup
+  // Marquee — mouseup (scoped to the active context's direct children)
   stage.on("mouseup touchend", () => {
     if (!selecting) return;
     selecting = false;
 
     if (selectionRect.width() > 2 && selectionRect.height() > 2) {
       const selBox = selectionRect.getClientRect();
-      const selectedIds: number[] = [];
+      const stack = getGroupContext();
+      const activeId = stack.length > 0 ? stack[stack.length - 1] : null;
+      const activeContainer = activeId != null ? (nodeMap.get(activeId) ?? null) : null;
       for (const [blockId, node] of nodeMap) {
-        // Skip page blocks — they aren't selectable
-        if (node.getAttr("isPage")) continue;
+        if (!isMarqueeCandidate(node, activeContainer)) continue;
         if (Konva.Util.haveIntersection(selBox, node.getClientRect())) {
-          selectedIds.push(blockId);
-        }
-      }
-      if (selectedIds.length > 0) {
-        for (const id of selectedIds) {
-          // Marquee selection is purely additive — never toggles/removes.
-          callbacks.onBlockClick?.(id, { shiftKey: true, additive: true });
+          callbacks.onBlockClick?.(blockId, { shiftKey: true, additive: true });
         }
       }
     }
@@ -171,58 +146,5 @@ export function setupInteraction(deps: InteractionDeps): void {
     });
   });
 
-  // ─── Wheel zoom ─────────────────────────────────────
-  const container = stage.container();
-  container.addEventListener(
-    "wheel",
-    (e: WheelEvent) => {
-      // Only zoom when Ctrl/Cmd is held. Trackpad pinch gestures also set
-      // ctrlKey, so pinch-to-zoom keeps working; plain scroll is ignored.
-      if (!e.ctrlKey && !e.metaKey) return;
-
-      e.preventDefault();
-
-      const oldZoom = camera.getZoom();
-
-      // Normalize deltaY: trackpads send small fractional values while
-      // discrete mouse wheels send large jumps (typically ±100–120).
-      // We cap the magnitude so one wheel tick ≈ 2-3 % change.
-      const delta = -Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 50);
-      const sensitivity = 0.0015;
-      const newZoom = oldZoom * (1 + delta * sensitivity);
-
-      // Zoom bounds are clamped inside the camera (single source of truth).
-      const pointer = stage.getPointerPosition();
-      if (pointer) {
-        // If the pointer is outside the page/image, zoom toward the page center instead
-        const worldPt = camera.screenToWorld(pointer);
-        let zoomAnchor = pointer;
-
-        // Find the page node and use its background rect for world-space bounds
-        for (const [, node] of nodeMap) {
-          if (node.getAttr("isPage")) {
-            const group = node as Konva.Group;
-            const bgRect = group.children?.[0] as Konva.Rect | undefined;
-            if (bgRect) {
-              const pw = bgRect.width();
-              const ph = bgRect.height();
-              const px = group.x();
-              const py = group.y();
-
-              if (worldPt.x < px || worldPt.x > px + pw || worldPt.y < py || worldPt.y > py + ph) {
-                zoomAnchor = camera.worldToScreen({ x: px + pw / 2, y: py + ph / 2 });
-              }
-            }
-            break;
-          }
-        }
-
-        camera.zoomAtPoint(newZoom, zoomAnchor);
-      }
-
-      // Report the actual (clamped) zoom the camera settled on.
-      callbacks.onZoomChange?.(camera.getZoom());
-    },
-    { passive: false },
-  );
+  setupWheelZoom(stage, camera, nodeMap, callbacks.onZoomChange);
 }

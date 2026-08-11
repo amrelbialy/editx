@@ -1,6 +1,6 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
-import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import { OPACITY, PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { ExportOptions } from "../editor-types";
 import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
@@ -9,6 +9,8 @@ import type { KonvaCamera } from "./konva-camera";
 import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
 import type { KonvaCropOverlay } from "./konva-crop-overlay";
 import { exportScene } from "./konva-export";
+import { applyGroupContext, createGroupOutline } from "./konva-group-affordance";
+import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { KonvaHoverOutline } from "./konva-hover-outline";
 import type { KonvaNodeFactory } from "./konva-node-factory";
 import { createKonvaScene } from "./konva-scene-setup";
@@ -32,9 +34,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #webgl: WebGLFilterRenderer | null = null;
   #updateAccentColor?: (color: string) => void;
   #hoverOutline!: KonvaHoverOutline;
+  #groupContext: number[] = [];
+  #groupOutline!: Konva.Rect;
 
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
   onBlockTransformEnd?: (
     blockId: number,
@@ -47,6 +52,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onPanChange?: (pan: { x: number; y: number }) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
   onAutoSize?: (blockId: number, computedHeight: number) => void;
+  onAutoWidth?: (blockId: number, computedWidth: number) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
 
   async init(root: HTMLElement): Promise<void> {
@@ -73,10 +79,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const scene = createKonvaScene(this.#rootEl, pageW, pageH, this.#nodeMap, {
       onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
       onBlockDblClick: (blockId, screenPos) => this.onBlockDblClick?.(blockId, screenPos),
+      onEnterGroup: (groupId, childId) => this.onEnterGroup?.(groupId, childId),
       onStageClick: (worldPos) => this.onStageClick?.(worldPos),
       onZoomChange: (zoom) => this.onZoomChange?.(zoom),
       onBlockTransform: (blockId, phase) => this.onBlockTransform?.(blockId, phase),
       onCropChange: (rect) => this.onCropChange?.(rect),
+      getGroupContext: () => this.#groupContext,
     });
 
     this.#stage = scene.stage;
@@ -99,6 +107,10 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#camera,
       "#4971FF",
     );
+
+    this.#groupContext = [];
+    this.#groupOutline = createGroupOutline();
+    this.#uiLayer.add(this.#groupOutline);
 
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = observeViewportResize({
@@ -155,9 +167,23 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
+
+    // Keep the Konva tree mirroring the block tree: nest grouped children inside
+    // their group node so their stored coords stay parent-relative (no abs↔local
+    // math), and re-home a block whenever its group membership changes.
+    if (block.type === "group") {
+      nestGroupChildren(node as Konva.Group, block.children, this.#nodeMap);
+    } else if (block.type !== "page") {
+      const container = containerForBlock(block, this.#nodeMap, this.#contentLayer);
+      if (node.getParent() !== container) node.moveTo(container);
+    }
+
     this.#transformer.moveToTop();
     if (result && result.autoHeight != null) {
       this.onAutoSize?.(id, result.autoHeight);
+    }
+    if (result && result.autoWidth != null) {
+      this.onAutoWidth?.(id, result.autoWidth);
     }
     if (block.type === "page") {
       const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
@@ -165,6 +191,28 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#camera.setPageSize(pw, ph);
       this.#lastPageSize = { width: pw, height: ph };
     }
+  }
+
+  setGroupContext(stack: number[]): void {
+    this.#groupContext = [...stack];
+    this.#applyGroupContext();
+    this.#uiLayer.batchDraw();
+    this.#contentLayer.batchDraw();
+  }
+
+  /** Apply draggable-scoping, dimming, and the dashed active-group outline. */
+  #applyGroupContext(): void {
+    if (!this.#groupOutline) return;
+    applyGroupContext({
+      stack: this.#groupContext,
+      nodeMap: this.#nodeMap,
+      contentLayer: this.#contentLayer,
+      outline: this.#groupOutline,
+      baseOpacity: (blockId) => {
+        const block = this.resolveBlock?.(blockId);
+        return (block?.properties[OPACITY] as number) ?? 1;
+      },
+    });
   }
 
   syncChildOrder(childIds: number[]): void {
@@ -328,6 +376,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   renderFrame(): void {
     // Scoped, batched redraws — avoid synchronous full-stage draws.
+    this.#applyGroupContext();
     this.#contentLayer?.batchDraw();
     this.#uiLayer?.batchDraw();
   }

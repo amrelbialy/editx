@@ -22,6 +22,7 @@ import type {
 import { defaultConfig } from "./config/default-config";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
+import { useGroupActions } from "./hooks/use-group-actions";
 import { useHistory } from "./hooks/use-history";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
@@ -171,7 +172,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
 
   const { canUndo, canRedo, handleUndo, handleRedo } = useHistory(engine, engineRef);
 
+  const { handleGroup, handleUngroup, exitGroupIfActive } = useGroupActions(engineRef);
+
   const handleEscape = useCallback(() => {
+    // Group context takes priority (text-editor Escape is handled separately by
+    // the overlay while contentEditable is focused, so it runs before this).
+    if (exitGroupIfActive()) return;
     if (tools.activeTool !== "select") {
       if (tools.activeTool === "crop") {
         tools.crop.handleCropCancel();
@@ -179,7 +185,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
         tools.setActiveTool("select");
       }
     }
-  }, [tools]);
+  }, [tools, exitGroupIfActive]);
 
   // --- useEffect ---
   useShortcuts({
@@ -198,6 +204,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     onSendToBack: tools.blockActions.sendToBack,
     onEscape: handleEscape,
     onDelete: tools.deleteBlock,
+    onGroup: handleGroup,
+    onUngroup: handleUngroup,
   });
 
   useEffect(() => {
@@ -303,6 +311,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               filter={tools.filter}
               addShape={tools.addShape}
               addText={tools.addText}
+              addTextPreset={tools.addTextPreset}
+              addShapePreset={tools.addShapePreset}
               addImage={tools.addImage}
               replaceImage={tools.replaceImage}
               blockEffects={tools.blockEffects}

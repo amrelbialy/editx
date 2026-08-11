@@ -2,6 +2,8 @@ import type { EditxEngine, ShapeType } from "@editx/engine";
 import { hexToColor, SHAPE_RECT_CORNER_RADIUS } from "@editx/engine";
 import { useCallback } from "react";
 import type { ImageEditorConfig } from "../config/config.types";
+import { DEFAULT_SHAPE_PRESET_GROUPS } from "../config/presets";
+import { findPresetById, resolveShapePresetGroups } from "../config/resolve-presets";
 import { useImageEditorStore } from "../store/image-editor-store";
 
 export interface UseShapesToolOptions {
@@ -74,5 +76,91 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
     [engineRef, editableBlockId, config.shapes],
   );
 
-  return { handleAddShape };
+  const handleAddShapePreset = useCallback(
+    (id: string) => {
+      const ce = engineRef.current;
+      if (!ce || editableBlockId === null) return;
+
+      const shapes = config.shapes ?? {};
+      const groups = resolveShapePresetGroups({
+        builtIn: DEFAULT_SHAPE_PRESET_GROUPS,
+        presetGroups: shapes.presetGroups,
+        additionalPresetGroups: shapes.additionalPresetGroups,
+        legacyPresets: shapes.presets,
+      });
+      const preset = findPresetById(groups, id);
+      // Back-compat: unknown ids fall through to the legacy shape-kind flow.
+      if (!preset) {
+        handleAddShape(id as ShapeType);
+        return;
+      }
+
+      const defaultColor = shapes.defaultColor ?? "#3b82f6";
+      const opacity = shapes.defaultOpacity ?? 1;
+      const sizeFraction = preset.sizeFraction ?? shapes.defaultSize ?? 0.25;
+
+      const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
+      const size = Math.min(pageW, pageH) * sizeFraction;
+      const shapeW = preset.shape.kind === "line" ? pageW * 0.5 : size;
+      const shapeH = size;
+      const x = (pageW - shapeW) / 2;
+      const y = (pageH - shapeH) / 2;
+
+      ce.beginBatch();
+      let graphicId: number;
+      try {
+        graphicId = ce.block.addShape(
+          editableBlockId,
+          preset.shape.kind,
+          preset.fill.kind,
+          x,
+          y,
+          shapeW,
+          shapeH,
+          {
+            sides: preset.shape.sides,
+            pathData: preset.shape.pathData,
+            viewBox: preset.shape.viewBox,
+          },
+        );
+      } catch {
+        // Engine rejected the preset (e.g. invalid SVG path data) — skip it
+        // gracefully rather than crashing the editor.
+        ce.endBatch();
+        return;
+      }
+
+      if (preset.fill.kind === "gradient" && preset.fill.gradient) {
+        const g = preset.fill.gradient;
+        ce.block.changeFillKind(graphicId, "gradient");
+        ce.block.setFillGradient(graphicId, { type: g.type, stops: g.stops, angle: g.angle });
+      } else if (preset.fill.kind === "image" && preset.fill.image) {
+        const img = preset.fill.image;
+        ce.block.changeFillKind(graphicId, "image");
+        ce.block.setFillImage(graphicId, { src: img.src, fit: img.fit });
+      } else {
+        ce.block.setFillSolidColor(graphicId, hexToColor(preset.fill.color ?? defaultColor));
+      }
+
+      if (preset.stroke) {
+        ce.block.setStrokeEnabled(graphicId, true);
+        ce.block.setStrokeColor(graphicId, hexToColor(preset.stroke.color));
+        ce.block.setStrokeWidth(graphicId, preset.stroke.width);
+      }
+
+      if (opacity !== 1) ce.block.setOpacity(graphicId, opacity);
+
+      if (preset.shape.kind === "rect" && preset.shape.cornerRadius) {
+        const shapeId = ce.block.getShape(graphicId);
+        if (shapeId != null)
+          ce.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, preset.shape.cornerRadius);
+      }
+      ce.endBatch();
+
+      ce.block.select(graphicId);
+    },
+    [engineRef, editableBlockId, config.shapes, handleAddShape],
+  );
+
+  return { handleAddShape, handleAddShapePreset };
 }

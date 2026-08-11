@@ -2,8 +2,14 @@ import {
   createLexicalComposerContext,
   LexicalComposerContext,
 } from "@lexical/react/LexicalComposerContext";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { createEditor, type LexicalEditor } from "lexical";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  createEditor,
+  type LexicalEditor,
+} from "lexical";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { I18nProvider } from "../../../i18n/i18n-context";
@@ -60,5 +66,38 @@ describe("ToolbarPlugin", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Color" }));
     expect(useImageEditorStore.getState().propertySidePanel).toBeNull();
+  });
+
+  it("renders the gradient (not the solid fill) in the swatch when the run has a gradient", async () => {
+    renderWithEditor(editor, <ToolbarPlugin zoom={1} />);
+
+    const gradient = {
+      type: "linear",
+      angle: 90,
+      stops: [
+        { offset: 0, color: "#ff0000" },
+        { offset: 1, color: "#0000ff" },
+      ],
+    };
+    const encoded = encodeURIComponent(JSON.stringify(gradient));
+
+    act(() => {
+      editor.update(
+        () => {
+          const paragraph = $createParagraphNode();
+          const textNode = $createTextNode("Colorful");
+          textNode.setStyle(`color: #ff0000; --text-fill-gradient: ${encoded}`);
+          paragraph.append(textNode);
+          $getRoot().clear().append(paragraph);
+          textNode.select(0, "Colorful".length);
+        },
+        { discrete: true },
+      );
+    });
+
+    await waitFor(() => {
+      const swatch = screen.getByRole("button", { name: "Color" }).querySelector("div");
+      expect(swatch?.style.background).toContain("linear-gradient");
+    });
   });
 });
