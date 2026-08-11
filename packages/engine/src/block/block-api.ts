@@ -6,6 +6,15 @@ import {
   SetKindCommand,
 } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
+import type { TextBoxLayout } from "../konva/formatted-text-box";
+import {
+  caretRectForOffset,
+  selectionRectsForRange,
+  type TextCaretRect,
+  type TextSelectionRect,
+} from "../konva/formatted-text-caret";
+import { computeTextLines } from "../konva/formatted-text-layout";
+import type { TextLine } from "../konva/formatted-text-utils";
 import type {
   BlockType,
   Color,
@@ -42,6 +51,14 @@ import { BlockShadowAPI } from "./block-shadow-api";
 import { BlockShapeAPI } from "./block-shape-api";
 import { BlockStrokeAPI } from "./block-stroke-api";
 import { BlockTextAPI } from "./block-text-api";
+import {
+  TEXT_ALIGN,
+  TEXT_AUTO_WIDTH,
+  TEXT_LINE_HEIGHT,
+  TEXT_PADDING,
+  TEXT_VERTICAL_ALIGN,
+  TEXT_WRAP,
+} from "./property-keys";
 import type { TextEditorSession } from "./text-editor-session";
 
 // Re-export adjustment types/constants from effect sub-API
@@ -680,6 +697,29 @@ export class BlockAPI {
   }
   getTextContent(blockId: number): string {
     return this.#text.getTextContent(blockId);
+  }
+  getTextCaretRect(blockId: number, offset: number): TextCaretRect | null {
+    const { lines, layout } = this.#textLinesAndLayout(blockId);
+    return caretRectForOffset(lines, layout, offset);
+  }
+  getTextSelectionRects(blockId: number, from: number, to: number): TextSelectionRect[] {
+    const { lines, layout } = this.#textLinesAndLayout(blockId);
+    return selectionRectsForRange(lines, layout, from, to);
+  }
+  /** Lay out the block's current text (fresh from block data, matches the canvas). */
+  #textLinesAndLayout(blockId: number): { lines: TextLine[]; layout: TextBoxLayout } {
+    const runs = this.getTextRuns(blockId);
+    const size = this.getSize(blockId);
+    const autoWidth = this.getBool(blockId, TEXT_AUTO_WIDTH);
+    const padding = this.getFloat(blockId, TEXT_PADDING) || 0;
+    const lineHeight = this.getFloat(blockId, TEXT_LINE_HEIGHT) || 1.2;
+    const align = this.getString(blockId, TEXT_ALIGN) || "left";
+    const verticalAlign = this.getString(blockId, TEXT_VERTICAL_ALIGN) || "top";
+    const wrap = autoWidth ? "none" : this.getString(blockId, TEXT_WRAP) || "word";
+    const width = size.width || 99999;
+    const plainText = runs.map((r) => r.text).join("");
+    const lines = computeTextLines(runs, { width, padding, wrap, lineHeight, plainText });
+    return { lines, layout: { width, height: size.height, padding, align, verticalAlign } };
   }
   insertTextAt(blockId: number, position: number, text: string): void {
     this.#text.insertTextAt(blockId, position, text);

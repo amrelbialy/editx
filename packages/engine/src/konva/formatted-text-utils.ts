@@ -32,6 +32,8 @@ export interface TextLine {
   parts: LinePart[];
   width: number;
   height: number;
+  /** Global char offset (into the plain text) of this line's first character. */
+  start?: number;
 }
 
 export interface LinePart {

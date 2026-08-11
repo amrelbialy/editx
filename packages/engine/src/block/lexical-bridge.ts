@@ -222,7 +222,19 @@ function getGlobalOffset(
   for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
     if (pIdx > 0) globalOffset += 1;
 
-    const children = paragraphs[pIdx].getChildren();
+    const paragraph = paragraphs[pIdx];
+    const children = paragraph.getChildren();
+
+    // Element point ON the paragraph (e.g. caret after a trailing line break):
+    // offset is a child index, so sum the sizes of the children before it.
+    if (paragraph.getKey() === nodeKey) {
+      let off = globalOffset;
+      for (let i = 0; i < localOffset && i < children.length; i++) {
+        off += children[i].getTextContentSize();
+      }
+      return off;
+    }
+
     for (const child of children) {
       if (child.getKey() === nodeKey) {
         return globalOffset + localOffset;

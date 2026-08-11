@@ -177,8 +177,8 @@ describe("FormattedText _hitFunc — the visible box is clickable", () => {
 
     node._hitFunc(hit.context);
 
-    // computedTextHeight = 20 × 1.2 + text padding 4 × 2 = 32, then bleed 14.
-    expect(hit.rects[0]).toEqual([-14, -14, 228, 60]);
+    // computedTextHeight hugs the em box: 20 + text padding 4 × 2 = 28, bleed 14.
+    expect(hit.rects[0]).toEqual([-14, -14, 228, 56]);
   });
 
   it("still uses the arc bbox for curved text", () => {
@@ -188,6 +188,6 @@ describe("FormattedText _hitFunc — the visible box is clickable", () => {
     node._hitFunc(hit.context);
 
     expect(hit.rects[0][2]).toBeGreaterThan(0);
-    expect(hit.rects[0]).not.toEqual([-14, -14, 228, 60]);
+    expect(hit.rects[0]).not.toEqual([-14, -14, 228, 56]);
   });
 });

@@ -151,6 +151,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
         parts: [{ text: "", style: s, width: 0 }],
         width: 0,
         height: s.fontSize * config.lineHeight,
+        start: globalCharIdx,
       });
       globalCharIdx += 1;
       continue;
@@ -162,7 +163,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
         const parts = buildParts(ctx, rawLine, globalCharIdx, runs);
         const lineW = parts.reduce((sum, p) => sum + p.width, 0);
         const lineH = Math.max(...parts.map((p) => p.style.fontSize)) * config.lineHeight;
-        result.push({ parts, width: lineW, height: lineH });
+        result.push({ parts, width: lineW, height: lineH, start: globalCharIdx });
         globalCharIdx += rawLine.length;
         cursor = rawLine.length;
         break;
@@ -176,7 +177,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
 
       if (fullWidth <= maxWidth + FIT_EPS) {
         const lineH = Math.max(...fullParts.map((p) => p.style.fontSize)) * config.lineHeight;
-        result.push({ parts: fullParts, width: fullWidth, height: lineH });
+        result.push({ parts: fullParts, width: fullWidth, height: lineH, start: globalCharIdx });
         globalCharIdx += remaining.length;
         cursor = rawLine.length;
         break;
@@ -219,7 +220,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
       const parts = buildParts(ctx, lineText, remainingStart, runs);
       const lineW = parts.reduce((sum, p) => sum + p.width, 0);
       const lineH = Math.max(...parts.map((p) => p.style.fontSize)) * config.lineHeight;
-      result.push({ parts, width: lineW, height: lineH });
+      result.push({ parts, width: lineW, height: lineH, start: globalCharIdx });
 
       cursor += bestLen;
       globalCharIdx += bestLen;

@@ -149,7 +149,8 @@
    opaquely on top of the canvas. Font metrics (size/family/spacing) are kept
    so the caret stays aligned with the canvas glyphs. */
 [data-text-editor-overlay],
-[data-text-editor-overlay] *:not([data-text-toolbar] *):not([data-text-toolbar]) {
+[data-text-editor-overlay]
+  *:not([data-text-toolbar] *):not([data-text-toolbar]):not([data-ex-text-ui]) {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   background-color: transparent !important;
@@ -170,9 +171,22 @@
   display: none; /* Chrome / Safari / Edge */
 }
 
+/* Native selection/caret are hidden; TextSelectionLayer paints them from the
+   engine layout so they hug the glyphs exactly like the Konva canvas. */
 [data-text-editor-overlay]::selection,
 [data-text-editor-overlay] *::selection {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-  background: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  background: transparent !important;
+}
+
+@keyframes ex-caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
 }

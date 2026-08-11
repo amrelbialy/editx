@@ -16,6 +16,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import type { LexicalEditor } from "lexical";
 import type React from "react";
 import { useCallback, useEffect, useMemo } from "react";
+import { useImageEditorStore } from "../../store/image-editor-store";
 import {
   AutoFocusPlugin,
   BlurHandlerPlugin,
@@ -24,6 +25,7 @@ import {
   SelectionSyncPlugin,
   ToolbarPlugin,
 } from "./plugins";
+import { TextSelectionLayer } from "./text-selection-layer.component";
 
 export interface TextEditorOverlayProps {
   engine: EditxEngine;
@@ -85,6 +87,8 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
       transform: `scale(${zoom}) rotate(${rotation}deg)`,
       transformOrigin: "top left",
       textAlign: align as React.CSSProperties["textAlign"],
+      // Native glyphs/caret are hidden; keep line-height so the invisible DOM
+      // line boxes stay aligned with the Konva line bands for click hit-testing.
       lineHeight: String(lineHeight),
       fontSize: `${fontSize}px`,
       fontFamily,
@@ -97,15 +101,21 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
       background: "transparent",
       boxSizing: "border-box",
       color: "transparent",
-      caretColor: "var(--primary)",
+      caretColor: "transparent",
       outline: `${3 / zoom}px solid var(--primary)`,
       outlineOffset: "0px",
-    };
+    } as React.CSSProperties;
   }, [engine, blockId]);
 
   // Get or start a TextEditorSession from engine
   const session = useMemo(() => engine.block.beginTextEditing(blockId), [engine, blockId]);
   const editor = session.getEditor();
+
+  // Re-run the style (which reads the auto-sized block height) whenever the
+  // editing selection/content changes, so the outline box tracks new lines.
+  const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: textSelectionRange forces a re-read of the auto-sized height
+  const overlayStyle = useMemo(getOverlayStyle, [getOverlayStyle, textSelectionRange]);
 
   // Build the LexicalComposerContext value for child plugins
   const composerCtx: [LexicalEditor, ReturnType<typeof createLexicalComposerContext>] = useMemo(
@@ -144,7 +154,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   }, [engine, blockId, editor]);
 
   return (
-    <div style={getOverlayStyle()} data-testid="text-editor-overlay" data-text-editor-overlay>
+    <div style={overlayStyle} data-testid="text-editor-overlay" data-text-editor-overlay>
       <LexicalComposerContext.Provider value={composerCtx}>
         <RichTextPlugin
           contentEditable={
@@ -163,6 +173,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
         <PastePlainTextPlugin />
         <BlurHandlerPlugin onClose={onClose} />
         <ToolbarPlugin zoom={engine.editor.getZoom()} />
+        <TextSelectionLayer engine={engine} blockId={blockId} zoom={engine.editor.getZoom()} />
       </LexicalComposerContext.Provider>
     </div>
   );

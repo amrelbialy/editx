@@ -1,6 +1,6 @@
 import type Konva from "konva";
 import { type TextBackgroundBoxStyle, textBoxOverflow } from "./formatted-text-box-render";
-import { lineTrailingSlack, type TextLine } from "./formatted-text-utils";
+import { lineTrailingSlack, type TextLine, textContentHeight } from "./formatted-text-utils";
 
 export interface TextRect {
   x: number;
@@ -58,12 +58,12 @@ export function textBoxBleedRect(
 }
 
 /**
- * Full line-box height (the last line keeps its line-gap) so the editing caret,
- * which spans fontSize×lineHeight, is always contained by the box.
+ * Box height on the trailing-leading model: interior lines keep their line-gap,
+ * the last line hugs its em box. Shared with vertical-align math via
+ * {@link textContentHeight} so a single line's box never grows with lineHeight.
  */
 export function computedTextHeight(lines: TextLine[], padding: number): number {
-  const contentHeight = lines.reduce((sum, line) => sum + line.height, 0);
-  return contentHeight + padding * 2;
+  return textContentHeight(lines) + padding * 2;
 }
 
 /**

@@ -111,7 +111,7 @@ function makeNode(attrs: Record<string, unknown> = {}): FormattedText {
   node.attrs = {
     textRuns: [{ text: "Hi", style: { fontSize: 20, fontFamily: "Arial" } }],
     width: 200,
-    // computedTextHeight: line box (20 × 1.2) + text/padding × 2.
+    // Explicit container height for the box-geometry fixtures.
     height: 32,
     lineHeight: 1.2,
     // The engine default for text blocks.
