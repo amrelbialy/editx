@@ -4,9 +4,9 @@ import { FormattedTextAttrs } from "./formatted-text-attrs";
 import {
   computedTextHeight,
   computedTextWidth,
+  formattedTextPaintRect,
   readBackgroundBox,
   type TextRect,
-  textBoxBleedRect,
 } from "./formatted-text-bounds";
 import { type CurvedTextLayout, computeCurvedLayout } from "./formatted-text-curve";
 import { computeTextLines } from "./formatted-text-layout";
@@ -47,6 +47,7 @@ export class FormattedText extends FormattedTextAttrs {
       "wrap",
       "width",
       "height",
+      "backgroundBox",
       "curveRadius",
       "curveDirection",
     ];
@@ -76,12 +77,27 @@ export class FormattedText extends FormattedTextAttrs {
     if (this._textLines.length > 0) return this._textLines;
     this._textLines = computeTextLines(this.textRuns(), {
       width: this.width() || 99999,
-      padding: this.padding(),
+      padding: this._contentPadding(),
       wrap: this.wrap(),
       lineHeight: this.lineHeight(),
       plainText: this.getPlainText(),
     });
     return this._textLines;
+  }
+
+  private _contentPadding() {
+    const box = readBackgroundBox(this);
+    return box?.geometry === "frame" ? box.padding : this.padding();
+  }
+
+  private _paintRect(width: number, height: number): TextRect {
+    return formattedTextPaintRect(readBackgroundBox(this), this._computeTextLines(), {
+      width,
+      height,
+      padding: this._contentPadding(),
+      align: this.align(),
+      verticalAlign: this.verticalAlign(),
+    });
   }
 
   /** Curved layout (memoized). Only reached when curveRadius > 0. */
@@ -108,9 +124,9 @@ export class FormattedText extends FormattedTextAttrs {
     const h = this.height() || 0;
     const box = readBackgroundBox(this);
 
-    // Clip text to the container bounds (plus any box bleed) so it doesn't overflow on resize
+    // Clip to every local paint outset while preserving the transformer's container bounds.
     if (w > 0 && h > 0) {
-      const clip = textBoxBleedRect(box, w, h);
+      const clip = this._paintRect(w, h);
       ctx.save();
       ctx.beginPath();
       ctx.rect(clip.x, clip.y, clip.width, clip.height);
@@ -120,7 +136,7 @@ export class FormattedText extends FormattedTextAttrs {
     renderFormattedText(ctx, this._computeTextLines(), {
       width: w || 99999,
       height: h,
-      padding: this.padding(),
+      padding: this._contentPadding(),
       align: this.align(),
       verticalAlign: this.verticalAlign(),
       backgroundFill: this.getAttr("backgroundFill") as string | undefined,
@@ -144,9 +160,8 @@ export class FormattedText extends FormattedTextAttrs {
     }
     const w = this.width() || 0;
     const h = this.height() || this.getComputedHeight();
-    // Same rect as the scene clip: everything the block can paint is clickable,
-    // so the box's own padding hits the block instead of falling through.
-    const hit = textBoxBleedRect(readBackgroundBox(this), w, h);
+    // Same rect as the scene clip: every visible box/highlight outset is clickable.
+    const hit = this._paintRect(w, h);
     ctx.beginPath();
     ctx.rect(hit.x, hit.y, hit.width, hit.height);
     ctx.closePath();
@@ -177,21 +192,21 @@ export class FormattedText extends FormattedTextAttrs {
     if (this.curveRadius() > 0 || w <= 0 || h <= 0 || config?.width != null) {
       return super.cache(config);
     }
-    return super.cache({ ...config, ...textBoxBleedRect(readBackgroundBox(this), w, h) });
+    return super.cache({ ...config, ...this._paintRect(w, h) });
   }
 
   getComputedHeight(): number {
     if (this.curveRadius() > 0) {
       return this._computeCurvedLayout().bbox.height;
     }
-    return computedTextHeight(this._computeTextLines(), this.padding());
+    return computedTextHeight(this._computeTextLines(), this._contentPadding());
   }
 
   getComputedWidth(): number {
     if (this.curveRadius() > 0) {
       return this._computeCurvedLayout().bbox.width;
     }
-    return computedTextWidth(this._computeTextLines(), this.padding());
+    return computedTextWidth(this._computeTextLines(), this._contentPadding());
   }
 
   getClassName(): string {

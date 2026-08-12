@@ -33,6 +33,7 @@ describe("BlockTextAPI text background box", () => {
     expect(block.getTextBackground(id)).toEqual({
       enabled: false,
       color: BLACK,
+      geometry: "text-union",
       cornerRadius: 0,
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
     });
@@ -110,6 +111,7 @@ describe("BlockTextAPI text background box", () => {
     expect(block.getTextBackground(id)).toEqual({
       enabled: false,
       color: BLACK,
+      geometry: "text-union",
       cornerRadius: 0,
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
     });
@@ -170,6 +172,7 @@ describe("BlockTextAPI text background box", () => {
     expect(block.getTextBackground(id)).toEqual({
       enabled: false,
       color: BLACK,
+      geometry: "text-union",
       cornerRadius: 0,
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
     });

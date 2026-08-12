@@ -112,9 +112,8 @@ describe("renderFormattedText — background box composition", () => {
     // First rounded fill is the union box (x=10, y=10, w=100, h=20)…
     expect(ops[0].args).toEqual([10, 10, 100, 20, 0]);
     expect(ops[0].fillStyle).toBe("#0000ff");
-    // …the second is the run pill, whose geometry is unchanged: padX = 0.2·fs,
-    // radius = 0.15·fs, anchored to the em box.
-    expect(ops[1].args).toEqual([6, 10, 108, 20, 3]);
+    // …the second is the run Highlight with zero-default padding and radius.
+    expect(ops[1].args).toEqual([10, 10, 100, 20, 0]);
     expect(ops[1].fillStyle).toBe("#ffff00");
   });
 

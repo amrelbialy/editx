@@ -123,6 +123,7 @@ describe("updateTextNode — backgroundBox attr", () => {
 
     expect(probe.box()).toEqual({
       color: "#ff0000",
+      geometry: "text-union",
       cornerRadius: 9,
       padding: { top: 0, right: 0, bottom: 0, left: 7 },
       shadow: { color: "#ff0000", blur: 12, offsetX: 3, offsetY: -3 },

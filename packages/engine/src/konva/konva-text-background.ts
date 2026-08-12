@@ -11,6 +11,7 @@ import {
   TEXT_BACKGROUND_COLOR,
   TEXT_BACKGROUND_CORNER_RADIUS,
   TEXT_BACKGROUND_ENABLED,
+  TEXT_BACKGROUND_GEOMETRY,
   TEXT_BACKGROUND_PADDING_BOTTOM,
   TEXT_BACKGROUND_PADDING_LEFT,
   TEXT_BACKGROUND_PADDING_RIGHT,
@@ -76,14 +77,21 @@ export function resolveTextBackgroundBox(
 ): TextBackgroundBoxStyle | null {
   if (!((props[TEXT_BACKGROUND_ENABLED] as boolean) ?? false)) return null;
 
+  const geometry = props[TEXT_BACKGROUND_GEOMETRY] === "frame" ? "frame" : "text-union";
+  const paddingValue = (key: string): number => {
+    const value = (props[key] as number) ?? 0;
+    return geometry === "frame" ? Math.max(0, value) : value;
+  };
+
   return {
     color: resolveBoxColor(props),
+    geometry,
     cornerRadius: (props[TEXT_BACKGROUND_CORNER_RADIUS] as number) ?? 0,
     padding: {
-      top: (props[TEXT_BACKGROUND_PADDING_TOP] as number) ?? 0,
-      right: (props[TEXT_BACKGROUND_PADDING_RIGHT] as number) ?? 0,
-      bottom: (props[TEXT_BACKGROUND_PADDING_BOTTOM] as number) ?? 0,
-      left: (props[TEXT_BACKGROUND_PADDING_LEFT] as number) ?? 0,
+      top: paddingValue(TEXT_BACKGROUND_PADDING_TOP),
+      right: paddingValue(TEXT_BACKGROUND_PADDING_RIGHT),
+      bottom: paddingValue(TEXT_BACKGROUND_PADDING_BOTTOM),
+      left: paddingValue(TEXT_BACKGROUND_PADDING_LEFT),
     },
     shadow: resolveBoxShadow(props),
     stroke: resolveBoxStroke(props),

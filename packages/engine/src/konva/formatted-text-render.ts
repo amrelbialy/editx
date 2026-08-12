@@ -1,5 +1,6 @@
 import { fillRoundRect } from "./canvas-round-rect";
 import {
+  type BoxPadding,
   computeTextUnionRect,
   hasVisibleGlyphs,
   lineStartX,
@@ -14,7 +15,7 @@ import { applyTextTransform, formatFont } from "./formatted-text-utils";
 export interface TextRenderConfig {
   width: number;
   height: number;
-  padding: number;
+  padding: number | BoxPadding;
   align: string;
   verticalAlign: string;
   backgroundFill?: string;
@@ -27,7 +28,16 @@ export function renderFormattedText(
   textLines: TextLine[],
   config: TextRenderConfig,
 ): void {
-  if (textLines.length === 0) return;
+  if (textLines.length === 0) {
+    if (config.backgroundBox?.geometry === "frame") {
+      drawTextBackgroundBox(
+        ctx,
+        { x: 0, y: 0, width: config.width, height: config.height },
+        config.backgroundBox,
+      );
+    }
+    return;
+  }
 
   if (config.backgroundFill) {
     ctx.fillStyle = config.backgroundFill;
@@ -38,8 +48,14 @@ export function renderFormattedText(
   // `fill/enabled` above, the box paints nothing when there is no text — and
   // "no text" means no glyphs, not no lines (an emptied block still lays out
   // one zero-width line).
-  if (config.backgroundBox && hasVisibleGlyphs(textLines)) {
-    const rect = computeTextUnionRect(textLines, config, config.backgroundBox.padding);
+  if (
+    config.backgroundBox &&
+    (config.backgroundBox.geometry === "frame" || hasVisibleGlyphs(textLines))
+  ) {
+    const rect =
+      config.backgroundBox.geometry === "frame"
+        ? { x: 0, y: 0, width: config.width, height: config.height }
+        : computeTextUnionRect(textLines, config, config.backgroundBox.padding);
     drawTextBackgroundBox(ctx, rect, config.backgroundBox);
   }
 
@@ -63,14 +79,23 @@ export function renderFormattedText(
         // to the em box — not `fontSize + 2·padY` shifted up by padY — means it
         // fills the tightened line box with no empty strip beneath, while the
         // font's intrinsic ascent/descent whitespace reads as balanced vertical
-        // padding. Horizontal padding (0.2·em) and radius (0.15·em) are kept.
+        // padding. Explicit padding may paint beyond the text block bounds.
         const fs = part.style.fontSize;
-        const padX = fs * 0.2;
-        const radius = fs * 0.15;
-        const boxX = Math.max(0, xOffset - padX);
-        const boxW = part.width + 2 * padX;
+        const padding = part.style.backgroundPadding;
+        const padLeft = padding?.left ?? 0;
+        const padRight = padding?.right ?? 0;
+        const padTop = padding?.top ?? 0;
+        const padBottom = padding?.bottom ?? 0;
+        const radius = part.style.backgroundCornerRadius ?? 0;
+        const boxX = xOffset - padLeft;
+        const boxY = partYOffset - padTop;
+        const boxW = part.width + padLeft + padRight;
+        const boxH = fs + padTop + padBottom;
+        const prevAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = prevAlpha * part.style.backgroundOpacity;
         ctx.fillStyle = part.style.backgroundColor;
-        fillRoundRect(ctx, boxX, partYOffset, boxW, fs, radius);
+        fillRoundRect(ctx, boxX, boxY, boxW, boxH, radius);
+        ctx.globalAlpha = prevAlpha;
       }
 
       const hasShadow =

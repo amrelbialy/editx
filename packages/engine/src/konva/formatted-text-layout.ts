@@ -1,5 +1,6 @@
 import type { TextRun } from "../block/block.types";
-import { gradientsEqual } from "../block/text-run-utils";
+import { backgroundPaddingsEqual, gradientsEqual } from "../block/text-run-utils";
+import { type BoxPadding, horizontalBoxPadding } from "./formatted-text-box";
 import {
   applyTextTransform,
   formatFont,
@@ -12,7 +13,7 @@ import {
 
 export interface TextLayoutConfig {
   width: number;
-  padding: number;
+  padding: number | BoxPadding;
   wrap: string;
   lineHeight: number;
   plainText: string;
@@ -89,6 +90,9 @@ function buildParts(
       charStyle.letterSpacing === currentStyle.letterSpacing &&
       charStyle.textDecoration === currentStyle.textDecoration &&
       charStyle.backgroundColor === currentStyle.backgroundColor &&
+      charStyle.backgroundOpacity === currentStyle.backgroundOpacity &&
+      charStyle.backgroundCornerRadius === currentStyle.backgroundCornerRadius &&
+      backgroundPaddingsEqual(charStyle.backgroundPadding, currentStyle.backgroundPadding) &&
       charStyle.textTransform === currentStyle.textTransform &&
       charStyle.textShadowColor === currentStyle.textShadowColor &&
       charStyle.textShadowBlur === currentStyle.textShadowBlur &&
@@ -124,7 +128,7 @@ export function computeTextLines(runs: TextRun[], config: TextLayoutConfig): Tex
   if (runs.length === 0) return [];
 
   const ctx = getDummyContext();
-  const maxWidth = (config.width || 99999) - config.padding * 2;
+  const maxWidth = (config.width || 99999) - horizontalBoxPadding(config.padding);
   const wrapMode = config.wrap;
   const shouldWrap = wrapMode !== "none";
   const wrapAtWord = wrapMode !== "char";

@@ -34,6 +34,7 @@ export function applyTextBackgroundBox(
 ): void {
   engine.block.setTextBackground(blockId, {
     enabled: true,
+    geometry: "frame",
     color: hexToColor(box.color),
     cornerRadius: (box.cornerRadius ?? 0) * scaleFactor,
     padding: scalePadding(box.padding, scaleFactor),

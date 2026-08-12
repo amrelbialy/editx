@@ -40,6 +40,7 @@ export const TEXT_CURVE_DIRECTION = "text/curve/direction" as const;
 // a fresh text block never serializes any text/background key.
 export const TEXT_BACKGROUND_ENABLED = "text/background/enabled" as const;
 export const TEXT_BACKGROUND_COLOR = "text/background/color" as const;
+export const TEXT_BACKGROUND_GEOMETRY = "text/background/geometry" as const;
 export const TEXT_BACKGROUND_CORNER_RADIUS = "text/background/cornerRadius" as const;
 export const TEXT_BACKGROUND_PADDING_TOP = "text/background/padding/top" as const;
 export const TEXT_BACKGROUND_PADDING_RIGHT = "text/background/padding/right" as const;

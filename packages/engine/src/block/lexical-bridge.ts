@@ -15,7 +15,13 @@ import {
   type LexicalEditor,
   type ParagraphNode,
 } from "lexical";
-import type { TextGradient, TextRun, TextRunStyle, TextRunStyleUpdate } from "./block.types";
+import type {
+  TextBackgroundPadding,
+  TextGradient,
+  TextRun,
+  TextRunStyle,
+  TextRunStyleUpdate,
+} from "./block.types";
 import { mergeAdjacentRuns } from "./text-run-utils";
 
 // ── TextRun[] → Lexical EditorState ─────────────────────────────────
@@ -271,6 +277,16 @@ export function runStyleToCssString(style: TextRunStyle): string {
     parts.push(`--text-stroke-color: ${style.textStrokeColor}`);
   }
   if (style.textStrokeWidth != null) parts.push(`--text-stroke-width: ${style.textStrokeWidth}`);
+  if (style.backgroundOpacity != null)
+    parts.push(`--text-background-opacity: ${style.backgroundOpacity}`);
+  if (style.backgroundCornerRadius != null)
+    parts.push(`--text-background-corner-radius: ${style.backgroundCornerRadius}`);
+  if (style.backgroundPadding != null) {
+    // Same URI-encoded JSON approach as fillGradient — keeps per-side padding lossless.
+    parts.push(
+      `--text-background-padding: ${encodeURIComponent(JSON.stringify(style.backgroundPadding))}`,
+    );
+  }
   if (style.fillGradient != null) {
     // JSON is URI-encoded so the CSS var value stays free of ';', ':', '{', '}'
     // and quotes — keeps the flat contenteditable overlay's inline style valid
@@ -327,6 +343,15 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
       case "--text-stroke-color":
         style.textStrokeColor = val;
         break;
+      case "--text-background-opacity":
+        if (Number.isFinite(Number(val))) style.backgroundOpacity = Number(val);
+        break;
+      case "--text-background-corner-radius":
+        if (Number.isFinite(Number(val))) style.backgroundCornerRadius = Number(val);
+        break;
+      case "--text-background-padding":
+        style.backgroundPadding = parsePaddingValue(val);
+        break;
       case "--text-stroke-width":
         style.textStrokeWidth = parseFloat(val);
         break;
@@ -370,6 +395,17 @@ export function textRunStyleToCssPatch(update: TextRunStyleUpdate): Record<strin
   if (update.textStrokeWidth !== undefined)
     patch["--text-stroke-width"] =
       update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
+  if (update.backgroundOpacity !== undefined)
+    patch["--text-background-opacity"] =
+      update.backgroundOpacity != null ? `${update.backgroundOpacity}` : null;
+  if (update.backgroundCornerRadius !== undefined)
+    patch["--text-background-corner-radius"] =
+      update.backgroundCornerRadius != null ? `${update.backgroundCornerRadius}` : null;
+  if (update.backgroundPadding !== undefined)
+    patch["--text-background-padding"] =
+      update.backgroundPadding != null
+        ? encodeURIComponent(JSON.stringify(update.backgroundPadding))
+        : null;
   if (update.fillGradient !== undefined)
     patch["--text-fill-gradient"] =
       update.fillGradient != null ? encodeURIComponent(JSON.stringify(update.fillGradient)) : null;
@@ -385,6 +421,26 @@ function parseGradientValue(val: string): TextGradient | undefined {
     }
   } catch {
     // Malformed value — treat as no gradient rather than throwing during parse.
+  }
+  return undefined;
+}
+
+/** Decode a URI-encoded JSON per-side padding override from a CSS var; undefined when invalid. */
+function parsePaddingValue(val: string): Partial<TextBackgroundPadding> | undefined {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(val));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const padding: Partial<TextBackgroundPadding> = {};
+      for (const side of ["top", "right", "bottom", "left"] as const) {
+        if (parsed[side] !== undefined) {
+          if (typeof parsed[side] !== "number" || !Number.isFinite(parsed[side])) return undefined;
+          padding[side] = parsed[side];
+        }
+      }
+      return padding;
+    }
+  } catch {
+    // Malformed value — treat as no override rather than throwing during parse.
   }
   return undefined;
 }

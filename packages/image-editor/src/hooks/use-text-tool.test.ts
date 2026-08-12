@@ -239,6 +239,7 @@ describe("useTextTool background box", () => {
     expect(block.setTextBackground).toHaveBeenCalledTimes(1);
     expect(block.setTextBackground).toHaveBeenCalledWith(102, {
       enabled: true,
+      geometry: "frame",
       color: hexToColor("#ffffff"),
       cornerRadius: 6,
       padding: { top: 28, right: 40, bottom: 28, left: 40 },
@@ -259,6 +260,7 @@ describe("useTextTool background box", () => {
 
     expect(block.setTextBackground).toHaveBeenCalledWith(102, {
       enabled: true,
+      geometry: "frame",
       color: hexToColor("#ffffff"),
       cornerRadius: 3,
       padding: { top: 14, right: 20, bottom: 14, left: 20 },
@@ -276,6 +278,7 @@ describe("useTextTool background box", () => {
     expect(block.setTextBackground).toHaveBeenCalledTimes(3);
     expect(block.setTextBackground).toHaveBeenNthCalledWith(1, 101, {
       enabled: true,
+      geometry: "frame",
       color: hexToColor("#dbeafe"),
       cornerRadius: 16,
       padding: 28,

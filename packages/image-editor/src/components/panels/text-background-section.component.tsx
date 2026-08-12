@@ -1,15 +1,12 @@
-import type { EditxEngine, TextRunStyle } from "@editx/engine";
+import type { EditxEngine } from "@editx/engine";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
-import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { useState } from "react";
 import { useTranslation } from "../../i18n/i18n-context";
-import { ColorPicker } from "../ui/color-picker";
-import { Section } from "../ui/section";
-import { SwitchField } from "../ui/switch-field";
+import { Section, SegmentedControl } from "../ui";
 import { TextBackgroundBoxGroup } from "./text-background-box-group.component";
+import { TextHighlightGroup } from "./text-highlight-group.component";
 
-/** Default highlight colour used when the background is toggled on. */
-const DEFAULT_HIGHLIGHT = "#FDE68A";
+type BackgroundEditor = "frame" | "highlight";
 
 export interface TextBackgroundSectionProps {
   engine: EditxEngine;
@@ -19,32 +16,6 @@ export interface TextBackgroundSectionProps {
   /** Offset used to read the displayed background style (selection start). */
   selectionStart?: number;
   swatches?: string[];
-}
-
-interface BackgroundState {
-  enabled: boolean;
-  color: string;
-}
-
-function readBackground(
-  engine: EditxEngine,
-  blockId: number,
-  selectionStart?: number,
-): BackgroundState {
-  const runs = engine.block.getTextRuns(blockId);
-  let style: TextRunStyle = runs[0]?.style ?? {};
-  if (selectionStart != null && selectionStart > 0) {
-    let offset = 0;
-    for (const run of runs) {
-      if (offset + run.text.length > selectionStart) {
-        style = run.style;
-        break;
-      }
-      offset += run.text.length;
-    }
-  }
-  const color = style.backgroundColor ?? "";
-  return { enabled: color !== "", color: color || DEFAULT_HIGHLIGHT };
 }
 
 /**
@@ -57,63 +28,44 @@ export const TextBackgroundSection: React.FC<TextBackgroundSectionProps> = (prop
   const { engine, blockId, getStyleRange, selectionStart, swatches } = props;
 
   const { t } = useTranslation();
-  const { commit } = useCoalescedHistory(engine);
 
-  const [state, setState] = useState<BackgroundState>(() =>
-    readBackground(engine, blockId, selectionStart),
-  );
-
-  const handleToggle = useCallback(() => {
-    const { start, end } = getStyleRange();
-    if (state.enabled) {
-      commit(() => engine.block.setTextBackgroundColor(blockId, start, end, undefined));
-      setState((s) => ({ ...s, enabled: false }));
-    } else {
-      const color = state.color || DEFAULT_HIGHLIGHT;
-      commit(() => engine.block.setTextBackgroundColor(blockId, start, end, color));
-      setState({ enabled: true, color });
-    }
-  }, [engine, blockId, getStyleRange, state.enabled, state.color, commit]);
-
-  const handleColorChange = useCallback(
-    (newColor: string) => {
-      const { start, end } = getStyleRange();
-      commit(() => engine.block.setTextBackgroundColor(blockId, start, end, newColor));
-      setState({ enabled: true, color: newColor });
-    },
-    [engine, blockId, getStyleRange, commit],
-  );
-
-  useEffect(() => {
-    setState(readBackground(engine, blockId, selectionStart));
-  }, [engine, blockId, selectionStart]);
-
-  useEffect(() => {
-    return engine.onHistoryChanged(() => setState(readBackground(engine, blockId, selectionStart)));
-  }, [engine, blockId, selectionStart]);
+  const [editor, setEditor] = useState<BackgroundEditor>(() => {
+    const frameActive = engine.block.getTextBackground(blockId).enabled;
+    const highlightActive = engine.block
+      .getTextRuns(blockId)
+      .some((run) => Boolean(run.style.backgroundColor));
+    return highlightActive && !frameActive ? "highlight" : "frame";
+  });
 
   return (
     <div className="flex flex-col gap-3">
-      <Section label={t("textBackground.highlight")}>
-        <p className="text-fluid text-muted-foreground">{t("textBackground.highlightHint")}</p>
-        <SwitchField
-          label={t("textBackground.enableHighlight")}
-          checked={state.enabled}
-          onChange={handleToggle}
-        >
-          <ColorPicker
-            color={state.color}
-            swatches={swatches}
-            onChange={handleColorChange}
-            showHexInput={false}
-          />
-        </SwitchField>
-      </Section>
+      <SegmentedControl<BackgroundEditor>
+        ariaLabel={t("textBackground.editor")}
+        options={[
+          { value: "frame", label: t("textBackground.frame") },
+          { value: "highlight", label: t("textBackground.highlight") },
+        ]}
+        value={editor}
+        onValueChange={setEditor}
+      />
 
-      {engine.block.supportsTextBackground(blockId) && (
-        <Section label={t("textBackground.box")} separator>
-          <p className="text-fluid text-muted-foreground">{t("textBackground.boxHint")}</p>
-          <TextBackgroundBoxGroup engine={engine} blockId={blockId} swatches={swatches} />
+      {editor === "frame" ? (
+        engine.block.supportsTextBackground(blockId) && (
+          <Section label={t("textBackground.frame")}>
+            <p className="text-fluid text-muted-foreground">{t("textBackground.frameHint")}</p>
+            <TextBackgroundBoxGroup engine={engine} blockId={blockId} swatches={swatches} />
+          </Section>
+        )
+      ) : (
+        <Section label={t("textBackground.highlight")}>
+          <p className="text-fluid text-muted-foreground">{t("textBackground.highlightHint")}</p>
+          <TextHighlightGroup
+            engine={engine}
+            blockId={blockId}
+            getStyleRange={getStyleRange}
+            selectionStart={selectionStart}
+            swatches={swatches}
+          />
         </Section>
       )}
     </div>

@@ -1,7 +1,8 @@
 import type { EngineCore } from "../engine-core";
 import type {
-  TextBackground,
+  ResolvedTextBackground,
   TextBackgroundOptions,
+  TextBackgroundPadding,
   TextCurve,
   TextCurveDirection,
   TextGradient,
@@ -195,7 +196,7 @@ export class BlockTextAPI {
   setTextBackground(blockId: number, opts: TextBackgroundOptions): void {
     this.#background.setTextBackground(blockId, opts);
   }
-  getTextBackground(blockId: number): TextBackground {
+  getTextBackground(blockId: number): ResolvedTextBackground {
     return this.#background.getTextBackground(blockId);
   }
   setTextBackgroundEnabled(blockId: number, enabled: boolean): void {
@@ -208,6 +209,31 @@ export class BlockTextAPI {
   /** Per-run pill highlight behind [start, end) — unrelated to the block-level box. */
   setTextBackgroundColor(blockId: number, start: number, end: number, color?: string): void {
     this.setTextStyle(blockId, start, end, { backgroundColor: color });
+  }
+
+  /** Opacity (0..1) of the per-run highlight pill; unset restores full opacity. */
+  setTextBackgroundOpacity(blockId: number, start: number, end: number, opacity?: number): void {
+    this.setTextStyle(blockId, start, end, { backgroundOpacity: opacity ?? null });
+  }
+
+  /** Corner radius (px) of the per-run highlight pill; unset restores 0. */
+  setTextBackgroundCornerRadius(
+    blockId: number,
+    start: number,
+    end: number,
+    radius?: number,
+  ): void {
+    this.setTextStyle(blockId, start, end, { backgroundCornerRadius: radius ?? null });
+  }
+
+  /** Per-side px padding of the per-run highlight pill; unset sides default to 0. */
+  setTextBackgroundPadding(
+    blockId: number,
+    start: number,
+    end: number,
+    padding: Partial<TextBackgroundPadding> | undefined,
+  ): void {
+    this.setTextStyle(blockId, start, end, { backgroundPadding: padding ?? null });
   }
 
   setTextTransform(blockId: number, start: number, end: number, transform: TextTransform): void {

@@ -1,3 +1,4 @@
+import type { TextBackgroundGeometry } from "../block/block.types";
 import { fillRoundRect, strokeRoundRect } from "./canvas-round-rect";
 import type { BoxPadding, BoxRect } from "./formatted-text-box";
 
@@ -16,6 +17,7 @@ export interface TextBoxStroke {
 /** Resolved paint style for the text background box (one per text block). */
 export interface TextBackgroundBoxStyle {
   color: string;
+  geometry: TextBackgroundGeometry;
   cornerRadius: number;
   padding: BoxPadding;
   shadow: TextBoxShadow | null;

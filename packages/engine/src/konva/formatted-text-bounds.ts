@@ -1,4 +1,5 @@
 import type Konva from "konva";
+import { type BoxPadding, lineStartX, type TextBoxLayout, textStartY } from "./formatted-text-box";
 import { type TextBackgroundBoxStyle, textBoxOverflow } from "./formatted-text-box-render";
 import { lineTrailingSlack, type TextLine, textContentHeight } from "./formatted-text-utils";
 
@@ -35,7 +36,8 @@ export function readBackgroundBox(node: Konva.Node): TextBackgroundBoxStyle | nu
 function textBoxBleed(box: TextBackgroundBoxStyle | null): number {
   if (!box) return 0;
   const p = box.padding;
-  return Math.max(0, p.top, p.right, p.bottom, p.left) + textBoxOverflow(box);
+  const paddingBleed = box.geometry === "frame" ? 0 : Math.max(0, p.top, p.right, p.bottom, p.left);
+  return paddingBleed + textBoxOverflow(box);
 }
 
 /**
@@ -58,12 +60,56 @@ export function textBoxBleedRect(
 }
 
 /**
+ * Local paint bounds for flat text. Highlight rectangles use the same laid-out
+ * line/run offsets as the renderer, then union with the block background bleed.
+ */
+export function formattedTextPaintRect(
+  box: TextBackgroundBoxStyle | null,
+  lines: TextLine[],
+  layout: TextBoxLayout,
+): TextRect {
+  const bounds = textBoxBleedRect(box, layout.width, layout.height);
+  let left = bounds.x;
+  let top = bounds.y;
+  let right = bounds.x + bounds.width;
+  let bottom = bounds.y + bounds.height;
+  let yOffset = textStartY(lines, layout);
+
+  for (const line of lines) {
+    let xOffset = lineStartX(line, layout);
+    let maxFontSize = 0;
+    for (const part of line.parts) maxFontSize = Math.max(maxFontSize, part.style.fontSize);
+    for (const part of line.parts) {
+      if (part.style.backgroundColor && part.text.length > 0) {
+        const padding = part.style.backgroundPadding;
+        const partTop = yOffset + (maxFontSize - part.style.fontSize) * 0.8;
+        const boxLeft = xOffset - (padding?.left ?? 0);
+        const boxTop = partTop - (padding?.top ?? 0);
+        const boxRight = xOffset + part.width + (padding?.right ?? 0);
+        const boxBottom = partTop + part.style.fontSize + (padding?.bottom ?? 0);
+        if (boxRight > boxLeft && boxBottom > boxTop) {
+          left = Math.min(left, boxLeft);
+          top = Math.min(top, boxTop);
+          right = Math.max(right, boxRight);
+          bottom = Math.max(bottom, boxBottom);
+        }
+      }
+      xOffset += part.width;
+    }
+    yOffset += line.height;
+  }
+
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+/**
  * Box height on the trailing-leading model: interior lines keep their line-gap,
  * the last line hugs its em box. Shared with vertical-align math via
  * {@link textContentHeight} so a single line's box never grows with lineHeight.
  */
-export function computedTextHeight(lines: TextLine[], padding: number): number {
-  return textContentHeight(lines) + padding * 2;
+export function computedTextHeight(lines: TextLine[], padding: number | BoxPadding): number {
+  const verticalPadding = typeof padding === "number" ? padding * 2 : padding.top + padding.bottom;
+  return textContentHeight(lines) + verticalPadding;
 }
 
 /**
@@ -71,7 +117,9 @@ export function computedTextHeight(lines: TextLine[], padding: number): number {
  * overhang, so a hugged width is >= the true rendered right edge and never
  * marginally wraps.
  */
-export function computedTextWidth(lines: TextLine[], padding: number): number {
+export function computedTextWidth(lines: TextLine[], padding: number | BoxPadding): number {
   const maxLineWidth = lines.reduce((max, l) => Math.max(max, l.width + lineTrailingSlack(l)), 0);
-  return maxLineWidth + padding * 2;
+  const horizontalPadding =
+    typeof padding === "number" ? padding * 2 : padding.left + padding.right;
+  return maxLineWidth + horizontalPadding;
 }

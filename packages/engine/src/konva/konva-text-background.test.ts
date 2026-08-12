@@ -21,6 +21,7 @@ import {
   TEXT_BACKGROUND_COLOR,
   TEXT_BACKGROUND_CORNER_RADIUS,
   TEXT_BACKGROUND_ENABLED,
+  TEXT_BACKGROUND_GEOMETRY,
   TEXT_BACKGROUND_PADDING_BOTTOM,
   TEXT_BACKGROUND_PADDING_LEFT,
   TEXT_BACKGROUND_PADDING_RIGHT,
@@ -51,6 +52,7 @@ describe("resolveTextBackgroundBox", () => {
   it("falls back to the property-store defaults when only enabled is set", () => {
     expect(resolveTextBackgroundBox({ [TEXT_BACKGROUND_ENABLED]: true })).toEqual({
       color: "#000000",
+      geometry: "text-union",
       cornerRadius: 0,
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
       shadow: null,
@@ -72,6 +74,18 @@ describe("resolveTextBackgroundBox", () => {
     expect(style?.color).toBe("#ff0000");
     expect(style?.cornerRadius).toBe(12);
     expect(style?.padding).toEqual({ top: 1, right: 2, bottom: -3, left: 4 });
+  });
+
+  it("resolves frame geometry and clamps its content insets", () => {
+    const style = resolveTextBackgroundBox({
+      [TEXT_BACKGROUND_ENABLED]: true,
+      [TEXT_BACKGROUND_GEOMETRY]: "frame",
+      [TEXT_BACKGROUND_PADDING_TOP]: -3,
+      [TEXT_BACKGROUND_PADDING_RIGHT]: 8,
+    });
+
+    expect(style?.geometry).toBe("frame");
+    expect(style?.padding).toEqual({ top: 0, right: 8, bottom: 0, left: 0 });
   });
 
   it("ignores the fill sub-block colour — the box reports and paints the store default", () => {

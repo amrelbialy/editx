@@ -132,7 +132,7 @@ describe("run highlight pills — invariant to the background box", () => {
     expect(withoutBox(on.ops)).toEqual(off.ops);
   });
 
-  it("keeps the ratified pill geometry (padX = 0.2·fs, radius = 0.15·fs, em-box)", () => {
+  it("keeps the zero-default Highlight geometry", () => {
     const { ctx, ops } = makeCtx();
 
     renderFormattedText(ctx, [line({ backgroundColor: "#ffff00" })], {
@@ -141,8 +141,7 @@ describe("run highlight pills — invariant to the background box", () => {
     });
 
     const pill = ops.find((o) => o.style === "#ffff00");
-    // x = max(0, 4 - 4) = 0, y = 4 (em-box top), w = 100 + 8, h = 20, r = 3.
-    expect(pill?.args).toEqual([0, 4, 108, 20, 3]);
+    expect(pill?.args).toEqual([4, 4, 100, 20, 0]);
   });
 });
 

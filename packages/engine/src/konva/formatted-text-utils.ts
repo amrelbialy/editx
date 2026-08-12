@@ -1,12 +1,16 @@
 import type { TextRunStyle } from "../block/block.types";
 
 /**
- * Resolved style: every field defaulted EXCEPT `fillGradient`, which stays
- * optional (undefined = solid `fill`). Using `Required<TextRunStyle>` directly
- * would force a non-undefined gradient object into DEFAULT_STYLE.
+ * Resolved style: every field defaulted EXCEPT `fillGradient`,
+ * `backgroundCornerRadius` and `backgroundPadding`, which stay optional
+ * (undefined = solid `fill` / zero-valued highlight geometry).
+ * Using `Required<TextRunStyle>` directly would force non-undefined values
+ * into DEFAULT_STYLE even though these optional values retain semantic meaning.
  */
-export type ResolvedTextRunStyle = Required<Omit<TextRunStyle, "fillGradient">> &
-  Pick<TextRunStyle, "fillGradient">;
+export type ResolvedTextRunStyle = Required<
+  Omit<TextRunStyle, "fillGradient" | "backgroundCornerRadius" | "backgroundPadding">
+> &
+  Pick<TextRunStyle, "fillGradient" | "backgroundCornerRadius" | "backgroundPadding">;
 
 /** Default style values used when a run's style property is undefined. */
 export const DEFAULT_STYLE: ResolvedTextRunStyle = {
@@ -18,6 +22,7 @@ export const DEFAULT_STYLE: ResolvedTextRunStyle = {
   letterSpacing: 0,
   textDecoration: "",
   backgroundColor: "",
+  backgroundOpacity: 1,
   textTransform: "none",
   textShadowColor: "",
   textShadowBlur: 0,
@@ -26,6 +31,8 @@ export const DEFAULT_STYLE: ResolvedTextRunStyle = {
   textStrokeColor: "",
   textStrokeWidth: 0,
   fillGradient: undefined,
+  backgroundCornerRadius: undefined,
+  backgroundPadding: undefined,
 };
 
 export interface TextLine {
@@ -142,6 +149,7 @@ export function resolveStyle(style: TextRunStyle): ResolvedTextRunStyle {
     letterSpacing: style.letterSpacing ?? DEFAULT_STYLE.letterSpacing,
     textDecoration: style.textDecoration ?? DEFAULT_STYLE.textDecoration,
     backgroundColor: style.backgroundColor ?? DEFAULT_STYLE.backgroundColor,
+    backgroundOpacity: style.backgroundOpacity ?? DEFAULT_STYLE.backgroundOpacity,
     textTransform: style.textTransform ?? DEFAULT_STYLE.textTransform,
     textShadowColor: style.textShadowColor ?? DEFAULT_STYLE.textShadowColor,
     textShadowBlur: style.textShadowBlur ?? DEFAULT_STYLE.textShadowBlur,
@@ -151,5 +159,8 @@ export function resolveStyle(style: TextRunStyle): ResolvedTextRunStyle {
     textStrokeWidth: style.textStrokeWidth ?? DEFAULT_STYLE.textStrokeWidth,
     // Carried through untouched — undefined means "solid fill".
     fillGradient: style.fillGradient,
+    // Carried through untouched — undefined means zero-valued highlight geometry.
+    backgroundCornerRadius: style.backgroundCornerRadius,
+    backgroundPadding: style.backgroundPadding,
   };
 }

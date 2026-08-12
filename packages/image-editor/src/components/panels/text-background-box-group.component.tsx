@@ -1,6 +1,6 @@
 import type { EditxEngine, TextBackgroundPadding } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
-import { Link, Unlink } from "lucide-react";
+import { Info, Link, Unlink } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
@@ -86,7 +86,11 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
     (next: boolean) => {
       // Discrete control: close any open burst so the toggle is its own entry and paints now.
       flush();
-      engine.block.setTextBackgroundEnabled(blockId, next);
+      if (next) {
+        engine.block.setTextBackground(blockId, { enabled: true, geometry: "frame" });
+      } else {
+        engine.block.setTextBackgroundEnabled(blockId, false);
+      }
       refresh();
     },
     [engine, blockId, flush, refresh],
@@ -95,7 +99,12 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
   const handleColor = useCallback(
     (hex: string) => {
       const { a } = engine.block.getTextBackground(blockId).color;
-      commit(() => engine.block.setTextBackground(blockId, { color: { ...hexToColor(hex), a } }));
+      commit(() =>
+        engine.block.setTextBackground(blockId, {
+          geometry: "frame",
+          color: { ...hexToColor(hex), a },
+        }),
+      );
       refresh();
     },
     [engine, blockId, commit, refresh],
@@ -104,7 +113,12 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
   const handleAlpha = useCallback(
     (alpha: number) => {
       const color = engine.block.getTextBackground(blockId).color;
-      commit(() => engine.block.setTextBackground(blockId, { color: { ...color, a: alpha } }));
+      commit(() =>
+        engine.block.setTextBackground(blockId, {
+          geometry: "frame",
+          color: { ...color, a: alpha },
+        }),
+      );
       refresh();
     },
     [engine, blockId, commit, refresh],
@@ -112,7 +126,9 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
 
   const handleCornerRadius = useCallback(
     (value: number) => {
-      commit(() => engine.block.setTextBackground(blockId, { cornerRadius: value }));
+      commit(() =>
+        engine.block.setTextBackground(blockId, { geometry: "frame", cornerRadius: value }),
+      );
       refresh();
     },
     [engine, blockId, commit, refresh],
@@ -120,7 +136,7 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
 
   const handlePaddingAll = useCallback(
     (value: number) => {
-      commit(() => engine.block.setTextBackground(blockId, { padding: value }));
+      commit(() => engine.block.setTextBackground(blockId, { geometry: "frame", padding: value }));
       refresh();
     },
     [engine, blockId, commit, refresh],
@@ -128,7 +144,12 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
 
   const handlePaddingSide = useCallback(
     (side: PaddingSide, value: number) => {
-      commit(() => engine.block.setTextBackground(blockId, { padding: { [side]: value } }));
+      commit(() =>
+        engine.block.setTextBackground(blockId, {
+          geometry: "frame",
+          padding: { [side]: value },
+        }),
+      );
       refresh();
     },
     [engine, blockId, commit, refresh],
@@ -148,7 +169,7 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
         <p className="text-fluid text-muted-foreground">{t("textBackground.curvedNotice")}</p>
       )}
       <SwitchField
-        label={t("textBackground.enableBox")}
+        label={t("textBackground.enableFrame")}
         checked={state.enabled}
         onChange={handleToggle}
       >
@@ -172,9 +193,17 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
           />
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-fluid font-medium text-muted-foreground">
-                {t("textBackground.padding")}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-fluid font-medium text-muted-foreground">
+                  {t("textBackground.contentPadding")}
+                </span>
+                <IconButton
+                  size="icon-xs"
+                  label={t("textBackground.contentPaddingTooltip")}
+                  tooltipSide="top"
+                  icon={<Info />}
+                />
+              </div>
               <IconButton
                 variant={linked ? "default" : "ghost"}
                 onClick={() => setLinked((prev) => !prev)}

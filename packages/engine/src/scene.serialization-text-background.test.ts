@@ -1,5 +1,5 @@
 /**
- * Serialization / back-compat guards for the text background box: the seven
+ * Serialization / back-compat guards for the text background box: its
  * `text/background/*` keys are strictly additive — never seeded, so pre-change
  * documents (and fresh blocks) serialize exactly as before.
  */
@@ -13,6 +13,7 @@ import {
   TEXT_BACKGROUND_COLOR,
   TEXT_BACKGROUND_CORNER_RADIUS,
   TEXT_BACKGROUND_ENABLED,
+  TEXT_BACKGROUND_GEOMETRY,
   TEXT_BACKGROUND_PADDING_BOTTOM,
   TEXT_BACKGROUND_PADDING_LEFT,
   TEXT_BACKGROUND_PADDING_RIGHT,
@@ -58,6 +59,7 @@ describe("SceneAPI — text background serialization", () => {
     block.setTextBackground(txt, {
       enabled: true,
       color: RED,
+      geometry: "frame",
       cornerRadius: 14,
       padding: { top: 1, right: 2, bottom: 3, left: 4 },
     });
@@ -75,6 +77,7 @@ describe("SceneAPI — text background serialization", () => {
     expect(original).toEqual({
       enabled: true,
       color: RED,
+      geometry: "frame",
       cornerRadius: 14,
       padding: { top: 1, right: 2, bottom: 3, left: 4 },
     });
@@ -104,6 +107,7 @@ describe("SceneAPI — text background serialization", () => {
     expect(block2.getTextBackground(txt2)).toEqual({
       enabled: false,
       color: { r: 0, g: 0, b: 0, a: 1 },
+      geometry: "text-union",
       cornerRadius: 0,
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
     });
@@ -148,6 +152,7 @@ describe("updateTextNode legacy fallback", () => {
         // Background box keys must not divert the glyph fallback.
         [TEXT_BACKGROUND_ENABLED]: true,
         [TEXT_BACKGROUND_COLOR]: { r: 0, g: 0, b: 1, a: 1 },
+        [TEXT_BACKGROUND_GEOMETRY]: "frame",
         [TEXT_BACKGROUND_CORNER_RADIUS]: 8,
         [TEXT_BACKGROUND_PADDING_TOP]: 4,
         [TEXT_BACKGROUND_PADDING_RIGHT]: 4,

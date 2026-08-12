@@ -97,6 +97,7 @@ describe("BackgroundPropertyPanel", () => {
     const engine = makeTextEngine({ fontSize: 24 });
     renderPanel(engine, "text");
 
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
     expect(
       screen.getByRole("switch", { name: "Enable Background" }).getAttribute("aria-checked"),
     ).toBe("false");
@@ -106,6 +107,7 @@ describe("BackgroundPropertyPanel", () => {
     const engine = makeTextEngine({ fontSize: 24 });
     renderPanel(engine, "text");
 
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
     fireEvent.click(screen.getByRole("switch", { name: "Enable Background" }));
 
     expect(engine.block.setTextBackgroundColor).toHaveBeenCalledTimes(1);

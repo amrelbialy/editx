@@ -28,9 +28,10 @@ import type {
   PathViewBox,
   PropertyValue,
   ReadonlyBlockData,
+  ResolvedTextBackground,
   ShapeType,
-  TextBackground,
   TextBackgroundOptions,
+  TextBackgroundPadding,
   TextCurve,
   TextCurveDirection,
   TextGradient,
@@ -711,7 +712,11 @@ export class BlockAPI {
     const runs = this.getTextRuns(blockId);
     const size = this.getSize(blockId);
     const autoWidth = this.getBool(blockId, TEXT_AUTO_WIDTH);
-    const padding = this.getFloat(blockId, TEXT_PADDING) || 0;
+    const background = this.getTextBackground(blockId);
+    const padding =
+      background.enabled && background.geometry === "frame"
+        ? background.padding
+        : this.getFloat(blockId, TEXT_PADDING) || 0;
     const lineHeight = this.getFloat(blockId, TEXT_LINE_HEIGHT) || 1.2;
     const align = this.getString(blockId, TEXT_ALIGN) || "left";
     const verticalAlign = this.getString(blockId, TEXT_VERTICAL_ALIGN) || "top";
@@ -778,7 +783,7 @@ export class BlockAPI {
   setTextBackground(blockId: number, opts: TextBackgroundOptions): void {
     this.#text.setTextBackground(blockId, opts);
   }
-  getTextBackground(blockId: number): TextBackground {
+  getTextBackground(blockId: number): ResolvedTextBackground {
     return this.#text.getTextBackground(blockId);
   }
   setTextBackgroundEnabled(blockId: number, enabled: boolean): void {
@@ -794,6 +799,30 @@ export class BlockAPI {
     color: string | undefined,
   ): void {
     this.#text.setTextBackgroundColor(blockId, start, end, color);
+  }
+  setTextBackgroundOpacity(
+    blockId: number,
+    start: number,
+    end: number,
+    opacity: number | undefined,
+  ): void {
+    this.#text.setTextBackgroundOpacity(blockId, start, end, opacity);
+  }
+  setTextBackgroundCornerRadius(
+    blockId: number,
+    start: number,
+    end: number,
+    radius: number | undefined,
+  ): void {
+    this.#text.setTextBackgroundCornerRadius(blockId, start, end, radius);
+  }
+  setTextBackgroundPadding(
+    blockId: number,
+    start: number,
+    end: number,
+    padding: Partial<TextBackgroundPadding> | undefined,
+  ): void {
+    this.#text.setTextBackgroundPadding(blockId, start, end, padding);
   }
   setTextTransform(
     blockId: number,

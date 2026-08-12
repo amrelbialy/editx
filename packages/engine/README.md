@@ -74,6 +74,28 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Text background geometry
+
+Block-level text backgrounds support two geometry modes through
+`engine.block.setTextBackground(id, options)`:
+
+```ts
+engine.block.setTextBackground(textId, {
+  enabled: true,
+  geometry: "frame",
+  padding: { top: 12, right: 16, bottom: 12, left: 16 },
+});
+
+const background = engine.block.getTextBackground(textId);
+// background.geometry is always resolved to "text-union" or "frame".
+```
+
+`TextBackgroundOptions.geometry` accepts `"text-union" | "frame"`. Missing or unknown stored
+values resolve to `"text-union"` for compatibility. Text-union padding remains signed and preserves
+legacy negative/outward behavior. Frame padding represents content insets and is normalized to
+nonnegative values by the block API. Geometry and padding updates share one undoable command batch.
+The frozen property key is `TEXT_BACKGROUND_GEOMETRY` (`"text/background/geometry"`).
+
 ## Reading vs. mutating block state
 
 Reading and writing block state go through two different, clearly separated paths:

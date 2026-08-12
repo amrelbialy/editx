@@ -5,7 +5,7 @@ import { lineTrailingSlack, textContentHeight } from "./formatted-text-utils";
 export interface TextBoxLayout {
   width: number;
   height: number;
-  padding: number;
+  padding: number | BoxPadding;
   align: string;
   verticalAlign: string;
 }
@@ -24,28 +24,33 @@ export interface BoxRect {
   height: number;
 }
 
+export function horizontalBoxPadding(padding: number | BoxPadding): number {
+  return typeof padding === "number" ? padding * 2 : padding.left + padding.right;
+}
+
 /**
  * Y of the first line's em-box top. Single source of truth for the vertical
  * start of both the glyphs and the background box, so the two can never drift.
  */
 export function textStartY(lines: TextLine[], layout: TextBoxLayout): number {
-  const pad = layout.padding;
-  const totalHeight = layout.height - pad * 2;
-  if (totalHeight <= 0) return pad;
+  const top = typeof layout.padding === "number" ? layout.padding : layout.padding.top;
+  const bottom = typeof layout.padding === "number" ? layout.padding : layout.padding.bottom;
+  const totalHeight = layout.height - top - bottom;
+  if (totalHeight <= 0) return top;
 
   const textHeight = textContentHeight(lines);
-  if (layout.verticalAlign === "middle") return pad + (totalHeight - textHeight) / 2;
-  if (layout.verticalAlign === "bottom") return pad + totalHeight - textHeight;
-  return pad;
+  if (layout.verticalAlign === "middle") return top + (totalHeight - textHeight) / 2;
+  if (layout.verticalAlign === "bottom") return top + totalHeight - textHeight;
+  return top;
 }
 
 /** X of a line's first glyph, per the horizontal alignment. */
 export function lineStartX(line: TextLine, layout: TextBoxLayout): number {
-  const pad = layout.padding;
-  const totalWidth = layout.width - pad * 2;
-  if (layout.align === "center") return pad + (totalWidth - line.width) / 2;
-  if (layout.align === "right") return pad + totalWidth - line.width;
-  return pad;
+  const left = typeof layout.padding === "number" ? layout.padding : layout.padding.left;
+  const totalWidth = layout.width - horizontalBoxPadding(layout.padding);
+  if (layout.align === "center") return left + (totalWidth - line.width) / 2;
+  if (layout.align === "right") return left + totalWidth - line.width;
+  return left;
 }
 
 /**

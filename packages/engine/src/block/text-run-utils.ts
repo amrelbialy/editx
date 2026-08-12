@@ -1,4 +1,10 @@
-import type { TextGradient, TextRun, TextRunStyle, TextRunStyleUpdate } from "./block.types";
+import type {
+  TextBackgroundPadding,
+  TextGradient,
+  TextRun,
+  TextRunStyle,
+  TextRunStyleUpdate,
+} from "./block.types";
 
 /**
  * Structural equality for two optional text gradients. Used by both the block
@@ -16,6 +22,16 @@ export function gradientsEqual(a?: TextGradient, b?: TextGradient): boolean {
     }
   }
   return true;
+}
+
+/** Structural equality for two optional per-side padding overrides. */
+export function backgroundPaddingsEqual(
+  a?: Partial<TextBackgroundPadding>,
+  b?: Partial<TextBackgroundPadding>,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
 }
 
 /**
@@ -68,6 +84,9 @@ export function stylesEqual(a: TextRunStyle, b: TextRunStyle): boolean {
     (a.letterSpacing ?? undefined) === (b.letterSpacing ?? undefined) &&
     (a.textDecoration ?? undefined) === (b.textDecoration ?? undefined) &&
     (a.backgroundColor ?? undefined) === (b.backgroundColor ?? undefined) &&
+    (a.backgroundOpacity ?? undefined) === (b.backgroundOpacity ?? undefined) &&
+    (a.backgroundCornerRadius ?? undefined) === (b.backgroundCornerRadius ?? undefined) &&
+    backgroundPaddingsEqual(a.backgroundPadding, b.backgroundPadding) &&
     (a.textTransform ?? undefined) === (b.textTransform ?? undefined) &&
     (a.textShadowColor ?? undefined) === (b.textShadowColor ?? undefined) &&
     (a.textShadowBlur ?? undefined) === (b.textShadowBlur ?? undefined) &&

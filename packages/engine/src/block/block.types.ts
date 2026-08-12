@@ -69,21 +69,31 @@ export interface TextBackgroundPadding {
   left: number;
 }
 
-/** Fully-resolved text background box descriptor returned by `getTextBackground`. */
+/** Geometry used to construct the block-level text background. */
+export type TextBackgroundGeometry = "text-union" | "frame";
+
+/** Text background box descriptor. `geometry` is optional for pre-geometry consumers. */
 export interface TextBackground {
   enabled: boolean;
   color: Color;
+  geometry?: TextBackgroundGeometry;
   /** px; render clamps to min(w,h)/2, the stored value is returned as-is. */
   cornerRadius: number;
   padding: TextBackgroundPadding;
+}
+
+/** Fully-resolved text background box descriptor returned by `getTextBackground`. */
+export interface ResolvedTextBackground extends TextBackground {
+  geometry: TextBackgroundGeometry;
 }
 
 /** Partial update for `setTextBackground` — omitted keys are left untouched. */
 export interface TextBackgroundOptions {
   enabled?: boolean;
   color?: Color;
+  geometry?: TextBackgroundGeometry;
   cornerRadius?: number;
-  /** number = all four sides; object = per-side merge. */
+  /** number = all four sides; object = per-side merge. Frame insets are clamped to >= 0. */
   padding?: number | Partial<TextBackgroundPadding>;
 }
 
@@ -128,6 +138,12 @@ export interface TextRunStyle {
   letterSpacing?: number;
   textDecoration?: string;
   backgroundColor?: string;
+  /** 0..1; unset = fully opaque. */
+  backgroundOpacity?: number;
+  /** px; unset = 0. */
+  backgroundCornerRadius?: number;
+  /** Per-side px; unset sides default to 0. */
+  backgroundPadding?: Partial<TextBackgroundPadding>;
   textTransform?: TextTransform;
   textShadowColor?: string;
   textShadowBlur?: number;

@@ -1,15 +1,29 @@
 /**
  * @vitest-environment happy-dom
  *
- * Run-level highlight "pill": the per-run backgroundColor must render as a
- * padded, rounded box (padX=0.2·fontSize, padY=0.1·fontSize, radius=0.15·fontSize)
- * that hugs the glyphs — not a bare full-line rectangle. The image-editor preview
- * mirrors these exact em ratios.
+ * Run-level highlight "pill": per-run backgroundColor renders behind the
+ * glyphs with optional explicit padding/radius (unset = 0), not as a bare
+ * full-line rectangle.
  */
 
 import { describe, expect, it, vi } from "vitest";
+import type { TextRun } from "../block/block.types";
 import { renderFormattedText, type TextRenderConfig } from "./formatted-text-render";
 import { resolveStyle, type TextLine } from "./formatted-text-utils";
+
+const { fakeCtx } = vi.hoisted(() => ({
+  fakeCtx: {
+    font: "",
+    measureText: (t: string) => ({ width: t.length * 10 }),
+  } as unknown as CanvasRenderingContext2D,
+}));
+
+vi.mock("./formatted-text-utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./formatted-text-utils")>();
+  return { ...actual, getDummyContext: () => fakeCtx };
+});
+
+import { computeTextLines } from "./formatted-text-layout";
 
 function makeCtx(withRoundRect: boolean) {
   const calls = {
@@ -74,19 +88,36 @@ const CONFIG: TextRenderConfig = {
 };
 
 describe("renderFormattedText highlight pill", () => {
-  it("draws a rounded, padded box via roundRect when available", () => {
+  it("draws an unpadded square box by default", () => {
     const fontSize = 20;
     const partWidth = 30;
     const { ctx, calls } = makeCtx(true);
 
     renderFormattedText(ctx, [makeLine(fontSize, partWidth)], CONFIG);
 
-    // padX = 4, radius = 3; xOffset = partYOffset = pad = 10.
-    // The pill hugs the run's em box: boxX = 10 - 4 = 6, boxY = 10 (glyph top),
-    // boxW = 30 + 8 = 38, boxH = fontSize = 20. No upward shift, no bottom gap.
-    expect(calls.roundRect).toContainEqual([6, 10, 38, 20, 3]);
+    expect(calls.roundRect).toContainEqual([10, 10, 30, 20, 0]);
     // The pill must NOT be a bare full-line fillRect anymore.
     expect(calls.fillRect).toHaveLength(0);
+  });
+
+  it("allows explicit padding to bleed beyond the text bounds", () => {
+    const style = resolveStyle({
+      fontSize: 20,
+      fontFamily: "Arial",
+      backgroundColor: "#ff0",
+      backgroundCornerRadius: 3,
+      backgroundPadding: { top: 2, right: 5, bottom: 6, left: 14 },
+    });
+    const line: TextLine = {
+      parts: [{ text: "Hi", style, width: 30 }],
+      width: 30,
+      height: 24,
+    };
+    const { ctx, calls } = makeCtx(true);
+
+    renderFormattedText(ctx, [line], CONFIG);
+
+    expect(calls.roundRect).toContainEqual([-4, 8, 49, 28, 3]);
   });
 
   it("falls back to an arcTo path when roundRect is unavailable", () => {
@@ -112,5 +143,60 @@ describe("renderFormattedText highlight pill", () => {
 
     expect(calls.roundRect).toHaveLength(0);
     expect(calls.fillRect).toHaveLength(0);
+  });
+});
+
+describe("computeTextLines run splitting on per-run highlight fields", () => {
+  const layoutConfig = { width: 400, padding: 0, wrap: "none", lineHeight: 1.2, plainText: "HiYo" };
+
+  it("splits adjacent runs sharing backgroundColor but differing in backgroundOpacity", () => {
+    const runs: TextRun[] = [
+      { text: "Hi", style: { fontSize: 20, backgroundColor: "#ff0", backgroundOpacity: 0.5 } },
+      { text: "Yo", style: { fontSize: 20, backgroundColor: "#ff0", backgroundOpacity: 0.8 } },
+    ];
+
+    const lines = computeTextLines(runs, layoutConfig);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0].parts.map((p) => p.text)).toEqual(["Hi", "Yo"]);
+  });
+
+  it("splits adjacent runs sharing backgroundColor but differing in backgroundCornerRadius", () => {
+    const runs: TextRun[] = [
+      { text: "Hi", style: { fontSize: 20, backgroundColor: "#ff0", backgroundCornerRadius: 2 } },
+      { text: "Yo", style: { fontSize: 20, backgroundColor: "#ff0", backgroundCornerRadius: 8 } },
+    ];
+
+    const lines = computeTextLines(runs, layoutConfig);
+
+    expect(lines[0].parts.map((p) => p.text)).toEqual(["Hi", "Yo"]);
+  });
+
+  it("splits adjacent runs sharing backgroundColor but differing in backgroundPadding", () => {
+    const runs: TextRun[] = [
+      {
+        text: "Hi",
+        style: { fontSize: 20, backgroundColor: "#ff0", backgroundPadding: { top: 2 } },
+      },
+      {
+        text: "Yo",
+        style: { fontSize: 20, backgroundColor: "#ff0", backgroundPadding: { top: 6 } },
+      },
+    ];
+
+    const lines = computeTextLines(runs, layoutConfig);
+
+    expect(lines[0].parts.map((p) => p.text)).toEqual(["Hi", "Yo"]);
+  });
+
+  it("merges adjacent runs into one part when every field, incl. the new ones, matches", () => {
+    const runs: TextRun[] = [
+      { text: "Hi", style: { fontSize: 20, backgroundColor: "#ff0", backgroundOpacity: 0.5 } },
+      { text: "Yo", style: { fontSize: 20, backgroundColor: "#ff0", backgroundOpacity: 0.5 } },
+    ];
+
+    const lines = computeTextLines(runs, layoutConfig);
+
+    expect(lines[0].parts.map((p) => p.text)).toEqual(["HiYo"]);
   });
 });

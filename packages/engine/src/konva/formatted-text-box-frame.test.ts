@@ -45,6 +45,7 @@ import { attachNodeHandlers } from "./konva-node-handlers";
 function boxStyle(over: Partial<TextBackgroundBoxStyle> = {}): TextBackgroundBoxStyle {
   return {
     color: "#0000ff",
+    geometry: "text-union",
     cornerRadius: 0,
     padding: { top: 0, right: 0, bottom: 0, left: 0 },
     shadow: null,
@@ -140,6 +141,16 @@ describe("FormattedText getSelfRect — the Transformer frame", () => {
 });
 
 describe("FormattedText pill-anchor resize — d px of drag moves the edge d px", () => {
+  it("naturally changes the local frame bounds in frame geometry", () => {
+    const node = makeNode({ backgroundBox: boxStyle({ geometry: "frame", padding: PADDING_14 }) });
+    wireHandlers(node, "middle-right");
+
+    node.scaleX(scaleForDrag(node.getSelfRect().width, 40));
+    node.fire("transform");
+
+    expect(node.getSelfRect()).toEqual({ x: 0, y: 0, width: 240, height: 32 });
+  });
+
   it("maps a horizontal drag one-to-one on a padded box", () => {
     const node = makeNode({ backgroundBox: PADDED });
     wireHandlers(node, "middle-right");

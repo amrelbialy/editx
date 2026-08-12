@@ -7,6 +7,7 @@ import { TextBackgroundSection } from "./text-background-section.component";
 const RESOLVED_BOX: TextBackground = {
   enabled: false,
   color: { r: 0, g: 0, b: 0, a: 1 },
+  geometry: "text-union",
   cornerRadius: 0,
   padding: { top: 0, right: 0, bottom: 0, left: 0 },
 };
@@ -22,6 +23,9 @@ function makeEngine(options: EngineOptions = {}) {
   const blockApi = {
     getTextRuns: vi.fn().mockReturnValue([{ text: "Hello", style: {} }]),
     setTextBackgroundColor: vi.fn(),
+    setTextBackgroundOpacity: vi.fn(),
+    setTextBackgroundCornerRadius: vi.fn(),
+    setTextBackgroundPadding: vi.fn(),
     supportsTextBackground: vi.fn().mockReturnValue(supportsBox),
     getTextBackground: vi.fn().mockReturnValue({ ...RESOLVED_BOX, ...box }),
     setTextBackground: vi.fn(),
@@ -62,7 +66,6 @@ function colorInput(): HTMLInputElement {
   if (!input) throw new Error("box colour input not rendered");
   return input;
 }
-
 describe("TextBackgroundSection", () => {
   afterEach(cleanup);
 
@@ -70,7 +73,8 @@ describe("TextBackgroundSection", () => {
     const engine = makeEngine({ supportsBox: false });
     renderSection(engine);
 
-    expect(screen.queryByRole("switch", { name: "Enable Box" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Enable Frame" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
     expect(screen.getByRole("switch", { name: "Enable Background" })).toBeTruthy();
   });
 
@@ -78,19 +82,34 @@ describe("TextBackgroundSection", () => {
     const engine = makeEngine();
     renderSection(engine);
 
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
     fireEvent.click(screen.getByRole("switch", { name: "Enable Background" }));
 
     expect(engine.block.setTextBackgroundColor).toHaveBeenCalledWith(7, 0, 5, "#FDE68A");
     expect(engine.block.setTextBackgroundEnabled).not.toHaveBeenCalled();
   });
 
-  it("toggles the box through setTextBackgroundEnabled", () => {
+  it("shows zero padding when the highlight geometry is unset", () => {
     const engine = makeEngine();
     renderSection(engine);
 
-    fireEvent.click(screen.getByRole("switch", { name: "Enable Box" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Enable Background" }));
 
-    expect(engine.block.setTextBackgroundEnabled).toHaveBeenCalledWith(7, true);
+    expect(screen.getByLabelText("All")).toHaveValue(0);
+  });
+
+  it("enables the Frame and authors its geometry atomically", () => {
+    const engine = makeEngine();
+    renderSection(engine);
+
+    fireEvent.click(screen.getByRole("switch", { name: "Enable Frame" }));
+
+    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, {
+      enabled: true,
+      geometry: "frame",
+    });
+    expect(engine.block.setTextBackgroundEnabled).not.toHaveBeenCalled();
     expect(engine.block.setTextBackgroundColor).not.toHaveBeenCalled();
   });
 
@@ -100,7 +119,10 @@ describe("TextBackgroundSection", () => {
 
     fireEvent.change(screen.getByLabelText("All"), { target: { value: "12" } });
 
-    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, { padding: 12 });
+    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, {
+      geometry: "frame",
+      padding: 12,
+    });
   });
 
   it("writes only the edited side once padding is unlinked", () => {
@@ -110,7 +132,10 @@ describe("TextBackgroundSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit padding sides separately" }));
     fireEvent.change(screen.getByLabelText("Left"), { target: { value: "6" } });
 
-    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, { padding: { left: 6 } });
+    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, {
+      geometry: "frame",
+      padding: { left: 6 },
+    });
   });
 
   it("coalesces a corner-radius drag into a single history entry", () => {
@@ -128,9 +153,13 @@ describe("TextBackgroundSection", () => {
     renderSection(engine);
 
     fireEvent.change(screen.getByLabelText("All"), { target: { value: "4" } });
-    fireEvent.click(screen.getByRole("switch", { name: "Enable Box" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Enable Frame" }));
 
     expect(engine.block.setTextBackgroundEnabled).toHaveBeenCalledWith(7, false);
+    expect(engine.block.setTextBackground).toHaveBeenLastCalledWith(7, {
+      geometry: "frame",
+      padding: 4,
+    });
     expect(engine.endBatch).toHaveBeenCalledTimes(1);
     expect(engine.endBatch.mock.invocationCallOrder[0]).toBeLessThan(
       engine.block.setTextBackgroundEnabled.mock.invocationCallOrder[0],
@@ -154,13 +183,15 @@ describe("TextBackgroundSection", () => {
     expect(screen.getByLabelText("Left")).toBeTruthy();
   });
 
-  it("passes negative padding through instead of clamping it to zero", () => {
+  it("upgrades loaded legacy union geometry on an explicit Frame padding edit", () => {
     const engine = makeEngine({ box: { enabled: true } });
     renderSection(engine);
 
     fireEvent.change(screen.getByLabelText("All"), { target: { value: "-4" } });
-
-    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, { padding: -4 });
+    expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, {
+      geometry: "frame",
+      padding: -4,
+    });
   });
 
   it("round-trips a translucent box colour without flattening it", () => {
@@ -174,6 +205,7 @@ describe("TextBackgroundSection", () => {
     fireEvent.change(colorInput(), { target: { value: "#00ff00" } });
 
     expect(engine.block.setTextBackground).toHaveBeenCalledWith(7, {
+      geometry: "frame",
       color: { r: 0, g: 1, b: 0, a: 0.5 },
     });
   });
@@ -182,13 +214,37 @@ describe("TextBackgroundSection", () => {
     const engine = makeEngine({ curve: { radius: 120, direction: "up" } });
     renderSection(engine);
 
-    expect(screen.getByText("The background box is not shown on curved text.")).toBeTruthy();
+    expect(screen.getByText("The Frame is not shown on curved text.")).toBeTruthy();
   });
 
   it("shows no curved hint for flat text", () => {
     const engine = makeEngine();
     renderSection(engine);
 
-    expect(screen.queryByText("The background box is not shown on curved text.")).toBeNull();
+    expect(screen.queryByText("The Frame is not shown on curved text.")).toBeNull();
+  });
+
+  it("writes a per-side padding for the highlight via setTextBackgroundPadding", () => {
+    const engine = makeEngine();
+    engine.block.getTextRuns.mockReturnValue([
+      {
+        text: "Hello",
+        style: {
+          backgroundColor: "#FDE68A",
+          backgroundPadding: { top: 2, right: 8, bottom: 2, left: 8 },
+        },
+      },
+    ]);
+    renderSection(engine);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Highlight" }));
+    fireEvent.change(screen.getByLabelText("Left"), { target: { value: "20" } });
+
+    expect(engine.block.setTextBackgroundPadding).toHaveBeenCalledWith(7, 0, 5, {
+      top: 2,
+      right: 8,
+      bottom: 2,
+      left: 20,
+    });
   });
 });

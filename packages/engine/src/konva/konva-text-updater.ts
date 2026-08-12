@@ -59,6 +59,10 @@ export function updateTextNode(
   textNode.curveRadius((props[TEXT_CURVE_RADIUS] as number) ?? 0);
   textNode.curveDirection((props[TEXT_CURVE_DIRECTION] as TextCurveDirection) ?? "up");
 
+  // Frame geometry owns the content insets, so it must be resolved before
+  // auto-size asks FormattedText to measure its layout.
+  textNode.setAttr("backgroundBox", resolveTextBackgroundBox(props));
+
   let computedWidth: number | null = null;
   if (autoWidth) {
     // A large layout width keeps measurement from wrapping; the content-derived
@@ -89,13 +93,6 @@ export function updateTextNode(
     if (bgColor) bgFill = colorToHex(bgColor);
   }
   textNode.setAttr("backgroundFill", bgFill);
-
-  // Not in FormattedText's watchAttrs: the box never affects line breaking, so
-  // changing it must not invalidate the layout (mirrors `backgroundFill`).
-  // Resolved from `props` alone — unlike `backgroundFill` above, the box colour
-  // deliberately does not borrow the `fillId` sub-block, so what it paints is
-  // exactly what `getTextBackground` reports.
-  textNode.setAttr("backgroundBox", resolveTextBackgroundBox(props));
 
   // Text shadow is drawn per-run inside FormattedText (from the run style), so
   // the node-level shadow must stay off — even for legacy scenes that still

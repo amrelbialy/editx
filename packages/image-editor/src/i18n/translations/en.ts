@@ -186,15 +186,21 @@ export const en = {
   "curve.up": "Up",
   "curve.down": "Down",
 
-  // Text background (per-run highlight + block-level box)
+  // Text background (per-run Highlight + block-level Frame)
+  "textBackground.editor": "Text background editor",
+  "textBackground.frame": "Frame",
   "textBackground.highlight": "Highlight",
   "textBackground.highlightHint": "Painted behind the selected characters.",
   "textBackground.enableHighlight": "Enable Background",
-  "textBackground.box": "Background Box",
-  "textBackground.boxHint": "Painted behind the whole text block.",
-  "textBackground.enableBox": "Enable Box",
+  "textBackground.frameHint": "Painted behind the whole text block.",
+  "textBackground.enableFrame": "Enable Frame",
   "textBackground.cornerRadius": "Corner Radius",
-  "textBackground.padding": "Padding",
+  "textBackground.contentPadding": "Content Padding",
+  "textBackground.contentPaddingTooltip":
+    "Moves text inward from the frame edges. The background remains within the frame.",
+  "textBackground.highlightPadding": "Highlight Padding",
+  "textBackground.highlightPaddingTooltip":
+    "Expands the highlight around the text. It may extend beyond the text frame.",
   "textBackground.paddingAll": "All",
   "textBackground.paddingTop": "Top",
   "textBackground.paddingRight": "Right",
@@ -202,7 +208,7 @@ export const en = {
   "textBackground.paddingLeft": "Left",
   "textBackground.linkPadding": "Link padding sides",
   "textBackground.unlinkPadding": "Edit padding sides separately",
-  "textBackground.curvedNotice": "The background box is not shown on curved text.",
+  "textBackground.curvedNotice": "The Frame is not shown on curved text.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
