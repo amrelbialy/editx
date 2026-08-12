@@ -1,10 +1,15 @@
-import type { EditxEngine, TextRunStyle } from "@editx/engine";
+import type { EditxEngine } from "@editx/engine";
 import { useCallback } from "react";
 import type { ImageEditorConfig } from "../config/config.types";
 import { DEFAULT_TEXT_PRESET_GROUPS } from "../config/presets";
 import { findPresetById, resolveTextPresetGroups } from "../config/resolve-presets";
 import { useImageEditorStore } from "../store/image-editor-store";
 import { applyTextBackgroundBox } from "../utils/apply-text-background-box";
+import {
+  convertTextPresetRunStyle,
+  convertValidTextRunOverrides,
+  toInitialTextRunStyle,
+} from "../utils/text-preset-run-style";
 
 /** Id of a text style preset (matches a preset `id` in the resolved gallery). */
 export type TextPreset = string;
@@ -104,31 +109,16 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
       const dStyle = text.defaultFontStyle ?? "normal";
       const dFill = text.defaultColor ?? "#ffffff";
 
-      ce.beginBatch();
-      const ids = preset.blocks.map((block) => {
-        const fontSize = Math.round(baseFontSize * (block.fontSizeScale ?? 1) * scaleFactor);
-        const style: Partial<TextRunStyle> = {
-          fontSize,
-          fontFamily: block.fontFamily ?? dFamily,
-          fontWeight: block.fontWeight ?? dWeight,
-          fontStyle: block.fontStyle ?? dStyle,
-          fill: block.fill ?? dFill,
-        };
-        if (block.letterSpacing !== undefined)
-          style.letterSpacing = block.letterSpacing * scaleFactor;
-        if (block.textTransform) style.textTransform = block.textTransform;
-        if (block.textStrokeColor) style.textStrokeColor = block.textStrokeColor;
-        if (block.textStrokeWidth !== undefined)
-          style.textStrokeWidth = block.textStrokeWidth * scaleFactor;
-        if (block.textShadowColor) style.textShadowColor = block.textShadowColor;
-        if (block.textShadowBlur !== undefined)
-          style.textShadowBlur = block.textShadowBlur * scaleFactor;
-        if (block.textShadowOffsetX !== undefined)
-          style.textShadowOffsetX = block.textShadowOffsetX * scaleFactor;
-        if (block.textShadowOffsetY !== undefined)
-          style.textShadowOffsetY = block.textShadowOffsetY * scaleFactor;
-        if (block.backgroundColor) style.backgroundColor = block.backgroundColor;
-
+      const preparedBlocks = preset.blocks.map((block) => {
+        const converted = convertTextPresetRunStyle(block, baseFontSize, scaleFactor);
+        const fontSize = converted.fontSize ?? Math.round(baseFontSize * scaleFactor);
+        const initialStyle = toInitialTextRunStyle(converted);
+        initialStyle.fontSize = fontSize;
+        initialStyle.fontFamily ??= dFamily;
+        initialStyle.fontWeight ??= dWeight;
+        initialStyle.fontStyle ??= dStyle;
+        initialStyle.fill ??= dFill;
+        delete initialStyle.fillGradient;
         const layout =
           block.x !== undefined
             ? {
@@ -138,7 +128,17 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
                 height: block.height * pageH,
               }
             : centeredTextLayout(pageW, pageH, fontSize, scaleFactor);
+        const overrides = convertValidTextRunOverrides(
+          block.text,
+          block.runOverrides,
+          baseFontSize,
+          scaleFactor,
+        );
+        return { block, initialStyle, layout, overrides };
+      });
 
+      ce.beginBatch();
+      const ids = preparedBlocks.map(({ block, initialStyle, layout, overrides }) => {
         const textId = ce.block.addText(
           editableBlockId,
           layout.x,
@@ -146,7 +146,7 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
           layout.width,
           layout.height,
           block.text,
-          { style },
+          { style: initialStyle },
         );
 
         const align = block.align ?? text.defaultTextAlign;
@@ -158,6 +158,9 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
           ce.block.setTextCurve(textId, block.curve.radius * scaleFactor, block.curve.direction);
         } else if (block.fillGradient) {
           ce.block.setTextGradient(textId, 0, block.text.length, block.fillGradient);
+        }
+        for (const override of overrides) {
+          ce.block.setTextStyle(textId, override.start, override.end, override.style);
         }
         // Data is applied even when curved; the engine suppresses the paint.
         if (block.backgroundBox)

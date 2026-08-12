@@ -4,6 +4,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
+
 ## [0.1.0-alpha.15](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.14...@editx/image-editor@0.1.0-alpha.15) (2026-08-05)
 
 ### Bug Fixes

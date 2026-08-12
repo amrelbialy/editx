@@ -83,7 +83,7 @@ describe("useTextTool.handleAddTextPreset", () => {
     expect(direction).toBe("up");
   });
 
-  it("sets backgroundColor on the run for a highlight preset", () => {
+  it("sets the richer run highlight fields for the preserved highlight id", () => {
     const { engine, block } = makeEngine();
     const { result } = renderHook(() => useTextTool({ engineRef: ref(engine), config }));
 
@@ -91,7 +91,12 @@ describe("useTextTool.handleAddTextPreset", () => {
 
     expect(block.addText).toHaveBeenCalledTimes(1);
     const options = block.addText.mock.calls[0][6];
-    expect(options.style.backgroundColor).toBe("#fde68a");
+    expect(options.style).toMatchObject({
+      backgroundColor: "#facc15",
+      backgroundOpacity: 0.82,
+      backgroundCornerRadius: 3,
+      backgroundPadding: { top: 3, right: 8, bottom: 3, left: 8 },
+    });
     expect(block.setTextGradient).not.toHaveBeenCalled();
   });
 

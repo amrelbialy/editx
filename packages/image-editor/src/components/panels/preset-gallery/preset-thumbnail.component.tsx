@@ -1,5 +1,10 @@
 import type React from "react";
-import type { PresetPreview, PreviewBoxStyle, PreviewStyle } from "../../../config/config.types";
+import type {
+  PresetPreview,
+  PreviewBoxStyle,
+  PreviewStyle,
+  PreviewTextSegment,
+} from "../../../config/config.types";
 
 interface PresetThumbnailProps {
   preview: PresetPreview;
@@ -19,18 +24,21 @@ export const PresetThumbnail: React.FC<PresetThumbnailProps> = (props) => {
   if (preview.kind === "text") {
     const lines = preview.sample.split("\n");
     const box = preview.style?.box;
-    const body = lines.map((line, i) => (
-      // biome-ignore lint/suspicious/noArrayIndexKey: static preview sample lines
-      <span key={i} className="block truncate text-[13px]">
-        {line || "\u00A0"}
-      </span>
-    ));
+    let offset = 0;
+    const body = lines.map((line, index) => {
+      const start = offset;
+      offset += line.length + 1;
+      return (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static preview sample lines
+        <span key={index} className="block truncate text-[13px]">
+          {renderLine(line, start, preview.style, preview.segments)}
+        </span>
+      );
+    });
+    const styledBody = preview.segments?.length ? body : renderTextLayers(body, preview.style);
     return (
-      <div
-        className="flex h-full w-full flex-col items-center justify-center px-1 text-center leading-tight text-foreground"
-        style={toTextStyle(preview.style)}
-      >
-        {box ? <div style={toBoxStyle(box)}>{body}</div> : body}
+      <div className="flex h-full w-full flex-col items-center justify-center px-1 text-center leading-tight text-foreground">
+        {box ? <div style={toBoxStyle(box)}>{styledBody}</div> : styledBody}
       </div>
     );
   }
@@ -48,32 +56,83 @@ function toBoxStyle(box: PreviewBoxStyle): React.CSSProperties {
   };
 }
 
-function toTextStyle(style?: PreviewStyle): React.CSSProperties {
+function toGlyphStyle(style?: PreviewStyle): React.CSSProperties {
   if (!style) return {};
   const css: React.CSSProperties = {
+    fontSize: style.fontSize,
     fontFamily: style.fontFamily,
     fontWeight: style.fontWeight,
     fontStyle: style.fontStyle,
     color: style.color,
     letterSpacing: style.letterSpacing,
+    textDecoration: style.textDecoration,
     textTransform: style.textTransform as React.CSSProperties["textTransform"],
     WebkitTextStroke: style.textStroke,
     textShadow: style.textShadow,
   };
-  if (style.background) {
-    css.background = style.background;
-    // Match the canvas highlight pill (padX 0.2em, padY 0.1em, radius 0.15em
-    // relative to font size) — em keeps it proportional to the sample font.
-    css.borderRadius = "0.15em";
-    css.padding = "0.1em 0.2em";
-  }
   if (style.textGradient) {
-    css.background = style.textGradient;
+    css.backgroundImage = style.textGradient;
     css.WebkitBackgroundClip = "text";
     css.backgroundClip = "text";
     css.color = "transparent";
+  } else if (style.textGradient === null) {
+    css.backgroundImage = "none";
+    css.WebkitBackgroundClip = "border-box";
+    css.backgroundClip = "border-box";
   }
   return css;
+}
+
+function toHighlightStyle(style?: PreviewStyle): React.CSSProperties {
+  if (!style?.background) return {};
+  return {
+    background:
+      style.backgroundOpacity === undefined
+        ? style.background
+        : `color-mix(in srgb, ${style.background} ${style.backgroundOpacity * 100}%, transparent)`,
+    borderRadius: style.borderRadius ?? "0.15em",
+    padding: style.padding ?? "0.1em 0.2em",
+  };
+}
+
+function renderTextLayers(content: React.ReactNode, style?: PreviewStyle) {
+  return (
+    <span style={toHighlightStyle(style)}>
+      <span data-text-preview-glyph style={toGlyphStyle(style)}>
+        {content}
+      </span>
+    </span>
+  );
+}
+
+function renderLine(
+  line: string,
+  lineStart: number,
+  baseStyle?: PreviewStyle,
+  segments?: PreviewTextSegment[],
+) {
+  if (!line) return renderTextLayers("\u00A0", baseStyle);
+  const lineEnd = lineStart + line.length;
+  const boundaries = [
+    lineStart,
+    ...(segments ?? []).flatMap(({ start, end }) => [start, end]),
+    lineEnd,
+  ]
+    .filter((value) => value >= lineStart && value <= lineEnd)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .sort((left, right) => left - right);
+  return boundaries.slice(0, -1).map((start, index) => {
+    const end = boundaries[index + 1];
+    const segment = segments?.find((candidate) => candidate.start <= start && candidate.end >= end);
+    const style = { ...baseStyle, ...segment?.style };
+    return (
+      <span key={`${start}:${end}`} style={toHighlightStyle(style)}>
+        <span data-text-preview-glyph style={toGlyphStyle(style)}>
+          {line.slice(start - lineStart, end - lineStart)}
+        </span>
+      </span>
+    );
+  });
 }
 
 function toShapeStyle(style?: PreviewStyle): React.CSSProperties {

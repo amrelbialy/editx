@@ -118,6 +118,66 @@ describe("deriveTextPreview", () => {
     expect(style.fontStyle).toBe("italic");
     expect(style.textTransform).toBe("uppercase");
   });
+
+  it("prefers transform over deprecated textTransform", () => {
+    const preview = deriveTextPreview(
+      block({ transform: "lowercase", textTransform: "uppercase" }),
+    );
+    expect(textStyle(preview).textTransform).toBe("lowercase");
+  });
+
+  it("does not apply block-relative run offsets to a different preview sample", () => {
+    const preview = deriveTextPreview(
+      block({ text: "BLOCK", runOverrides: [{ start: 0, end: 2, style: { fill: "#f00" } }] }),
+      "Sample",
+    );
+    if (preview.kind !== "text") throw new Error("expected text preview");
+    expect(preview.segments).toBeUndefined();
+  });
+
+  it("derives ordered override segments with later properties winning", () => {
+    const preview = deriveTextPreview(
+      block({
+        text: "COLOR",
+        backgroundColor: "#fde68a",
+        backgroundOpacity: 0.4,
+        backgroundCornerRadius: 6,
+        backgroundPadding: { left: 4 },
+        runOverrides: [
+          { start: 1, end: 4, style: { fill: "#ef4444", fontWeight: "bold" } },
+          { start: 2, end: 3, style: { fill: "#2563eb", backgroundColor: "#fff" } },
+        ],
+      }),
+    );
+    if (preview.kind !== "text") throw new Error("expected text preview");
+    expect(preview.style).toMatchObject({
+      background: "#fde68a",
+      backgroundOpacity: 0.4,
+      borderRadius: "0.25em",
+      padding: "0em 0em 0em 0.167em",
+    });
+    expect(preview.segments).toEqual([
+      {
+        start: 1,
+        end: 2,
+        style: expect.objectContaining({ color: "#ef4444", fontWeight: "bold" }),
+      },
+      {
+        start: 2,
+        end: 3,
+        style: expect.objectContaining({
+          color: "#2563eb",
+          fontWeight: "bold",
+          background: "#fff",
+        }),
+      },
+      {
+        start: 3,
+        end: 4,
+        style: expect.objectContaining({ color: "#ef4444", fontWeight: "bold" }),
+      },
+    ]);
+  });
 });
 
 describe("resolveTextPreview", () => {

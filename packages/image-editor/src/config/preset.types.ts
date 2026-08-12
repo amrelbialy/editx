@@ -49,29 +49,41 @@ export interface PreviewBoxStyle {
  * `ui/` thumbnail never needs to import engine or config types.
  */
 export interface PreviewStyle {
+  fontSize?: string;
   fontFamily?: string;
   fontWeight?: string;
   fontStyle?: string;
   color?: string;
   letterSpacing?: string;
+  textDecoration?: string;
   textTransform?: string;
   /** Maps to `-webkit-text-stroke`. */
   textStroke?: string;
   textShadow?: string;
   /** Solid colour or gradient for a shape/text swatch (text: highlight box). */
   background?: string;
+  backgroundOpacity?: number;
   /**
    * CSS gradient string painted onto the glyphs via `background-clip: text`
    * (mirrors an inserted `fillGradient`). Takes precedence over `color`.
    */
-  textGradient?: string;
+  /** CSS glyph gradient; `null` explicitly clears an inherited gradient. */
+  textGradient?: string | null;
   /** `url(...)` / gradient for an image-filled preview. */
   backgroundImage?: string;
   borderRadius?: string;
+  padding?: string;
   clipPath?: string;
   border?: string;
   /** Block-level background box behind the whole sample (text previews). */
   box?: PreviewBoxStyle;
+}
+
+/** One styled UTF-16 range carried by a serializable text preview. */
+export interface PreviewTextSegment {
+  start: number;
+  end: number;
+  style: PreviewStyle;
 }
 
 /** Box padding: one value for all four sides, or per side. */
@@ -101,19 +113,26 @@ export interface TextBackgroundBoxSpec {
  * React node — the thumbnail component interprets it into CSS.
  */
 export type PresetPreview =
-  | { kind: "text"; sample: string; style?: PreviewStyle }
+  | { kind: "text"; sample: string; style?: PreviewStyle; segments?: PreviewTextSegment[] }
   | { kind: "shape"; style?: PreviewStyle };
 
-/** Content + visual style for a text block, independent of page geometry. */
-export interface TextStyleSpec {
-  text: string;
+/** Serializable style authored for a whole text block or run override. */
+export interface TextPresetRunStyle {
   /** Multiplier applied to `text.defaultFontSize` (× canvas scale). */
   fontSizeScale?: number;
   fontFamily?: string;
   fontWeight?: string;
   fontStyle?: string;
   fill?: string;
+  fillGradient?: {
+    type: "linear" | "radial";
+    angle?: number;
+    stops: { offset: number; color: string }[];
+  };
   letterSpacing?: number;
+  textDecoration?: string;
+  transform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  /** @deprecated Use `transform`. */
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
   textStrokeColor?: string;
   textStrokeWidth?: number;
@@ -123,17 +142,29 @@ export interface TextStyleSpec {
   textShadowOffsetY?: number;
   /** Per-run highlight box painted behind the glyphs. */
   backgroundColor?: string;
+  backgroundOpacity?: number;
+  backgroundCornerRadius?: number;
+  backgroundPadding?: TextBoxPadding;
+}
+
+/** Partial run update; `null` explicitly clears a previously supplied value. */
+export type TextPresetRunStyleUpdate = {
+  [K in keyof TextPresetRunStyle]?: TextPresetRunStyle[K] | null;
+};
+
+/** A UTF-16 half-open range with a partial style update. */
+export interface TextRunOverride {
+  start: number;
+  end: number;
+  style: TextPresetRunStyleUpdate;
+}
+
+/** Content + visual style for a text block, independent of page geometry. */
+export interface TextStyleSpec extends TextPresetRunStyle {
+  text: string;
+  runOverrides?: TextRunOverride[];
   /** Block-level background box behind the whole block (suppressed when curved). */
   backgroundBox?: TextBackgroundBoxSpec;
-  /**
-   * Gradient text fill applied after insertion via `setTextGradient`. Not
-   * combined with `curve` (curve wins; gradient is skipped when curved).
-   */
-  fillGradient?: {
-    type: "linear" | "radial";
-    angle?: number;
-    stops: { offset: number; color: string }[];
-  };
   align?: "left" | "center" | "right";
   lineHeight?: number;
   curve?: { radius: number; direction: "up" | "down" };

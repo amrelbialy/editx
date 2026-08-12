@@ -7,6 +7,7 @@ import type {
   TextPreset,
   TextPresetBlock,
 } from "../config.types";
+import { deriveTextRunPreviewSegments } from "./derive-text-run-preview";
 
 /**
  * Base font size the preset scales apply to (must match the insertion default in
@@ -34,7 +35,8 @@ export function deriveTextPreview(block: TextPresetBlock, sample?: string): Pres
   if (block.fontFamily) style.fontFamily = block.fontFamily;
   if (block.fontWeight) style.fontWeight = block.fontWeight;
   if (block.fontStyle) style.fontStyle = block.fontStyle;
-  if (block.textTransform) style.textTransform = block.textTransform;
+  const transform = block.transform ?? block.textTransform;
+  if (transform) style.textTransform = transform;
 
   if (block.fillGradient) {
     style.textGradient = textGradientToCss(block.fillGradient);
@@ -63,9 +65,20 @@ export function deriveTextPreview(block: TextPresetBlock, sample?: string): Pres
   }
 
   if (block.backgroundColor) style.background = block.backgroundColor;
+  if (block.backgroundOpacity !== undefined) style.backgroundOpacity = block.backgroundOpacity;
+  if (block.backgroundCornerRadius !== undefined)
+    style.borderRadius = em(block.backgroundCornerRadius, referenceFontPx);
+  if (block.backgroundPadding !== undefined) {
+    const padding = resolvePadding(block.backgroundPadding);
+    style.padding = [padding.top, padding.right, padding.bottom, padding.left]
+      .map((side) => em(side, referenceFontPx))
+      .join(" ");
+  }
   if (block.backgroundBox) style.box = deriveBoxStyle(block.backgroundBox, referenceFontPx);
 
-  return { kind: "text", sample: sample ?? block.text, style };
+  const previewSample = sample ?? block.text;
+  const segments = previewSample === block.text ? deriveTextRunPreviewSegments(block) : undefined;
+  return { kind: "text", sample: previewSample, style, segments };
 }
 
 /** Resolve authored padding into the four sides, in reference px. */
