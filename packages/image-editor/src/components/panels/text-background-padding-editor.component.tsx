@@ -50,9 +50,9 @@ export const TextBackgroundPaddingEditor: React.FC<TextBackgroundPaddingEditorPr
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <span className="text-fluid font-medium text-muted-foreground">{label}</span>
-          <IconButton size="sm" label={tooltip} tooltipSide="top" icon={<Info />} />
+          <IconButton size="icon" label={tooltip} tooltipSide="top" icon={<Info />} />
         </div>
         <IconButton
           variant={linked ? "default" : "ghost"}
