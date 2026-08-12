@@ -1,6 +1,42 @@
-import { POSITION_X, SIZE_HEIGHT, SIZE_WIDTH, TEXT_ALIGN } from "../block/property-keys";
+import type { TextBackgroundPadding } from "../block/block.types";
+import {
+  POSITION_X,
+  SIZE_HEIGHT,
+  SIZE_WIDTH,
+  TEXT_ALIGN,
+  TEXT_BACKGROUND_CORNER_RADIUS,
+  TEXT_BACKGROUND_PADDING_BOTTOM,
+  TEXT_BACKGROUND_PADDING_LEFT,
+  TEXT_BACKGROUND_PADDING_RIGHT,
+  TEXT_BACKGROUND_PADDING_TOP,
+  TEXT_PADDING,
+} from "../block/property-keys";
 import { EditxEngine } from "../editx-engine";
 import { KonvaRendererAdapter } from "./konva-renderer-adapter";
+
+const CORNER_ANCHORS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
+const BACKGROUND_GEOMETRY_KEYS = [
+  TEXT_BACKGROUND_CORNER_RADIUS,
+  TEXT_BACKGROUND_PADDING_TOP,
+  TEXT_BACKGROUND_PADDING_RIGHT,
+  TEXT_BACKGROUND_PADDING_BOTTOM,
+  TEXT_BACKGROUND_PADDING_LEFT,
+] as const;
+
+function scaleGeometry(value: number, scaleFactor: number): number {
+  return Math.round(value * scaleFactor * 10) / 10;
+}
+
+function scalePadding(
+  padding: Partial<TextBackgroundPadding>,
+  scaleFactor: number,
+): Partial<TextBackgroundPadding> {
+  const scaled = { ...padding };
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    if (padding[side] !== undefined) scaled[side] = scaleGeometry(padding[side], scaleFactor);
+  }
+  return scaled;
+}
 
 export { KonvaCropOverlay } from "./konva-crop-overlay";
 export { KonvaRendererAdapter } from "./konva-renderer-adapter";
@@ -48,7 +84,6 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
   adapter.onBlockTransform = (blockId, phase) =>
     engine.emit("block:transform", { block: blockId, phase });
   adapter.onBlockDragEnd = (blockId, x, y) => engine.block.setPosition(blockId, x, y);
-  const CORNER_ANCHORS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
 
   adapter.onBlockTransformEnd = (blockId, transform, anchorName) => {
     engine.beginBatch();
@@ -68,11 +103,33 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
           style: {
             ...run.style,
             fontSize: run.style.fontSize
-              ? Math.round(run.style.fontSize * scaleFactor * 10) / 10
+              ? scaleGeometry(run.style.fontSize, scaleFactor)
               : run.style.fontSize,
+            ...(run.style.backgroundPadding && {
+              backgroundPadding: scalePadding(run.style.backgroundPadding, scaleFactor),
+            }),
+            ...(run.style.backgroundCornerRadius !== undefined && {
+              backgroundCornerRadius: scaleGeometry(run.style.backgroundCornerRadius, scaleFactor),
+            }),
           },
         }));
         engine.block.setProperty(blockId, "text/runs", scaledRuns);
+        engine.block.setFloat(
+          blockId,
+          TEXT_PADDING,
+          scaleGeometry(engine.block.getFloat(blockId, TEXT_PADDING), scaleFactor),
+        );
+        if (engine.block.isTextBackgroundEnabled(blockId)) {
+          for (const key of BACKGROUND_GEOMETRY_KEYS) {
+            if (engine.block.getProperty(blockId, key) !== undefined) {
+              engine.block.setFloat(
+                blockId,
+                key,
+                scaleGeometry(engine.block.getFloat(blockId, key), scaleFactor),
+              );
+            }
+          }
+        }
       }
     }
 

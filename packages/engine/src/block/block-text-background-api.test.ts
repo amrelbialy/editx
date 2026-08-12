@@ -8,6 +8,7 @@ import {
   TEXT_BACKGROUND_ENABLED,
   TEXT_BACKGROUND_PADDING_LEFT,
   TEXT_BACKGROUND_PADDING_TOP,
+  TEXT_PADDING,
 } from "./property-keys";
 
 const RED: Color = { r: 1, g: 0, b: 0, a: 1 };
@@ -95,6 +96,20 @@ describe("BlockTextAPI text background box", () => {
       right: 6,
       bottom: 6,
       left: 20,
+    });
+  });
+
+  it("preserves the text inset when frame geometry is enabled without authored padding", () => {
+    const id = block.create("text");
+    block.setFloat(id, TEXT_PADDING, 4);
+
+    block.setTextBackground(id, { enabled: true, geometry: "frame" });
+
+    expect(block.getTextBackground(id).padding).toEqual({
+      top: 4,
+      right: 4,
+      bottom: 4,
+      left: 4,
     });
   });
 

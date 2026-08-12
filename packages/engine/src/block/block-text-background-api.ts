@@ -16,6 +16,7 @@ import {
   TEXT_BACKGROUND_PADDING_LEFT,
   TEXT_BACKGROUND_PADDING_RIGHT,
   TEXT_BACKGROUND_PADDING_TOP,
+  TEXT_PADDING,
 } from "./property-keys";
 
 const PADDING_KEYS: Record<keyof TextBackgroundPadding, string> = {
@@ -72,7 +73,10 @@ export class BlockTextBackgroundAPI {
     if (opts.geometry === "frame") {
       for (const side of PADDING_SIDES) {
         const supplied = typeof padding === "number" ? padding : padding?.[side];
-        const value = supplied ?? H.getFloat(this.#engine, blockId, PADDING_KEYS[side]);
+        const stored = H.getProperty(this.#engine, blockId, PADDING_KEYS[side]);
+        const value =
+          supplied ??
+          (typeof stored === "number" ? stored : H.getFloat(this.#engine, blockId, TEXT_PADDING));
         writes.push([PADDING_KEYS[side], normalizePadding(value)]);
       }
     } else if (typeof padding === "number") {
