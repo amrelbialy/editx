@@ -46,6 +46,35 @@ export function unionBBox(rects: readonly SizedTransform[]): BBox {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
+/** Axis-aligned union of logical rects rotated around their stored top-left. */
+export function rotatedUnionBBox(rects: readonly SizedTransform[]): BBox {
+  if (rects.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const rect of rects) {
+    const radians = (rect.rotation * Math.PI) / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const widthX = rect.width * cos;
+    const widthY = rect.width * sin;
+    const heightX = -rect.height * sin;
+    const heightY = rect.height * cos;
+    const x1 = rect.x + widthX;
+    const y1 = rect.y + widthY;
+    const x2 = rect.x + heightX;
+    const y2 = rect.y + heightY;
+    const x3 = x1 + heightX;
+    const y3 = y1 + heightY;
+    minX = Math.min(minX, rect.x, x1, x2, x3);
+    minY = Math.min(minY, rect.y, y1, y2, y3);
+    maxX = Math.max(maxX, rect.x, x1, x2, x3);
+    maxY = Math.max(maxY, rect.y, y1, y2, y3);
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
 /** Convert an absolute (page-space) transform into a group-local transform. */
 export function absoluteToLocal(abs: Transform2D, group: Transform2D): Transform2D {
   const rad = (group.rotation * Math.PI) / 180;

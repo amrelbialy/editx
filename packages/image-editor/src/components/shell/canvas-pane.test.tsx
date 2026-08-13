@@ -8,6 +8,17 @@ import { CanvasPane } from "./canvas-pane";
 // The overlay talks to the real engine text-editing session; stub it so these
 // tests can focus on the dblclick gating (does the editor open at all?).
 vi.mock("../text-editor-overlay", () => ({ TextEditorOverlay: () => null }));
+vi.mock("../../hooks/use-block-screen-rect", () => ({
+  useBlockScreenRect: () => ({ x: 10, y: 20, width: 100, height: 50 }),
+}));
+vi.mock("./block-properties-bar", () => ({
+  BlockPropertiesBar: ({ blockType }: { blockType: string }) => (
+    <div data-testid="properties-bar">{blockType}</div>
+  ),
+}));
+vi.mock("./canvas-block-overlay", () => ({
+  CanvasBlockOverlay: () => <div data-testid="block-overlay" />,
+}));
 
 afterEach(() => {
   cleanup();
@@ -66,6 +77,35 @@ function renderPane(engine: unknown) {
 }
 
 describe("CanvasPane dblclick gating", () => {
+  it("shows the contextual header but no type-specific overlay for a group", () => {
+    const mock = makeEngine({ type: "group", parent: 1, context: [] });
+    const { queryByTestId, getByTestId } = render(
+      <ImageEditorProvider>
+        <CanvasPane
+          canvasRef={React.createRef<HTMLDivElement>()}
+          engine={mock.engine as never}
+          activeTool="select"
+          selectedShapeId={7}
+          selectedBlockType="group"
+          hasSelectedBlock
+          blockActions={{} as never}
+          rotateFlip={{
+            handleRotateClockwise: vi.fn(),
+            handleRotateCounterClockwise: vi.fn(),
+            handleFlipHorizontal: vi.fn(),
+            handleFlipVertical: vi.fn(),
+          }}
+          replaceImage={vi.fn()}
+          onContextualReset={vi.fn()}
+          onDone={vi.fn()}
+        />
+      </ImageEditorProvider>,
+    );
+
+    expect(getByTestId("properties-bar").textContent).toBe("group");
+    expect(queryByTestId("block-overlay")).toBeNull();
+  });
+
   it("REGRESSION: an ungrouped text block opens the editor on the first dblclick", () => {
     // Top-level text (no group context, parent is the page → not a group).
     const mock = makeEngine({ type: "text", parent: 1, context: [] });

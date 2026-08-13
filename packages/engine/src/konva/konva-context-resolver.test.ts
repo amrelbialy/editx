@@ -49,6 +49,16 @@ describe("konva-context-resolver", () => {
     expect(resolveHit(t.C1, [])?.blockId).toBe(1);
   });
 
+  it("top level: a released group child resolves only to itself on the next click", () => {
+    t.C1.moveTo(t.root);
+
+    const resolved = resolveHit(t.C1, []);
+
+    expect(resolved?.blockId).toBe(2);
+    expect(resolved?.node).toBe(t.C1);
+    expect(resolved?.isGroup).toBe(false);
+  });
+
   it("inside a context: resolves to the DIRECT CHILD of that context", () => {
     // Inside G1, clicking C1 → the member C1.
     const r = resolveHit(t.C1, [1]);

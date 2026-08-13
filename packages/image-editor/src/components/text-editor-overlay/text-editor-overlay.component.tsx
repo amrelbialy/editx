@@ -25,6 +25,7 @@ import {
   SelectionSyncPlugin,
   ToolbarPlugin,
 } from "./plugins";
+import { toOverlayPositionStyle } from "./text-editor-overlay-geometry";
 import { TextSelectionLayer } from "./text-selection-layer.component";
 
 export interface TextEditorOverlayProps {
@@ -53,8 +54,11 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const rotation = engine.block.getRotation(blockId);
 
     const topLeft = engine.editor.worldToScreen({ x: pos.x, y: pos.y });
-
-    if (!topLeft) return { display: "none" };
+    const positionStyle = toOverlayPositionStyle(
+      engine.editor._getBlockScreenTransform(blockId),
+      topLeft ? { x: topLeft.x, y: topLeft.y, zoom, rotation } : null,
+    );
+    if (positionStyle.display === "none") return positionStyle;
 
     const align = engine.block.getString(blockId, TEXT_ALIGN) || "left";
     const lineHeight = engine.block.getFloat(blockId, TEXT_LINE_HEIGHT) ?? 1.2;
@@ -80,12 +84,9 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
       display: "flex",
       flexDirection: "column" as const,
       justifyContent,
-      left: topLeft.x,
-      top: topLeft.y,
+      ...positionStyle,
       width: size.width,
       height: size.height,
-      transform: `scale(${zoom}) rotate(${rotation}deg)`,
-      transformOrigin: "top left",
       textAlign: align as React.CSSProperties["textAlign"],
       // Native glyphs/caret are hidden; keep line-height so the invisible DOM
       // line boxes stay aligned with the Konva line bands for click hit-testing.

@@ -5,6 +5,7 @@ import type {
   PreviewStyle,
   PreviewTextSegment,
 } from "../../../config/config.types";
+import { CompositionShapeThumbnail } from "./composition-shape-thumbnail.component";
 
 interface PresetThumbnailProps {
   preview: PresetPreview;
@@ -21,30 +22,79 @@ interface PresetThumbnailProps {
 export const PresetThumbnail: React.FC<PresetThumbnailProps> = (props) => {
   const { preview } = props;
 
+  if (preview.kind === "composition") {
+    return (
+      <div
+        className="relative h-full w-full overflow-hidden"
+        style={{ containerType: "size" }}
+        data-composition-preview
+      >
+        {preview.layers.map((layer, index) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: authored layers have stable order
+            key={index}
+            className={layer.kind === "shape" ? "absolute overflow-hidden" : "absolute"}
+            style={{
+              ...toLayerPosition(layer.layout, preview.bounds),
+              opacity: layer.kind === "shape" ? layer.opacity : undefined,
+            }}
+            data-composition-layer={layer.kind}
+          >
+            {layer.kind === "shape" ? (
+              <CompositionShapeThumbnail layer={layer} />
+            ) : (
+              <div
+                className="flex h-full w-full flex-col justify-center leading-tight"
+                style={{
+                  alignItems: toAlignItems(layer.align),
+                  fontSize: toCompositionFontSize(layer.fontSizeScale ?? 1, preview.bounds.height),
+                  textAlign: layer.align ?? "center",
+                }}
+                data-font-size-scale={layer.fontSizeScale ?? 1}
+              >
+                {renderBoxedPreviewText(layer.sample, layer.style, layer.segments)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (preview.kind === "text") {
-    const lines = preview.sample.split("\n");
-    const box = preview.style?.box;
-    let offset = 0;
-    const body = lines.map((line, index) => {
-      const start = offset;
-      offset += line.length + 1;
-      return (
-        // biome-ignore lint/suspicious/noArrayIndexKey: static preview sample lines
-        <span key={index} className="block truncate text-[13px]">
-          {renderLine(line, start, preview.style, preview.segments)}
-        </span>
-      );
-    });
-    const styledBody = preview.segments?.length ? body : renderTextLayers(body, preview.style);
     return (
       <div className="flex h-full w-full flex-col items-center justify-center px-1 text-center leading-tight text-foreground">
-        {box ? <div style={toBoxStyle(box)}>{styledBody}</div> : styledBody}
+        {renderBoxedPreviewText(preview.sample, preview.style, preview.segments)}
       </div>
     );
   }
 
   return <div className="h-11 w-11" style={toShapeStyle(preview.style)} />;
 };
+
+function toLayerPosition(
+  layout: { x: number; y: number; width: number; height: number; rotation?: number },
+  bounds: { x: number; y: number; width: number; height: number },
+): React.CSSProperties {
+  return {
+    left: `${((layout.x - bounds.x) / bounds.width) * 100}%`,
+    top: `${((layout.y - bounds.y) / bounds.height) * 100}%`,
+    width: `${(layout.width / bounds.width) * 100}%`,
+    height: `${(layout.height / bounds.height) * 100}%`,
+    transform: layout.rotation ? `rotate(${layout.rotation}deg)` : undefined,
+    transformOrigin: "top left",
+  };
+}
+
+function toCompositionFontSize(scale: number, boundsHeight: number): string {
+  return `${((scale * (24 / 1080) * 100) / boundsHeight).toFixed(3)}cqh`;
+}
+
+function toAlignItems(align?: "left" | "center" | "right") {
+  if (align === "left") return "flex-start";
+  if (align === "right") return "flex-end";
+  return "center";
+}
 
 function toBoxStyle(box: PreviewBoxStyle): React.CSSProperties {
   return {
@@ -102,6 +152,36 @@ function renderTextLayers(content: React.ReactNode, style?: PreviewStyle) {
         {content}
       </span>
     </span>
+  );
+}
+
+function renderPreviewText(sample: string, style?: PreviewStyle, segments?: PreviewTextSegment[]) {
+  let offset = 0;
+  const body = sample.split("\n").map((line, index) => {
+    const start = offset;
+    offset += line.length + 1;
+    return (
+      // biome-ignore lint/suspicious/noArrayIndexKey: static preview sample lines
+      <span key={index} className="block whitespace-nowrap" data-composition-line>
+        {renderLine(line, start, style, segments)}
+      </span>
+    );
+  });
+  return segments?.length ? body : renderTextLayers(body, style);
+}
+
+function renderBoxedPreviewText(
+  sample: string,
+  style?: PreviewStyle,
+  segments?: PreviewTextSegment[],
+) {
+  const body = renderPreviewText(sample, style, segments);
+  return style?.box ? (
+    <div style={toBoxStyle(style.box)} data-preview-box>
+      {body}
+    </div>
+  ) : (
+    body
   );
 }
 

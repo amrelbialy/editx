@@ -66,7 +66,7 @@ export const PresetCategoryRow: React.FC<PresetCategoryRowProps> = (props) => {
       </div>
 
       {expanded ? (
-        <div className="grid grid-cols-2 gap-2 @3xl/editor:grid-cols-3">{cards}</div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-2">{cards}</div>
       ) : (
         <CarouselRow
           ariaLabel={label}

@@ -25,7 +25,7 @@ export const PresetCard: React.FC<PresetCardProps> = (props) => {
         className,
       )}
     >
-      <div className="flex h-14 items-center justify-center overflow-hidden rounded-sm">
+      <div className="flex h-14 w-full max-w-24 self-center items-center justify-center overflow-hidden rounded-sm">
         {children}
       </div>
       {label && (

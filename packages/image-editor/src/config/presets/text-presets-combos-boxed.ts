@@ -2,11 +2,6 @@ import type { TextPreset } from "../config.types";
 import { combo } from "./text-presets-combo-factory";
 import { onPhotoShadow } from "./text-presets-combo-shadow";
 
-/** Light-blue rounded box shared by every line of the "Text Box" preset. */
-const boxedLine = {
-  backgroundBox: { color: "#dbeafe", padding: 14, cornerRadius: 8 },
-} as const;
-
 /**
  * "Text Combinations" built on the block-level background box: card, boxed
  * lines, and ticker-bar layouts. Every box length is authored against the 1080
@@ -15,57 +10,53 @@ const boxedLine = {
 export const boxedCombos: TextPreset[] = [
   combo({
     id: "promo-code",
-    label: "Promo Code",
-    sample: "PROMO CODE\nGET 20",
+    label: "Promo",
+    sample: "LIMITED OFFER\n20% OFF",
+    width: 0.64,
     lines: [
       {
-        text: "Promo code",
-        scale: 0.9,
+        text: "Limited offer",
+        scale: 1.05,
         fontWeight: "bold",
-        fill: "#16a34a",
-        letterSpacing: 6,
+        fill: "#14532d",
+        letterSpacing: 5,
         textTransform: "uppercase",
-        ...onPhotoShadow,
       },
       {
-        text: "Get 20",
-        scale: 3.5,
+        text: "20% off",
+        scale: 3.4,
         fontWeight: "bold",
-        fill: "#111827",
+        fill: "#15803d",
         textTransform: "uppercase",
-        gap: 0.5,
+        gap: 0.35,
         backgroundBox: {
           color: "#ffffff",
-          padding: { top: 28, right: 40, bottom: 28, left: 40 },
-          cornerRadius: 6,
-          // Hard offset with zero blur: a black card peeking out behind the white one.
-          shadow: { color: "#000000", offsetX: 14, offsetY: 14, blur: 0 },
+          padding: { top: 24, right: 36, bottom: 24, left: 36 },
+          cornerRadius: 8,
+          shadow: { color: "#052e16", offsetX: 12, offsetY: 12, blur: 0 },
+          stroke: { color: "#166534", width: 3 },
         },
       },
     ],
   }),
   combo({
     id: "text-box",
-    label: "Text Box",
-    sample: "Simple.\nBold.\nClear.",
-    align: "left",
+    label: "Box",
+    sample: "TEXT IN A BOX.\nNOT A MESSAGE\nIN A BOTTLE.",
+    width: 0.68,
     lines: [
-      { text: "Simple.", scale: 1.8, fontWeight: "bold", fill: "#1e3a8a", ...boxedLine },
       {
-        text: "Bold.",
-        scale: 1.8,
+        text: "Text in a box.\nNot a message\nin a bottle.",
+        scale: 2.35,
         fontWeight: "bold",
-        fill: "#1e3a8a",
-        gap: 0.7,
-        ...boxedLine,
-      },
-      {
-        text: "Clear.",
-        scale: 1.8,
-        fontWeight: "bold",
-        fill: "#1e3a8a",
-        gap: 0.7,
-        ...boxedLine,
+        fill: "#172554",
+        lineHeight: 1.12,
+        widthMode: "fixed",
+        backgroundBox: {
+          color: "#c7d2fe",
+          padding: { top: 28, right: 34, bottom: 28, left: 34 },
+          cornerRadius: 2,
+        },
       },
     ],
   }),
@@ -73,25 +64,30 @@ export const boxedCombos: TextPreset[] = [
     id: "breaking-news",
     label: "Breaking News",
     sample: "BREAKING NEWS\nMarkets hit record high",
+    width: 0.78,
+    shapes: [
+      {
+        kind: "shape",
+        layout: { x: 0.11, y: 0.442, width: 0.78, height: 0.04 },
+        shape: { kind: "rect" },
+        fill: { kind: "color", color: "#dc2626" },
+      },
+    ],
     lines: [
       {
         text: "Breaking news",
-        scale: 1,
+        scale: 0.9,
         fontWeight: "bold",
         fill: "#ffffff",
         letterSpacing: 5,
         textTransform: "uppercase",
-        backgroundBox: {
-          color: "#dc2626",
-          padding: { top: 10, right: 20, bottom: 10, left: 20 },
-        },
       },
       {
         text: "Markets hit record high",
-        scale: 2.6,
+        scale: 2.4,
         fontWeight: "bold",
         fill: "#ffffff",
-        gap: 0.5,
+        gap: 0.3,
         ...onPhotoShadow,
       },
     ],

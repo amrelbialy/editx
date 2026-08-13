@@ -1,7 +1,8 @@
 import type { EditxEngine } from "@editx/engine";
-import { Group, Ungroup } from "lucide-react";
+import { FolderOpen, Group, Ungroup } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { enterGroup, groupSelection, ungroupSelection } from "../../../hooks/use-group-actions";
 import { useTranslation } from "../../../i18n/i18n-context";
 import { IconButton } from "../../ui";
 
@@ -29,12 +30,14 @@ export const GroupControls: React.FC<GroupControlsProps> = (props) => {
   const canGroup = selectedIds.length > 1;
 
   const handleGroup = useCallback(() => {
-    if (selectedIds.length > 1) engine.block.group(selectedIds);
-  }, [engine, selectedIds]);
+    groupSelection(engine);
+  }, [engine]);
 
   const handleUngroup = useCallback(() => {
-    if (engine.block.getType(blockId) === "group") engine.block.ungroup(blockId);
+    ungroupSelection(engine, blockId);
   }, [engine, blockId]);
+
+  const handleEnterGroup = useCallback(() => enterGroup(engine, blockId), [engine, blockId]);
 
   if (!canGroup && !isGroup) return null;
 
@@ -48,11 +51,18 @@ export const GroupControls: React.FC<GroupControlsProps> = (props) => {
         />
       )}
       {isGroup && (
-        <IconButton
-          onClick={handleUngroup}
-          label={t("action.ungroup")}
-          icon={<Ungroup className="h-4 w-4" />}
-        />
+        <>
+          <IconButton
+            onClick={handleEnterGroup}
+            label={t("action.enterGroup")}
+            icon={<FolderOpen className="h-4 w-4" />}
+          />
+          <IconButton
+            onClick={handleUngroup}
+            label={t("action.ungroup")}
+            icon={<Ungroup className="h-4 w-4" />}
+          />
+        </>
       )}
     </>
   );

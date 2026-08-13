@@ -171,6 +171,9 @@ export class BlockAPI {
   ungroup(groupId: number): number[] {
     return this.#group.ungroup(groupId);
   }
+  refitGroupBounds(groupId: number): void {
+    this.#group.refitGroupBounds(groupId);
+  }
   addToGroup(groupId: number, blockId: number): void {
     this.#group.addToGroup(groupId, blockId);
   }

@@ -29,6 +29,12 @@ function makeEngine() {
     findAllSelected: vi.fn().mockReturnValue([1]),
     onSelectionChanged: vi.fn().mockReturnValue(() => {}),
     getType: vi.fn().mockReturnValue("graphic"),
+    group: vi.fn().mockReturnValue(20),
+    ungroup: vi.fn().mockReturnValue([8, 9]),
+    enterGroup: vi.fn(),
+    deselectAll: vi.fn(),
+    select: vi.fn(),
+    setSelected: vi.fn(),
     toggleBoldText: vi.fn(),
     toggleItalicText: vi.fn(),
     setTextAlign: vi.fn(),
@@ -37,7 +43,7 @@ function makeEngine() {
   return engine as unknown as EditxEngine & { block: typeof block };
 }
 
-type BlockType = "text" | "graphic" | "image";
+type BlockType = "text" | "graphic" | "image" | "group";
 
 function renderBar(blockType: BlockType, engine: EditxEngine = makeEngine()) {
   return render(
@@ -87,6 +93,36 @@ describe("BlockPropertiesBar", () => {
     expect(screen.getByRole("button", { name: "Bold" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Italic" })).toBeDefined();
     expect(screen.getByRole("button", { name: "More text options" })).toBeDefined();
+  });
+
+  it("renders only dedicated controls for a selected group", () => {
+    const engine = makeEngine();
+    engine.block.getType.mockReturnValue("group");
+    renderBar("group", engine);
+
+    expect(screen.getByRole("button", { name: "Enter Group" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ungroup" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Shadow" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter Group" }));
+    expect(engine.block.enterGroup).toHaveBeenCalledWith(7);
+    expect(engine.block.deselectAll).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+    expect(engine.block.ungroup).toHaveBeenCalledWith(7);
+    expect(engine.block.deselectAll).toHaveBeenCalledTimes(2);
+    expect(engine.block.select).not.toHaveBeenCalled();
+    expect(engine.block.setSelected).not.toHaveBeenCalled();
+  });
+
+  it("groups a multi-selection and selects the returned group", () => {
+    const engine = makeEngine();
+    engine.block.findAllSelected.mockReturnValue([7, 8]);
+    renderBar("graphic", engine);
+
+    fireEvent.click(screen.getByRole("button", { name: "Group" }));
+    expect(engine.block.group).toHaveBeenCalledWith([7, 8]);
+    expect(engine.block.select).toHaveBeenCalledWith(20);
   });
 
   it("keeps the data-text-toolbar marker on the root container", () => {

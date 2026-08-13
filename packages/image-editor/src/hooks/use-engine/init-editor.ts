@@ -182,14 +182,7 @@ export async function runInit(
     setEngine(ce);
 
     ce.block.onSelectionChanged((ids: number[]) => {
-      if (ids.length === 1) {
-        const blockType = ce.block.getType(ids[0]);
-        if (blockType === "graphic" || blockType === "text" || blockType === "image") {
-          setSelectedShapeId(ids[0]);
-          return;
-        }
-      }
-      setSelectedShapeId(null);
+      setSelectedShapeId(ids[0] ?? null);
     });
   } catch (err) {
     if (signal?.disposed) return;

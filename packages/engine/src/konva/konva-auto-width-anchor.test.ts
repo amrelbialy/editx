@@ -1,6 +1,12 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { POSITION_X, SIZE_WIDTH, TEXT_ALIGN } from "../block/property-keys";
+import {
+  POSITION_X,
+  POSITION_Y,
+  SIZE_HEIGHT,
+  SIZE_WIDTH,
+  TEXT_ALIGN,
+} from "../block/property-keys";
 import type { EditxEngine } from "../editx-engine";
 import { createEngine, type KonvaRendererAdapter } from "./index";
 
@@ -93,6 +99,27 @@ describe("konva onAutoWidth re-anchor", () => {
     expect(engine.block.getFloat(id, POSITION_X)).toBe(140);
 
     engine.undo();
+    expect(engine.canUndo()).toBe(false);
+  });
+
+  it("refits the direct parent around the re-anchored width in the same silent batch", () => {
+    const groupId = engine.block.create("group");
+    engine.block.setPosition(groupId, 10, 20);
+    engine.block.setSize(groupId, 1, 1);
+    engine.block.setPosition(id, 100, 30);
+    engine.block.setSize(id, 200, 40);
+    engine.block.setString(id, TEXT_ALIGN, "right");
+    engine.block.appendChild(groupId, id);
+    engine.clearHistory();
+
+    adapter.onAutoWidth?.(id, 120);
+
+    expect(engine.block.getFloat(groupId, POSITION_X)).toBe(190);
+    expect(engine.block.getFloat(groupId, POSITION_Y)).toBe(50);
+    expect(engine.block.getFloat(groupId, SIZE_WIDTH)).toBe(120);
+    expect(engine.block.getFloat(groupId, SIZE_HEIGHT)).toBe(40);
+    expect(engine.block.getFloat(id, POSITION_X)).toBe(0);
+    expect(engine.block.getFloat(id, POSITION_Y)).toBe(0);
     expect(engine.canUndo()).toBe(false);
   });
 });

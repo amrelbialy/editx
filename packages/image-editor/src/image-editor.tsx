@@ -258,11 +258,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   // --- Derived state ---
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
 
-  const hasSelectedBlock =
-    tools.selectedBlockType === "text" ||
-    tools.selectedBlockType === "graphic" ||
-    tools.selectedBlockType === "image";
-
   return (
     <Providers config={userConfig}>
       <EditorShell style={{ width, height }} className="relative">
@@ -327,7 +322,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               activeTool={tools.activeTool}
               selectedShapeId={selectedShapeId}
               selectedBlockType={tools.selectedBlockType}
-              hasSelectedBlock={hasSelectedBlock}
+              hasSelectedBlock={tools.hasSelectedBlock}
               blockActions={tools.blockActions}
               rotateFlip={tools.rotateFlip}
               replaceImage={tools.replaceImage}

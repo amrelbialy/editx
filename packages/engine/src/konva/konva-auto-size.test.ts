@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { POSITION_X, SIZE_HEIGHT } from "../block/property-keys";
+import { POSITION_X, POSITION_Y, SIZE_HEIGHT, SIZE_WIDTH } from "../block/property-keys";
 import type { EditxEngine } from "../editx-engine";
 import { createEngine, type KonvaRendererAdapter } from "./index";
 
@@ -90,6 +90,26 @@ describe("konva onAutoSize reroute", () => {
     engine.undo(); // reverts the user command
     expect(engine.block.getFloat(id, POSITION_X)).toBe(0);
     // If onAutoSize had added a step, this would still be true.
+    expect(engine.canUndo()).toBe(false);
+  });
+
+  it("atomically refits the direct parent group without adding history", () => {
+    const groupId = engine.block.create("group");
+    engine.block.setPosition(groupId, 100, 200);
+    engine.block.setSize(groupId, 1, 1);
+    engine.block.setPosition(id, 10, 20);
+    engine.block.setSize(id, 30, 40);
+    engine.block.appendChild(groupId, id);
+    engine.clearHistory();
+
+    adapter.onAutoSize?.(id, 60);
+
+    expect(engine.block.getFloat(groupId, POSITION_X)).toBe(110);
+    expect(engine.block.getFloat(groupId, POSITION_Y)).toBe(220);
+    expect(engine.block.getFloat(groupId, SIZE_WIDTH)).toBe(30);
+    expect(engine.block.getFloat(groupId, SIZE_HEIGHT)).toBe(60);
+    expect(engine.block.getFloat(id, POSITION_X)).toBe(0);
+    expect(engine.block.getFloat(id, POSITION_Y)).toBe(0);
     expect(engine.canUndo()).toBe(false);
   });
 });

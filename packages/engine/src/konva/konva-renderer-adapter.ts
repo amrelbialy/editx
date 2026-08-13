@@ -5,6 +5,7 @@ import type { ExportOptions } from "../editor-types";
 import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
+import { getNodeScreenTransform } from "./konva-block-screen-transform";
 import type { KonvaCamera } from "./konva-camera";
 import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
 import type { KonvaCropOverlay } from "./konva-crop-overlay";
@@ -105,6 +106,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#contentLayer,
       this.#transformer,
       this.#camera,
+      () => this.#groupContext,
       "#4971FF",
     );
 
@@ -163,7 +165,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       node = created;
       this.#nodeMap.set(id, node);
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
-      this.#hoverOutline.bind(id, node);
+      this.#hoverOutline.bind(node);
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
@@ -273,6 +275,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!node) return null;
     const rect = node.getClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }
+
+  getBlockScreenTransform(
+    blockId: number,
+  ): { a: number; b: number; c: number; d: number; e: number; f: number } | null {
+    const node = this.#nodeMap.get(blockId);
+    return node ? getNodeScreenTransform(node) : null;
   }
 
   setZoom(zoom: number, animate = false): void {

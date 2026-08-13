@@ -4,9 +4,11 @@ import type {
   PreviewBoxStyle,
   PreviewStyle,
   TextBackgroundBoxSpec,
+  TextLayoutSpec,
   TextPreset,
   TextPresetBlock,
 } from "../config.types";
+import { prepareTextComposition } from "../text-composition";
 import { deriveTextRunPreviewSegments } from "./derive-text-run-preview";
 
 /**
@@ -28,7 +30,10 @@ function em(value: number, referenceFontPx: number): string {
  * block so the thumbnail reflects the *real* inserted style. Scale-dependent
  * effects are emitted in `em` relative to the block's reference font size.
  */
-export function deriveTextPreview(block: TextPresetBlock, sample?: string): PresetPreview {
+export function deriveTextPreview(
+  block: TextPresetBlock,
+  sample?: string,
+): Extract<PresetPreview, { kind: "text" }> {
   const referenceFontPx = BASE_FONT_SIZE * (block.fontSizeScale ?? 1);
   const style: PreviewStyle = {};
 
@@ -124,6 +129,35 @@ function deriveBoxStyle(box: TextBackgroundBoxSpec, referenceFontPx: number): Pr
  * px preview values, and multi-block combos show their headline — not a kicker.
  */
 export function resolveTextPreview(preset: TextPreset): PresetPreview {
+  const composition = prepareTextComposition(preset);
+  if (composition) {
+    const bounds = padCompositionBounds(composition.bounds);
+    return {
+      kind: "composition",
+      bounds,
+      layers: composition.elements.map((element) => {
+        if (element.kind === "shape") {
+          return {
+            kind: "shape" as const,
+            layout: element.layout,
+            shape: element.shape,
+            style: deriveShapeStyle(element, bounds.height),
+            opacity: element.opacity,
+          };
+        }
+        const preview = deriveTextPreview(preset.blocks[element.block]);
+        return {
+          kind: "text" as const,
+          layout: element.layout,
+          sample: preview.sample,
+          fontSizeScale: preset.blocks[element.block].fontSizeScale ?? 1,
+          align: preset.blocks[element.block].align,
+          style: preview.style,
+          segments: preview.segments,
+        };
+      }),
+    };
+  }
   const { preview, blocks } = preset;
   if (preview.kind === "text" && preview.style) return preview;
   const block = dominantBlock(blocks);
@@ -141,6 +175,48 @@ export function resolveTextPreview(preset: TextPreset): PresetPreview {
     );
   }
   return derived;
+}
+
+function padCompositionBounds(bounds: TextLayoutSpec): TextLayoutSpec {
+  const padding = Math.max(bounds.width, bounds.height) * 0.04;
+  return {
+    x: bounds.x - padding,
+    y: bounds.y - padding,
+    width: bounds.width + padding * 2,
+    height: bounds.height + padding * 2,
+  };
+}
+
+function deriveShapeStyle(
+  element: Extract<NonNullable<TextPreset["composition"]>["elements"][number], { kind: "shape" }>,
+  boundsHeight: number,
+): PreviewStyle {
+  const style: PreviewStyle = {};
+  if (element.fill.kind === "gradient" && element.fill.gradient) {
+    const { type, angle = 0, stops } = element.fill.gradient;
+    const colors = stops.map((stop) => `${stop.color} ${stop.offset * 100}%`).join(", ");
+    style.background =
+      type === "radial"
+        ? `radial-gradient(circle, ${colors})`
+        : `linear-gradient(${angle}deg, ${colors})`;
+  } else if (element.fill.kind === "image" && element.fill.image) {
+    style.backgroundImage = `url(${element.fill.image.src})`;
+  } else style.background = element.fill.color ?? "#000000";
+  if (element.stroke) {
+    const width = ["rect", "ellipse"].includes(element.shape.kind)
+      ? compositionLength(element.stroke.width, boundsHeight)
+      : `${element.stroke.width}px`;
+    style.border = `${width} solid ${element.stroke.color}`;
+  }
+  if (element.shape.kind === "ellipse") style.borderRadius = "50%";
+  if (element.shape.kind === "rect" && element.shape.cornerRadius)
+    style.borderRadius = compositionLength(element.shape.cornerRadius, boundsHeight);
+  if (element.shape.kind === "line") style.clipPath = "inset(45% 0)";
+  return style;
+}
+
+function compositionLength(referencePixels: number, boundsHeight: number): string {
+  return `${(referencePixels / (boundsHeight * 1080)) * 100}cqh`;
 }
 
 /** The largest block by font scale (first wins ties) — the preset's "voice". */

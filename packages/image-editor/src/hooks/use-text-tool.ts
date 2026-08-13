@@ -4,12 +4,7 @@ import type { ImageEditorConfig } from "../config/config.types";
 import { DEFAULT_TEXT_PRESET_GROUPS } from "../config/presets";
 import { findPresetById, resolveTextPresetGroups } from "../config/resolve-presets";
 import { useImageEditorStore } from "../store/image-editor-store";
-import { applyTextBackgroundBox } from "../utils/apply-text-background-box";
-import {
-  convertTextPresetRunStyle,
-  convertValidTextRunOverrides,
-  toInitialTextRunStyle,
-} from "../utils/text-preset-run-style";
+import { insertTextPreset } from "./insert-text-preset";
 
 /** Id of a text style preset (matches a preset `id` in the resolved gallery). */
 export type TextPreset = string;
@@ -103,79 +98,10 @@ export function useTextTool({ engineRef, config }: UseTextToolOptions) {
 
       const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
       const scaleFactor = Math.min(pageW, pageH) / REFERENCE_DIM;
-      const baseFontSize = text.defaultFontSize ?? 24;
-      const dFamily = text.defaultFontFamily ?? text.fonts?.[0] ?? "Arial";
-      const dWeight = text.defaultFontWeight ?? "normal";
-      const dStyle = text.defaultFontStyle ?? "normal";
-      const dFill = text.defaultColor ?? "#ffffff";
-
-      const preparedBlocks = preset.blocks.map((block) => {
-        const converted = convertTextPresetRunStyle(block, baseFontSize, scaleFactor);
-        const fontSize = converted.fontSize ?? Math.round(baseFontSize * scaleFactor);
-        const initialStyle = toInitialTextRunStyle(converted);
-        initialStyle.fontSize = fontSize;
-        initialStyle.fontFamily ??= dFamily;
-        initialStyle.fontWeight ??= dWeight;
-        initialStyle.fontStyle ??= dStyle;
-        initialStyle.fill ??= dFill;
-        delete initialStyle.fillGradient;
-        const layout =
-          block.x !== undefined
-            ? {
-                x: block.x * pageW,
-                y: block.y * pageH,
-                width: block.width * pageW,
-                height: block.height * pageH,
-              }
-            : centeredTextLayout(pageW, pageH, fontSize, scaleFactor);
-        const overrides = convertValidTextRunOverrides(
-          block.text,
-          block.runOverrides,
-          baseFontSize,
-          scaleFactor,
-        );
-        return { block, initialStyle, layout, overrides };
-      });
-
-      ce.beginBatch();
-      const ids = preparedBlocks.map(({ block, initialStyle, layout, overrides }) => {
-        const textId = ce.block.addText(
-          editableBlockId,
-          layout.x,
-          layout.y,
-          layout.width,
-          layout.height,
-          block.text,
-          { style: initialStyle },
-        );
-
-        const align = block.align ?? text.defaultTextAlign;
-        if (align) ce.block.setTextAlign(textId, align);
-        const lineHeight = block.lineHeight ?? text.defaultLineHeight;
-        if (lineHeight !== undefined) ce.block.setTextLineHeight(textId, lineHeight);
-        // Curve and gradient don't combine: curve wins, gradient is skipped.
-        if (block.curve && block.curve.radius > 0) {
-          ce.block.setTextCurve(textId, block.curve.radius * scaleFactor, block.curve.direction);
-        } else if (block.fillGradient) {
-          ce.block.setTextGradient(textId, 0, block.text.length, block.fillGradient);
-        }
-        for (const override of overrides) {
-          ce.block.setTextStyle(textId, override.start, override.end, override.style);
-        }
-        // Data is applied even when curved; the engine suppresses the paint.
-        if (block.backgroundBox)
-          applyTextBackgroundBox(ce, textId, block.backgroundBox, scaleFactor);
-        // Single-block presets (style or plain) hug their content; multi-block
-        // compositions keep authored width for arrangement, and curved blocks
-        // own their own sizing.
-        const isCurved = (block.curve?.radius ?? 0) > 0;
-        if (preset.blocks.length === 1 && !isCurved) ce.block.setTextAutoWidth(textId, true);
-        return textId;
-      });
-
-      const shouldGroup = ids.length > 1 && (preset.group ?? true);
-      const selectId = shouldGroup ? ce.block.group(ids) : ids[0];
-      ce.endBatch();
+      const selectId = insertTextPreset(
+        { engine: ce, pageId: editableBlockId, pageW, pageH, scaleFactor, config: text },
+        preset,
+      );
 
       if (selectId !== undefined) ce.block.select(selectId);
     },

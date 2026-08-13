@@ -112,7 +112,7 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
       <BlockPropertiesBar
         engine={engine}
         blockId={selectedShapeId}
-        blockType={selectedBlockType as "text" | "graphic" | "image"}
+        blockType={selectedBlockType as "text" | "graphic" | "image" | "group"}
       />
     ) : activeTool !== "select" ? (
       <ToolPropertiesBar
@@ -130,8 +130,12 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
       />
     ) : undefined;
 
+  const supportsOverlay =
+    selectedBlockType === "text" ||
+    selectedBlockType === "graphic" ||
+    selectedBlockType === "image";
   const overlay =
-    engine && selectedShapeId !== null && hasSelectedBlock && blockScreenRect ? (
+    engine && selectedShapeId !== null && hasSelectedBlock && supportsOverlay && blockScreenRect ? (
       <CanvasBlockOverlay
         blockType={selectedBlockType!}
         screenRect={blockScreenRect}

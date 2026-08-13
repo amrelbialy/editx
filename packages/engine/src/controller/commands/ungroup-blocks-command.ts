@@ -72,16 +72,13 @@ export class UngroupBlocksCommand extends PatchCommand {
     // Group is now childless — safe to destroy without cascading into members.
     store.destroy(groupId);
 
-    // Patch order (single history entry). Mirror of GroupBlocksCommand: the group
-    // is split into a RELEASE patch (children → empty) and a DESTROY patch. On
-    // redo the RELEASE runs first (emptying `children`) so the DESTROY cannot
-    // cascade into the members; on undo the DESTROY is reversed first (re-creating
-    // the childless group) and the RELEASE restores its children last.
+    // Patch order (single history entry). Parent and member snapshots come first
+    // so renderer flushes can re-home released children before removing the group.
+    // RELEASE must remain immediately before DESTROY: redo empties `children`
+    // before destruction, while reverse undo recreates the empty group and then
+    // restores its full child list before restoring the members themselves.
     const groupEmpty: BlockData = { ...(groupBefore as BlockData), children: [] };
-    const patches: Patch[] = [
-      { id: groupId, before: groupBefore, after: groupEmpty },
-      { id: groupId, before: groupEmpty, after: null },
-    ];
+    const patches: Patch[] = [];
     if (groupParentId != null) {
       patches.push({
         id: groupParentId,
@@ -92,6 +89,10 @@ export class UngroupBlocksCommand extends PatchCommand {
     for (const m of members) {
       patches.push({ id: m, before: memberBefore.get(m) ?? null, after: store.snapshot(m) });
     }
+    patches.push(
+      { id: groupId, before: groupBefore, after: groupEmpty },
+      { id: groupId, before: groupEmpty, after: null },
+    );
     return patches;
   }
 }

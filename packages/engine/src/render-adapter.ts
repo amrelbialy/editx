@@ -51,6 +51,10 @@ export interface RendererAdapter {
   getBlockScreenRect(
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null;
+  /** @internal Full local-to-screen affine transform for DOM editing overlays. */
+  getBlockScreenTransform?(
+    blockId: number,
+  ): { a: number; b: number; c: number; d: number; e: number; f: number } | null;
 
   //
   // Camera / viewport

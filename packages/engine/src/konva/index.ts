@@ -153,9 +153,13 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     if (Math.abs(current - target) <= 0.5) return;
 
     engine.beginSilent();
+    engine.beginBatch();
     try {
       engine.block.setFloat(blockId, SIZE_HEIGHT, target);
+      const parentId = engine.block.getParent(blockId);
+      if (parentId != null) engine.block.refitGroupBounds(parentId);
     } finally {
+      engine.endBatch();
       engine.endSilent();
     }
   };
@@ -173,6 +177,7 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
       align === "center" ? (current - target) / 2 : align === "right" ? current - target : 0;
 
     engine.beginSilent();
+    engine.beginBatch();
     try {
       // Position and size move together inside one silent block: atomic on
       // screen, and no undo entry for either.
@@ -184,7 +189,10 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
         );
       }
       engine.block.setFloat(blockId, SIZE_WIDTH, target);
+      const parentId = engine.block.getParent(blockId);
+      if (parentId != null) engine.block.refitGroupBounds(parentId);
     } finally {
+      engine.endBatch();
       engine.endSilent();
     }
   };

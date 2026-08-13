@@ -31,6 +31,7 @@ export const en = {
   "action.duplicate": "Duplicate",
   "action.delete": "Delete",
   "action.group": "Group",
+  "action.enterGroup": "Enter Group",
   "action.ungroup": "Ungroup",
   "action.alignLeft": "Align Left",
   "action.alignCenter": "Align Center",

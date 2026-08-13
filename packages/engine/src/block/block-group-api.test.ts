@@ -1,14 +1,17 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockRenderer } from "../__tests__/mocks/mock-renderer";
 import { EditxEngine } from "../editx-engine";
+import type { RendererAdapter } from "../render-adapter";
 import type { BlockData } from "./block.types";
-import { POSITION_X, POSITION_Y, ROTATION, SIZE_HEIGHT, SIZE_WIDTH } from "./property-keys";
+import { POSITION_X, POSITION_Y, SIZE_HEIGHT, SIZE_WIDTH } from "./property-keys";
 
 describe("BlockGroupAPI (group / ungroup / add / remove)", () => {
   let engine: EditxEngine;
+  let renderer: RendererAdapter;
 
   beforeEach(() => {
-    engine = new EditxEngine({ renderer: createMockRenderer() });
+    renderer = createMockRenderer();
+    engine = new EditxEngine({ renderer });
   });
 
   const store = () => engine._getBlockStore();
@@ -98,6 +101,23 @@ describe("BlockGroupAPI (group / ungroup / add / remove)", () => {
     expect(store().getFloat(a, POSITION_Y)).toBeCloseTo(20);
     expect(store().getFloat(b, POSITION_X)).toBeCloseTo(100);
     expect(store().getFloat(b, POSITION_Y)).toBeCloseTo(5);
+  });
+
+  it("syncs released members before removing the group from the renderer", () => {
+    const { a, b } = setup();
+    const gid = engine.block.group([a, b]);
+    vi.mocked(renderer.syncBlock).mockClear();
+    vi.mocked(renderer.removeBlock).mockClear();
+
+    engine.block.ungroup(gid);
+
+    const sync = vi.mocked(renderer.syncBlock).mock;
+    const removeOrder = vi.mocked(renderer.removeBlock).mock.invocationCallOrder[0];
+    for (const memberId of [a, b]) {
+      const callIndex = sync.calls.findIndex(([id]) => id === memberId);
+      expect(callIndex).toBeGreaterThanOrEqual(0);
+      expect(sync.invocationCallOrder[callIndex]).toBeLessThan(removeOrder);
+    }
   });
 
   it("ungroup restores absolute position when the group was moved", () => {

@@ -33,6 +33,10 @@ Crop, adjust, filter, annotate &amp; export — in **any** app. Ship it as a **W
 | 📐 | **Responsive** | CSS Container Queries — adapts to its container, not the viewport |
 | 🌍 | **i18n** | Built-in translations, custom-locale support |
 
+Text presets support backward-compatible style blocks plus optional layered
+compositions with editable text and shape elements. See
+[Configure Text](docs/guides/configure-fonts.md#layered-text-combinations).
+
 ## Installation
 
 ```bash

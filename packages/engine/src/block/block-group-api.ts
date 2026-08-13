@@ -1,5 +1,6 @@
 import { AppendChildCommand } from "../controller/commands/append-child-command";
 import { GroupBlocksCommand } from "../controller/commands/group-blocks-command";
+import { createRefitGroupBoundsCommand } from "../controller/commands/refit-group-bounds-command";
 import { RemoveChildCommand } from "../controller/commands/remove-child-command";
 import { SetPropertyCommand } from "../controller/commands/set-property-command";
 import { UngroupBlocksCommand } from "../controller/commands/ungroup-blocks-command";
@@ -36,6 +37,12 @@ export class BlockGroupAPI {
     const cmd = new UngroupBlocksCommand(store, groupId);
     this.#engine.exec(cmd);
     return cmd.getFreedIds();
+  }
+
+  /** Refit a group's logical bounds and all group ancestors in one undo step. */
+  refitGroupBounds(groupId: number): void {
+    const store = this.#engine._getBlockStore();
+    this.#engine.exec(createRefitGroupBoundsCommand(store, groupId));
   }
 
   /** Reparent a block into a group, converting its coords to group-local. */

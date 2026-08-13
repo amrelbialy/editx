@@ -131,6 +131,11 @@ export function useTools({
     engine && selectedShapeId !== null
       ? (engine.block.getType(selectedShapeId) as "text" | "graphic" | string)
       : null;
+  const hasSelectedBlock =
+    selectedBlockType === "text" ||
+    selectedBlockType === "graphic" ||
+    selectedBlockType === "image" ||
+    selectedBlockType === "group";
 
   const blockEffects = useBlockEffects({
     engineRef,
@@ -162,6 +167,7 @@ export function useTools({
     blockActions: notifyingBlockActions,
     blockEffects,
     selectedBlockType,
+    hasSelectedBlock,
     notify,
 
     // Notification-wrapped callbacks

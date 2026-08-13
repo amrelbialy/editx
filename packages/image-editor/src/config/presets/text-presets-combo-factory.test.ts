@@ -15,10 +15,12 @@ describe("combo() text-preset factory", () => {
     });
 
     expect(preset.blocks).toHaveLength(2);
-    for (const block of preset.blocks) {
-      expect(block.x).toBeCloseTo(0.2, 5); // (1 - 0.6) / 2
-      expect(block.width).toBe(0.6);
+    for (const [index, block] of preset.blocks.entries()) {
+      const element = preset.composition?.elements[index];
+      expect(element?.layout.x).toBeCloseTo(0.2, 5); // (1 - 0.6) / 2
+      expect(element?.layout.width).toBe(0.6);
       expect(block.align).toBe("center");
+      expect(block.x).toBeUndefined();
     }
   });
 
@@ -29,11 +31,11 @@ describe("combo() text-preset factory", () => {
       lines: [{ text: "Head", scale: 3 }, { text: "Sub" }],
     });
 
-    const [head, sub] = preset.blocks;
-    expect(head.height).toBeCloseTo(3 * 1.2 * EM, 4);
-    expect(sub.height).toBeCloseTo(1.2 * EM, 4);
+    const [head, sub] = preset.composition?.elements ?? [];
+    expect(head.layout.height).toBeCloseTo(3 * 1.2 * EM, 4);
+    expect(sub.layout.height).toBeCloseTo(1.2 * EM, 4);
     // The next line starts exactly where the previous one ends (no gap set).
-    expect(sub.y).toBeCloseTo((head.y ?? 0) + (head.height ?? 0), 4);
+    expect(sub.layout.y).toBeCloseTo(head.layout.y + head.layout.height, 4);
   });
 
   it("centres the stack vertically on centerY", () => {
@@ -44,8 +46,9 @@ describe("combo() text-preset factory", () => {
       lines: [{ text: "A", scale: 2 }, { text: "B" }],
     });
 
-    const total = preset.blocks.reduce((sum, block) => sum + (block.height ?? 0), 0);
-    expect(preset.blocks[0].y).toBeCloseTo(0.8 - total / 2, 4);
+    const elements = preset.composition?.elements ?? [];
+    const total = elements.reduce((sum, element) => sum + element.layout.height, 0);
+    expect(elements[0].layout.y).toBeCloseTo(0.8 - total / 2, 4);
   });
 
   it("adds a gap measured in ems of the line's own font size", () => {
@@ -55,14 +58,14 @@ describe("combo() text-preset factory", () => {
       lines: [{ text: "A" }, { text: "B", scale: 2, gap: 0.5 }],
     });
 
-    const [a, b] = preset.blocks;
-    expect((b.y ?? 0) - ((a.y ?? 0) + (a.height ?? 0))).toBeCloseTo(0.5 * 2 * EM, 4);
+    const [a, b] = preset.composition?.elements ?? [];
+    expect(b.layout.y - (a.layout.y + a.layout.height)).toBeCloseTo(0.5 * 2 * EM, 4);
   });
 
   it("counts wrapped-in newline rows toward the block height", () => {
     const preset = combo({ id: "c", label: "C", lines: [{ text: "One\nTwo\nThree" }] });
 
-    expect(preset.blocks[0].height).toBeCloseTo(3 * 1.2 * EM, 4);
+    expect(preset.composition?.elements[0].layout.height).toBeCloseTo(3 * 1.2 * EM, 4);
   });
 
   it("defaults the preview sample to the joined lines", () => {
@@ -83,6 +86,19 @@ describe("combo() text-preset factory", () => {
     expect(preset.blocks[0].align).toBe("left");
     expect(preset.blocks[1].align).toBe("right");
     expect(preset.preview).toEqual({ kind: "text", sample: "A" });
+  });
+
+  it("applies an authored rotation to every row", () => {
+    const preset = combo({
+      id: "rotated",
+      label: "Rotated",
+      rotation: -3,
+      lines: [{ text: "One" }, { text: "Two" }],
+    });
+
+    expect(preset.composition?.elements.map((element) => element.layout.rotation)).toEqual([
+      -3, -3,
+    ]);
   });
 
   it("carries an authored background box through onto the emitted block", () => {
@@ -113,7 +129,7 @@ describe("combo() text-preset factory", () => {
     });
     expect(preset.blocks[1].backgroundBox).toBeUndefined();
     // Box authoring must not disturb the derived stack geometry.
-    expect(preset.blocks[0].height).toBeCloseTo(1.2 * EM, 4);
+    expect(preset.composition?.elements[0].layout.height).toBeCloseTo(1.2 * EM, 4);
   });
 });
 
@@ -125,28 +141,36 @@ describe("boxed text combinations", () => {
     expect(catalogIds).toEqual(expect.arrayContaining(["promo-code", "text-box", "breaking-news"]));
   });
 
-  it("puts a white card with a hard offset shadow on the promo-code headline", () => {
+  it("puts the prominent green promo-code headline inside a visible card", () => {
     const box = byId.get("promo-code")?.blocks[1].backgroundBox;
     expect(box?.color).toBe("#ffffff");
     expect(box?.cornerRadius).toBeGreaterThan(0);
-    expect(box?.shadow).toEqual({ color: "#000000", offsetX: 14, offsetY: 14, blur: 0 });
+    expect(box?.stroke).toEqual({ color: "#166534", width: 3 });
+    expect(box?.shadow).toEqual({ color: "#052e16", offsetX: 12, offsetY: 12, blur: 0 });
+    expect(byId.get("promo-code")?.blocks[1].fill).toBe("#15803d");
     // The kicker sits above the card, unboxed.
     expect(byId.get("promo-code")?.blocks[0].backgroundBox).toBeUndefined();
   });
 
-  it("boxes every left-aligned line of text-box", () => {
+  it("puts the full multiline text-box inside one background box", () => {
     const preset = byId.get("text-box");
-    expect(preset?.blocks).toHaveLength(3);
-    for (const block of preset?.blocks ?? []) {
-      expect(block.align).toBe("left");
-      expect(block.backgroundBox).toEqual({ color: "#dbeafe", padding: 14, cornerRadius: 8 });
-    }
+    expect(preset?.blocks).toHaveLength(1);
+    expect(preset?.blocks[0]).toMatchObject({
+      align: "center",
+      text: "Text in a box.\nNot a message\nin a bottle.",
+      backgroundBox: { color: "#c7d2fe", cornerRadius: 2 },
+    });
   });
 
   it("gives breaking-news a red ticker bar above an unboxed headline", () => {
-    const [ticker, headline] = byId.get("breaking-news")?.blocks ?? [];
-    expect(ticker.backgroundBox?.color).toBe("#dc2626");
+    const preset = byId.get("breaking-news");
+    const [ticker, headline] = preset?.blocks ?? [];
+    const backing = preset?.composition?.elements[0];
+    expect(backing?.kind).toBe("shape");
+    if (backing?.kind !== "shape") throw new Error("expected shape-backed ticker");
+    expect(backing.fill.color).toBe("#dc2626");
     expect(ticker.textTransform).toBe("uppercase");
+    expect(ticker.backgroundBox).toBeUndefined();
     expect(headline.backgroundBox).toBeUndefined();
     expect(headline.fontSizeScale).toBeGreaterThan(ticker.fontSizeScale ?? 1);
   });

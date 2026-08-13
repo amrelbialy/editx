@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { absoluteToLocal, localToAbsolute, unionBBox } from "./group-transform";
+import { absoluteToLocal, localToAbsolute, rotatedUnionBBox, unionBBox } from "./group-transform";
 
 describe("group-transform", () => {
   describe("unionBBox", () => {
@@ -13,6 +13,24 @@ describe("group-transform", () => {
 
     it("returns a zero box for no members", () => {
       expect(unionBBox([])).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+    });
+  });
+
+  describe("rotatedUnionBBox", () => {
+    it("unions logical corners rotated around each stored top-left", () => {
+      const box = rotatedUnionBBox([
+        { x: 10, y: 20, width: 30, height: 10, rotation: 90 },
+        { x: -5, y: 8, width: 4, height: 2, rotation: 0 },
+      ]);
+
+      expect(box.x).toBeCloseTo(-5);
+      expect(box.y).toBeCloseTo(8);
+      expect(box.width).toBeCloseTo(15);
+      expect(box.height).toBeCloseTo(42);
+    });
+
+    it("returns a zero box for no rectangles", () => {
+      expect(rotatedUnionBBox([])).toEqual({ x: 0, y: 0, width: 0, height: 0 });
     });
   });
 

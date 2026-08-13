@@ -7,6 +7,88 @@ import { PresetThumbnail } from "./preset-thumbnail.component";
 afterEach(cleanup);
 
 describe("PresetThumbnail rich text segments", () => {
+  it("renders ordered, positioned composition layers", () => {
+    const { container } = render(
+      <PresetThumbnail
+        preview={{
+          kind: "composition",
+          bounds: { x: 0.1, y: 0.2, width: 0.8, height: 0.4 },
+          layers: [
+            {
+              kind: "shape",
+              layout: { x: 0.1, y: 0.2, width: 0.8, height: 0.4 },
+              shape: { kind: "rect" },
+              style: { background: "#dc2626" },
+            },
+            {
+              kind: "text",
+              layout: { x: 0.2, y: 0.3, width: 0.6, height: 0.1 },
+              sample: "Banner",
+              style: { color: "#ffffff" },
+            },
+          ],
+        }}
+      />,
+    );
+    const layers = container.querySelectorAll("[data-composition-layer]");
+    expect(layers).toHaveLength(2);
+    expect(layers[0].getAttribute("data-composition-layer")).toBe("shape");
+    expect(layers[1].getAttribute("data-composition-layer")).toBe("text");
+    expect((layers[1] as HTMLElement).style.left).toBe("12.5%");
+    expect(container.textContent).toContain("Banner");
+  });
+
+  it("preserves multiline composition text and run segments", () => {
+    const { container } = render(
+      <PresetThumbnail
+        preview={{
+          kind: "composition",
+          bounds: { x: 0, y: 0, width: 1, height: 1 },
+          layers: [
+            {
+              kind: "text",
+              layout: { x: 0, y: 0, width: 1, height: 1 },
+              sample: "AB\nCD",
+              style: { color: "#2563eb" },
+              segments: [
+                { start: 1, end: 2, style: { color: "#ef4444" } },
+                { start: 3, end: 4, style: { fontStyle: "italic" } },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(container.querySelectorAll("[data-composition-layer] .block")).toHaveLength(2);
+    expect(screen.getByText("B")).toHaveStyle({ color: "#ef4444" });
+    expect(screen.getByText("C")).toHaveStyle({ fontStyle: "italic" });
+  });
+
+  it("positions rotated layers from the top-left transform origin", () => {
+    const { container } = render(
+      <PresetThumbnail
+        preview={{
+          kind: "composition",
+          bounds: { x: 0, y: 0.3, width: 0.2, height: 0.4 },
+          layers: [
+            {
+              kind: "shape",
+              layout: { x: 0.2, y: 0.3, width: 0.4, height: 0.2, rotation: 90 },
+              shape: { kind: "rect" },
+              style: { background: "#000000" },
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(container.querySelector<HTMLElement>("[data-composition-layer]")).toHaveStyle({
+      transform: "rotate(90deg)",
+      transformOrigin: "top left",
+    });
+  });
+
   it("splits a styled UTF-16 range across preserved preview lines", () => {
     const preview: PresetPreview = {
       kind: "text",

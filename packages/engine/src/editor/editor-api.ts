@@ -183,6 +183,13 @@ export class EditorAPI {
     return this.#ctx.renderer?.getBlockScreenRect(blockId) ?? null;
   }
 
+  /** @internal Full local-to-screen affine transform for DOM editing overlays. */
+  _getBlockScreenTransform(
+    blockId: number,
+  ): { a: number; b: number; c: number; d: number; e: number; f: number } | null {
+    return this.#ctx.renderer?.getBlockScreenTransform?.(blockId) ?? null;
+  }
+
   /** @internal */
   _getCrop(): EditorCrop {
     return this.#crop;

@@ -1,4 +1,5 @@
-import type { TextPreset, TextPresetBlock, TextStyleSpec } from "../config.types";
+import type { TextPreset, TextPresetBlock, TextStyleSpec } from "../preset.types";
+import type { TextCompositionShapeElement } from "../text-composition.types";
 
 /**
  * One 1× em as a fraction of the page's reference edge: preset font sizes are
@@ -19,6 +20,8 @@ export interface ComboLine extends Omit<Partial<TextStyleSpec>, "text"> {
   scale?: number;
   /** Blank space above this line, in ems of this line's own font size. */
   gap?: number;
+  /** Defaults to auto for one-line text and fixed for explicit multiline text. */
+  widthMode?: "auto" | "fixed";
 }
 
 export interface ComboSpec {
@@ -32,6 +35,10 @@ export interface ComboSpec {
   width?: number;
   /** Vertical centre of the stack as a fraction of page height. Default `0.5`. */
   centerY?: number;
+  /** Rotation in degrees applied to every text row in the stack. */
+  rotation?: number;
+  /** Shape layers inserted behind the text layers, in authored order. */
+  shapes?: TextCompositionShapeElement[];
   lines: ComboLine[];
 }
 
@@ -61,20 +68,26 @@ export function combo(spec: ComboSpec): TextPreset {
   const total = rows.reduce((sum, row) => sum + row.gap + row.height, 0);
   let cursor = (spec.centerY ?? 0.5) - total / 2;
 
+  const layouts: { x: number; y: number; width: number; height: number }[] = [];
+  const widthModes: ("auto" | "fixed")[] = [];
   const blocks: TextPresetBlock[] = rows.map(({ line, scale, gap, height }) => {
-    const { text, scale: _scale, gap: _gap, ...style } = line;
+    const { text, scale: _scale, gap: _gap, widthMode, ...style } = line;
     cursor += gap;
     const y = cursor;
     cursor += height;
+    layouts.push({
+      x,
+      y: round(y),
+      width,
+      height: round(height),
+      ...(spec.rotation ? { rotation: spec.rotation } : {}),
+    });
+    widthModes.push(widthMode ?? (text.includes("\n") ? "fixed" : "auto"));
     return {
       ...style,
       text,
       fontSizeScale: scale,
       align: line.align ?? align,
-      x,
-      y: round(y),
-      width,
-      height: round(height),
     };
   });
 
@@ -82,6 +95,17 @@ export function combo(spec: ComboSpec): TextPreset {
     id: spec.id,
     label: spec.label,
     blocks,
+    composition: {
+      elements: [
+        ...(spec.shapes ?? []),
+        ...layouts.map((layout, block) => ({
+          kind: "text" as const,
+          block,
+          layout,
+          widthMode: widthModes[block],
+        })),
+      ],
+    },
     preview: {
       kind: "text",
       sample: spec.sample ?? spec.lines.map((line) => line.text).join("\n"),

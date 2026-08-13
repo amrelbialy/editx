@@ -16,7 +16,7 @@ import { useBlockTextFormat } from "./use-block-text-format";
 interface BlockPropertiesBarProps {
   engine: EditxEngine;
   blockId: number;
-  blockType: "text" | "graphic" | "image";
+  blockType: "text" | "graphic" | "image" | "group";
 }
 
 export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => {
@@ -60,16 +60,16 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     : (textState?.fill ?? "#000000");
   const colorSwatch = isText ? textSwatch : fillColor;
 
+  if (blockType === "group") {
+    return (
+      <div className={toolbarClassName} data-group-toolbar>
+        <GroupControls engine={engine} blockId={blockId} />
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1 h-10 px-3 [&>*]:shrink-0",
-        "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
-        "animate-in fade-in-0 slide-in-from-top-1 duration-150",
-        "overflow-x-auto scrollbar-none",
-      )}
-      data-text-toolbar
-    >
+    <div className={toolbarClassName} data-text-toolbar>
       {isText && textState && (
         <TextFormatToolbar
           textState={textState}
@@ -105,3 +105,10 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     </div>
   );
 };
+
+const toolbarClassName = cn(
+  "flex items-center gap-1 h-10 px-3 [&>*]:shrink-0",
+  "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
+  "animate-in fade-in-0 slide-in-from-top-1 duration-150",
+  "overflow-x-auto scrollbar-none",
+);

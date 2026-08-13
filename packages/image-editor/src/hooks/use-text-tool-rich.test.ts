@@ -139,4 +139,61 @@ describe("useTextTool rich preset insertion", () => {
     expect(engine.block.exists(textId)).toBe(false);
     expect(engine.canUndo()).toBe(false);
   });
+
+  it("creates real shape layers and removes the whole composition in one undo", () => {
+    const engine = new EditxEngine({ renderer: undefined });
+    const pageId = engine.block.create("page");
+    engine.block.setSize(pageId, 1080, 1080);
+    engine.clearHistory();
+    useImageEditorStore.setState({ editableBlockId: pageId });
+    const realConfig = {
+      text: {
+        presetGroups: [
+          {
+            id: "custom",
+            label: "Custom",
+            presets: [
+              {
+                id: "banner",
+                label: "Banner",
+                blocks: [{ text: "News", fill: "#ffffff" }],
+                composition: {
+                  elements: [
+                    {
+                      kind: "shape",
+                      layout: { x: 0.1, y: 0.4, width: 0.8, height: 0.2 },
+                      shape: { kind: "rect" },
+                      fill: { kind: "color", color: "#dc2626" },
+                    },
+                    {
+                      kind: "text",
+                      block: 0,
+                      layout: { x: 0.2, y: 0.45, width: 0.6, height: 0.1 },
+                    },
+                  ],
+                },
+                preview: { kind: "text", sample: "News" },
+              },
+            ],
+          },
+        ],
+      },
+    } satisfies ImageEditorConfig;
+    const { result } = renderHook(() =>
+      useTextTool({ engineRef: { current: engine }, config: realConfig }),
+    );
+
+    act(() => result.current.handleAddTextPreset("banner"));
+
+    const [groupId] = engine.block.findByType("group");
+    const children = engine.block.getChildren(groupId);
+    expect(children.map((id) => engine.block.getType(id))).toEqual(["graphic", "text"]);
+    expect(engine.block.getTextAutoWidth(children[1])).toBe(false);
+    expect(engine.canUndo()).toBe(true);
+
+    engine.undo();
+    expect(engine.block.exists(groupId)).toBe(false);
+    expect(children.every((id) => !engine.block.exists(id))).toBe(true);
+    expect(engine.canUndo()).toBe(false);
+  });
 });

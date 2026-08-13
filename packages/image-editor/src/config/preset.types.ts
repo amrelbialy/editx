@@ -1,4 +1,5 @@
 import type { FillType, GradientStop, ShapeType } from "@editx/engine";
+import type { TextComposition, TextCompositionPreview } from "./text-composition.types";
 
 /**
  * A selectable text style in the legacy Text tool grid (Title, Heading, …).
@@ -114,7 +115,8 @@ export interface TextBackgroundBoxSpec {
  */
 export type PresetPreview =
   | { kind: "text"; sample: string; style?: PreviewStyle; segments?: PreviewTextSegment[] }
-  | { kind: "shape"; style?: PreviewStyle };
+  | { kind: "shape"; style?: PreviewStyle }
+  | TextCompositionPreview;
 
 /** Serializable style authored for a whole text block or run override. */
 export interface TextPresetRunStyle {
@@ -179,6 +181,7 @@ export interface TextLayoutSpec {
   y: number;
   width: number;
   height: number;
+  rotation?: number;
 }
 
 /** Forbids any layout field, so geometry is all-or-nothing on a block. */
@@ -198,6 +201,7 @@ export interface TextPreset {
   blocks: TextPresetBlock[];
   /** Group inserted blocks into one unit. Defaults to `blocks.length > 1`. */
   group?: boolean;
+  composition?: TextComposition;
   preview: PresetPreview;
 }
 

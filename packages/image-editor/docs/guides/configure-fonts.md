@@ -56,9 +56,10 @@ still enter any custom hex; the palette is just the quick-pick row.
 
 ## Rich text presets
 
-Each modern preset contains one or more `blocks`. Omit block geometry for a
-centered, auto-sized style preset; provide all of `x`, `y`, `width`, and `height`
-as page fractions for a composition preset.
+Each modern preset contains one or more required `blocks`. They remain the
+canonical source for text content and style. Omit block geometry for a centered,
+auto-sized style preset. For layered combinations, add `composition.elements`;
+the composition owns normalized page geometry and back-to-front ordering.
 
 ```tsx
 text: {
@@ -84,6 +85,46 @@ text: {
   }],
 }
 ```
+
+### Layered text combinations
+
+Composition text elements reference a `blocks` index exactly once. Referenced
+blocks must not also define `x`, `y`, `width`, or `height`. Shape elements carry
+the same real shape/fill/stroke data as shape presets, so inserted banners,
+dividers, and badges remain editable graphics rather than text backgrounds.
+
+```tsx
+{
+  id: "announcement",
+  label: "Announcement",
+  blocks: [{ text: "New collection", fontSizeScale: 2, fontWeight: "bold", fill: "#ffffff" }],
+  composition: {
+    elements: [
+      {
+        kind: "shape",
+        layout: { x: 0.15, y: 0.42, width: 0.7, height: 0.16 },
+        shape: { kind: "rect", cornerRadius: 12 },
+        fill: { kind: "color", color: "#dc2626" },
+      },
+      {
+        kind: "text",
+        block: 0,
+        layout: { x: 0.22, y: 0.46, width: 0.56, height: 0.08 },
+        widthMode: "auto",
+      },
+    ],
+  },
+  preview: { kind: "text", sample: "New collection" },
+}
+```
+
+`widthMode` defaults to `"fixed"` when omitted. Use `"auto"` for short labels
+and headlines; use `"fixed"` for wrapping or multiline copy. Existing presets
+without `composition` keep their legacy behavior: a single non-curved block is
+auto width, legacy multi-block presets are fixed width, and curved text does not
+implicitly enable auto width. `preview` remains required for compatibility;
+composition presets derive their layered thumbnail from `composition` and
+`blocks` so the thumbnail and inserted result share one source of truth.
 
 `runOverrides` use half-open UTF-16 offsets: `[start, end)`. Ranges must contain
 at least one code unit, stay within `text`, use integer boundaries, and must not
@@ -113,7 +154,7 @@ Properties panel (bounded by `min/maxFontSize`).
 Preset lengths such as letter spacing, stroke/shadow sizes, highlight padding
 and radius, curve radius, and background-box dimensions are also authored in
 1080-reference pixels and multiplied by `min(pageW, pageH) / 1080`. Block
-geometry is normalized instead, using page fractions from `0` to `1`.
+composition geometry is normalized instead, using page fractions from `0` to `1`.
 
 Load the matching web fonts yourself (e.g. via a `<link>` or `@font-face`) so the
 names you list actually render.
