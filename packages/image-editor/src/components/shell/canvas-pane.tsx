@@ -133,7 +133,8 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const supportsOverlay =
     selectedBlockType === "text" ||
     selectedBlockType === "graphic" ||
-    selectedBlockType === "image";
+    selectedBlockType === "image" ||
+    selectedBlockType === "group";
   const overlay =
     engine && selectedShapeId !== null && hasSelectedBlock && supportsOverlay && blockScreenRect ? (
       <CanvasBlockOverlay

@@ -77,9 +77,9 @@ function renderPane(engine: unknown) {
 }
 
 describe("CanvasPane dblclick gating", () => {
-  it("shows the contextual header but no type-specific overlay for a group", () => {
+  it("shows the contextual header and action overlay for a group", () => {
     const mock = makeEngine({ type: "group", parent: 1, context: [] });
-    const { queryByTestId, getByTestId } = render(
+    const { getByTestId } = render(
       <ImageEditorProvider>
         <CanvasPane
           canvasRef={React.createRef<HTMLDivElement>()}
@@ -103,7 +103,7 @@ describe("CanvasPane dblclick gating", () => {
     );
 
     expect(getByTestId("properties-bar").textContent).toBe("group");
-    expect(queryByTestId("block-overlay")).toBeNull();
+    expect(getByTestId("block-overlay")).toBeDefined();
   });
 
   it("REGRESSION: an ungrouped text block opens the editor on the first dblclick", () => {

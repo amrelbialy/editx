@@ -1,6 +1,6 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
-import { OPACITY, PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { ExportOptions } from "../editor-types";
 import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
@@ -202,7 +202,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#contentLayer.batchDraw();
   }
 
-  /** Apply draggable-scoping, dimming, and the dashed active-group outline. */
+  /** Apply draggable scoping and the dashed active-group outline. */
   #applyGroupContext(): void {
     if (!this.#groupOutline) return;
     applyGroupContext({
@@ -210,10 +210,6 @@ export class KonvaRendererAdapter implements RendererAdapter {
       nodeMap: this.#nodeMap,
       contentLayer: this.#contentLayer,
       outline: this.#groupOutline,
-      baseOpacity: (blockId) => {
-        const block = this.resolveBlock?.(blockId);
-        return (block?.properties[OPACITY] as number) ?? 1;
-      },
     });
   }
 
