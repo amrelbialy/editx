@@ -1,4 +1,4 @@
-import type { EditxEngine } from "@editx/engine";
+import { colorToHex, type EditxEngine } from "@editx/engine";
 import type React from "react";
 import { useCallback, useMemo } from "react";
 import type { PresetGroup, ShapePreset } from "../../config/config.types";
@@ -6,6 +6,7 @@ import { useConfig } from "../../config/config-context";
 import { DEFAULT_SHAPE_PRESET_GROUPS } from "../../config/presets";
 import { resolveShapePresetGroups } from "../../config/resolve-presets";
 import { toShapeGeometry } from "../../config/shape-geometry-options";
+import { useHistoryVersion } from "../../hooks/use-history-version";
 import { PresetGallery } from "./preset-gallery";
 
 interface ShapeReplacePanelProps {
@@ -15,6 +16,35 @@ interface ShapeReplacePanelProps {
 
 const preview = { kind: "shape" as const };
 const neutralFill = { kind: "color" as const, color: "#64748b" };
+
+function readPreviewPaint(
+  engine: EditxEngine,
+  blockId: number,
+): Pick<ShapePreset, "fill" | "stroke"> {
+  const fillId = engine.block.getFill(blockId);
+  const fillKind = fillId == null ? "color" : engine.block.getKind(fillId);
+  let fill: ShapePreset["fill"] = neutralFill;
+  if (!engine.block.isFillEnabled(blockId)) {
+    fill = { kind: "color", color: "transparent" };
+  } else if (fillKind === "gradient") {
+    const gradient = engine.block.getFillGradient(blockId);
+    if (gradient) fill = { kind: "gradient", gradient };
+  } else if (fillKind === "image") {
+    const image = engine.block.getFillImage(blockId);
+    if (image) fill = { kind: "image", image };
+  } else {
+    const color = engine.block.getFillSolidColor(blockId);
+    if (color) fill = { kind: "color", color: colorToHex(color) };
+  }
+
+  const stroke = engine.block.isStrokeEnabled(blockId)
+    ? {
+        color: colorToHex(engine.block.getStrokeColor(blockId)),
+        width: engine.block.getStrokeWidth(blockId),
+      }
+    : undefined;
+  return { fill, stroke };
+}
 
 const primitivePresets: ShapePreset[] = [
   { id: "primitive-rect", label: "Rectangle", shape: { kind: "rect" }, fill: neutralFill, preview },
@@ -39,6 +69,9 @@ const primitivePresets: ShapePreset[] = [
 export const ShapeReplacePanel: React.FC<ShapeReplacePanelProps> = (props) => {
   const { engine, blockId } = props;
   const config = useConfig();
+  useHistoryVersion(engine);
+
+  const previewPaint = readPreviewPaint(engine, blockId);
 
   const groups = useMemo<PresetGroup<ShapePreset>[]>(() => {
     const configured = resolveShapePresetGroups({
@@ -51,12 +84,16 @@ export const ShapeReplacePanel: React.FC<ShapeReplacePanelProps> = (props) => {
     const paths = configured
       .flatMap((group) => group.presets)
       .filter((preset) => preset.shape.kind === "path")
-      .map((preset) => ({ ...preset, fill: neutralFill, stroke: undefined }));
+      .map((preset) => ({ ...preset, ...previewPaint }));
     return [
-      { id: "primitive", label: "Basic", presets: primitivePresets },
-      ...(paths.length ? [{ id: "path", label: "Shapes", presets: paths }] : []),
+      {
+        id: "primitive",
+        label: "Basic",
+        presets: primitivePresets.map((preset) => ({ ...preset, ...previewPaint })),
+      },
+      ...(paths.length ? [{ id: "path", label: "Abstract", presets: paths }] : []),
     ];
-  }, [config.shapes]);
+  }, [config.shapes, previewPaint]);
 
   const replaceShape = useCallback(
     (id: string) => {

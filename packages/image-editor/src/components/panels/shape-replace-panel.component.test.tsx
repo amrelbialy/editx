@@ -10,7 +10,15 @@ afterEach(cleanup);
 it("replaces geometry without changing appearance", () => {
   const block = {
     getShape: vi.fn(() => 9),
-    getKind: vi.fn((id: number) => (id === 9 ? "ellipse" : "graphic")),
+    getFill: vi.fn(() => 10),
+    getKind: vi.fn((id: number) => (id === 9 ? "ellipse" : id === 10 ? "color" : "graphic")),
+    isFillEnabled: vi.fn(() => true),
+    getFillSolidColor: vi.fn(() => ({ r: 0, g: 0, b: 0, a: 0 })),
+    getFillGradient: vi.fn(() => null),
+    getFillImage: vi.fn(() => null),
+    isStrokeEnabled: vi.fn(() => true),
+    getStrokeColor: vi.fn(() => ({ r: 1, g: 0, b: 0, a: 1 })),
+    getStrokeWidth: vi.fn(() => 6),
     getFloat: vi.fn(() => 0),
     setShapeGeometry: vi.fn((_id: number, _geometry: ShapeGeometry) => undefined),
     setFillSolidColor: vi.fn(),
@@ -32,7 +40,10 @@ it("replaces geometry without changing appearance", () => {
       </ImageEditorProvider>
     </I18nProvider>,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Rectangle" }));
+  const rectangle = screen.getByRole("button", { name: "Rectangle" });
+  expect(rectangle.querySelector('rect[fill="none"]')).not.toBeNull();
+  expect(rectangle.querySelector('rect[stroke="#ff0000"]')).not.toBeNull();
+  fireEvent.click(rectangle);
 
   expect(block.setShapeGeometry).toHaveBeenCalledWith(7, {
     type: "rect",
