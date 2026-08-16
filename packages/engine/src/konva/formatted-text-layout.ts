@@ -100,7 +100,8 @@ function buildParts(
       charStyle.textShadowOffsetY === currentStyle.textShadowOffsetY &&
       charStyle.textStrokeColor === currentStyle.textStrokeColor &&
       charStyle.textStrokeWidth === currentStyle.textStrokeWidth &&
-      gradientsEqual(charStyle.fillGradient, currentStyle.fillGradient);
+      gradientsEqual(charStyle.fillGradient, currentStyle.fillGradient) &&
+      gradientsEqual(charStyle.textStrokeGradient, currentStyle.textStrokeGradient);
 
     if (!sameStyle && currentText.length > 0) {
       const w = measureText(ctx, currentText, currentStyle, true);

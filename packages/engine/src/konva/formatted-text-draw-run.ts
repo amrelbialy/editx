@@ -1,4 +1,4 @@
-import type { TextGradient } from "../block/block.types";
+import type { StrokeGradient, TextGradient } from "../block/block.types";
 import { buildTextGradient } from "./formatted-text-gradient";
 
 /** Minimal shape a run must expose to be painted (flat run or curved glyph). */
@@ -7,6 +7,7 @@ export interface DrawablePart {
     letterSpacing: number;
     textStrokeColor: string;
     textStrokeWidth: number;
+    textStrokeGradient?: StrokeGradient;
     fill: string;
     fillGradient?: TextGradient;
     fontSize: number;
@@ -43,9 +44,9 @@ export function drawPartText(
   hasShadow: boolean,
   allowGradient = true,
 ): void {
-  const hasStroke = !!part.style.textStrokeColor && part.style.textStrokeWidth > 0;
-  if (hasStroke) {
-    ctx.strokeStyle = part.style.textStrokeColor;
+  const strokeStyle = resolveStrokeStyle(ctx, part, xOffset, yOffset, allowGradient);
+  if (strokeStyle != null && part.style.textStrokeWidth > 0) {
+    ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = part.style.textStrokeWidth;
     ctx.lineJoin = "round";
     drawText(ctx, displayText, xOffset, yOffset, part.style.letterSpacing, true);
@@ -60,6 +61,27 @@ export function drawPartText(
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
   }
+}
+
+function resolveStrokeStyle(
+  ctx: CanvasRenderingContext2D,
+  part: DrawablePart,
+  xOffset: number,
+  yOffset: number,
+  allowGradient: boolean,
+): string | CanvasGradient | null {
+  const gradient = part.style.textStrokeGradient;
+  if (!gradient || gradient.stops.length === 0 || gradient.type !== "linear") {
+    return part.style.textStrokeColor || null;
+  }
+  if (!allowGradient) return part.style.textStrokeColor || gradient.stops[0].color;
+  if (part.width <= 0) return part.style.textStrokeColor || null;
+  return buildTextGradient(ctx, gradient, {
+    x: xOffset,
+    y: yOffset,
+    width: part.width,
+    height: part.style.fontSize,
+  });
 }
 
 /**

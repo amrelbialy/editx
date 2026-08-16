@@ -17,6 +17,7 @@ export type {
   ResolvedTextBackground,
   ShapeGeometry,
   ShapeType,
+  StrokeGradient,
   TextBackground,
   TextBackgroundGeometry,
   TextBackgroundOptions,

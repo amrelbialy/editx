@@ -18,17 +18,10 @@ import {
   FILL_IMAGE_SCALE,
   FILL_IMAGE_SRC,
   FILL_SOLID_COLOR,
-  SHADOW_BLUR,
-  SHADOW_COLOR,
-  SHADOW_ENABLED,
-  SHADOW_OFFSET_X,
-  SHADOW_OFFSET_Y,
-  STROKE_COLOR,
-  STROKE_ENABLED,
-  STROKE_WIDTH,
 } from "../block/property-keys";
 import { colorToHex } from "../utils/color";
 import { loadImage } from "../utils/image-loader";
+import { applyStrokeAndShadow } from "./konva-stroke-shadow";
 
 /**
  * Bounding box of a shape in its own local coordinate space. Rect/arrow are
@@ -51,8 +44,7 @@ export function applyShapeFillStroke(
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {
   applyFill(node, props, box, block, resolveBlock);
-  applyStroke(node, props);
-  applyShadow(node, props);
+  applyStrokeAndShadow(node, props, box);
 }
 
 function applyFill(
@@ -200,35 +192,4 @@ function applyImageFill(node: Konva.Shape, fillBlock: BlockData, box: FillBox): 
       if (node.getAttr("__pendingFillSrc") !== src) return;
       console.error(`[editx] Failed to load fill image: ${src}`, error);
     });
-}
-
-// ── Stroke + shadow resolution ─────────────────────────────────────
-
-function applyStroke(node: Konva.Shape, props: Record<string, unknown>): void {
-  const strokeEnabled = (props[STROKE_ENABLED] as boolean) ?? false;
-  const sc = props[STROKE_COLOR];
-  const strokeColor = sc && typeof sc === "object" ? (sc as Color) : undefined;
-  const strokeW = (props[STROKE_WIDTH] as number) ?? 0;
-  if (strokeEnabled && strokeColor && strokeW > 0) {
-    node.stroke(colorToHex(strokeColor));
-    node.strokeWidth(strokeW);
-  } else {
-    node.stroke("");
-    node.strokeWidth(0);
-  }
-}
-
-function applyShadow(node: Konva.Shape, props: Record<string, unknown>): void {
-  const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
-  if (!shadowEnabled) {
-    node.shadowEnabled(false);
-    return;
-  }
-  const sc = props[SHADOW_COLOR];
-  node.shadowColor(sc && typeof sc === "object" ? colorToHex(sc as Color) : "rgba(0,0,0,0.5)");
-  node.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
-  node.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
-  node.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
-  node.shadowEnabled(true);
-  node.shadowForStrokeEnabled(false);
 }

@@ -14,6 +14,9 @@ import {
   FILL_IMAGE_SRC,
   STROKE_COLOR,
   STROKE_ENABLED,
+  STROKE_GRADIENT_ANGLE,
+  STROKE_GRADIENT_ENABLED,
+  STROKE_GRADIENT_STOPS,
   STROKE_WIDTH,
 } from "../block/property-keys";
 import { applyShapeFillStroke } from "./konva-fill";
@@ -34,6 +37,7 @@ describe("applyShapeFillStroke", () => {
       fill: vi.fn(),
       stroke: vi.fn(),
       strokeWidth: vi.fn(),
+      strokeLinearGradientColorStops: vi.fn(),
       shadowEnabled: vi.fn(),
     } as unknown as Konva.Ellipse;
 
@@ -61,6 +65,7 @@ describe("applyShapeFillStroke", () => {
       fill: vi.fn(),
       stroke: vi.fn(),
       strokeWidth: vi.fn(),
+      strokeLinearGradientColorStops: vi.fn(),
       shadowEnabled: vi.fn(),
     } as unknown as Konva.Rect;
     const fillBlock: BlockData = {
@@ -115,6 +120,7 @@ describe("applyShapeFillStroke", () => {
       fillPatternScale: vi.fn(),
       stroke: vi.fn(),
       strokeWidth: vi.fn(),
+      strokeLinearGradientColorStops: vi.fn(),
       shadowEnabled: vi.fn(),
       getAttr: (key: string) => attrs.get(key),
       setAttr: (key: string, value: unknown) => attrs.set(key, value),
@@ -154,5 +160,103 @@ describe("applyShapeFillStroke", () => {
     expect(node.fillPatternScale).toHaveBeenCalledWith({ x: 9, y: 9 });
     expect(attrs.get("__fillLoadedSrc")).toBe("photo.png");
     expect(batchDraw).toHaveBeenCalledOnce();
+  });
+
+  it("projects a linear stroke gradient across the local fill box", () => {
+    const node = {
+      fillEnabled: vi.fn(),
+      fillPriority: vi.fn(),
+      fillPatternImage: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      strokeWidth: vi.fn(),
+      strokeLinearGradientStartPoint: vi.fn(),
+      strokeLinearGradientEndPoint: vi.fn(),
+      strokeLinearGradientColorStops: vi.fn(),
+      shadowEnabled: vi.fn(),
+    } as unknown as Konva.Rect;
+
+    applyShapeFillStroke(
+      node,
+      {
+        [STROKE_ENABLED]: true,
+        [STROKE_WIDTH]: 5,
+        [STROKE_GRADIENT_ENABLED]: true,
+        [STROKE_GRADIENT_ANGLE]: 0,
+        [STROKE_GRADIENT_STOPS]: [
+          { offset: 0, color: "#ff0000" },
+          { offset: 1, color: "#0000ff" },
+        ],
+      },
+      { x: 10, y: 20, width: 100, height: 40 },
+    );
+
+    expect(node.strokeLinearGradientStartPoint).toHaveBeenCalledWith({ x: 10, y: 40 });
+    expect(node.strokeLinearGradientEndPoint).toHaveBeenCalledWith({ x: 110, y: 40 });
+    expect(node.strokeLinearGradientColorStops).toHaveBeenLastCalledWith([
+      0,
+      "#ff0000",
+      1,
+      "#0000ff",
+    ]);
+    expect(node.strokeWidth).toHaveBeenCalledWith(5);
+  });
+
+  it("clears stale gradient stops for solid, empty, and disabled strokes", () => {
+    const node = {
+      fillEnabled: vi.fn(),
+      fillPriority: vi.fn(),
+      fillPatternImage: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      strokeWidth: vi.fn(),
+      strokeLinearGradientStartPoint: vi.fn(),
+      strokeLinearGradientEndPoint: vi.fn(),
+      strokeLinearGradientColorStops: vi.fn(),
+      shadowEnabled: vi.fn(),
+    } as unknown as Konva.Rect;
+    const box = { x: 0, y: 0, width: 100, height: 100 };
+    const solid = { r: 1, g: 0, b: 0, a: 1 };
+
+    applyShapeFillStroke(
+      node,
+      {
+        [STROKE_ENABLED]: true,
+        [STROKE_COLOR]: solid,
+        [STROKE_WIDTH]: 4,
+      },
+      box,
+    );
+    expect(node.strokeLinearGradientColorStops).toHaveBeenLastCalledWith(undefined);
+    expect(node.stroke).toHaveBeenLastCalledWith("#ff0000");
+
+    applyShapeFillStroke(
+      node,
+      {
+        [STROKE_ENABLED]: true,
+        [STROKE_COLOR]: solid,
+        [STROKE_WIDTH]: 4,
+        [STROKE_GRADIENT_ENABLED]: true,
+        [STROKE_GRADIENT_STOPS]: [],
+      },
+      box,
+    );
+    expect(node.strokeLinearGradientColorStops).toHaveBeenLastCalledWith(undefined);
+    expect(node.stroke).toHaveBeenLastCalledWith("#ff0000");
+
+    applyShapeFillStroke(
+      node,
+      {
+        [STROKE_ENABLED]: false,
+        [STROKE_COLOR]: solid,
+        [STROKE_WIDTH]: 4,
+        [STROKE_GRADIENT_ENABLED]: true,
+        [STROKE_GRADIENT_STOPS]: [{ offset: 0, color: "#ffffff" }],
+      },
+      box,
+    );
+    expect(node.strokeLinearGradientColorStops).toHaveBeenLastCalledWith(undefined);
+    expect(node.stroke).toHaveBeenLastCalledWith("");
+    expect(node.strokeWidth).toHaveBeenLastCalledWith(0);
   });
 });

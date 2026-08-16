@@ -94,7 +94,8 @@ export function stylesEqual(a: TextRunStyle, b: TextRunStyle): boolean {
     (a.textShadowOffsetY ?? undefined) === (b.textShadowOffsetY ?? undefined) &&
     (a.textStrokeColor ?? undefined) === (b.textStrokeColor ?? undefined) &&
     (a.textStrokeWidth ?? undefined) === (b.textStrokeWidth ?? undefined) &&
-    gradientsEqual(a.fillGradient, b.fillGradient)
+    gradientsEqual(a.fillGradient, b.fillGradient) &&
+    gradientsEqual(a.textStrokeGradient, b.textStrokeGradient)
   );
 }
 

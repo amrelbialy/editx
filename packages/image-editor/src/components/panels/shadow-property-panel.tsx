@@ -2,10 +2,11 @@ import type { EditxEngine } from "@editx/engine";
 import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { cn } from "../../utils/cn";
-import { ColorSwatch } from "../ui/color-swatch";
+import { ColorPicker } from "../ui/color-picker";
 import { toOpaqueHexColor } from "../ui/color-value";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
@@ -21,6 +22,7 @@ interface ShadowPropertyPanelProps {
 interface ShadowState {
   enabled: boolean;
   color: string;
+  opacity: number;
   offsetX: number;
   offsetY: number;
   blur: number;
@@ -31,6 +33,7 @@ function readShadow(engine: EditxEngine, blockId: number): ShadowState {
   return {
     enabled: engine.block.isShadowEnabled(blockId),
     color: sc ? toOpaqueHexColor(colorToHex(sc)) : "#000000",
+    opacity: sc?.a ?? 1,
     offsetX: engine.block.getShadowOffsetX(blockId),
     offsetY: engine.block.getShadowOffsetY(blockId),
     blur: engine.block.getShadowBlur(blockId),
@@ -39,6 +42,7 @@ function readShadow(engine: EditxEngine, blockId: number): ShadowState {
 
 export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = (props) => {
   const { engine, blockId, blockType, enabled } = props;
+  const config = useConfig();
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
@@ -72,12 +76,23 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = (props) =
   }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
   const handleColor = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      commit(() => engine.block.setShadowColor(blockId, hexToColor(value)));
+    (value: string) => {
+      commit(() =>
+        engine.block.setShadowColor(blockId, { ...hexToColor(value), a: state.opacity }),
+      );
       update();
     },
-    [engine, blockId, update, commit],
+    [engine, blockId, state.opacity, update, commit],
+  );
+
+  const handleOpacity = useCallback(
+    (opacity: number) => {
+      commit(() =>
+        engine.block.setShadowColor(blockId, { ...hexToColor(state.color), a: opacity }),
+      );
+      update();
+    },
+    [engine, blockId, state.color, update, commit],
   );
 
   const handleOffsetX = useCallback(
@@ -117,6 +132,7 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = (props) =
         getStyleRange={getStyleRange}
         selectionStart={textSelectionRange?.from}
         enabled={enabled}
+        swatches={config.colors}
       />
     );
   }
@@ -128,14 +144,13 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = (props) =
         !(enabled ?? state.enabled) && "opacity-50",
       )}
     >
-      {/* Color */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-fluid text-muted-foreground">Color</span>
-        <div className="flex items-center gap-2">
-          <ColorSwatch value={state.color} onChange={handleColor} />
-          <span className="text-fluid font-mono text-muted-foreground">{state.color}</span>
-        </div>
-      </div>
+      <ColorPicker
+        color={state.color}
+        opacity={state.opacity}
+        swatches={config.colors}
+        onChange={handleColor}
+        onOpacityChange={handleOpacity}
+      />
 
       {/* Offset */}
       <div className="flex flex-col gap-1.5">

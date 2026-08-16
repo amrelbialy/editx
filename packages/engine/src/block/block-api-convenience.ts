@@ -44,7 +44,7 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
   const allKeys = store.findAllProperties(blockId);
   for (const key of allKeys) {
     const val = api.getProperty(blockId, key);
-    if (val !== undefined) api.setProperty(newId, key, val);
+    if (val !== undefined) api.setProperty(newId, key, structuredClone(val));
   }
 
   const pos = api.getPosition(blockId);
@@ -57,7 +57,7 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
       const shapeKeys = store.findAllProperties(sourceBlock.shapeId);
       for (const key of shapeKeys) {
         const val = api.getProperty(sourceBlock.shapeId, key);
-        if (val !== undefined) api.setProperty(newShapeId, key, val);
+        if (val !== undefined) api.setProperty(newShapeId, key, structuredClone(val));
       }
       api.setShape(newId, newShapeId);
     }
@@ -70,7 +70,7 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
       const fillKeys = store.findAllProperties(sourceBlock.fillId);
       for (const key of fillKeys) {
         const val = api.getProperty(sourceBlock.fillId, key);
-        if (val !== undefined) api.setProperty(newFillId, key, val);
+        if (val !== undefined) api.setProperty(newFillId, key, structuredClone(val));
       }
       api.setFill(newId, newFillId);
     }
@@ -83,7 +83,7 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
       const effectKeys = store.findAllProperties(effectId);
       for (const key of effectKeys) {
         const val = api.getProperty(effectId, key);
-        if (val !== undefined) api.setProperty(newEffectId, key, val);
+        if (val !== undefined) api.setProperty(newEffectId, key, structuredClone(val));
       }
       api.appendEffect(newId, newEffectId);
     }

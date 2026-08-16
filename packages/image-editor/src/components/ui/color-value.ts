@@ -56,3 +56,34 @@ export const toOpaqueHexColor = (color: string): string => {
 
   return `#${hexChannels.join("")}`;
 };
+
+export const getColorOpacity = (color: string): number => {
+  const normalized = color.trim().toLowerCase();
+  if (normalized === "transparent") return 0;
+
+  const shorthandHex = normalized.match(/^#[0-9a-f]{3}([0-9a-f])$/);
+  if (shorthandHex) return Number.parseInt(shorthandHex[1], 16) / 15;
+
+  const hex = normalized.match(/^#[0-9a-f]{6}([0-9a-f]{2})$/);
+  if (hex) return Number.parseInt(hex[1], 16) / 255;
+
+  const rgba = normalized.match(/^rgba\((.*)\)$/);
+  if (!rgba) return 1;
+
+  const alpha = rgba[1].split(",")[3]?.trim();
+  if (!alpha || !CHANNEL_PATTERN.test(alpha)) return 1;
+  const value = Number.parseFloat(alpha);
+  const normalizedAlpha = alpha.endsWith("%") ? value / 100 : value;
+  return Math.min(1, Math.max(0, normalizedAlpha));
+};
+
+export const withColorOpacity = (color: string, opacity: number): string => {
+  const opaque = toOpaqueHexColor(color);
+  const alpha = Math.min(1, Math.max(0, opacity));
+  if (alpha === 1) return opaque;
+
+  const red = Number.parseInt(opaque.slice(1, 3), 16);
+  const green = Number.parseInt(opaque.slice(3, 5), 16);
+  const blue = Number.parseInt(opaque.slice(5, 7), 16);
+  return `rgba(${red},${green},${blue},${Number(alpha.toFixed(3))})`;
+};

@@ -1,16 +1,22 @@
 import type { TextRunStyle } from "../block/block.types";
 
 /**
- * Resolved style: every field defaulted EXCEPT `fillGradient`,
+ * Resolved style: every field defaulted EXCEPT gradients,
  * `backgroundCornerRadius` and `backgroundPadding`, which stay optional
  * (undefined = solid `fill` / zero-valued highlight geometry).
  * Using `Required<TextRunStyle>` directly would force non-undefined values
  * into DEFAULT_STYLE even though these optional values retain semantic meaning.
  */
 export type ResolvedTextRunStyle = Required<
-  Omit<TextRunStyle, "fillGradient" | "backgroundCornerRadius" | "backgroundPadding">
+  Omit<
+    TextRunStyle,
+    "fillGradient" | "textStrokeGradient" | "backgroundCornerRadius" | "backgroundPadding"
+  >
 > &
-  Pick<TextRunStyle, "fillGradient" | "backgroundCornerRadius" | "backgroundPadding">;
+  Pick<
+    TextRunStyle,
+    "fillGradient" | "textStrokeGradient" | "backgroundCornerRadius" | "backgroundPadding"
+  >;
 
 /** Default style values used when a run's style property is undefined. */
 export const DEFAULT_STYLE: ResolvedTextRunStyle = {
@@ -30,6 +36,7 @@ export const DEFAULT_STYLE: ResolvedTextRunStyle = {
   textShadowOffsetY: 0,
   textStrokeColor: "",
   textStrokeWidth: 0,
+  textStrokeGradient: undefined,
   fillGradient: undefined,
   backgroundCornerRadius: undefined,
   backgroundPadding: undefined,
@@ -157,6 +164,7 @@ export function resolveStyle(style: TextRunStyle): ResolvedTextRunStyle {
     textShadowOffsetY: style.textShadowOffsetY ?? DEFAULT_STYLE.textShadowOffsetY,
     textStrokeColor: style.textStrokeColor ?? DEFAULT_STYLE.textStrokeColor,
     textStrokeWidth: style.textStrokeWidth ?? DEFAULT_STYLE.textStrokeWidth,
+    textStrokeGradient: style.textStrokeGradient,
     // Carried through untouched — undefined means "solid fill".
     fillGradient: style.fillGradient,
     // Carried through untouched — undefined means zero-valued highlight geometry.

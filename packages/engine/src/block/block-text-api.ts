@@ -1,6 +1,7 @@
 import type { EngineCore } from "../engine-core";
 import type {
   ResolvedTextBackground,
+  StrokeGradient,
   TextBackgroundOptions,
   TextBackgroundPadding,
   TextCurve,
@@ -258,11 +259,19 @@ export class BlockTextAPI {
     blockId: number,
     start: number,
     end: number,
-    stroke: { color?: string; width?: number },
+    stroke: { color?: string; width?: number; gradient?: StrokeGradient | null },
   ): void {
+    const gradient = stroke.gradient
+      ? {
+          type: "linear" as const,
+          angle: stroke.gradient.angle,
+          stops: stroke.gradient.stops.map((stop) => ({ ...stop })),
+        }
+      : stroke.gradient;
     this.setTextStyle(blockId, start, end, {
       textStrokeColor: stroke.color,
       textStrokeWidth: stroke.width,
+      textStrokeGradient: gradient,
     });
   }
 

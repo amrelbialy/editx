@@ -32,6 +32,7 @@ import type {
   ResolvedTextBackground,
   ShapeGeometry,
   ShapeType,
+  StrokeGradient,
   TextBackgroundOptions,
   TextBackgroundPadding,
   TextCurve,
@@ -653,6 +654,12 @@ export class BlockAPI {
   getStrokeWidth(blockId: number): number {
     return this.#stroke.getStrokeWidth(blockId);
   }
+  setStrokeGradient(blockId: number, gradient: StrokeGradient | null): void {
+    this.#stroke.setStrokeGradient(blockId, gradient);
+  }
+  getStrokeGradient(blockId: number): StrokeGradient | null {
+    return this.#stroke.getStrokeGradient(blockId);
+  }
 
   // ── Shadow ────────────────────────────────────────
 
@@ -852,7 +859,7 @@ export class BlockAPI {
     blockId: number,
     start: number,
     end: number,
-    stroke: { color?: string; width?: number },
+    stroke: { color?: string; width?: number; gradient?: StrokeGradient | null },
   ): void {
     this.#text.setTextStroke(blockId, start, end, stroke);
   }

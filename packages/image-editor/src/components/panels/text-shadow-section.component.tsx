@@ -3,7 +3,8 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { cn } from "../../utils/cn";
-import { ColorSwatch } from "../ui/color-swatch";
+import { ColorPicker } from "../ui/color-picker";
+import { getColorOpacity, withColorOpacity } from "../ui/color-value";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
 
@@ -15,11 +16,13 @@ export interface TextShadowSectionProps {
   /** Offset used to read the displayed shadow style (selection start). */
   selectionStart?: number;
   enabled?: boolean;
+  swatches?: string[];
 }
 
 interface ShadowState {
   enabled: boolean;
   color: string;
+  opacity: number;
   blur: number;
   offsetX: number;
   offsetY: number;
@@ -45,6 +48,7 @@ function readShadow(engine: EditxEngine, blockId: number, selectionStart?: numbe
   return {
     enabled: color !== "" || blur !== 0 || offsetX !== 0 || offsetY !== 0,
     color: color || "#000000",
+    opacity: getColorOpacity(color || "#000000"),
     blur,
     offsetX,
     offsetY,
@@ -55,7 +59,7 @@ function readShadow(engine: EditxEngine, blockId: number, selectionStart?: numbe
  *  `TextStrokeSection` — writes the run style so it stays the single source of
  *  truth for text (no separate block-level Konva shadow). */
 export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
-  const { engine, blockId, getStyleRange, selectionStart, enabled } = props;
+  const { engine, blockId, getStyleRange, selectionStart, enabled, swatches } = props;
 
   const [state, setState] = useState<ShadowState>(() =>
     readShadow(engine, blockId, selectionStart),
@@ -72,13 +76,23 @@ export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
   }, [engine, blockId, selectionStart]);
 
   const handleColor = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (color: string) => {
       const { start, end } = getStyleRange();
-      const value = e.target.value;
+      const value = withColorOpacity(color, state.opacity);
       commit(() => engine.block.setTextShadow(blockId, start, end, { color: value }));
-      setState((s) => ({ ...s, color: value }));
+      setState((current) => ({ ...current, color: value }));
     },
-    [engine, blockId, getStyleRange, commit],
+    [engine, blockId, getStyleRange, state.opacity, commit],
+  );
+
+  const handleOpacity = useCallback(
+    (opacity: number) => {
+      const { start, end } = getStyleRange();
+      const color = withColorOpacity(state.color, opacity);
+      commit(() => engine.block.setTextShadow(blockId, start, end, { color }));
+      setState((current) => ({ ...current, color, opacity }));
+    },
+    [engine, blockId, getStyleRange, state.color, commit],
   );
 
   const handleBlur = useCallback(
@@ -107,14 +121,13 @@ export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
         !(enabled ?? state.enabled) && "opacity-50",
       )}
     >
-      {/* Color */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-fluid text-muted-foreground">Color</span>
-        <div className="flex items-center gap-2">
-          <ColorSwatch value={state.color} onChange={handleColor} />
-          <span className="text-fluid font-mono text-muted-foreground">{state.color}</span>
-        </div>
-      </div>
+      <ColorPicker
+        color={state.color}
+        opacity={state.opacity}
+        swatches={swatches}
+        onChange={handleColor}
+        onOpacityChange={handleOpacity}
+      />
 
       {/* Offset */}
       <div className="flex flex-col gap-1.5">

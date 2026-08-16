@@ -90,7 +90,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
       {swatches.length > 0 && (
         <div className="flex flex-col gap-2">
           <span className="text-fluid font-medium text-muted-foreground">Default Colors</span>
-          <ColorPalette colors={swatches} value={color} onSelect={handleSwatchSelect} />
+          <ColorPalette colors={swatches} value={opaqueColor} onSelect={handleSwatchSelect} />
         </div>
       )}
     </div>

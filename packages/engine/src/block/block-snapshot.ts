@@ -63,7 +63,7 @@ function deepCopyProperties(props: Record<string, PropertyValue>): Record<string
   return copy;
 }
 
-/** Clone a run style, deep-copying nested `fillGradient`/`backgroundPadding` objects. */
+/** Clone a run style, deep-copying nested gradient and padding objects. */
 function cloneRunStyle(style: TextRunStyle): TextRunStyle {
   const copy: TextRunStyle = { ...style };
   if (style.fillGradient) {
@@ -71,6 +71,13 @@ function cloneRunStyle(style: TextRunStyle): TextRunStyle {
       type: style.fillGradient.type,
       angle: style.fillGradient.angle,
       stops: style.fillGradient.stops.map((s) => ({ offset: s.offset, color: s.color })),
+    };
+  }
+  if (style.textStrokeGradient) {
+    copy.textStrokeGradient = {
+      type: "linear",
+      angle: style.textStrokeGradient.angle,
+      stops: style.textStrokeGradient.stops.map((s) => ({ offset: s.offset, color: s.color })),
     };
   }
   if (style.backgroundPadding) {

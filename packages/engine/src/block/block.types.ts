@@ -51,6 +51,13 @@ export interface GradientFill {
   stops: GradientStop[];
 }
 
+/** Linear gradient descriptor for graphic and text strokes. */
+export interface StrokeGradient {
+  type: "linear";
+  angle: number;
+  stops: GradientStop[];
+}
+
 /** Resolved image (pattern) fill descriptor returned by `getFillImage`. */
 export interface ImageFill {
   src: string;
@@ -160,6 +167,8 @@ export interface TextRunStyle {
   textShadowOffsetY?: number;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  /** Linear gradient stroke for the run. When set it overrides the solid stroke color. */
+  textStrokeGradient?: StrokeGradient;
 }
 
 /** A contiguous segment of text with uniform styling. */

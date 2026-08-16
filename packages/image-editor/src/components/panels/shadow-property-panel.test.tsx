@@ -31,7 +31,7 @@ function makeEngine(run: Record<string, unknown>) {
     endBatch: vi.fn(),
     renderDirty: vi.fn(),
   };
-  return engine as unknown as EditxEngine & { block: typeof block };
+  return engine as unknown as EditxEngine;
 }
 
 function makeGraphicEngine() {
@@ -49,7 +49,7 @@ function makeGraphicEngine() {
     endBatch: vi.fn(),
     renderDirty: vi.fn(),
   };
-  return engine as unknown as EditxEngine;
+  return engine as unknown as EditxEngine & { block: typeof block };
 }
 
 function renderPanel(engine: EditxEngine) {
@@ -74,10 +74,11 @@ describe("ShadowPropertyPanel (text block)", () => {
       textShadowOffsetX: 3,
       textShadowOffsetY: 4,
     });
-    renderPanel(engine);
+    const { container } = renderPanel(engine);
 
     expect(screen.queryByRole("switch", { name: "Enable Shadow" })).toBeNull();
-    expect(screen.getByText("#ff0000")).toBeDefined();
+    expect(container.querySelector<HTMLInputElement>('input[type="text"]')?.value).toBe("FF0000");
+    expect(screen.getByText("Default Colors")).toBeDefined();
   });
 
   it("keeps disabled text shadow controls mounted with reduced opacity", () => {
@@ -97,7 +98,28 @@ describe("ShadowPropertyPanel (text block)", () => {
     );
 
     expect(container.querySelector<HTMLInputElement>('input[type="color"]')?.value).toBe("#000000");
-    expect(screen.getByText("#000000")).toBeDefined();
+    expect(container.querySelector<HTMLInputElement>('input[type="text"]')?.value).toBe("000000");
     expect(screen.queryByText("rgba(0,")).toBeNull();
+  });
+
+  it("reads graphic shadow opacity from the color alpha", () => {
+    const { container } = render(
+      <ImageEditorProvider>
+        <ShadowPropertyPanel engine={makeGraphicEngine()} blockId={7} blockType="graphic" />
+      </ImageEditorProvider>,
+    );
+    const opacity = container.querySelector<HTMLInputElement>('input[type="range"]');
+    if (!opacity) throw new Error("Shadow opacity slider was not rendered");
+
+    expect(opacity.value).toBe("0");
+  });
+
+  it("reads text shadow opacity from the run color", () => {
+    const engine = makeEngine({ textShadowColor: "#ff0000" });
+    const { container } = renderPanel(engine);
+    const opacity = container.querySelector<HTMLInputElement>('input[type="range"]');
+    if (!opacity) throw new Error("Text shadow opacity slider was not rendered");
+
+    expect(opacity.value).toBe("1");
   });
 });

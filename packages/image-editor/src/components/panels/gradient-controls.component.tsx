@@ -8,6 +8,7 @@ export interface GradientControlsProps {
   startColor: string;
   endColor: string;
   opacity: number;
+  showTypeControl?: boolean;
   onTypeChange: (type: GradientType) => void;
   onAngleChange: (angle: number) => void;
   onStartColorChange: (color: string) => void;
@@ -22,6 +23,7 @@ export const GradientControls: React.FC<GradientControlsProps> = (props) => {
     startColor,
     endColor,
     opacity,
+    showTypeControl = true,
     onTypeChange,
     onAngleChange,
     onStartColorChange,
@@ -31,15 +33,17 @@ export const GradientControls: React.FC<GradientControlsProps> = (props) => {
 
   return (
     <>
-      <SegmentedControl<GradientType>
-        ariaLabel="Gradient type"
-        value={type}
-        onValueChange={onTypeChange}
-        options={[
-          { value: "linear", label: "Linear" },
-          { value: "radial", label: "Radial" },
-        ]}
-      />
+      {showTypeControl && (
+        <SegmentedControl<GradientType>
+          ariaLabel="Gradient type"
+          value={type}
+          onValueChange={onTypeChange}
+          options={[
+            { value: "linear", label: "Linear" },
+            { value: "radial", label: "Radial" },
+          ]}
+        />
+      )}
       <Section label="Stops">
         <div className="flex items-center gap-2">
           <ColorSwatch

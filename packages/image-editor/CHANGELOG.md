@@ -10,6 +10,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 * **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
 * **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls
+* **image-editor:** add solid and linear gradient modes to graphic and text stroke controls
 
 ### Bug Fixes
 

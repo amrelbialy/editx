@@ -16,6 +16,7 @@ import {
   type ParagraphNode,
 } from "lexical";
 import type {
+  StrokeGradient,
   TextBackgroundPadding,
   TextGradient,
   TextRun,
@@ -277,6 +278,11 @@ export function runStyleToCssString(style: TextRunStyle): string {
     parts.push(`--text-stroke-color: ${style.textStrokeColor}`);
   }
   if (style.textStrokeWidth != null) parts.push(`--text-stroke-width: ${style.textStrokeWidth}`);
+  if (style.textStrokeGradient != null) {
+    parts.push(
+      `--text-stroke-gradient: ${encodeURIComponent(JSON.stringify(style.textStrokeGradient))}`,
+    );
+  }
   if (style.backgroundOpacity != null)
     parts.push(`--text-background-opacity: ${style.backgroundOpacity}`);
   if (style.backgroundCornerRadius != null)
@@ -355,6 +361,9 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
       case "--text-stroke-width":
         style.textStrokeWidth = parseFloat(val);
         break;
+      case "--text-stroke-gradient":
+        style.textStrokeGradient = parseStrokeGradientValue(val);
+        break;
       case "--text-fill-gradient":
         style.fillGradient = parseGradientValue(val);
         break;
@@ -395,6 +404,11 @@ export function textRunStyleToCssPatch(update: TextRunStyleUpdate): Record<strin
   if (update.textStrokeWidth !== undefined)
     patch["--text-stroke-width"] =
       update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
+  if (update.textStrokeGradient !== undefined)
+    patch["--text-stroke-gradient"] =
+      update.textStrokeGradient != null
+        ? encodeURIComponent(JSON.stringify(update.textStrokeGradient))
+        : null;
   if (update.backgroundOpacity !== undefined)
     patch["--text-background-opacity"] =
       update.backgroundOpacity != null ? `${update.backgroundOpacity}` : null;
@@ -423,6 +437,12 @@ function parseGradientValue(val: string): TextGradient | undefined {
     // Malformed value — treat as no gradient rather than throwing during parse.
   }
   return undefined;
+}
+
+function parseStrokeGradientValue(val: string): StrokeGradient | undefined {
+  const gradient = parseGradientValue(val);
+  if (gradient?.type !== "linear") return undefined;
+  return { type: "linear", angle: gradient.angle ?? 0, stops: gradient.stops };
 }
 
 /** Decode a URI-encoded JSON per-side padding override from a CSS var; undefined when invalid. */

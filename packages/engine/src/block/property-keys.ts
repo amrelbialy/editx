@@ -18,6 +18,9 @@ export const VISIBLE = "appearance/visible" as const;
 export const FILL_COLOR = "fill/color" as const;
 export const STROKE_COLOR = "stroke/color" as const;
 export const STROKE_WIDTH = "stroke/width" as const;
+export const STROKE_GRADIENT_ENABLED = "stroke/gradient/enabled" as const;
+export const STROKE_GRADIENT_ANGLE = "stroke/gradient/angle" as const;
+export const STROKE_GRADIENT_STOPS = "stroke/gradient/stops" as const;
 
 // ── Text ─────────────────────────────────────────────
 export const TEXT_CONTENT = "text/content" as const;

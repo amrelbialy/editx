@@ -11,6 +11,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **engine:** export the `ShapeGeometry` descriptor union and add undoable
 	`engine.block.setShapeGeometry` replacement for rectangle, ellipse, polygon, star, line, and path
 	geometry.
+* **engine:** add undoable linear gradient strokes for graphic blocks and text runs through
+	`setStrokeGradient` and selection-aware `setTextStroke` updates.
 
 ### Changed
 
