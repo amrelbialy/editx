@@ -15,6 +15,7 @@ export type {
   PropertyValue,
   ReadonlyBlockData,
   ResolvedTextBackground,
+  ShapeGeometry,
   ShapeType,
   TextBackground,
   TextBackgroundGeometry,

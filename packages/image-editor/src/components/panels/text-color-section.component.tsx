@@ -1,11 +1,11 @@
-import type { EditxEngine, TextGradient, TextRunStyle } from "@editx/engine";
+import type { EditxEngine, GradientType, TextGradient, TextRunStyle } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
-import { ColorPicker, ColorSwatch, Input, Section, SegmentedControl, SliderField } from "../ui";
+import { ColorPicker, SegmentedControl } from "../ui";
+import { GradientControls } from "./gradient-controls.component";
 
 type ColorMode = "solid" | "gradient";
-type GradientType = "linear" | "radial";
 
 export interface TextColorSectionProps {
   engine: EditxEngine;
@@ -197,51 +197,18 @@ export const TextColorSection: React.FC<TextColorSectionProps> = (props) => {
           onOpacityChange={onOpacityChange}
         />
       ) : (
-        <>
-          <SegmentedControl<GradientType>
-            ariaLabel="Gradient type"
-            value={state.gradientType}
-            onValueChange={(v) => handleGradient({ gradientType: v })}
-            options={[
-              { value: "linear", label: "Linear" },
-              { value: "radial", label: "Radial" },
-            ]}
-          />
-          <Section label="Stops">
-            <div className="flex items-center gap-2">
-              <ColorSwatch
-                value={state.gradientStart}
-                onChange={(e) => handleGradient({ gradientStart: e.target.value })}
-              />
-              <ColorSwatch
-                value={state.gradientEnd}
-                onChange={(e) => handleGradient({ gradientEnd: e.target.value })}
-              />
-              {state.gradientType === "linear" && (
-                <Input
-                  type="number"
-                  label="Angle"
-                  value={state.gradientAngle}
-                  min={0}
-                  max={360}
-                  className="flex-1"
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value);
-                    if (!Number.isNaN(v)) handleGradient({ gradientAngle: v });
-                  }}
-                />
-              )}
-            </div>
-          </Section>
-          <SliderField
-            label="Opacity"
-            value={Math.round(opacity * 100)}
-            min={0}
-            max={100}
-            step={1}
-            onChange={(v) => onOpacityChange(v / 100)}
-          />
-        </>
+        <GradientControls
+          type={state.gradientType}
+          angle={state.gradientAngle}
+          startColor={state.gradientStart}
+          endColor={state.gradientEnd}
+          opacity={opacity}
+          onTypeChange={(gradientType) => handleGradient({ gradientType })}
+          onAngleChange={(gradientAngle) => handleGradient({ gradientAngle })}
+          onStartColorChange={(gradientStart) => handleGradient({ gradientStart })}
+          onEndColorChange={(gradientEnd) => handleGradient({ gradientEnd })}
+          onOpacityChange={onOpacityChange}
+        />
       )}
     </div>
   );

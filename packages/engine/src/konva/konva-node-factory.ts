@@ -51,7 +51,7 @@ export class KonvaNodeFactory {
     block: BlockData,
     callbacks: NodeCallbacks,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): Konva.Node | null {
+  ): Konva.Shape | Konva.Group | null {
     if (block.type === "page") {
       return createPageNode(id);
     }

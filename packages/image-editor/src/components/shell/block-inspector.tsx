@@ -11,6 +11,7 @@ import { ImageFillPanel } from "../panels/image-fill-panel";
 import { PositionPropertyPanel } from "../panels/position-property-panel";
 import { ShadowPropertyPanel } from "../panels/shadow-property-panel";
 import { ShapeFillPanel } from "../panels/shape-fill-panel";
+import { ShapeReplacePanel } from "../panels/shape-replace-panel.component";
 import { StrokePropertyPanel } from "../panels/stroke-property-panel";
 import { TextAdvancedPanel } from "../panels/text-advanced-panel";
 
@@ -34,23 +35,31 @@ interface BlockInspectorProps {
     sendToBack: () => void;
     alignToPage: (direction: AlignDirection) => void;
   };
+  propertyEnabled?: boolean;
   onReplaceImage: (file: File) => void;
 }
 
 export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
-  const { panel, engine, blockId, blockType, blockEffects, blockActions, onReplaceImage } = props;
+  const {
+    panel,
+    engine,
+    blockId,
+    blockType,
+    blockEffects,
+    blockActions,
+    propertyEnabled,
+    onReplaceImage,
+  } = props;
 
   if (!panel) return null;
 
   switch (panel) {
+    case "shape":
+      if (blockType !== "graphic") return null;
+      return <ShapeReplacePanel engine={engine} blockId={blockId} />;
     case "color":
-      return (
-        <ColorPropertyPanel
-          engine={engine}
-          blockId={blockId}
-          blockType={blockType as "text" | "graphic"}
-        />
-      );
+      if (blockType !== "text") return null;
+      return <ColorPropertyPanel engine={engine} blockId={blockId} />;
     case "background":
       return (
         <BackgroundPropertyPanel
@@ -65,6 +74,7 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
           engine={engine}
           blockId={blockId}
           blockType={blockType as "text" | "graphic" | "image"}
+          enabled={propertyEnabled}
         />
       );
     case "stroke":
@@ -73,11 +83,12 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
           engine={engine}
           blockId={blockId}
           blockType={blockType as "text" | "graphic" | "image"}
+          enabled={propertyEnabled}
         />
       );
     case "fill":
       if (blockType !== "graphic") return null;
-      return <ShapeFillPanel engine={engine} blockId={blockId} />;
+      return <ShapeFillPanel engine={engine} blockId={blockId} enabled={propertyEnabled} />;
     case "position":
       return (
         <PositionPropertyPanel

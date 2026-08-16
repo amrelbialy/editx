@@ -27,7 +27,12 @@ them.
 
 Shape ids match the built-in shapes — `rect`, `ellipse`, `triangle`, `pentagon`,
 `hexagon`, `star`, `line`. They render in the order you list them. Omit `presets`
-to show every built-in shape.
+to show every built-in shape. Legacy shape ids use `shapes.defaultColor` in both
+the gallery and the inserted document.
+
+Custom `presetGroups` derive thumbnails from each preset's `shape`, `fill`, and
+`stroke`. The required `preview` field remains supported for API compatibility,
+but it is not used to replace authored shape semantics.
 
 ## Try it
 

@@ -1,14 +1,18 @@
 import type React from "react";
-import type { PresetPreview } from "../../../config/config.types";
+import type { PresetPreview, ShapePreset } from "../../../config/config.types";
 import { useTranslation } from "../../../i18n/i18n-context";
 import { Button, CarouselRow, PresetCard } from "../../ui";
 import { PresetThumbnail } from "./preset-thumbnail.component";
+import { ShapePresetThumbnail } from "./shape-preset-thumbnail.component";
 
 /** Minimal shape the gallery needs from a text or shape preset. */
 export interface GalleryPreset {
   id: string;
   label: string;
   preview: PresetPreview;
+  shape?: ShapePreset["shape"];
+  fill?: ShapePreset["fill"];
+  stroke?: ShapePreset["stroke"];
 }
 
 interface PresetCategoryRowProps {
@@ -43,7 +47,13 @@ export const PresetCategoryRow: React.FC<PresetCategoryRowProps> = (props) => {
       onClick={() => onSelect(preset.id)}
       className={expanded ? "min-w-0" : "w-24 shrink-0"}
     >
-      <PresetThumbnail preview={preset.preview} />
+      {preset.shape && preset.fill ? (
+        <ShapePresetThumbnail
+          preset={{ shape: preset.shape, fill: preset.fill, stroke: preset.stroke }}
+        />
+      ) : (
+        <PresetThumbnail preview={preset.preview} />
+      )}
     </PresetCard>
   ));
 

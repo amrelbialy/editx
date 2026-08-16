@@ -14,6 +14,15 @@ export type EffectType = "adjustments" | "filter";
 /** Shape geometry types — sub-block kinds for type='shape'. */
 export type ShapeType = "rect" | "ellipse" | "polygon" | "star" | "line" | "path";
 
+/** Complete shape replacement descriptor accepted by `BlockAPI.setShapeGeometry`. */
+export type ShapeGeometry =
+  | { type: "rect"; cornerRadius?: number }
+  | { type: "ellipse" }
+  | { type: "polygon"; sides?: number }
+  | { type: "star"; points?: number; innerDiameter?: number }
+  | { type: "line"; pointerLength?: number; pointerWidth?: number }
+  | { type: "path"; name?: string; pathData: string; viewBox: PathViewBox };
+
 /** Fill content types — sub-block kinds for type='fill'. */
 export type FillType = "color" | "gradient" | "image";
 

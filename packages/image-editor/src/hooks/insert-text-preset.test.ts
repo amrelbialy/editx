@@ -4,20 +4,34 @@ import type { TextPreset } from "../config/preset.types";
 import { insertTextPreset } from "./insert-text-preset";
 
 describe("insertTextPreset", () => {
-  it("closes the batch after malformed shape insertion so later history commits", () => {
+  it.each([
+    ["polygon", { kind: "polygon", sides: 2 }, "sides must be at least 3"],
+    ["star", { kind: "star", points: 1 }, "points must be at least 2"],
+    ["line", { kind: "line", pointerLength: -1 }, "pointerLength must be at least 0"],
+    [
+      "path",
+      { kind: "path", pathData: "M0 0<bad>", viewBox: { width: 10, height: 10 } },
+      "Invalid SVG path data",
+    ],
+  ] as const)("rejects invalid %s geometry before inserting any composition child", (_, shape, message) => {
     const engine = new EditxEngine();
     const pageId = engine.block.create("page");
     engine.clearHistory();
     const preset: TextPreset = {
-      id: "invalid-path",
-      label: "Invalid path",
-      blocks: [],
+      id: "invalid-shape",
+      label: "Invalid shape",
+      blocks: [{ text: "Must not be inserted" }],
       composition: {
         elements: [
           {
+            kind: "text",
+            block: 0,
+            layout: { x: 0, y: 0, width: 0.5, height: 0.1 },
+          },
+          {
             kind: "shape",
-            layout: { x: 0, y: 0, width: 0.5, height: 0.5 },
-            shape: { kind: "path", pathData: "M0 0<bad>" },
+            layout: { x: 0, y: 0.2, width: 0.5, height: 0.5 },
+            shape,
             fill: { kind: "color", color: "#000000" },
           },
         ],
@@ -37,7 +51,8 @@ describe("insertTextPreset", () => {
         },
         preset,
       ),
-    ).toThrow("Invalid SVG path data");
+    ).toThrow(message);
+    expect(engine.block.getChildren(pageId)).toEqual([]);
     expect(engine.canUndo()).toBe(false);
 
     const nextId = engine.block.create("graphic");

@@ -16,7 +16,7 @@ const scene = vi.hoisted(() => {
   const contentLayer = layer();
   const uiLayer = layer();
   const stage = { batchDraw: vi.fn(), draw: vi.fn(), destroy: vi.fn() };
-  const transformer = { nodes: vi.fn(), moveToTop: vi.fn() };
+  const transformer = { nodes: vi.fn(() => []), moveToTop: vi.fn() };
   const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5), setPageSize: vi.fn() };
   const cropOverlay = {
     applyViewportScale: vi.fn(),
@@ -24,7 +24,8 @@ const scene = vi.hoisted(() => {
     hide: vi.fn(),
     destroy: vi.fn(),
   };
-  return { contentLayer, uiLayer, stage, transformer, camera, cropOverlay };
+  const nodeFactory = { createNode: vi.fn(), updateNode: vi.fn() };
+  return { contentLayer, uiLayer, stage, transformer, camera, cropOverlay, nodeFactory };
 });
 
 vi.mock("./konva-scene-setup", () => ({
@@ -36,7 +37,7 @@ vi.mock("./konva-scene-setup", () => ({
     updateAccentColor: vi.fn(),
     selectionRect: {},
     camera: scene.camera,
-    nodeFactory: {},
+    nodeFactory: scene.nodeFactory,
     cropOverlay: scene.cropOverlay,
     webgl: null,
   })),
@@ -82,6 +83,31 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     expect(scene.uiLayer.batchDraw).toHaveBeenCalledTimes(1);
     expect(scene.stage.draw).not.toHaveBeenCalled();
     expect(scene.stage.batchDraw).not.toHaveBeenCalled();
+  });
+
+  it("replaces an incompatible graphic node before applying its state", async () => {
+    const Konva = (await import("konva")).default;
+    const adapter = await makeAdapter();
+    const rect = new Konva.Rect();
+    const ellipse = new Konva.Ellipse();
+    scene.nodeFactory.createNode.mockReturnValueOnce(rect).mockReturnValueOnce(ellipse);
+
+    adapter.syncBlock(7, { type: "graphic", kind: "rect" } as BlockData);
+    adapter.syncBlock(7, { type: "graphic", kind: "ellipse" } as BlockData);
+
+    expect(scene.nodeFactory.updateNode).toHaveBeenNthCalledWith(
+      1,
+      rect,
+      expect.anything(),
+      undefined,
+    );
+    expect(scene.nodeFactory.updateNode).toHaveBeenNthCalledWith(
+      2,
+      ellipse,
+      expect.anything(),
+      undefined,
+    );
+    expect(scene.transformer.nodes).toHaveBeenCalled();
   });
 
   it("showCropOverlay uses a scoped content-layer batchDraw, not stage.batchDraw", async () => {

@@ -129,6 +129,27 @@ describe("resolveShapePresetGroups", () => {
     const triangle = result[0].presets.find((p) => p.id === "triangle");
     expect(triangle?.shape.kind).toBe("polygon");
     expect(triangle?.shape.sides).toBe(3);
+    expect(triangle?.fill).toEqual({ kind: "color", color: "#3b82f6" });
+  });
+
+  it("uses the configured default color for legacy shape semantics", () => {
+    const result = resolveShapePresetGroups({
+      builtIn: builtInShape,
+      legacyPresets: ["ellipse"],
+      defaultColor: "#be123c",
+    });
+
+    expect(result[0].presets[0].fill).toEqual({ kind: "color", color: "#be123c" });
+  });
+
+  it("normalizes missing solid colors in custom semantic presets", () => {
+    const result = resolveShapePresetGroups({
+      builtIn: builtInShape,
+      presetGroups: [{ id: "mine", label: "Mine", presets: [shapePreset("custom")] }],
+      defaultColor: "#0f766e",
+    });
+
+    expect(result[0].presets[0].fill).toEqual({ kind: "color", color: "#0f766e" });
   });
 
   it("appends a new shape category", () => {

@@ -11,6 +11,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
 * **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls
 
+### Bug Fixes
+
+* **image-editor:** derive shape preset thumbnails and insertion geometry from authored shape, fill, and stroke semantics
+
 ## [0.1.0-alpha.15](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.14...@editx/image-editor@0.1.0-alpha.15) (2026-08-05)
 
 ### Bug Fixes

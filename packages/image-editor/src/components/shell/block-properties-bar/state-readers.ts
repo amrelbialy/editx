@@ -1,5 +1,6 @@
 import type { EditxEngine } from "@editx/engine";
 import { colorToHex, FILL_SOLID_COLOR, TEXT_ALIGN } from "@editx/engine";
+import { toOpaqueHexColor } from "../../ui/color-value";
 
 /** Snapshot of the text style shown in the properties toolbar. */
 export type TextState = ReturnType<typeof readTextState>;
@@ -37,7 +38,7 @@ export function readBlockColor(engine: EditxEngine, blockId: number): string {
   const fillId = engine.block.getFill(blockId);
   if (fillId != null) {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
-    if (c) return colorToHex(c).substring(0, 7);
+    if (c) return toOpaqueHexColor(colorToHex(c));
   }
   return "#4a90e2";
 }

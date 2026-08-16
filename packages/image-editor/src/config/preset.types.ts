@@ -215,6 +215,9 @@ export interface ShapePreset {
     points?: number;
     innerDiameter?: number;
     cornerRadius?: number;
+    pointerLength?: number;
+    pointerWidth?: number;
+    name?: string;
     pathData?: string;
     viewBox?: { width: number; height: number };
   };

@@ -14,6 +14,7 @@ import { applyGroupContext, createGroupOutline } from "./konva-group-affordance"
 import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { KonvaHoverOutline } from "./konva-hover-outline";
 import type { KonvaNodeFactory } from "./konva-node-factory";
+import { replaceIncompatibleNode } from "./konva-node-replacement";
 import { createKonvaScene } from "./konva-scene-setup";
 import { observeViewportResize } from "./konva-viewport-resize";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
@@ -146,26 +147,38 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!this.#nodeFactory) return;
 
     let node = this.#nodeMap.get(id);
+    const callbacks = {
+      onDragEnd: (blockId: number, x: number, y: number) => this.onBlockDragEnd?.(blockId, x, y),
+      onTransformEnd: (
+        blockId: number,
+        transform: { x: number; y: number; width: number; height: number; rotation: number },
+      ) => {
+        const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
+        this.onBlockTransformEnd?.(blockId, transform, anchor);
+      },
+      getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
+    };
 
     if (!node) {
-      const created = this.#nodeFactory.createNode(
-        id,
-        block,
-        {
-          onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
-          onTransformEnd: (blockId, transform) => {
-            const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
-            this.onBlockTransformEnd?.(blockId, transform, anchor);
-          },
-          getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
-        },
-        this.resolveBlock,
-      );
+      const created = this.#nodeFactory.createNode(id, block, callbacks, this.resolveBlock);
       if (!created) return;
       node = created;
       this.#nodeMap.set(id, node);
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
       this.#hoverOutline.bind(node);
+    } else {
+      node = replaceIncompatibleNode({
+        id,
+        block,
+        node,
+        nodeMap: this.#nodeMap,
+        factory: this.#nodeFactory,
+        callbacks,
+        transformer: this.#transformer,
+        contentLayer: this.#contentLayer,
+        bindHover: (replacement) => this.#hoverOutline.bind(replacement),
+        resolveBlock: this.resolveBlock,
+      });
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);

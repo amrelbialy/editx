@@ -1,61 +1,29 @@
 import {
-  type Color,
-  colorToHex,
   type EditxEngine,
-  FILL_SOLID_COLOR,
   type FillType,
+  type GradientType,
   hexToColor,
-  type ImageFillFit,
+  type ImageFill,
 } from "@editx/engine";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useConfig } from "../../config/config-context";
+import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useTranslation } from "../../i18n/i18n-context";
-import type { TranslationKey } from "../../i18n/translations/en";
+import { cn } from "../../utils/cn";
+import { ColorPicker, SegmentedControl } from "../ui";
+import { GradientControls } from "./gradient-controls.component";
 import {
-  ColorSwatch,
-  Input,
-  Section,
-  SegmentedControl,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui";
+  mergeActiveShapeFillState,
+  readShapeFillState,
+  type ShapeFillState,
+} from "./shape-fill-state";
+import { ShapeImageFillControls } from "./shape-image-fill-controls.component";
 
 export interface ShapeFillPanelProps {
   engine: EditxEngine;
   blockId: number;
-}
-
-interface FillState {
-  kind: FillType;
-  gradientStart: string;
-  gradientEnd: string;
-  gradientAngle: number;
-  imageSrc: string;
-  imageFit: ImageFillFit;
-}
-
-const FIT_VALUES: ImageFillFit[] = ["cover", "contain", "tile", "stretch"];
-
-function toHex(color: string): string {
-  return color.startsWith("#") ? color.substring(0, 7) : color;
-}
-
-function readFillState(engine: EditxEngine, blockId: number): FillState {
-  const fillId = engine.block.getFill(blockId);
-  const kind = (fillId != null ? engine.block.getKind(fillId) : "color") as FillType;
-  const gradient = engine.block.getFillGradient(blockId);
-  const image = engine.block.getFillImage(blockId);
-  return {
-    kind,
-    gradientStart: toHex(gradient?.stops[0]?.color ?? "#f97316"),
-    gradientEnd: toHex(gradient?.stops[gradient.stops.length - 1]?.color ?? "#ec4899"),
-    gradientAngle: gradient?.angle ?? 0,
-    imageSrc: image?.src ?? "",
-    imageFit: image?.fit ?? "cover",
-  };
+  enabled?: boolean;
 }
 
 /**
@@ -64,24 +32,33 @@ function readFillState(engine: EditxEngine, blockId: number): FillState {
  * undoable engine command (`changeFillKind` / `setFillGradient` / `setFillImage`).
  */
 export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
-  const { engine, blockId } = props;
+  const { engine, blockId, enabled } = props;
+
+  const stateRef = useRef<ShapeFillState | null>(null);
 
   const { t } = useTranslation();
+  const config = useConfig();
 
-  const [state, setState] = useState<FillState>(() => readFillState(engine, blockId));
+  const [state, setState] = useState<ShapeFillState>(() => readShapeFillState(engine, blockId));
+  stateRef.current = state;
+
+  const { commit } = useCoalescedHistory(engine);
 
   useEffect(() => {
-    setState(readFillState(engine, blockId));
+    setState(readShapeFillState(engine, blockId));
   }, [engine, blockId]);
 
   useEffect(() => {
-    return engine.onHistoryChanged(() => setState(readFillState(engine, blockId)));
+    return engine.onHistoryChanged(() => {
+      const fresh = readShapeFillState(engine, blockId);
+      setState((current) => mergeActiveShapeFillState(current, fresh));
+    });
   }, [engine, blockId]);
 
   const applyGradient = useCallback(
-    (start: string, end: string, angle: number) => {
+    (type: GradientType, start: string, end: string, angle: number) => {
       engine.block.setFillGradient(blockId, {
-        type: "linear",
+        type,
         angle,
         stops: [
           { offset: 0, color: start },
@@ -94,66 +71,78 @@ export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
 
   const handleKind = useCallback(
     (kind: FillType) => {
+      const current = stateRef.current;
+      if (!current || current.kind === kind) return;
+
+      const next = { ...current, kind };
+      stateRef.current = next;
+      setState(next);
       engine.block.changeFillKind(blockId, kind);
-      const next = readFillState(engine, blockId);
-      if (kind === "gradient")
-        applyGradient(next.gradientStart, next.gradientEnd, next.gradientAngle);
-      else if (kind === "image" && next.imageSrc)
-        engine.block.setFillImage(blockId, { src: next.imageSrc, fit: next.imageFit });
-      setState({ ...next, kind });
+      if (kind === "color") {
+        engine.block.setFillSolidColor(blockId, hexToColor(current.solidColor));
+      } else if (kind === "gradient") {
+        applyGradient(
+          current.gradientType,
+          current.gradientStart,
+          current.gradientEnd,
+          current.gradientAngle,
+        );
+      } else {
+        engine.block.setFillImage(blockId, current.image);
+      }
     },
     [engine, blockId, applyGradient],
   );
 
   const handleSolidColor = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (color: string) => {
       const fillId = engine.block.getFill(blockId);
-      if (fillId != null) engine.block.setFillSolidColor(blockId, hexToColor(e.target.value));
-      setState((s) => ({ ...s, gradientStart: e.target.value }));
+      if (fillId != null) {
+        commit(() => engine.block.setFillSolidColor(blockId, hexToColor(color)));
+      }
+      setState((current) => ({ ...current, solidColor: color }));
     },
-    [engine, blockId],
+    [engine, blockId, commit],
+  );
+
+  const handleOpacity = useCallback(
+    (opacity: number) => {
+      commit(() => engine.block.setOpacity(blockId, opacity));
+      setState((current) => ({ ...current, opacity }));
+    },
+    [engine, blockId, commit],
   );
 
   const handleGradient = useCallback(
-    (patch: Partial<Pick<FillState, "gradientStart" | "gradientEnd" | "gradientAngle">>) => {
-      setState((s) => {
-        const next = { ...s, ...patch };
-        applyGradient(next.gradientStart, next.gradientEnd, next.gradientAngle);
-        return next;
-      });
+    (
+      patch: Partial<
+        Pick<ShapeFillState, "gradientType" | "gradientStart" | "gradientEnd" | "gradientAngle">
+      >,
+    ) => {
+      const current = stateRef.current;
+      if (!current) return;
+      const next = { ...current, ...patch };
+      applyGradient(next.gradientType, next.gradientStart, next.gradientEnd, next.gradientAngle);
+      setState(next);
     },
     [applyGradient],
   );
 
-  const handleImageSrc = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const src = e.target.value;
-      setState((s) => {
-        engine.block.setFillImage(blockId, { src, fit: s.imageFit });
-        return { ...s, imageSrc: src };
-      });
+  const handleImageChange = useCallback(
+    (image: ImageFill) => {
+      engine.block.setFillImage(blockId, image);
+      setState((current) => ({ ...current, image }));
     },
     [engine, blockId],
   );
-
-  const handleFit = useCallback(
-    (fit: string) => {
-      setState((s) => {
-        engine.block.setFillImage(blockId, { src: s.imageSrc, fit: fit as ImageFillFit });
-        return { ...s, imageFit: fit as ImageFillFit };
-      });
-    },
-    [engine, blockId],
-  );
-
-  const solidColor = (() => {
-    const fillId = engine.block.getFill(blockId);
-    const c: Color | null = fillId != null ? engine.block.getColor(fillId, FILL_SOLID_COLOR) : null;
-    return c ? colorToHex(c).substring(0, 7) : "#3b82f6";
-  })();
 
   return (
-    <div className="flex flex-col gap-3 p-1">
+    <div
+      className={cn(
+        "flex flex-col gap-3 p-1 transition-opacity",
+        !(enabled ?? state.enabled) && "opacity-50",
+      )}
+    >
       <SegmentedControl<FillType>
         ariaLabel={t("fill.kind")}
         value={state.kind}
@@ -166,61 +155,38 @@ export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
       />
 
       {state.kind === "color" && (
-        <Section label={t("fill.color")}>
-          <div className="flex items-center gap-2">
-            <ColorSwatch value={solidColor} onChange={handleSolidColor} />
-            <span className="text-fluid font-mono text-muted-foreground">{solidColor}</span>
-          </div>
-        </Section>
+        <ColorPicker
+          color={state.solidColor}
+          opacity={state.opacity}
+          swatches={config.colors}
+          onChange={handleSolidColor}
+          onOpacityChange={handleOpacity}
+        />
       )}
 
       {state.kind === "gradient" && (
-        <Section label={t("fill.stops")}>
-          <div className="flex items-center gap-2">
-            <ColorSwatch
-              value={state.gradientStart}
-              onChange={(e) => handleGradient({ gradientStart: e.target.value })}
-            />
-            <ColorSwatch
-              value={state.gradientEnd}
-              onChange={(e) => handleGradient({ gradientEnd: e.target.value })}
-            />
-            <Input
-              type="number"
-              label={t("fill.angle")}
-              value={state.gradientAngle}
-              min={0}
-              max={360}
-              className="flex-1"
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                if (!Number.isNaN(v)) handleGradient({ gradientAngle: v });
-              }}
-            />
-          </div>
-        </Section>
+        <GradientControls
+          type={state.gradientType}
+          angle={state.gradientAngle}
+          startColor={state.gradientStart}
+          endColor={state.gradientEnd}
+          opacity={state.opacity}
+          onTypeChange={(gradientType) => handleGradient({ gradientType })}
+          onAngleChange={(gradientAngle) => handleGradient({ gradientAngle })}
+          onStartColorChange={(gradientStart) => handleGradient({ gradientStart })}
+          onEndColorChange={(gradientEnd) => handleGradient({ gradientEnd })}
+          onOpacityChange={handleOpacity}
+        />
       )}
 
       {state.kind === "image" && (
-        <>
-          <Section label={t("fill.source")}>
-            <Input type="text" value={state.imageSrc} onChange={handleImageSrc} />
-          </Section>
-          <Section label={t("fill.fit")}>
-            <Select value={state.imageFit} onValueChange={handleFit}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FIT_VALUES.map((fit) => (
-                  <SelectItem key={fit} value={fit}>
-                    {t(`fill.fit${fit[0].toUpperCase()}${fit.slice(1)}` as TranslationKey)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Section>
-        </>
+        <ShapeImageFillControls
+          image={state.image}
+          opacity={state.opacity}
+          imageConfig={config.image}
+          onChange={handleImageChange}
+          onOpacityChange={handleOpacity}
+        />
       )}
     </div>
   );

@@ -82,6 +82,14 @@ constants (e.g. `POSITION_X`, `SIZE_WIDTH`, `TEXT_RUNS`) rather than ad-hoc keys
 and writes discoverable and consistent. `BlockAPI` is a thin facade delegating to focused
 sub-APIs (property, selection, layout, crop, page, shape, fill, stroke, shadow, effect, text).
 
+Shape geometry replacement uses the exported `ShapeGeometry` discriminated union and
+`BlockAPI.setShapeGeometry`. The API validates and normalizes the complete descriptor before any
+mutation, creates and attaches a fresh shape sub-block, updates the graphic kind, and destroys the
+old sub-block in one command batch. This preserves graphic-owned styling, layout, effects,
+selection, and grouping while giving undo/redo ownership of both shape lifetimes. Omitted primitive
+fields use fresh shape defaults; invalid descriptors throw before history, and unsupported targets
+are no-ops.
+
 ### Commands — the only mutation path
 
 Every document mutation is a `Command` with a single `do(): Patch[]` method (see

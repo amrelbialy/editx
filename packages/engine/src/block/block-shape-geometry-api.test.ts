@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { EditxEngine } from "../editx-engine";
 import { BlockAPI } from "./block-api";
-import { SHAPE_POLYGON_SIDES, SHAPE_RECT_CORNER_RADIUS } from "./property-keys";
+import {
+  SHAPE_LINE_POINTER_LENGTH,
+  SHAPE_LINE_POINTER_WIDTH,
+  SHAPE_POLYGON_SIDES,
+  SHAPE_RECT_CORNER_RADIUS,
+  SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_STAR_POINTS,
+} from "./property-keys";
 
 describe("BlockShapeAPI.setShapeGeometry", () => {
   let engine: EditxEngine;
@@ -112,6 +119,19 @@ describe("BlockShapeAPI.setShapeGeometry", () => {
     block.setShapeGeometry(graphicId, { type: "rect", cornerRadius: 24 });
     block.setShapeGeometry(graphicId, { type: "rect" });
     expect(block.getFloat(block.getShape(graphicId) as number, SHAPE_RECT_CORNER_RADIUS)).toBe(0);
+
+    block.setShapeGeometry(graphicId, { type: "polygon" });
+    expect(block.getFloat(block.getShape(graphicId) as number, SHAPE_POLYGON_SIDES)).toBe(5);
+
+    block.setShapeGeometry(graphicId, { type: "star" });
+    const starId = block.getShape(graphicId) as number;
+    expect(block.getFloat(starId, SHAPE_STAR_POINTS)).toBe(5);
+    expect(block.getFloat(starId, SHAPE_STAR_INNER_DIAMETER)).toBe(0.5);
+
+    block.setShapeGeometry(graphicId, { type: "line" });
+    const lineId = block.getShape(graphicId) as number;
+    expect(block.getFloat(lineId, SHAPE_LINE_POINTER_LENGTH)).toBe(15);
+    expect(block.getFloat(lineId, SHAPE_LINE_POINTER_WIDTH)).toBe(15);
   });
 
   it("stores path names through history and keeps public naming undoable", () => {

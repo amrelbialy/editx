@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useTranslation } from "../../i18n/i18n-context";
 import { ColorSwatch } from "../ui/color-swatch";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
@@ -26,7 +27,7 @@ function readShadow(engine: EditxEngine, blockId: number): FrameShadowState {
   const color = engine.block.getShadowColor(blockId);
   return {
     enabled: engine.block.isShadowEnabled(blockId),
-    color: color ? colorToHex(color).substring(0, 7) : "#000000",
+    color: color ? toOpaqueHexColor(colorToHex(color)) : "#000000",
     offsetX: engine.block.getShadowOffsetX(blockId),
     offsetY: engine.block.getShadowOffsetY(blockId),
     blur: engine.block.getShadowBlur(blockId),

@@ -7,6 +7,7 @@ import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useTranslation } from "../../i18n/i18n-context";
 import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 
@@ -24,7 +25,7 @@ interface FrameStrokeState {
 function readStroke(engine: EditxEngine, blockId: number): FrameStrokeState {
   return {
     enabled: engine.block.isStrokeEnabled(blockId),
-    color: colorToHex(engine.block.getStrokeColor(blockId)).substring(0, 7),
+    color: toOpaqueHexColor(colorToHex(engine.block.getStrokeColor(blockId))),
     width: engine.block.getStrokeWidth(blockId),
   };
 }

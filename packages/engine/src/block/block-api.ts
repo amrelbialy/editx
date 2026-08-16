@@ -4,6 +4,7 @@ import {
   DestroyBlockCommand,
   RemoveChildCommand,
   SetKindCommand,
+  SetNameCommand,
 } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
 import type { TextBoxLayout } from "../konva/formatted-text-box";
@@ -29,6 +30,7 @@ import type {
   PropertyValue,
   ReadonlyBlockData,
   ResolvedTextBackground,
+  ShapeGeometry,
   ShapeType,
   TextBackgroundOptions,
   TextBackgroundPadding,
@@ -316,7 +318,7 @@ export class BlockAPI {
     return this.#engine._getBlockStore().getName(id);
   }
   setName(id: number, name: string): void {
-    this.#engine._getBlockStore().setName(id, name);
+    this.#engine.exec(new SetNameCommand(this.#engine._getBlockStore(), id, name));
   }
 
   // ── Layout ────────────────────────────────────────
@@ -560,6 +562,9 @@ export class BlockAPI {
   }
   hasShape(blockId: number): boolean {
     return this.#shape.hasShape(blockId);
+  }
+  setShapeGeometry(blockId: number, geometry: ShapeGeometry): void {
+    this.#shape.setShapeGeometry(blockId, geometry);
   }
   addShape(
     parentId: number,

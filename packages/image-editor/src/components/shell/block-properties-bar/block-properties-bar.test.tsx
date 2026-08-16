@@ -14,7 +14,7 @@ import { BlockPropertiesBar } from "./block-properties-bar.component";
  * All document mutations are exposed as spies so tests assert they route
  * through the engine (mirrors production undoability).
  */
-function makeEngine() {
+function makeEngine(shapeKind = "rect") {
   const block = {
     getTextRuns: vi.fn().mockReturnValue([{ text: "Hello", style: {} }]),
     getString: vi.fn().mockReturnValue("left"),
@@ -29,6 +29,10 @@ function makeEngine() {
     findAllSelected: vi.fn().mockReturnValue([1]),
     onSelectionChanged: vi.fn().mockReturnValue(() => {}),
     getType: vi.fn().mockReturnValue("graphic"),
+    getShape: vi.fn().mockReturnValue(9),
+    getKind: vi.fn((id: number) => (id === 9 ? shapeKind : "graphic")),
+    getFloat: vi.fn().mockReturnValue(0),
+    setShapeGeometry: vi.fn(),
     group: vi.fn().mockReturnValue(20),
     ungroup: vi.fn().mockReturnValue([8, 9]),
     enterGroup: vi.fn(),
@@ -39,7 +43,13 @@ function makeEngine() {
     toggleItalicText: vi.fn(),
     setTextAlign: vi.fn(),
   };
-  const engine = { block };
+  const engine = {
+    block,
+    onHistoryChanged: vi.fn().mockReturnValue(() => {}),
+    beginBatch: vi.fn(),
+    endBatch: vi.fn(),
+    renderDirty: vi.fn(),
+  };
   return engine as unknown as EditxEngine & { block: typeof block };
 }
 
@@ -74,9 +84,37 @@ describe("BlockPropertiesBar", () => {
     expect(screen.getByRole("button", { name: "Shadow" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opacity" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Position" })).toBeDefined();
-    // Graphic-specific: color + stroke panels.
-    expect(screen.getByRole("button", { name: "Color" })).toBeDefined();
+    // Graphic-specific: fill + stroke panels. Color is owned by Fill.
+    expect(screen.getByRole("button", { name: "Shapes" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Corner Radius" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Fill" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
     expect(screen.getByRole("button", { name: "Stroke" })).toBeDefined();
+  });
+
+  it("shows only geometry properties supported by the selected shape", () => {
+    const { unmount } = renderBar("graphic", makeEngine("polygon"));
+    expect(screen.getByRole("button", { name: "Sides" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Corner Radius" })).toBeNull();
+    unmount();
+
+    renderBar("graphic", makeEngine("ellipse"));
+    expect(screen.queryByRole("button", { name: "Corner Radius" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sides" })).toBeNull();
+  });
+
+  it("opens geometry properties as a dropdown without changing the side panel", () => {
+    renderBar("graphic");
+
+    fireEvent.click(screen.getByRole("button", { name: "Shapes" }));
+    expect(useImageEditorStore.getState().propertySidePanel).toBe("shape");
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Corner Radius" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByRole("slider")).toBeDefined();
+    expect(useImageEditorStore.getState().propertySidePanel).toBe("shape");
   });
 
   it("renders image-specific controls for an image block", () => {
@@ -196,13 +234,10 @@ describe("BlockPropertiesBar", () => {
     expect(engine.block.toggleItalicText).toHaveBeenCalledWith(7, 0, "Hello".length);
   });
 
-  it("routes the no-fill toggle through the engine for graphic blocks", () => {
-    const engine = makeEngine();
-    renderBar("graphic", engine);
+  it("keeps fill enablement inside the Fill panel", () => {
+    renderBar("graphic");
 
-    // Icon-only toggle labelled via aria-label ("Disable fill" when enabled).
-    const noFill = screen.getByRole("button", { name: "Disable fill" });
-    fireEvent.click(noFill);
-    expect(engine.block.setFillEnabled).toHaveBeenCalledWith(7, false);
+    expect(screen.queryByRole("button", { name: "Disable fill" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Fill" })).toBeDefined();
   });
 });

@@ -1,7 +1,6 @@
 ---
 name: <role-name>
 description: Describe exactly when Copilot should suggest this editx specialist.
-model: claude-opus-4.8
 tools: [read, search]
 ---
 
@@ -34,4 +33,6 @@ Tool categories: read, edit, search, execute, github. Grant the minimum needed:
 - designers:          [read, search, edit]
 - implementers:       [read, edit, search, execute]
 - GitHub work:        add `github`
+
+Omit `model` to inherit the active picker model. Pin a model only when the role needs it.
 -->

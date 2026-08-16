@@ -1,5 +1,5 @@
 import type { EditxEngine } from "@editx/engine";
-import { hexToColor, SHAPE_RECT_CORNER_RADIUS } from "@editx/engine";
+import { hexToColor } from "@editx/engine";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ImageEditorConfig } from "../config/config.types";
@@ -25,8 +25,10 @@ function makeEngine(pageSize = { width: 1080, height: 1080 }) {
     setFillGradient: vi.fn(),
     setFillImage: vi.fn(),
     setFillSolidColor: vi.fn(),
+    setFillEnabled: vi.fn(),
     getShape: vi.fn(() => 500),
     setFloat: vi.fn(),
+    setShapeGeometry: vi.fn(),
     setOpacity: vi.fn(),
     setTextBackground: vi.fn(),
     setShadowEnabled: vi.fn(),
@@ -206,7 +208,7 @@ describe("useTextTool.handleAddTextPreset", () => {
                       kind: "shape",
                       layout: { x: 0.1, y: 0.2, width: 0.8, height: 0.2, rotation: 2 },
                       shape: { kind: "rect", cornerRadius: 12 },
-                      fill: { kind: "color", color: "#dc2626" },
+                      fill: { kind: "color", color: "#00000000" },
                       stroke: { color: "#ffffff", width: 3 },
                       opacity: 0.9,
                     },
@@ -237,8 +239,13 @@ describe("useTextTool.handleAddTextPreset", () => {
       pathData: undefined,
       viewBox: undefined,
     });
-    expect(block.setFillSolidColor).toHaveBeenCalledWith(101, hexToColor("#dc2626"));
-    expect(block.setFloat).toHaveBeenCalledWith(500, SHAPE_RECT_CORNER_RADIUS, 12);
+    expect(block.setFillSolidColor).toHaveBeenCalledWith(101, hexToColor("#00000000"));
+    expect(block.setFillEnabled).toHaveBeenCalledWith(101, false);
+    expect(block.setStrokeEnabled).toHaveBeenCalledWith(101, true);
+    expect(block.setShapeGeometry).toHaveBeenCalledWith(101, {
+      type: "rect",
+      cornerRadius: 12,
+    });
     expect(block.setTextAutoWidth).toHaveBeenCalledWith(102, true);
     expect(block.group).toHaveBeenCalledWith([101, 102]);
     expect(block.refitGroupBounds).toHaveBeenCalledWith(999);

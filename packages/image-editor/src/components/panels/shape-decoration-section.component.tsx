@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
 import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
@@ -26,7 +27,7 @@ interface DecorationState {
 }
 
 function toHex(c: Color): string {
-  return colorToHex(c).substring(0, 7);
+  return toOpaqueHexColor(colorToHex(c));
 }
 
 function readState(engine: EditxEngine, blockId: number): DecorationState {

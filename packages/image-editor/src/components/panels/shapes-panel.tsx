@@ -30,6 +30,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = (props) => {
       presetGroups: shapes.presetGroups,
       additionalPresetGroups: shapes.additionalPresetGroups,
       legacyPresets: shapes.presets,
+      defaultColor: shapes.defaultColor,
     });
   }, [config.shapes]);
 

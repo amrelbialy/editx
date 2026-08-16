@@ -11,6 +11,12 @@ vi.mock("../panels/position-property-panel", () => ({
   ),
 }));
 
+vi.mock("../panels/shape-replace-panel.component", () => ({
+  ShapeReplacePanel: (props: { blockId: number }) => (
+    <div data-block-id={props.blockId} data-testid="shape-panel" />
+  ),
+}));
+
 afterEach(cleanup);
 
 describe("BlockInspector", () => {
@@ -43,5 +49,65 @@ describe("BlockInspector", () => {
     );
 
     expect(screen.getByTestId("position-panel").dataset.blockId).toBe("7");
+    expect(screen.queryByTestId("shape-geometry")).toBeNull();
+  });
+
+  it("keeps Position focused on layout for graphics", () => {
+    render(
+      <BlockInspector
+        panel="position"
+        engine={{} as EditxEngine}
+        blockId={11}
+        blockType="graphic"
+        blockEffects={{
+          adjustValues: {},
+          handleAdjustChange: vi.fn(),
+          handleAdjustCommit: vi.fn(),
+          handleAdjustReset: vi.fn(),
+          activeFilter: "none",
+          handleFilterSelect: vi.fn(),
+        }}
+        blockActions={{
+          bringForward: vi.fn(),
+          sendBackward: vi.fn(),
+          bringToFront: vi.fn(),
+          sendToBack: vi.fn(),
+          alignToPage: vi.fn(),
+        }}
+        onReplaceImage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("position-panel")).toBeTruthy();
+    expect(screen.queryByTestId("shape-panel")).toBeNull();
+  });
+
+  it("routes graphics to the dedicated Shape panel", () => {
+    render(
+      <BlockInspector
+        panel="shape"
+        engine={{} as EditxEngine}
+        blockId={11}
+        blockType="graphic"
+        blockEffects={{
+          adjustValues: {},
+          handleAdjustChange: vi.fn(),
+          handleAdjustCommit: vi.fn(),
+          handleAdjustReset: vi.fn(),
+          activeFilter: "none",
+          handleFilterSelect: vi.fn(),
+        }}
+        blockActions={{
+          bringForward: vi.fn(),
+          sendBackward: vi.fn(),
+          bringToFront: vi.fn(),
+          sendToBack: vi.fn(),
+          alignToPage: vi.fn(),
+        }}
+        onReplaceImage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("shape-panel").dataset.blockId).toBe("11");
   });
 });

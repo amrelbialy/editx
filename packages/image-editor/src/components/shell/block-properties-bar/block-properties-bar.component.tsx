@@ -98,7 +98,6 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
         propertySidePanel={propertySidePanel}
         onTogglePanel={togglePanel}
         onOpacityChange={handleOpacityChange}
-        refresh={refresh}
       />
 
       <GroupControls engine={engine} blockId={blockId} />

@@ -1,7 +1,6 @@
 ---
 name: documentation-writer
 description: Documentation specialist for editx. Use to create and update public API references, guides, examples, and README content after features or SDK surfaces change.
-model: claude-opus-4.8
 tools: [read, edit, search, execute]
 ---
 

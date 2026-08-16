@@ -1,13 +1,10 @@
-import {
-  type EditxEngine,
-  hexToColor,
-  SHAPE_RECT_CORNER_RADIUS,
-  SHAPE_STAR_INNER_DIAMETER,
-  SHAPE_STAR_POINTS,
-} from "@editx/engine";
+import { type EditxEngine, hexToColor, type ShapeGeometry } from "@editx/engine";
 import type { TextToolConfig } from "../config/config.types";
 import type { TextPreset, TextPresetBlock } from "../config/preset.types";
-import { prepareTextComposition } from "../config/text-composition";
+import {
+  type PreparedTextCompositionShapeElement,
+  prepareTextComposition,
+} from "../config/text-composition";
 import { applyTextBackgroundBox } from "../utils/apply-text-background-box";
 import {
   convertTextPresetRunStyle,
@@ -106,29 +103,30 @@ function insertText(
   return textId;
 }
 
-function insertShape(
-  context: InsertContext,
-  element: Extract<NonNullable<TextPreset["composition"]>["elements"][number], { kind: "shape" }>,
-) {
+function insertShape(context: InsertContext, element: PreparedTextCompositionShapeElement) {
   const { engine, pageId, pageW, pageH, scaleFactor } = context;
-  const { layout, shape, fill } = element;
+  const { layout, geometry, fill } = element;
   const id = engine.block.addShape(
     pageId,
-    shape.kind,
+    geometry.type,
     fill.kind,
     layout.x * pageW,
     layout.y * pageH,
     layout.width * pageW,
     layout.height * pageH,
-    { sides: shape.sides, pathData: shape.pathData, viewBox: shape.viewBox },
+    geometry.type === "path"
+      ? { pathData: geometry.pathData, viewBox: geometry.viewBox }
+      : { sides: geometry.type === "polygon" ? geometry.sides : undefined },
   );
   if (fill.kind === "gradient" && fill.gradient) {
-    engine.block.changeFillKind(id, "gradient");
     engine.block.setFillGradient(id, fill.gradient);
   } else if (fill.kind === "image" && fill.image) {
-    engine.block.changeFillKind(id, "image");
     engine.block.setFillImage(id, fill.image);
-  } else engine.block.setFillSolidColor(id, hexToColor(fill.color ?? "#000000"));
+  } else {
+    const color = hexToColor(fill.color ?? "#000000");
+    engine.block.setFillSolidColor(id, color);
+    if (color.a === 0) engine.block.setFillEnabled(id, false);
+  }
   if (element.stroke) {
     engine.block.setStrokeEnabled(id, true);
     engine.block.setStrokeColor(id, hexToColor(element.stroke.color));
@@ -136,16 +134,22 @@ function insertShape(
   }
   if (element.opacity !== undefined) engine.block.setOpacity(id, element.opacity);
   if (layout.rotation) engine.block.setRotation(id, layout.rotation);
-  const shapeId = engine.block.getShape(id);
-  if (shapeId != null) {
-    if (shape.kind === "rect" && shape.cornerRadius !== undefined)
-      engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, shape.cornerRadius * scaleFactor);
-    if (shape.kind === "star" && shape.points !== undefined)
-      engine.block.setFloat(shapeId, SHAPE_STAR_POINTS, shape.points);
-    if (shape.kind === "star" && shape.innerDiameter !== undefined)
-      engine.block.setFloat(shapeId, SHAPE_STAR_INNER_DIAMETER, shape.innerDiameter);
-  }
+  engine.block.setShapeGeometry(id, scaleShapeGeometry(geometry, scaleFactor));
   return id;
+}
+
+function scaleShapeGeometry(geometry: ShapeGeometry, scaleFactor: number): ShapeGeometry {
+  if (geometry.type === "rect") {
+    return { ...geometry, cornerRadius: geometry.cornerRadius! * scaleFactor };
+  }
+  if (geometry.type === "line") {
+    return {
+      ...geometry,
+      pointerLength: geometry.pointerLength! * scaleFactor,
+      pointerWidth: geometry.pointerWidth! * scaleFactor,
+    };
+  }
+  return geometry;
 }
 
 function legacyWidthMode(preset: TextPreset, block: TextPresetBlock): "auto" | "fixed" {

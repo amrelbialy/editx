@@ -6,6 +6,7 @@ import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { ColorPicker } from "../ui/color-picker";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { SwitchField } from "../ui/switch-field";
 import { TextBackgroundSection } from "./text-background-section.component";
 
@@ -21,11 +22,11 @@ function readFillState(engine: EditxEngine, blockId: number) {
   const fillId = engine.block.getFill(blockId);
   if (fillId != null) {
     const c = engine.block.getColor(fillId, FILL_SOLID_COLOR);
-    if (c) color = colorToHex(c).substring(0, 7);
+    if (c) color = toOpaqueHexColor(colorToHex(c));
   } else {
     // Text blocks don't have fill sub-blocks; read FILL_COLOR directly
     const c = engine.block.getColor(blockId, FILL_COLOR);
-    if (c) color = colorToHex(c).substring(0, 7);
+    if (c) color = toOpaqueHexColor(colorToHex(c));
   }
   return { enabled: fillEnabled, color };
 }

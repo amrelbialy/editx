@@ -40,6 +40,7 @@ export function getToolPanelTitle(
 }
 
 const propertyPanelKeys: Record<string, TranslationKey> = {
+  shape: "panel.shapes",
   color: "panel.color",
   fill: "fill.kind",
   background: "panel.background",
@@ -61,6 +62,8 @@ export function getPropertyPanelTitleKey(
 
 export function getPropertyPanelTitle(panel: PropertySidePanel | null): string | undefined {
   switch (panel) {
+    case "shape":
+      return "Shape";
     case "color":
       return "Color";
     case "fill":

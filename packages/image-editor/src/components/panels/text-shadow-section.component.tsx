@@ -2,10 +2,10 @@ import type { EditxEngine, TextRunStyle } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
+import { cn } from "../../utils/cn";
 import { ColorSwatch } from "../ui/color-swatch";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
-import { SwitchField } from "../ui/switch-field";
 
 export interface TextShadowSectionProps {
   engine: EditxEngine;
@@ -14,6 +14,7 @@ export interface TextShadowSectionProps {
   getStyleRange: () => { start: number; end: number };
   /** Offset used to read the displayed shadow style (selection start). */
   selectionStart?: number;
+  enabled?: boolean;
 }
 
 interface ShadowState {
@@ -54,7 +55,7 @@ function readShadow(engine: EditxEngine, blockId: number, selectionStart?: numbe
  *  `TextStrokeSection` — writes the run style so it stays the single source of
  *  truth for text (no separate block-level Konva shadow). */
 export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
-  const { engine, blockId, getStyleRange, selectionStart } = props;
+  const { engine, blockId, getStyleRange, selectionStart, enabled } = props;
 
   const [state, setState] = useState<ShadowState>(() =>
     readShadow(engine, blockId, selectionStart),
@@ -69,27 +70,6 @@ export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
   useEffect(() => {
     return engine.onHistoryChanged(() => setState(readShadow(engine, blockId, selectionStart)));
   }, [engine, blockId, selectionStart]);
-
-  const handleToggle = useCallback(() => {
-    const { start, end } = getStyleRange();
-    if (state.enabled) {
-      engine.block.setTextShadow(blockId, start, end, {
-        color: "",
-        blur: 0,
-        offsetX: 0,
-        offsetY: 0,
-      });
-      setState((s) => ({ ...s, enabled: false }));
-    } else {
-      engine.block.setTextShadow(blockId, start, end, {
-        color: "#000000",
-        blur: 4,
-        offsetX: 2,
-        offsetY: 2,
-      });
-      setState({ enabled: true, color: "#000000", blur: 4, offsetX: 2, offsetY: 2 });
-    }
-  }, [engine, blockId, getStyleRange, state.enabled]);
 
   const handleColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +101,12 @@ export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
   );
 
   return (
-    <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
+    <div
+      className={cn(
+        "flex flex-col gap-3 transition-opacity",
+        !(enabled ?? state.enabled) && "opacity-50",
+      )}
+    >
       {/* Color */}
       <div className="flex flex-col gap-1.5">
         <span className="text-fluid text-muted-foreground">Color</span>
@@ -162,6 +147,6 @@ export const TextShadowSection: React.FC<TextShadowSectionProps> = (props) => {
         onChange={(v) => handleBlur([v])}
         onCommit={flush}
       />
-    </SwitchField>
+    </div>
   );
 };

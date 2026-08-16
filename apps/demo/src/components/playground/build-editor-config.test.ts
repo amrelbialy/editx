@@ -2,7 +2,7 @@ import type { ImageEditorConfig } from "@editx/image-editor";
 import { describe, expect, it } from "vitest";
 import { buildEditorConfig } from "./build-editor-config";
 import { BUILT_IN_RESIZE_GROUPS } from "./crop-presets";
-import { DEFAULT_PLAYGROUND_CONFIG } from "./playground.constants";
+import { DEFAULT_PLAYGROUND_CONFIG, SHAPE_PRESET_IDS } from "./playground.constants";
 import type { PlaygroundConfig } from "./playground.types";
 
 const base = (overrides: Partial<PlaygroundConfig> = {}): PlaygroundConfig => ({
@@ -59,5 +59,20 @@ describe("buildEditorConfig crop mapping", () => {
   it("produces a config object assignable to ImageEditorConfig", () => {
     const cfg: ImageEditorConfig = buildEditorConfig(base());
     expect(cfg.crop?.presets?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("buildEditorConfig shape mapping", () => {
+  it("omits presets for the canonical default selection", () => {
+    const cfg = buildEditorConfig(base({ shapesPresets: [...SHAPE_PRESET_IDS] }));
+
+    expect("presets" in (cfg.shapes ?? {})).toBe(false);
+  });
+
+  it("includes presets for a narrowed selection", () => {
+    const shapesPresets = SHAPE_PRESET_IDS.slice(0, 2);
+    const cfg = buildEditorConfig(base({ shapesPresets }));
+
+    expect(cfg.shapes?.presets).toEqual(shapesPresets);
   });
 });

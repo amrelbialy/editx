@@ -3,7 +3,7 @@ import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "@editx/e
 import { useCallback } from "react";
 import type { ImageToolConfig } from "../config/config.types";
 import { useImageEditorStore } from "../store/image-editor-store";
-import { formatBytes } from "../utils/validate-image";
+import { processImageFile } from "../utils/process-image-file";
 
 export interface UseImageToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
@@ -14,56 +14,8 @@ export interface UseImageToolOptions {
   imageConfig?: ImageToolConfig;
 }
 
-const DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const DEFAULT_MAX_DIMENSION = 2048;
-
-/** Read a File as a data URL, returning the string. */
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Load an image element from a data URL and return it with natural dimensions. */
-function loadImageElement(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = src;
-  });
-}
-
-/**
- * Downscale an image if either dimension exceeds maxDim.
- * Returns a new data URL (or the original if no downscale needed).
- */
-function downscaleImage(img: HTMLImageElement, maxDim: number): string {
-  const { naturalWidth: w, naturalHeight: h } = img;
-  if (w <= maxDim && h <= maxDim) {
-    return img.src;
-  }
-
-  const scale = maxDim / Math.max(w, h);
-  const newW = Math.round(w * scale);
-  const newH = Math.round(h * scale);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = newW;
-  canvas.height = newH;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0, newW, newH);
-  return canvas.toDataURL("image/png");
-}
-
 export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
   const editableBlockId = useImageEditorStore((s) => s.editableBlockId);
-
-  const maxFileSize = imageConfig?.maxFileSize ?? DEFAULT_MAX_FILE_SIZE;
-  const maxDimension = imageConfig?.maxDimension ?? DEFAULT_MAX_DIMENSION;
 
   /**
    * Add an image overlay to the page from a File.
@@ -71,29 +23,12 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
    */
   const handleAddImage = useCallback(
     async (file: File) => {
-      // Validate file size
-      if (file.size > maxFileSize) {
-        throw new Error(
-          `Image is too large (${formatBytes(file.size)}). Maximum size: ${formatBytes(maxFileSize)}`,
-        );
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        throw new Error("File is not an image");
-      }
-
       const ce = engineRef.current;
       if (!ce || editableBlockId === null) return;
 
-      const dataUrl = await readFileAsDataURL(file);
-      const img = await loadImageElement(dataUrl);
-
-      // Downscale if exceeds max dimension
-      const finalSrc = downscaleImage(img, maxDimension);
-      const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
-      const naturalW = finalImg.naturalWidth;
-      const naturalH = finalImg.naturalHeight;
+      const processed = await processImageFile(file, imageConfig);
+      const naturalW = processed.width;
+      const naturalH = processed.height;
 
       // Place on page at ~40% of the shortest side
       const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
@@ -114,7 +49,7 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
 
       const imageId = ce.block.addImage(
         editableBlockId,
-        finalSrc,
+        processed.src,
         x,
         y,
         width,
@@ -124,7 +59,7 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
       );
       ce.block.select(imageId);
     },
-    [engineRef, editableBlockId, maxFileSize, maxDimension],
+    [engineRef, editableBlockId, imageConfig],
   );
 
   /**
@@ -135,29 +70,15 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
       const ce = engineRef.current;
       if (!ce) return;
 
-      if (file.size > maxFileSize) {
-        throw new Error(
-          `Image is too large (${formatBytes(file.size)}). Maximum size: ${formatBytes(maxFileSize)}`,
-        );
-      }
-
-      if (!file.type.startsWith("image/")) {
-        throw new Error("File is not an image");
-      }
-
-      const dataUrl = await readFileAsDataURL(file);
-      const img = await loadImageElement(dataUrl);
-
-      const finalSrc = downscaleImage(img, maxDimension);
-      const finalImg = finalSrc === img.src ? img : await loadImageElement(finalSrc);
+      const processed = await processImageFile(file, imageConfig);
 
       ce.beginBatch();
-      ce.block.setString(blockId, IMAGE_SRC, finalSrc);
-      ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, finalImg.naturalWidth);
-      ce.block.setFloat(blockId, IMAGE_ORIGINAL_HEIGHT, finalImg.naturalHeight);
+      ce.block.setString(blockId, IMAGE_SRC, processed.src);
+      ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, processed.width);
+      ce.block.setFloat(blockId, IMAGE_ORIGINAL_HEIGHT, processed.height);
       ce.endBatch();
     },
-    [engineRef, maxFileSize, maxDimension],
+    [engineRef, imageConfig],
   );
 
   return { handleAddImage, handleReplaceImage };

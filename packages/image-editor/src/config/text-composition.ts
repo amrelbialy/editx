@@ -1,8 +1,21 @@
+import type { ShapeGeometry } from "@editx/engine";
 import type { TextLayoutSpec, TextPreset } from "./preset.types";
-import type { TextCompositionTextElement } from "./text-composition.types";
+import { normalizeShapePresetGeometry } from "./shape-geometry-options";
+import type {
+  TextCompositionShapeElement,
+  TextCompositionTextElement,
+} from "./text-composition.types";
+
+export type PreparedTextCompositionShapeElement = TextCompositionShapeElement & {
+  geometry: ShapeGeometry;
+};
+
+type PreparedTextCompositionElement =
+  | TextCompositionTextElement
+  | PreparedTextCompositionShapeElement;
 
 export interface PreparedTextComposition {
-  elements: NonNullable<TextPreset["composition"]>["elements"];
+  elements: PreparedTextCompositionElement[];
   bounds: TextLayoutSpec;
   widthModes: Map<number, "auto" | "fixed">;
 }
@@ -14,17 +27,20 @@ export function prepareTextComposition(preset: TextPreset): PreparedTextComposit
 
   const referenced = new Set<number>();
   const widthModes = new Map<number, "auto" | "fixed">();
-  for (const element of composition.elements) {
+  const elements = composition.elements.map((element): PreparedTextCompositionElement => {
     validateLayout(preset.id, element.layout);
-    if (element.kind !== "text") continue;
+    if (element.kind === "shape") {
+      return { ...element, geometry: normalizeShapePresetGeometry(element.shape) };
+    }
     validateTextElement(preset, element, referenced);
     widthModes.set(element.block, element.widthMode ?? "fixed");
-  }
+    return element;
+  });
   if (referenced.size !== preset.blocks.length) {
     throw new Error(`Text preset "${preset.id}" must reference every block exactly once`);
   }
 
-  return { elements: composition.elements, bounds: unionBounds(composition.elements), widthModes };
+  return { elements, bounds: unionBounds(elements), widthModes };
 }
 
 function validateTextElement(

@@ -63,8 +63,8 @@ function applyFill(
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {
   const fillEnabled = (props[FILL_ENABLED] as boolean) ?? true;
+  node.fillEnabled(fillEnabled);
   if (!fillEnabled) {
-    setColorFill(node, "");
     return;
   }
 

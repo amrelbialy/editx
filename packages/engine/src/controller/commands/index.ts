@@ -14,6 +14,7 @@ export { RemoveChildCommand } from "./remove-child-command";
 export { RemoveEffectCommand } from "./remove-effect-command";
 export { SetFillCommand } from "./set-fill-command";
 export { SetKindCommand } from "./set-kind-command";
+export { SetNameCommand } from "./set-name-command";
 export { SetPageImageCommand } from "./set-page-image-command";
 export type { PageMargins } from "./set-page-margins-command";
 export { SetPageMarginsCommand } from "./set-page-margins-command";

@@ -37,7 +37,7 @@ function makeEngine(run: Record<string, unknown>) {
 function renderPanel(engine: EditxEngine) {
   return render(
     <ImageEditorProvider>
-      <ColorPropertyPanel engine={engine} blockId={7} blockType="text" />
+      <ColorPropertyPanel engine={engine} blockId={7} />
     </ImageEditorProvider>,
   );
 }

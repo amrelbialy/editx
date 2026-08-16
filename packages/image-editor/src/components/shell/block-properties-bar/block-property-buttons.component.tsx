@@ -1,13 +1,13 @@
 import type { EditxEngine } from "@editx/engine";
 import {
   ChevronDown,
-  CircleOff,
   Grid2x2,
   ImageIcon,
   Move,
   PaintBucket,
   Paintbrush,
   Palette,
+  Shapes,
   SlidersHorizontal,
   Sparkles,
   Sun,
@@ -16,15 +16,9 @@ import type React from "react";
 import { useTranslation } from "../../../i18n/i18n-context";
 import type { PropertySidePanel } from "../../../store/image-editor-store";
 import { cn } from "../../../utils/cn";
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  IconButton,
-  Slider,
-} from "../../ui";
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Slider } from "../../ui";
 import { ACTIVE_PANEL_TINT, PanelButton } from "./panel-button.component";
+import { ShapeGeometryButton } from "./shape-geometry-button.component";
 
 const triggerBase = "gap-1.5 px-2.5 h-8 text-xs whitespace-nowrap";
 
@@ -38,14 +32,8 @@ export interface BlockPropertyButtonsProps {
   propertySidePanel: PropertySidePanel;
   onTogglePanel: (panel: PropertySidePanel) => void;
   onOpacityChange: (value: number[]) => void;
-  refresh: () => void;
 }
 
-/**
- * Shared property buttons rendered for every block type (with type-specific
- * variations). Presentational: side-panel toggles and opacity mutation are
- * delegated via props.
- */
 export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props) => {
   const {
     engine,
@@ -57,17 +45,25 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
     propertySidePanel,
     onTogglePanel,
     onOpacityChange,
-    refresh,
   } = props;
 
   const { t } = useTranslation();
 
-  const fillEnabled = engine.block.isFillEnabled(blockId);
   const styleActive = propertySidePanel === "adjust" || propertySidePanel === "filter";
   return (
     <>
-      {/* Color (text + graphic only) */}
-      {!isImage && (
+      {!isText && !isImage && (
+        <PanelButton
+          panel="shape"
+          icon={<Shapes className="h-4 w-4" />}
+          label={t("panel.shapes")}
+          active={propertySidePanel === "shape"}
+          onToggle={onTogglePanel}
+        />
+      )}
+      {!isText && !isImage && <ShapeGeometryButton engine={engine} blockId={blockId} />}
+
+      {isText && (
         <PanelButton
           panel="color"
           icon={
@@ -82,21 +78,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {/* No-fill toggle (graphic only) */}
-      {!isText && !isImage && (
-        <IconButton
-          onClick={() => {
-            engine.block.setFillEnabled(blockId, !fillEnabled);
-            refresh();
-          }}
-          label={fillEnabled ? t("block.disableFill") : t("block.enableFill")}
-          aria-pressed={!fillEnabled}
-          className={cn(!fillEnabled ? "bg-primary/20 text-primary" : "text-muted-foreground")}
-          icon={<CircleOff className="h-4 w-4" />}
-        />
-      )}
-
-      {/* Fill kind (graphic only — Color / Gradient / Image) */}
       {!isText && !isImage && (
         <PanelButton
           panel="fill"
@@ -107,7 +88,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {/* Background (text only) */}
       {isText && (
         <PanelButton
           panel="background"
@@ -118,7 +98,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {/* Stroke (graphic only) */}
       {!isText && !isImage && (
         <PanelButton
           panel="stroke"
@@ -129,7 +108,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {/* Image fill panel button (image only) */}
       {isImage && (
         <PanelButton
           panel="imageFill"
@@ -140,7 +118,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {/* Style dropdown (image only — Adjustments / Filters) */}
       {isImage && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -189,7 +166,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         </DropdownMenu>
       )}
 
-      {/* Shadow */}
       <PanelButton
         panel="shadow"
         icon={<Sun className="h-4 w-4" />}
@@ -198,7 +174,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         onToggle={onTogglePanel}
       />
 
-      {/* Opacity (dropdown) */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className={cn(triggerBase, "text-muted-foreground")}>
@@ -230,7 +205,6 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Position */}
       <PanelButton
         panel="position"
         icon={<Move className="h-4 w-4" />}

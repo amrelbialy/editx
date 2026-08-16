@@ -74,6 +74,22 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Replacing shape geometry
+
+Use `engine.block.setShapeGeometry(graphicId, geometry)` to replace a graphic's shape without
+changing its layout, fill, stroke, effects, group membership, or selection. `ShapeGeometry` is a
+public discriminated union for `rect`, `ellipse`, `polygon`, `star`, `line`, and named SVG `path`
+descriptors. The replacement is one undo entry; omitted primitive options reset to fresh defaults.
+Invalid descriptors throw before history changes, while missing or non-shape targets are no-ops.
+
+```ts
+engine.block.setShapeGeometry(graphicId, {
+  type: "star",
+  points: 8,
+  innerDiameter: 0.4,
+});
+```
+
 ### Text background geometry
 
 Block-level text backgrounds support two geometry modes through

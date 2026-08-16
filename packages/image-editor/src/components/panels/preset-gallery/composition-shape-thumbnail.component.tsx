@@ -1,11 +1,16 @@
 import type React from "react";
 import { useId } from "react";
+import type { ShapePreset } from "../../../config/config.types";
 import type { TextCompositionPreview } from "../../../config/text-composition.types";
 
 type ShapeLayer = Extract<TextCompositionPreview["layers"][number], { kind: "shape" }>;
+type SemanticShapeLayer = Pick<ShapeLayer, "shape" | "style"> & {
+  fill?: ShapePreset["fill"];
+  stroke?: ShapePreset["stroke"];
+};
 
 interface CompositionShapeThumbnailProps {
-  layer: ShapeLayer;
+  layer: SemanticShapeLayer;
 }
 
 const INSERTED_LINE_STROKE = { color: "#4a8fe3", width: 10 } as const;
@@ -14,12 +19,13 @@ const INSERTED_LINE_POINTER_WIDTH = 15;
 
 export const CompositionShapeThumbnail: React.FC<CompositionShapeThumbnailProps> = (props) => {
   const { layer } = props;
-  const clipId = useId().replaceAll(":", "");
+  const clipId = useId().replace(/:/g, "");
 
   if (["line", "star", "polygon", "path"].includes(layer.shape.kind)) {
     const geometry = toSvgGeometry(layer);
-    const stroke = parseBorder(layer.style?.border);
-    const solidFill = parseSolidFill(layer.style?.background);
+    const stroke = layer.stroke ?? parseBorder(layer.style?.border);
+    const solidFill =
+      layer.fill?.kind === "color" ? layer.fill.color : parseSolidFill(layer.style?.background);
     return (
       <svg
         className="h-full w-full overflow-visible"
@@ -37,7 +43,7 @@ export const CompositionShapeThumbnail: React.FC<CompositionShapeThumbnailProps>
           geometry.fill(solidFill)
         ) : (
           <foreignObject width="100%" height="100%" clipPath={`url(#${clipId})`}>
-            <div className="h-full w-full" style={toFillStyle(layer.style, false)} />
+            <div className="h-full w-full" style={toFillStyle(layer, false)} />
           </foreignObject>
         )}
         {geometry.stroke(stroke)}
@@ -48,15 +54,37 @@ export const CompositionShapeThumbnail: React.FC<CompositionShapeThumbnailProps>
   return (
     <div
       className="h-full w-full"
-      style={{ ...toFillStyle(layer.style), ...toGeometryStyle(layer) }}
+      style={{ ...toFillStyle(layer), ...toGeometryStyle(layer) }}
       data-composition-shape={layer.shape.kind}
     />
   );
 };
 
-function toFillStyle(style: ShapeLayer["style"], includeBorder = true): React.CSSProperties {
+function toFillStyle(layer: SemanticShapeLayer, includeBorder = true): React.CSSProperties {
+  const { fill, style } = layer;
+  if (fill?.kind === "gradient" && fill.gradient) {
+    const { type, stops, angle = 0 } = fill.gradient;
+    const renderedStops = stops.map(({ offset, color }) => `${color} ${offset * 100}%`).join(", ");
+    return {
+      background:
+        type === "radial"
+          ? `radial-gradient(circle, ${renderedStops})`
+          : `linear-gradient(${(angle + 90) % 360}deg, ${renderedStops})`,
+      border: includeBorder ? toBorder(layer.stroke) : undefined,
+    };
+  }
+  if (fill?.kind === "image" && fill.image) {
+    const fit = fill.image.fit ?? "cover";
+    return {
+      backgroundImage: `url("${fill.image.src}")`,
+      backgroundSize: fit === "stretch" ? "100% 100%" : fit === "tile" ? "auto" : fit,
+      backgroundPosition: "center",
+      backgroundRepeat: fit === "tile" ? "repeat" : "no-repeat",
+      border: includeBorder ? toBorder(layer.stroke) : undefined,
+    };
+  }
   return {
-    background: style?.background,
+    background: fill?.kind === "color" ? fill.color : style?.background,
     ...(style?.backgroundImage
       ? {
           backgroundImage: style.backgroundImage,
@@ -64,15 +92,19 @@ function toFillStyle(style: ShapeLayer["style"], includeBorder = true): React.CS
           backgroundPosition: "center",
         }
       : {}),
-    border: includeBorder ? style?.border : undefined,
+    border: includeBorder ? (toBorder(layer.stroke) ?? style?.border) : undefined,
   };
 }
 
-function toGeometryStyle(layer: ShapeLayer): React.CSSProperties {
+function toBorder(stroke?: ShapePreset["stroke"]): string | undefined {
+  return stroke ? `${stroke.width}px solid ${stroke.color}` : undefined;
+}
+
+function toGeometryStyle(layer: SemanticShapeLayer): React.CSSProperties {
   const { shape, style } = layer;
   if (shape.kind === "ellipse") return { borderRadius: "50%" };
   if (shape.kind === "rect") {
-    return { borderRadius: style?.borderRadius };
+    return { borderRadius: shape.cornerRadius ?? style?.borderRadius };
   }
   return { borderRadius: style?.borderRadius, clipPath: style?.clipPath };
 }
@@ -100,10 +132,15 @@ function parseSolidFill(background?: string): string | undefined {
 
 type Stroke = ReturnType<typeof parseBorder>;
 
-function toSvgGeometry(layer: ShapeLayer) {
+function toSvgGeometry(layer: SemanticShapeLayer) {
   const strokeProps = (stroke: Stroke) =>
     stroke
-      ? { fill: "none", stroke: stroke.color, strokeWidth: stroke.width, strokeLinejoin: "round" }
+      ? {
+          fill: "none",
+          stroke: stroke.color,
+          strokeWidth: stroke.width,
+          strokeLinejoin: "round" as const,
+        }
       : { fill: "none" };
   if (layer.shape.kind === "path" && layer.shape.pathData) {
     const viewBox = layer.shape.viewBox ?? { width: 100, height: 100 };
@@ -116,10 +153,11 @@ function toSvgGeometry(layer: ShapeLayer) {
     };
   }
   if (layer.shape.kind === "line") {
-    const pointerBaseX = 100 - INSERTED_LINE_POINTER_LENGTH;
-    const pointerHalfWidth = INSERTED_LINE_POINTER_WIDTH / 2;
+    const pointerBaseX = 100 - (layer.shape.pointerLength ?? INSERTED_LINE_POINTER_LENGTH);
+    const pointerHalfWidth = (layer.shape.pointerWidth ?? INSERTED_LINE_POINTER_WIDTH) / 2;
     const pointer = `${pointerBaseX},${50 + pointerHalfWidth} 100,50 ${pointerBaseX},${50 - pointerHalfWidth}`;
-    const effectiveStroke = parseBorder(layer.style?.border) ?? INSERTED_LINE_STROKE;
+    const effectiveStroke =
+      layer.stroke ?? parseBorder(layer.style?.border) ?? INSERTED_LINE_STROKE;
     const lineStrokeProps = {
       fill: "none",
       stroke: effectiveStroke.color,

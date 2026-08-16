@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../config/config-context";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
 import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
 import { ColorSwatch } from "../ui/color-swatch";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { SliderField } from "../ui/slider-field";
 import { SwitchField } from "../ui/switch-field";
 import { TextStrokeSection } from "./text-stroke-section.component";
@@ -15,6 +17,7 @@ interface StrokePropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
   blockType: "text" | "graphic" | "image";
+  enabled?: boolean;
 }
 
 interface StrokeState {
@@ -26,16 +29,13 @@ interface StrokeState {
 function readStroke(engine: EditxEngine, blockId: number): StrokeState {
   return {
     enabled: engine.block.isStrokeEnabled(blockId),
-    color: colorToHex(engine.block.getStrokeColor(blockId)).substring(0, 7),
+    color: toOpaqueHexColor(colorToHex(engine.block.getStrokeColor(blockId))),
     width: engine.block.getStrokeWidth(blockId),
   };
 }
 
-export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({
-  engine,
-  blockId,
-  blockType,
-}) => {
+export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = (props) => {
+  const { engine, blockId, blockType, enabled } = props;
   const shapes = useConfig().shapes;
 
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
@@ -120,9 +120,8 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({
     );
   }
 
-  return (
-    <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
-      {/* Color */}
+  const controls = (
+    <>
       <div className="flex flex-col gap-1.5">
         <span className="text-fluid text-muted-foreground">Color</span>
         <div className="flex items-center gap-2">
@@ -131,7 +130,6 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({
         </div>
       </div>
 
-      {/* Width */}
       <SliderField
         label="Width"
         value={state.width}
@@ -142,6 +140,25 @@ export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({
         onCommit={flush}
         formatValue={(v) => v.toFixed(1)}
       />
-    </SwitchField>
+    </>
+  );
+
+  if (blockType === "image") {
+    return (
+      <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
+        {controls}
+      </SwitchField>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 transition-opacity",
+        !(enabled ?? state.enabled) && "opacity-50",
+      )}
+    >
+      {controls}
+    </div>
   );
 };

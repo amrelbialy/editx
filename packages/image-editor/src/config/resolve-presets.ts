@@ -18,6 +18,7 @@ export interface ResolveShapePresetsInput {
   presetGroups?: PresetGroup<ShapePreset>[];
   additionalPresetGroups?: PresetGroup<ShapePreset>[];
   legacyPresets?: string[];
+  defaultColor?: string;
 }
 
 /** Polygon side counts for legacy named shape ids. */
@@ -42,16 +43,21 @@ function legacyTextToPreset(p: TextStylePreset): TextPreset {
   };
 }
 
-function legacyShapeToPreset(id: string): ShapePreset {
+function legacyShapeToPreset(id: string, defaultColor: string): ShapePreset {
   const sides = LEGACY_SHAPE_SIDES[id];
   const kind = (sides ? "polygon" : id) as ShapeType;
   return {
     id,
     label: id,
     shape: { kind, sides },
-    fill: { kind: "color" },
+    fill: { kind: "color", color: defaultColor },
     preview: { kind: "shape" },
   };
+}
+
+function normalizeShapePreset(preset: ShapePreset, defaultColor: string): ShapePreset {
+  if (preset.fill.kind !== "color" || preset.fill.color) return preset;
+  return { ...preset, fill: { ...preset.fill, color: defaultColor } };
 }
 
 /** Append `additions`, merging presets into any category sharing an `id`. */
@@ -123,12 +129,18 @@ export function resolveShapePresetGroups(
         id: LEGACY_SHAPE_GROUP_ID,
         label: "Shapes",
         labelKey: "presets.shapes.legacy",
-        presets: legacyPresets.map(legacyShapeToPreset),
+        presets: legacyPresets.map((id) =>
+          legacyShapeToPreset(id, input.defaultColor ?? "#3b82f6"),
+        ),
       },
     ];
   else base = builtIn;
   const merged = additionalPresetGroups ? appendGroups(base, additionalPresetGroups) : base;
-  return sanitizeGroups(merged);
+  const defaultColor = input.defaultColor ?? "#3b82f6";
+  return sanitizeGroups(merged).map((group) => ({
+    ...group,
+    presets: group.presets.map((preset) => normalizeShapePreset(preset, defaultColor)),
+  }));
 }
 
 /** Find a preset by id across all categories. */

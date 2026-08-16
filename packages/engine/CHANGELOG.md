@@ -4,6 +4,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Added
+
+* **engine:** export the `ShapeGeometry` descriptor union and add undoable
+	`engine.block.setShapeGeometry` replacement for rectangle, ellipse, polygon, star, line, and path
+	geometry.
+
+### Changed
+
+* **engine:** `hexToColor` now accepts `#RRGGBBAA` input while `colorToHex` output is unchanged.
+
 ## [0.1.0-alpha.11](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.10...@editx/engine@0.1.0-alpha.11) (2026-08-05)
 
 **Note:** Version bump only for package @editx/engine

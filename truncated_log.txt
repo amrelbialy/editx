@@ -1,0 +1,265 @@
+PS D:\personal-projects\editx> 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/components/panels/shape-properties-panel.test.tsx > ShapePropertiesPanel > out-of-range values > ignores non-numeric intermediate input without calling setShapeGeometry
+TestingLibraryElementError: Unable to find an accessible element with the role "spinbutton" and name "Sides"
+
+Here are the accessible roles:
+
+  combobox:
+
+  Name "Geometry":
+  <button
+    aria-autocomplete="none"
+    aria-controls="radix-_r_2f_"
+    aria-expanded="false"
+    aria-label="Geometry"
+    class="flex h-8 cursor-pointer items-center justify-between gap-1 rounded-md border border-border bg-muted px-2 text-fluid text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background [&>span]:line-clamp-1 w-full"
+    data-state="closed"
+    dir="ltr"
+    role="combobox"
+    type="button"
+  />
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "":
+  <input
+    class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    min="3"
+    step="1"
+    type="number"
+    value="6"
+  />
+
+  Name "":
+  <input
+    class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    type="number"
+    value="0"
+  />
+
+  Name "":
+  <input
+    class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    type="number"
+    value="0"
+  />
+
+  Name "":
+  <input
+    class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    type="number"
+    value="100"
+  />
+
+  Name "":
+  <input
+    class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    type="number"
+    value="100"
+  />
+
+  --------------------------------------------------
+  slider:
+
+  Name "Opacity":
+  <input
+    aria-label="Opacity"
+    type="range"
+    value="1"
+  />
+
+  --------------------------------------------------
+  none:
+
+  Name "":
+  <div
+    class="shrink-0 bg-border h-px w-full"
+    data-orientation="horizontal"
+    role="none"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex flex-col gap-4"
+    >
+      <div
+        class="text-fluid font-medium text-muted-foreground uppercase tracking-wider"
+      >
+        Shape Properties
+      </div>
+      <div
+        class="flex flex-col gap-1.5"
+      >
+        <span
+          class="text-fluid font-medium text-muted-foreground"
+        >
+          Geometry
+        </span>
+        <button
+          aria-autocomplete="none"
+          aria-controls="radix-_r_2f_"
+          aria-expanded="false"
+          aria-label="Geometry"
+          class="flex h-8 cursor-pointer items-center justify-between gap-1 rounded-md border border-border bg-muted px-2 text-fluid text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background [&>span]:line-clamp-1 w-full"
+          data-state="closed"
+          dir="ltr"
+          role="combobox"
+          type="button"
+        >
+          <span
+            style="pointer-events: none;"
+          >
+            Polygon
+          </span>
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-chevron-down h-3 w-3 shrink-0 opacity-50"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m6 9 6 6 6-6"
+            />
+          </svg>
+        </button>
+        <div
+          class="flex items-center gap-1.5"
+        >
+          <span
+            class="text-fluid text-muted-foreground shrink-0"
+          >
+            Sides
+          </span>
+          <div
+            class="h-8 rounded-md border border-border bg-muted px-2 text-foreground transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background flex flex-1 items-center gap-1 text-fluid"
+          >
+            <input
+              class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              min="3"
+              step="1"
+              type="number"
+              value="6"
+            />
+          </div>
+        </div>
+      </div>
+      <input
+        aria-label="Opacity"
+        type="range"
+        value="1"
+      />
+      <div
+        class="shrink-0 bg-border h-px w-full"
+        data-orientation="horizontal"
+        role="none"
+      />
+      <div
+        class="flex flex-col gap-1.5"
+      >
+        <span
+          class="text-fluid font-medium text-muted-foreground"
+        >
+          Position
+        </span>
+        <div
+          class="grid grid-cols-2 gap-2"
+        >
+          <div
+            class="flex items-center gap-1.5"
+          >
+            <span
+              class="text-fluid text-muted-foreground shrink-0"
+            >
+              X
+            </span>
+            <div
+              class="h-8 rounded-md border border-border bg-muted px-2 text-foreground transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background flex flex-1 items-center gap-1 text-fluid"
+            >
+              <input
+                class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                type="number"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-1.5"
+          >
+            <span
+              class="text-fluid text-muted-foreground shrink-0"
+            >
+              Y
+            </span>
+            <div
+              class="h-8 rounded-md border border-border bg-muted px-2 text-foreground transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background flex flex-1 items-center gap-1 text-fluid"
+            >
+              <input
+                class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                type="number"
+                value="0"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col gap-1.5"
+      >
+        <span
+          class="text-fluid font-medium text-muted-foreground"
+        >
+          Size
+        </span>
+        <div
+          class="grid grid-cols-2 gap-2"
+        >
+          <div
+            class="flex items-center gap-1.5"
+          >
+            <span
+              class="text-fluid text-muted-foreground shrink-0"
+            >
+              W
+            </span>
+            <div
+              class="h-8 rounded-md border border-border bg-muted px-2 text-foreground transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background flex flex-1 items-center gap-1 text-fluid"
+            >
+              <input
+                class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                type="number"
+                value="100"
+              />
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-1.5"
+          >
+            <span
+              class="text-fluid text-muted-foreground shrink-0"
+            >
+              H
+            </span>
+            <div
+              class="h-8 rounded-md border border-border bg-muted px-2 text-foreground transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background flex flex-1 items-center gap-1 text-fluid"
+            >
+              <input
+                class="w-0 flex-1 bg-transparent text-foreground outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                type="number"
+                value="100"
+              />
+           

@@ -34,6 +34,24 @@ function makeEngine(run: Record<string, unknown>) {
   return engine as unknown as EditxEngine & { block: typeof block };
 }
 
+function makeGraphicEngine() {
+  const block = {
+    getShadowColor: vi.fn().mockReturnValue({ r: 0, g: 0, b: 0, a: 0 }),
+    isShadowEnabled: vi.fn().mockReturnValue(true),
+    getShadowOffsetX: vi.fn().mockReturnValue(0),
+    getShadowOffsetY: vi.fn().mockReturnValue(0),
+    getShadowBlur: vi.fn().mockReturnValue(0),
+  };
+  const engine = {
+    block,
+    onHistoryChanged: vi.fn().mockReturnValue(() => {}),
+    beginBatch: vi.fn(),
+    endBatch: vi.fn(),
+    renderDirty: vi.fn(),
+  };
+  return engine as unknown as EditxEngine;
+}
+
 function renderPanel(engine: EditxEngine) {
   return render(
     <ImageEditorProvider>
@@ -49,7 +67,7 @@ describe("ShadowPropertyPanel (text block)", () => {
 
   afterEach(cleanup);
 
-  it("reflects the run's shadow values from a preset (enabled + real values)", () => {
+  it("reflects the run's shadow values from a preset", () => {
     const engine = makeEngine({
       textShadowColor: "#ff0000",
       textShadowBlur: 8,
@@ -58,20 +76,28 @@ describe("ShadowPropertyPanel (text block)", () => {
     });
     renderPanel(engine);
 
-    // Switch is ON because the run carries a shadow.
-    expect(screen.getByRole("switch", { name: "Enable Shadow" }).getAttribute("aria-checked")).toBe(
-      "true",
-    );
-    // The preset colour is surfaced, not "#000000"/disabled.
+    expect(screen.queryByRole("switch", { name: "Enable Shadow" })).toBeNull();
     expect(screen.getByText("#ff0000")).toBeDefined();
   });
 
-  it("shows a disabled switch when the run carries no shadow", () => {
+  it("keeps disabled text shadow controls mounted with reduced opacity", () => {
     const engine = makeEngine({ fontSize: 24 });
-    renderPanel(engine);
+    const { container } = renderPanel(engine);
 
-    expect(screen.getByRole("switch", { name: "Enable Shadow" }).getAttribute("aria-checked")).toBe(
-      "false",
+    expect(screen.queryByRole("switch", { name: "Enable Shadow" })).toBeNull();
+    expect(screen.getByText("Blur")).toBeDefined();
+    expect(container.firstElementChild?.classList.contains("opacity-50")).toBe(true);
+  });
+
+  it("renders a transparent engine shadow as a valid opaque color control", () => {
+    const { container } = render(
+      <ImageEditorProvider>
+        <ShadowPropertyPanel engine={makeGraphicEngine()} blockId={7} blockType="graphic" />
+      </ImageEditorProvider>,
     );
+
+    expect(container.querySelector<HTMLInputElement>('input[type="color"]')?.value).toBe("#000000");
+    expect(screen.getByText("#000000")).toBeDefined();
+    expect(screen.queryByText("rgba(0,")).toBeNull();
   });
 });

@@ -1,4 +1,3 @@
-/** Clamp helpers keeping ShapePropertiesPanel values inside setShapeGeometry's engine bounds. */
 import type { ShapeGeometry, ShapeType } from "@editx/engine";
 
 export type NumericShapeKey =
@@ -41,7 +40,6 @@ function clampPointerWidth(value: number): number {
   return Math.max(0, value);
 }
 
-/** Builds a clamped `ShapeGeometry` patch for the state's kind, or `null` if it has no numeric params. */
 export function buildClampedGeometry(
   state: NumericShapeState,
   key: NumericShapeKey,

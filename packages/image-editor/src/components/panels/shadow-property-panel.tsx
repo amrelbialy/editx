@@ -4,16 +4,18 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
 import { useImageEditorStore } from "../../store/image-editor-store";
+import { cn } from "../../utils/cn";
 import { ColorSwatch } from "../ui/color-swatch";
+import { toOpaqueHexColor } from "../ui/color-value";
 import { Input } from "../ui/input";
 import { SliderField } from "../ui/slider-field";
-import { SwitchField } from "../ui/switch-field";
 import { TextShadowSection } from "./text-shadow-section.component";
 
 interface ShadowPropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
   blockType: "text" | "graphic" | "image";
+  enabled?: boolean;
 }
 
 interface ShadowState {
@@ -28,18 +30,15 @@ function readShadow(engine: EditxEngine, blockId: number): ShadowState {
   const sc = engine.block.getShadowColor(blockId);
   return {
     enabled: engine.block.isShadowEnabled(blockId),
-    color: sc ? colorToHex(sc).substring(0, 7) : "#000000",
+    color: sc ? toOpaqueHexColor(colorToHex(sc)) : "#000000",
     offsetX: engine.block.getShadowOffsetX(blockId),
     offsetY: engine.block.getShadowOffsetY(blockId),
     blur: engine.block.getShadowBlur(blockId),
   };
 }
 
-export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({
-  engine,
-  blockId,
-  blockType,
-}) => {
+export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = (props) => {
+  const { engine, blockId, blockType, enabled } = props;
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
@@ -71,11 +70,6 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({
     }
     return { start: 0, end: engine.block.getTextContent(blockId).length };
   }, [engine, blockId, hasCharSelection, textSelectionRange]);
-
-  const handleToggle = useCallback(() => {
-    engine.block.setShadowEnabled(blockId, !state.enabled);
-    update();
-  }, [engine, blockId, state.enabled, update]);
 
   const handleColor = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,12 +116,18 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({
         blockId={blockId}
         getStyleRange={getStyleRange}
         selectionStart={textSelectionRange?.from}
+        enabled={enabled}
       />
     );
   }
 
   return (
-    <SwitchField label="Enable Shadow" checked={state.enabled} onChange={handleToggle}>
+    <div
+      className={cn(
+        "flex flex-col gap-3 transition-opacity",
+        !(enabled ?? state.enabled) && "opacity-50",
+      )}
+    >
       {/* Color */}
       <div className="flex flex-col gap-1.5">
         <span className="text-fluid text-muted-foreground">Color</span>
@@ -168,6 +168,6 @@ export const ShadowPropertyPanel: React.FC<ShadowPropertyPanelProps> = ({
         onChange={(v) => handleBlur([v])}
         onCommit={flush}
       />
-    </SwitchField>
+    </div>
   );
 };

@@ -60,6 +60,12 @@ export const en = {
 
   // Tool panel
   "panel.close": "Close panel",
+  "panel.showFill": "Show fill",
+  "panel.hideFill": "Hide fill",
+  "panel.showStroke": "Show stroke",
+  "panel.hideStroke": "Hide stroke",
+  "panel.showShadow": "Show shadow",
+  "panel.hideShadow": "Hide shadow",
   "panel.crop": "Crop",
   "panel.rotateFlip": "Rotate & Flip",
   "panel.adjustments": "Adjustments",
