@@ -1,6 +1,7 @@
 import type { TextBackgroundPadding } from "../block/block.types";
 import {
   POSITION_X,
+  SHAPE_RECT_CORNER_RADIUS,
   SIZE_HEIGHT,
   SIZE_WIDTH,
   TEXT_ALIGN,
@@ -87,15 +88,16 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
 
   adapter.onBlockTransformEnd = (blockId, transform, anchorName) => {
     engine.beginBatch();
-    const isText = engine.block.getType(blockId) === "text";
+    const blockType = engine.block.getType(blockId);
+    const isText = blockType === "text";
     const isCorner = CORNER_ANCHORS.has(anchorName ?? "");
+    const oldSize = isCorner || blockType === "graphic" ? engine.block.getSize(blockId) : null;
+    const scaleFactor = oldSize
+      ? Math.sqrt((transform.width / oldSize.width) * (transform.height / oldSize.height))
+      : 1;
 
     // Scale font sizes only on corner resize (pills just resize the container)
     if (isText && isCorner) {
-      const oldSize = engine.block.getSize(blockId);
-      const scaleX = transform.width / oldSize.width;
-      const scaleY = transform.height / oldSize.height;
-      const scaleFactor = Math.sqrt(scaleX * scaleY);
       if (Math.abs(scaleFactor - 1) > 0.001) {
         const runs = engine.block.getTextRuns(blockId);
         const scaledRuns = runs.map((run) => ({
@@ -129,6 +131,25 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
               );
             }
           }
+        }
+      }
+    }
+
+    if (blockType === "graphic" && Math.abs(scaleFactor - 1) > 0.001) {
+      const strokeWidth = engine.block.getStrokeWidth(blockId);
+      if (strokeWidth > 0) {
+        engine.block.setStrokeWidth(blockId, scaleGeometry(strokeWidth, scaleFactor));
+      }
+
+      const shapeId = engine.block.getShape(blockId);
+      if (shapeId != null && engine.block.getKind(shapeId) === "rect") {
+        const cornerRadius = engine.block.getFloat(shapeId, SHAPE_RECT_CORNER_RADIUS);
+        if (cornerRadius > 0) {
+          engine.block.setFloat(
+            shapeId,
+            SHAPE_RECT_CORNER_RADIUS,
+            scaleGeometry(cornerRadius, scaleFactor),
+          );
         }
       }
     }
