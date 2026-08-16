@@ -170,7 +170,7 @@ export const en = {
   "presets.shapes.outline": "Outline",
   "presets.shapes.gradient": "Gradient",
   "presets.shapes.image": "Image",
-  "presets.shapes.path": "Shapes",
+  "presets.shapes.path": "Abstract",
   "presets.shapes.legacy": "Shapes",
 
   // Shape fill panel

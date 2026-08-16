@@ -8,13 +8,13 @@ import { resolveShapePresetGroups } from "../../config/resolve-presets";
 import { toShapeGeometry } from "../../config/shape-geometry-options";
 import { useHistoryVersion } from "../../hooks/use-history-version";
 import { PresetGallery } from "./preset-gallery";
+import { createShapeReplacementGroups } from "./shape-replacement-groups";
 
 interface ShapeReplacePanelProps {
   engine: EditxEngine;
   blockId: number;
 }
 
-const preview = { kind: "shape" as const };
 const neutralFill = { kind: "color" as const, color: "#64748b" };
 
 function readPreviewPaint(
@@ -46,26 +46,6 @@ function readPreviewPaint(
   return { fill, stroke };
 }
 
-const primitivePresets: ShapePreset[] = [
-  { id: "primitive-rect", label: "Rectangle", shape: { kind: "rect" }, fill: neutralFill, preview },
-  {
-    id: "primitive-ellipse",
-    label: "Ellipse",
-    shape: { kind: "ellipse" },
-    fill: neutralFill,
-    preview,
-  },
-  { id: "primitive-arrow", label: "Arrow", shape: { kind: "line" }, fill: neutralFill, preview },
-  {
-    id: "primitive-polygon",
-    label: "Polygon",
-    shape: { kind: "polygon", sides: 5 },
-    fill: neutralFill,
-    preview,
-  },
-  { id: "primitive-star", label: "Star", shape: { kind: "star" }, fill: neutralFill, preview },
-];
-
 export const ShapeReplacePanel: React.FC<ShapeReplacePanelProps> = (props) => {
   const { engine, blockId } = props;
   const config = useConfig();
@@ -81,18 +61,7 @@ export const ShapeReplacePanel: React.FC<ShapeReplacePanelProps> = (props) => {
       legacyPresets: config.shapes?.presets,
       defaultColor: config.shapes?.defaultColor,
     });
-    const paths = configured
-      .flatMap((group) => group.presets)
-      .filter((preset) => preset.shape.kind === "path")
-      .map((preset) => ({ ...preset, ...previewPaint }));
-    return [
-      {
-        id: "primitive",
-        label: "Basic",
-        presets: primitivePresets.map((preset) => ({ ...preset, ...previewPaint })),
-      },
-      ...(paths.length ? [{ id: "path", label: "Abstract", presets: paths }] : []),
-    ];
+    return createShapeReplacementGroups(configured, previewPaint);
   }, [config.shapes, previewPaint]);
 
   const replaceShape = useCallback(

@@ -2,7 +2,7 @@ import type { EditxEngine, ShapeGeometry, ShapeType } from "@editx/engine";
 import { hexToColor } from "@editx/engine";
 import { useCallback } from "react";
 import type { ImageEditorConfig } from "../config/config.types";
-import { DEFAULT_SHAPE_PRESET_GROUPS } from "../config/presets";
+import { DEFAULT_SHAPE_PRESET_GROUPS, LEGACY_FILLED_ARROW_PRESET } from "../config/presets";
 import { findPresetById, resolveShapePresetGroups } from "../config/resolve-presets";
 import { normalizeShapePresetGeometry } from "../config/shape-geometry-options";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -98,7 +98,9 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
         legacyPresets: shapes.presets,
         defaultColor: shapes.defaultColor,
       });
-      const preset = findPresetById(groups, id);
+      const preset =
+        findPresetById(groups, id) ??
+        (id === LEGACY_FILLED_ARROW_PRESET.id ? LEGACY_FILLED_ARROW_PRESET : undefined);
       // Back-compat: unknown ids fall through to the legacy shape-kind flow.
       if (!preset) {
         handleAddShape(id as ShapeType);

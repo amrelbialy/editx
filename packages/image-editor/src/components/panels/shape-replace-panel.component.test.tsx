@@ -41,6 +41,7 @@ it("replaces geometry without changing appearance", () => {
     </I18nProvider>,
   );
   const rectangle = screen.getByRole("button", { name: "Rectangle" });
+  expect(screen.getAllByRole("button", { name: "Rectangle" })).toHaveLength(1);
   expect(rectangle.querySelector('rect[fill="none"]')).not.toBeNull();
   expect(rectangle.querySelector('rect[stroke="#ff0000"]')).not.toBeNull();
   fireEvent.click(rectangle);
@@ -55,10 +56,11 @@ it("replaces geometry without changing appearance", () => {
   expect(screen.queryByText("Properties")).toBeNull();
   expect(screen.queryByText("Corner Radius")).toBeNull();
 
+  fireEvent.click(screen.getByRole("button", { name: "More (10)" }));
   fireEvent.click(screen.getByRole("button", { name: "Arrow" }));
   expect(block.setShapeGeometry).toHaveBeenCalledWith(7, {
     type: "line",
-    pointerLength: undefined,
-    pointerWidth: undefined,
+    pointerLength: 15,
+    pointerWidth: 15,
   });
 });

@@ -241,6 +241,22 @@ describe("useShapesTool.handleAddShapePreset", () => {
     expect(block.setStrokeWidth).toHaveBeenCalledWith(200, 4);
   });
 
+  it("applies the built-in outline category paint", () => {
+    const { engine, block } = makeEngine();
+    const { result } = renderHook(() => useShapesTool({ engineRef: ref(engine), config }));
+
+    act(() => result.current.handleAddShapePreset("outline-diamond"));
+
+    expect(block.setFillEnabled).toHaveBeenCalledWith(200, false);
+    expect(block.setStrokeEnabled).toHaveBeenCalledWith(200, true);
+    expect(block.setStrokeColor).toHaveBeenCalledTimes(1);
+    expect(block.setStrokeWidth).toHaveBeenCalledWith(200, 6);
+    expect(block.setShapeGeometry).toHaveBeenCalledWith(
+      200,
+      expect.objectContaining({ type: "path", name: "diamond" }),
+    );
+  });
+
   it("skips a preset whose path the engine rejects without throwing", () => {
     const { engine, block } = makeEngine(() => {
       throw new Error("Invalid SVG path data");
