@@ -8,11 +8,7 @@ export interface StyleSpec {
   block: Partial<TextStyleSpec>;
 }
 
-/**
- * Build a single-block "Text Styles" preset. The thumbnail is derived from the
- * block's real style at the gallery layer (see `derive-text-preview.ts`), so no
- * hand-authored `preview.style` is duplicated here.
- */
+/** Build a single-block text preset rendered directly by the thumbnail engine. */
 export function style(spec: StyleSpec): TextPreset {
   return {
     id: spec.id,

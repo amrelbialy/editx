@@ -134,7 +134,7 @@ export const DEFAULT_PLAYGROUND_CONFIG: PlaygroundConfig = {
   textDefaultColor: "#ffffff",
   textDefaultFontStyle: "normal",
   textDefaultTextAlign: "left",
-  textDefaultLineHeight: 1.2,
+  textDefaultLineHeight: 1.1,
   textDefaultLetterSpacing: 0,
   textMinFontSize: 1,
   textMaxFontSize: 500,

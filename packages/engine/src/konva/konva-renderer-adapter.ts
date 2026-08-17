@@ -1,7 +1,7 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
-import type { ExportOptions } from "../editor-types";
+import type { BlockExportOptions, ExportOptions } from "../editor-types";
 import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
@@ -10,6 +10,7 @@ import type { KonvaCamera } from "./konva-camera";
 import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
 import type { KonvaCropOverlay } from "./konva-crop-overlay";
 import { exportScene } from "./konva-export";
+import { exportBlockNode } from "./konva-export-block";
 import { applyGroupContext, createGroupOutline } from "./konva-group-affordance";
 import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { KonvaHoverOutline } from "./konva-hover-outline";
@@ -410,6 +411,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
       throw new Error("Cannot export: scene not initialised");
     }
     return exportScene(this.#stage, this.#contentLayer, this.#uiLayer, this.#lastPageSize, options);
+  }
+
+  async exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob> {
+    if (!this.#stage) throw new Error("Cannot export: scene not initialised");
+    const node = this.#nodeMap.get(blockId);
+    if (!node) throw new Error(`Cannot export: block ${blockId} has no rendered node`);
+    return exportBlockNode(node, this.#contentLayer, options);
   }
 
   dispose(): void {

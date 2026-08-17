@@ -56,7 +56,8 @@ export function updateImageNode(
     // Track the most recent requested src so a stale async load can't clobber
     // a newer one when it resolves out of order.
     imgNode.setAttr("__pendingSrc", src);
-    loadImage(src)
+    imgNode.setAttr("__imageLoadError", undefined);
+    const imageReady = loadImage(src)
       .then((htmlImg) => {
         // Bail if a newer src load superseded this one, or the node was
         // destroyed / detached from the stage while the image was loading.
@@ -85,8 +86,10 @@ export function updateImageNode(
         if (imgNode.getAttr("loadedSrc") === src) {
           imgNode.setAttr("loadedSrc", undefined);
         }
+        imgNode.setAttr("__imageLoadError", error);
         console.error(`[editx] Failed to load image: ${src}`, error);
       });
+    imgNode.setAttr("__imageReady", imageReady);
   }
 
   // Only filter synchronously when the source is already loaded. When the src

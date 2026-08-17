@@ -118,6 +118,14 @@ describe("FormattedText background box — clip and bounds", () => {
     expect(node.getSelfRect()).toEqual({ x: 0, y: 0, width: 200, height: 100 });
   });
 
+  it("uses paint bleed only when detached export requests it", () => {
+    const node = makeNode({ backgroundBox: BOX });
+
+    expect(node.getSelfRect()).toEqual({ x: 0, y: 0, width: 200, height: 100 });
+    node.usePaintBoundsForExport();
+    expect(node.getSelfRect()).toMatchObject({ x: -10, y: -10, width: 220, height: 120 });
+  });
+
   it("inflates the clip by the box bleed while the self-rect stays on the container", () => {
     const node = makeNode({ backgroundBox: BOX });
     const { context, clips, rounds } = makeCtx();

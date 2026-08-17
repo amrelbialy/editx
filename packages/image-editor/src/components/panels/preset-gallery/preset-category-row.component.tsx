@@ -1,18 +1,19 @@
 import type React from "react";
-import type { PresetPreview, ShapePreset } from "../../../config/config.types";
+import type { ShapePreset, TextPreset } from "../../../config/config.types";
 import { useTranslation } from "../../../i18n/i18n-context";
 import { Button, CarouselRow, PresetCard } from "../../ui";
-import { PresetThumbnail } from "./preset-thumbnail.component";
-import { ShapePresetThumbnail } from "./shape-preset-thumbnail.component";
+import { PresetRasterThumbnail } from "./preset-raster-thumbnail.component";
 
 /** Minimal shape the gallery needs from a text or shape preset. */
 export interface GalleryPreset {
   id: string;
   label: string;
-  preview: PresetPreview;
   shape?: ShapePreset["shape"];
   fill?: ShapePreset["fill"];
   stroke?: ShapePreset["stroke"];
+  blocks?: TextPreset["blocks"];
+  group?: TextPreset["group"];
+  composition?: TextPreset["composition"];
 }
 
 interface PresetCategoryRowProps {
@@ -45,15 +46,9 @@ export const PresetCategoryRow: React.FC<PresetCategoryRowProps> = (props) => {
       ariaLabel={preset.label}
       label={preset.label}
       onClick={() => onSelect(preset.id)}
-      className={expanded ? "min-w-0" : "w-24 shrink-0"}
+      className={expanded ? "min-w-0" : "w-32 shrink-0"}
     >
-      {preset.shape && preset.fill ? (
-        <ShapePresetThumbnail
-          preset={{ shape: preset.shape, fill: preset.fill, stroke: preset.stroke }}
-        />
-      ) : (
-        <PresetThumbnail preview={preset.preview} />
-      )}
+      <PresetRasterThumbnail preset={preset} />
     </PresetCard>
   ));
 
@@ -76,7 +71,7 @@ export const PresetCategoryRow: React.FC<PresetCategoryRowProps> = (props) => {
       </div>
 
       {expanded ? (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-2">{cards}</div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">{cards}</div>
       ) : (
         <CarouselRow
           ariaLabel={label}

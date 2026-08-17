@@ -76,3 +76,11 @@ describe("buildEditorConfig shape mapping", () => {
     expect(cfg.shapes?.presets).toEqual(shapesPresets);
   });
 });
+
+describe("buildEditorConfig text mapping", () => {
+  it("keeps the canonical line height used by static built-in thumbnails", () => {
+    const cfg = buildEditorConfig(base());
+
+    expect(cfg.text?.defaultLineHeight).toBe(1.1);
+  });
+});

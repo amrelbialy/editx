@@ -178,7 +178,8 @@ function applyImageFill(node: Konva.Shape, fillBlock: BlockData, box: FillBox): 
   // Track the most recent requested src so a stale async load can't clobber a
   // newer one when it resolves out of order (mirrors updateImageNode).
   node.setAttr("__pendingFillSrc", src);
-  loadImage(src)
+  node.setAttr("__fillImageLoadError", undefined);
+  const imageReady = loadImage(src)
     .then((img) => {
       if (node.getAttr("__pendingFillSrc") !== src) return;
       if (!node.getStage()) return;
@@ -190,6 +191,8 @@ function applyImageFill(node: Konva.Shape, fillBlock: BlockData, box: FillBox): 
     })
     .catch((error: unknown) => {
       if (node.getAttr("__pendingFillSrc") !== src) return;
+      node.setAttr("__fillImageLoadError", error);
       console.error(`[editx] Failed to load fill image: ${src}`, error);
     });
+  node.setAttr("__fillImageReady", imageReady);
 }

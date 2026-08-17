@@ -20,6 +20,7 @@ export * from "./segmented-control";
 export * from "./select";
 export * from "./selection-grid";
 export * from "./separator";
+export * from "./skeleton";
 export * from "./slider";
 export * from "./slider-field";
 export * from "./spinner";

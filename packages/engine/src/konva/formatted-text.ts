@@ -34,6 +34,7 @@ export class FormattedText extends FormattedTextAttrs {
   private _textLines: TextLine[] = [];
   private _curvedLayout: CurvedTextLayout | null = null;
   private _plainTextCache: string | null = null;
+  private _exportPaintBounds = false;
 
   constructor(config?: FormattedTextConfig) {
     super(config);
@@ -178,7 +179,14 @@ export class FormattedText extends FormattedTextAttrs {
    */
   getSelfRect(): TextRect {
     if (this.curveRadius() > 0) return { ...this._computeCurvedLayout().bbox };
+    if (this._exportPaintBounds) {
+      return this._paintRect(this.width() || 0, this.height() || 0);
+    }
     return { x: 0, y: 0, width: this.width() || 0, height: this.height() || 0 };
+  }
+
+  usePaintBoundsForExport(): void {
+    this._exportPaintBounds = true;
   }
 
   /**

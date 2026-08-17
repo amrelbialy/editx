@@ -1,5 +1,5 @@
 import type { BlockData } from "./block/block.types";
-import type { CursorType, ExportOptions } from "./editor-types";
+import type { BlockExportOptions, CursorType, ExportOptions } from "./editor-types";
 import type { CropRect } from "./utils/crop-math";
 
 /**
@@ -92,6 +92,8 @@ export interface RendererAdapter {
   //
   /** Render the current page to an offscreen canvas and return the result as a Blob. */
   exportScene(options: ExportOptions): Promise<Blob>;
+  /** Render one block subtree into a transparent, centered PNG. */
+  exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob>;
 
   //
   // Cleanup

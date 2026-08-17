@@ -9,6 +9,17 @@ export interface ExportOptions {
   pixelRatio?: number;
 }
 
+export interface BlockExportOptions {
+  /** Logical output width in CSS pixels. */
+  width: number;
+  /** Logical output height in CSS pixels. */
+  height: number;
+  /** Transparent inset in logical pixels. Default: 0. */
+  padding?: number;
+  /** Raster-density multiplier. Default: 1. */
+  pixelRatio?: number;
+}
+
 /**
  * Built-in edit modes for the editor.
  *

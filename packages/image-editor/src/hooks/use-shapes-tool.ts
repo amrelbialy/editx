@@ -6,6 +6,7 @@ import { DEFAULT_SHAPE_PRESET_GROUPS, LEGACY_FILLED_ARROW_PRESET } from "../conf
 import { findPresetById, resolveShapePresetGroups } from "../config/resolve-presets";
 import { normalizeShapePresetGeometry } from "../config/shape-geometry-options";
 import { useImageEditorStore } from "../store/image-editor-store";
+import { insertShapePreset } from "./insert-shape-preset";
 
 export interface UseShapesToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
@@ -107,72 +108,12 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
         return;
       }
 
-      let geometry: ShapeGeometry;
-      try {
-        geometry = normalizeShapePresetGeometry(preset.shape, preset.id);
-      } catch {
-        return;
-      }
-
-      const defaultColor = shapes.defaultColor ?? "#3b82f6";
-      const opacity = shapes.defaultOpacity ?? 1;
-      const sizeFraction = preset.sizeFraction ?? shapes.defaultSize ?? 0.25;
-
       const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
-      const size = Math.min(pageW, pageH) * sizeFraction;
-      const shapeW = preset.shape.kind === "line" ? pageW * 0.5 : size;
-      const shapeH = size;
-      const x = (pageW - shapeW) / 2;
-      const y = (pageH - shapeH) / 2;
-
-      ce.beginBatch();
-      let graphicId: number;
-      try {
-        try {
-          graphicId = ce.block.addShape(
-            editableBlockId,
-            preset.shape.kind,
-            preset.fill.kind,
-            x,
-            y,
-            shapeW,
-            shapeH,
-            {
-              sides: preset.shape.sides,
-              pathData: preset.shape.pathData,
-              viewBox: preset.shape.viewBox,
-            },
-          );
-        } catch {
-          return;
-        }
-
-        if (preset.fill.kind === "gradient" && preset.fill.gradient) {
-          const g = preset.fill.gradient;
-          ce.block.setFillGradient(graphicId, { type: g.type, stops: g.stops, angle: g.angle });
-        } else if (preset.fill.kind === "image" && preset.fill.image) {
-          const img = preset.fill.image;
-          ce.block.setFillImage(graphicId, { src: img.src, fit: img.fit });
-        } else {
-          const color = hexToColor(preset.fill.color ?? defaultColor);
-          ce.block.setFillSolidColor(graphicId, color);
-          if (color.a === 0) ce.block.setFillEnabled(graphicId, false);
-        }
-
-        if (preset.stroke) {
-          ce.block.setStrokeEnabled(graphicId, true);
-          ce.block.setStrokeColor(graphicId, hexToColor(preset.stroke.color));
-          ce.block.setStrokeWidth(graphicId, preset.stroke.width);
-        }
-
-        if (opacity !== 1) ce.block.setOpacity(graphicId, opacity);
-
-        ce.block.setShapeGeometry(graphicId, geometry);
-      } finally {
-        ce.endBatch();
-      }
-
-      ce.block.select(graphicId);
+      const graphicId = insertShapePreset(
+        { engine: ce, pageId: editableBlockId, pageW, pageH, config: shapes },
+        preset,
+      );
+      if (graphicId !== undefined) ce.block.select(graphicId);
     },
     [engineRef, editableBlockId, config.shapes, handleAddShape],
   );

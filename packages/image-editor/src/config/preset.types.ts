@@ -109,10 +109,7 @@ export interface TextBackgroundBoxSpec {
   stroke?: { color: string; width: number };
 }
 
-/**
- * A plain, serializable descriptor of how to draw a preset thumbnail. Never a
- * React node — the thumbnail component interprets it into CSS.
- */
+/** @deprecated Thumbnails are rendered from the preset by the engine. */
 export type PresetPreview =
   | { kind: "text"; sample: string; style?: PreviewStyle; segments?: PreviewTextSegment[] }
   | { kind: "shape"; style?: PreviewStyle }
@@ -202,7 +199,8 @@ export interface TextPreset {
   /** Group inserted blocks into one unit. Defaults to `blocks.length > 1`. */
   group?: boolean;
   composition?: TextComposition;
-  preview: PresetPreview;
+  /** @deprecated Thumbnails are rendered from the preset by the engine. */
+  preview?: PresetPreview;
 }
 
 /** A one-click shape preset with geometry, fill, stroke, and preview. */
@@ -230,5 +228,6 @@ export interface ShapePreset {
   stroke?: { color: string; width: number };
   /** Starting size as a fraction of the smaller canvas edge (0..1). */
   sizeFraction?: number;
-  preview: PresetPreview;
+  /** @deprecated Thumbnails are rendered from the preset by the engine. */
+  preview?: PresetPreview;
 }

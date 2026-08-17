@@ -153,7 +153,13 @@ export {
   textRunStyleToCssPatch,
   VISIBLE,
 } from "./block";
-export type { CursorType, EditMode, EditModeConfig, ExportOptions } from "./editor-types";
+export type {
+  BlockExportOptions,
+  CursorType,
+  EditMode,
+  EditModeConfig,
+  ExportOptions,
+} from "./editor-types";
 export { EDIT_MODE_DEFAULTS } from "./editor-types";
 export { EditxEngine } from "./editx-engine";
 export type {

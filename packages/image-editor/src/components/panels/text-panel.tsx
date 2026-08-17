@@ -2,7 +2,6 @@ import type React from "react";
 import { useMemo } from "react";
 import { useConfig } from "../../config/config-context";
 import { DEFAULT_TEXT_PRESET_GROUPS } from "../../config/presets";
-import { resolveTextPreview } from "../../config/presets/derive-text-preview";
 import { resolveTextPresetGroups } from "../../config/resolve-presets";
 import type { TextPreset } from "../../hooks/use-text-tool";
 import { PresetGallery } from "./preset-gallery";
@@ -32,15 +31,7 @@ export const TextPanel: React.FC<TextPanelProps> = (props) => {
       additionalPresetGroups: text.additionalPresetGroups,
       legacyPresets: text.presets,
     });
-    // Derive each thumbnail from the block's real style (consumer-supplied
-    // `preview.style` is honoured) so previews track the inserted result.
-    return resolved.map((group) => ({
-      ...group,
-      presets: group.presets.map((preset) => ({
-        ...preset,
-        preview: resolveTextPreview(preset),
-      })),
-    }));
+    return resolved;
   }, [config.text]);
 
   const handleSelect = onAddTextPreset ?? ((id: string) => onAddText(id));
