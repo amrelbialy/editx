@@ -7,8 +7,8 @@ import type { NodeCallbacks } from "./konva-node-factory";
  * Create a Konva.Group for a `group` block. Grouped children are nested INSIDE
  * this node, so their stored (local, parent-relative) coordinates map straight
  * onto Konva without any absolute↔local conversion. The group is draggable so
- * moving it at top level moves the whole set; on resize we deliberately reset
- * scale (group size derives from children — never forced onto the node).
+ * moving it at top level moves the whole set; on resize we report the temporary
+ * scale before resetting it so the engine can bake it into descendant geometry.
  */
 export function createGroupNode(id: number, callbacks: NodeCallbacks): Konva.Group {
   const group = new Konva.Group({ name: `block-${id}`, draggable: true });
@@ -21,12 +21,13 @@ export function createGroupNode(id: number, callbacks: NodeCallbacks): Konva.Gro
   });
 
   group.on("transformend", () => {
-    // Bake rotation; discard any scale so children are never distorted.
     const rotation = group.rotation();
     const { x, y } = group.position();
+    const scaleX = group.scaleX();
+    const scaleY = group.scaleY();
     group.scaleX(1);
     group.scaleY(1);
-    callbacks.onTransformEnd(id, { x, y, width: 0, height: 0, rotation });
+    callbacks.onTransformEnd(id, { x, y, width: 0, height: 0, rotation, scaleX, scaleY });
   });
 
   return group;

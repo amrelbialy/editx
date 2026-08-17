@@ -16,7 +16,15 @@ const scene = vi.hoisted(() => {
   const contentLayer = layer();
   const uiLayer = layer();
   const stage = { batchDraw: vi.fn(), draw: vi.fn(), destroy: vi.fn() };
-  const transformer = { nodes: vi.fn(() => []), moveToTop: vi.fn() };
+  const transformer = {
+    nodes: vi.fn((): unknown[] => []),
+    moveToTop: vi.fn(),
+    forceUpdate: vi.fn(),
+    enabledAnchors: vi.fn(),
+    rotateEnabled: vi.fn(),
+    keepRatio: vi.fn(),
+    flipEnabled: vi.fn(),
+  };
   const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5), setPageSize: vi.fn() };
   const cropOverlay = {
     applyViewportScale: vi.fn(),
@@ -85,6 +93,15 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     expect(scene.stage.batchDraw).not.toHaveBeenCalled();
   });
 
+  it("refreshes selected transformer bounds after dirty nodes synchronize", async () => {
+    const adapter = await makeAdapter();
+    scene.transformer.nodes.mockReturnValueOnce([{}]);
+
+    adapter.renderFrame();
+
+    expect(scene.transformer.forceUpdate).toHaveBeenCalledTimes(1);
+  });
+
   it("replaces an incompatible graphic node before applying its state", async () => {
     const Konva = (await import("konva")).default;
     const adapter = await makeAdapter();
@@ -108,6 +125,41 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
       undefined,
     );
     expect(scene.transformer.nodes).toHaveBeenCalled();
+  });
+
+  it("uses uniform corner scaling for groups without disabling rotation", async () => {
+    const adapter = await makeAdapter();
+
+    adapter.showTransformer([], "group");
+
+    expect(scene.transformer.enabledAnchors).toHaveBeenLastCalledWith([
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+    ]);
+    expect(scene.transformer.keepRatio).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.flipEnabled).toHaveBeenLastCalledWith(false);
+    expect(scene.transformer.rotateEnabled).not.toHaveBeenCalled();
+  });
+
+  it("keeps all resize anchors for non-group blocks", async () => {
+    const adapter = await makeAdapter();
+
+    adapter.showTransformer([], "graphic");
+
+    expect(scene.transformer.enabledAnchors).toHaveBeenLastCalledWith([
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+      "middle-left",
+      "middle-right",
+      "top-center",
+      "bottom-center",
+    ]);
+    expect(scene.transformer.keepRatio).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.flipEnabled).toHaveBeenLastCalledWith(true);
   });
 
   it("showCropOverlay uses a scoped content-layer batchDraw, not stage.batchDraw", async () => {

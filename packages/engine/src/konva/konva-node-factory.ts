@@ -9,6 +9,7 @@ import {
   SIZE_WIDTH,
   VISIBLE,
 } from "../block/property-keys";
+import type { BlockTransform } from "../render-adapter";
 import { FormattedText } from "./formatted-text";
 import { createGroupNode, updateGroupNode } from "./konva-group-node";
 import { updateImageNode } from "./konva-image-updater";
@@ -27,10 +28,7 @@ import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
-  onTransformEnd: (
-    id: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-  ) => void;
+  onTransformEnd: (id: number, transform: BlockTransform) => void;
   getActiveAnchor?: () => string;
 }
 

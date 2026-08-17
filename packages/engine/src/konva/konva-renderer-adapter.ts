@@ -2,7 +2,7 @@ import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { BlockExportOptions, ExportOptions } from "../editor-types";
-import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
+import type { BlockClickEvent, BlockTransform, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
 import { getNodeScreenTransform } from "./konva-block-screen-transform";
@@ -44,11 +44,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (
-    blockId: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-    anchorName?: string,
-  ) => void;
+  onBlockTransformEnd?: (blockId: number, transform: BlockTransform, anchorName?: string) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
   onZoomChange?: (zoom: number) => void;
@@ -150,10 +146,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     let node = this.#nodeMap.get(id);
     const callbacks = {
       onDragEnd: (blockId: number, x: number, y: number) => this.onBlockDragEnd?.(blockId, x, y),
-      onTransformEnd: (
-        blockId: number,
-        transform: { x: number; y: number; width: number; height: number; rotation: number },
-      ) => {
+      onTransformEnd: (blockId: number, transform: BlockTransform) => {
         const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
         this.onBlockTransformEnd?.(blockId, transform, anchor);
       },
@@ -249,20 +242,27 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
-  showTransformer(blockIds: number[], _blockType?: string): void {
+  showTransformer(blockIds: number[], blockType?: string): void {
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
+    const isGroup = blockType === "group";
     this.#hoverOutline.hide();
     this.#transformer.nodes(nodes);
-    this.#transformer.enabledAnchors([
-      "top-left",
-      "top-right",
-      "bottom-left",
-      "bottom-right",
-      "middle-left",
-      "middle-right",
-      "top-center",
-      "bottom-center",
-    ]);
+    this.#transformer.enabledAnchors(
+      isGroup
+        ? ["top-left", "top-right", "bottom-left", "bottom-right"]
+        : [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+            "middle-left",
+            "middle-right",
+            "top-center",
+            "bottom-center",
+          ],
+    );
+    this.#transformer.keepRatio(true);
+    this.#transformer.flipEnabled(!isGroup);
     (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
   }
@@ -396,6 +396,9 @@ export class KonvaRendererAdapter implements RendererAdapter {
   renderFrame(): void {
     // Scoped, batched redraws — avoid synchronous full-stage draws.
     this.#applyGroupContext();
+    if (this.#transformer?.nodes().length > 0) {
+      this.#transformer.forceUpdate();
+    }
     this.#contentLayer?.batchDraw();
     this.#uiLayer?.batchDraw();
   }

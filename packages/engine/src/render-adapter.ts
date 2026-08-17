@@ -14,6 +14,17 @@ export interface BlockClickEvent {
   insideContext?: boolean;
 }
 
+export interface BlockTransform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  /** Temporary renderer scale, supplied when group geometry must be baked into descendants. */
+  scaleX?: number;
+  scaleY?: number;
+}
+
 export interface RendererAdapter {
   //
   // Initialization
@@ -145,10 +156,7 @@ export interface RendererAdapter {
   /** Called on a double-click that should descend into a group (child under cursor, if any). */
   onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (
-    blockId: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-  ) => void;
+  onBlockTransformEnd?: (blockId: number, transform: BlockTransform) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   /** Called when the user drags/resizes the crop overlay. */
   onCropChange?: (rect: CropRect) => void;
