@@ -7,6 +7,7 @@ import { type UseBlockActionsReturn, useBlockActions } from "./use-block-actions
 import { useBlockEffects } from "./use-block-effects";
 import { useCropTool } from "./use-crop-tool";
 import { useFilterTool } from "./use-filter-tool";
+import { useImageFillCrop } from "./use-image-fill-crop";
 import { useImageTool } from "./use-image-tool";
 import { useNotifications } from "./use-notifications";
 import { useRotateFlipTool } from "./use-rotate-flip-tool";
@@ -51,6 +52,7 @@ export function useTools({
   const shapes = useShapesTool({ engineRef, config });
   const textTool = useTextTool({ engineRef, config });
   const imageTool = useImageTool({ engineRef, imageConfig: config.image });
+  const imageFillCrop = useImageFillCrop({ engineRef, engine, enterCropMode: crop.enterCropMode });
   const blockActions = useBlockActions({
     engineRef,
     selectedBlockId: selectedShapeId,
@@ -59,9 +61,20 @@ export function useTools({
 
   // --- Notification-wrapped callbacks ---
   const cropApply = useCallback(() => {
-    crop.handleCropApply();
+    if (imageFillCrop.isActive) imageFillCrop.apply();
+    else crop.handleCropApply();
     notify.success("Image cropped");
-  }, [crop, notify]);
+  }, [crop.handleCropApply, imageFillCrop.apply, imageFillCrop.isActive, notify]);
+
+  const cropCancel = useCallback(() => {
+    if (imageFillCrop.isActive) imageFillCrop.cancel();
+    else crop.handleCropCancel();
+  }, [crop.handleCropCancel, imageFillCrop.cancel, imageFillCrop.isActive]);
+
+  const cropReset = useCallback(() => {
+    if (imageFillCrop.isActive) imageFillCrop.reset();
+    else crop.handleCropCancel();
+  }, [crop.handleCropCancel, imageFillCrop.isActive, imageFillCrop.reset]);
 
   const addShape = useCallback(
     (shapeType: ShapeType, sides?: number) => {
@@ -139,7 +152,8 @@ export function useTools({
 
   const blockEffects = useBlockEffects({
     engineRef,
-    blockId: selectedBlockType === "image" ? selectedShapeId : null,
+    blockId:
+      selectedBlockType === "image" || selectedBlockType === "graphic" ? selectedShapeId : null,
   });
 
   // --- Tool manager (with notification-wrapped cropApply) ---
@@ -147,9 +161,10 @@ export function useTools({
     () => ({
       enterCropMode: crop.enterCropMode,
       handleCropApply: cropApply,
-      handleCropCancel: crop.handleCropCancel,
+      handleCropCancel: cropCancel,
+      handleCropReset: cropReset,
     }),
-    [crop.enterCropMode, cropApply, crop.handleCropCancel],
+    [crop.enterCropMode, cropApply, cropCancel, cropReset],
   );
 
   const { activeTool, activeToolId, handleSidebarToolSelect, handleDone, handleContextualReset } =
@@ -160,7 +175,8 @@ export function useTools({
 
   return {
     // Raw tool hooks (for SidePanel / CanvasPane to read specific methods)
-    crop,
+    crop: { ...crop, handleCropApply: cropApply, handleCropCancel: cropCancel },
+    imageFillCrop,
     rotateFlip,
     adjustments,
     filter,

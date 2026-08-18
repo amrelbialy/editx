@@ -1,5 +1,7 @@
+import type Konva from "konva";
 import { describe, expect, it } from "vitest";
 import { absBoxToWorld, cropBoundBoxFunc, worldBoxToAbs } from "./konva-crop-overlay-layout";
+import { makeCropBoundBoxFunc } from "./konva-crop-overlay-viewport";
 
 const box = (x: number, y: number, width: number, height: number, rotation = 0) => ({
   x,
@@ -89,5 +91,43 @@ describe("cropBoundBoxFunc (world space)", () => {
     // Absolute result is consistent with the applied camera transform
     expect(backAbs.x).toBe(600 * scale + pan.x);
     expect(backAbs.width).toBe(200 * scale);
+  });
+});
+
+describe("makeCropBoundBoxFunc block mode", () => {
+  it("constrains a graphic frame to the rendered image", () => {
+    const layer = { scaleX: () => 1 } as Konva.Layer;
+    const image = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 80 },
+      { x: 0, y: 80 },
+    ];
+    const bound = makeCropBoundBoxFunc(
+      layer,
+      () => ({ x: 0, y: 0, width: 100, height: 80 }),
+      () => null,
+      () => false,
+      () => image,
+    );
+
+    const result = bound(box(20, 10, 60, 50), box(-20, -10, 140, 100));
+    expect(result).toMatchObject({ x: expect.closeTo(0, 4), y: expect.closeTo(0, 4) });
+    expect(result.width).toBeCloseTo(100, 4);
+    expect(result.height).toBeCloseTo(75, 4);
+  });
+
+  it("keeps the minimum frame size stable across camera zoom", () => {
+    const layer = { scaleX: () => 2 } as Konva.Layer;
+    const bound = makeCropBoundBoxFunc(
+      layer,
+      () => ({ x: 0, y: 0, width: 100, height: 80 }),
+      () => null,
+      () => false,
+    );
+    const oldBox = box(0, 0, 100, 80);
+
+    expect(bound(oldBox, box(0, 0, 19, 40))).toBe(oldBox);
+    expect(bound(oldBox, box(0, 0, 20, 40))).toEqual(box(0, 0, 20, 40));
   });
 });

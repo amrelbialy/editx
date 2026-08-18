@@ -6,6 +6,7 @@ import {
   cropBoundBoxFunc,
   worldBoxToAbs,
 } from "./konva-crop-overlay-layout";
+import { constrainBoxToPolygon } from "./konva-crop-overlay-polygon";
 
 /** Full anchor set for the crop transformer (all edges + corners). */
 export const CROP_ANCHORS_ALL = [
@@ -33,8 +34,18 @@ export function makeCropBoundBoxFunc(
   layer: Konva.Layer,
   getImageRect: () => CropRect,
   getRatio: () => number | null,
+  isConstrained: () => boolean = () => true,
+  getBlockImagePolygon: () => { x: number; y: number }[] | null = () => null,
 ): (oldBox: Box, newBox: Box) => Box {
   return (oldBox, newBox) => {
+    if (!isConstrained()) {
+      const minimum = 10 * (layer.scaleX?.() || 1);
+      const polygon = getBlockImagePolygon();
+      if (polygon) return constrainBoxToPolygon(oldBox, newBox, polygon, minimum);
+      return Math.abs(newBox.width) < minimum || Math.abs(newBox.height) < minimum
+        ? oldBox
+        : newBox;
+    }
     const scale = layer.scaleX() || 1;
     const pan = layer.position();
     const world = cropBoundBoxFunc(
@@ -78,6 +89,7 @@ export interface CropStrokeNodes {
 /** The static (non-transformer) scene nodes that make up the crop overlay. */
 export interface CropOverlayNodes {
   group: Konva.Group;
+  visualGroup: Konva.Group;
   darkTop: Konva.Rect;
   darkBottom: Konva.Rect;
   darkLeft: Konva.Rect;
@@ -93,6 +105,7 @@ export interface CropOverlayNodes {
  */
 export function createCropOverlayNodes(): CropOverlayNodes {
   const group = new Konva.Group({ name: "crop-overlay", visible: false });
+  const visualGroup = new Konva.Group();
 
   const darkFill = "rgba(0, 0, 0, 0.5)";
   const darkTop = new Konva.Rect({ fill: darkFill, listening: false });
@@ -126,8 +139,9 @@ export function createCropOverlayNodes(): CropOverlayNodes {
     );
   }
 
-  group.add(darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines);
-  return { group, darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines };
+  visualGroup.add(darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines);
+  group.add(visualGroup);
+  return { group, visualGroup, darkTop, darkBottom, darkLeft, darkRight, cutout, gridLines };
 }
 
 /**

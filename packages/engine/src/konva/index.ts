@@ -43,6 +43,9 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
     engine.block.deselectAll();
     engine.emit("stage:click", worldPos);
   };
+  adapter.onImageFillCropDismiss = () => {
+    if (engine.editor.getImageFillCrop()) engine.editor.commitCrop();
+  };
   engine.block.onGroupContextChanged((stack) => adapter.setGroupContext?.(stack));
   adapter.onZoomChange = (zoom) => engine.emit("zoom:changed", zoom);
   adapter.onPanChange = (pan) => engine.emit("pan:changed", pan);

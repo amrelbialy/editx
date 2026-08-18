@@ -110,7 +110,7 @@ describe("SceneAPI — serialization v2", () => {
       expect(block2.getFillGradient(gfx2)).toEqual(original);
     });
 
-    it("round-trips an image fill (src / fit / offsets / scale)", async () => {
+    it("round-trips an image fill and its content transform", async () => {
       await scene.create();
       const pageId = scene.getCurrentPage()!;
       const gfx = block.addShape(pageId, "rect", "color", 0, 0, 100, 100);
@@ -121,6 +121,9 @@ describe("SceneAPI — serialization v2", () => {
         offsetX: 12,
         offsetY: -8,
         scale: 1.5,
+        rotation: 270,
+        flipHorizontal: true,
+        flipVertical: true,
       });
       const original = block.getFillImage(gfx);
 

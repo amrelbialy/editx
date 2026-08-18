@@ -7,6 +7,35 @@ import { BlockActionBar } from "./block-action-bar";
 afterEach(cleanup);
 
 describe("BlockActionBar", () => {
+  it("offers Replace for an image-filled graphic when provided", () => {
+    const onReplace = vi.fn();
+    const { container } = render(
+      <I18nProvider>
+        <TooltipProvider>
+          <BlockActionBar
+            blockType="graphic"
+            onReplace={onReplace}
+            onBringForward={vi.fn()}
+            onSendBackward={vi.fn()}
+            onBringToFront={vi.fn()}
+            onSendToBack={vi.fn()}
+            onDuplicate={vi.fn()}
+            onDelete={vi.fn()}
+            onAlign={vi.fn()}
+          />
+        </TooltipProvider>
+      </I18nProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Replace Image" })).toBeDefined();
+    const file = new File(["image"], "replacement.png", { type: "image/png" });
+    fireEvent.change(container.querySelector('input[type="file"]')!, {
+      target: { files: [file] },
+    });
+
+    expect(onReplace).toHaveBeenCalledWith(file);
+  });
+
   it("renders and dispatches the complete group action set", () => {
     const actions = {
       enterGroup: vi.fn(),

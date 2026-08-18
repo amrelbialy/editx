@@ -175,27 +175,27 @@ export class KonvaNodeFactory {
     }
 
     if (node instanceof Konva.Ellipse) {
-      updateEllipseNode(node, props, width, height, block, resolveBlock);
+      updateEllipseNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.RegularPolygon) {
-      updatePolygonNode(node, props, width, height, block, resolveBlock);
+      updatePolygonNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Star) {
-      updateStarNode(node, props, width, height, block, resolveBlock);
+      updateStarNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Arrow) {
-      updateArrowNode(node, props, width, height, block, resolveBlock);
+      updateArrowNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Path) {
-      updatePathNode(node, props, width, height, block, resolveBlock);
+      updatePathNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Rect) {
-      updateRectNode(node, props, width, height, block, resolveBlock);
+      updateRectNode(node, props, width, height, block, resolveBlock, this.#webgl);
     }
   }
 }

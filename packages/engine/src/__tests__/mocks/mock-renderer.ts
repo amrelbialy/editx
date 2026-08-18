@@ -36,5 +36,8 @@ export function createMockRenderer(): RendererAdapter {
     setCropRatio: vi.fn(),
     getCropRect: vi.fn().mockReturnValue(null),
     getCropImageRect: vi.fn().mockReturnValue(null),
+    showImageFillCropPreview: vi.fn((_blockId, crop) => crop),
+    setImageFillCropPreview: vi.fn((crop) => crop),
+    hideImageFillCropPreview: vi.fn(),
   };
 }

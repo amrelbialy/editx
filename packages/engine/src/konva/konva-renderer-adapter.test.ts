@@ -15,22 +15,36 @@ const scene = vi.hoisted(() => {
   const layer = () => ({ add: vi.fn(), batchDraw: vi.fn() });
   const contentLayer = layer();
   const uiLayer = layer();
-  const stage = { batchDraw: vi.fn(), draw: vi.fn(), destroy: vi.fn() };
+  const stage = {
+    batchDraw: vi.fn(),
+    draw: vi.fn(),
+    destroy: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    getPointerPosition: vi.fn(() => null),
+    container: vi.fn(() => ({ style: { cursor: "" } })),
+  };
   const transformer = {
     nodes: vi.fn((): unknown[] => []),
     moveToTop: vi.fn(),
     forceUpdate: vi.fn(),
+    getLayer: vi.fn(() => uiLayer),
     enabledAnchors: vi.fn(),
     rotateEnabled: vi.fn(),
     keepRatio: vi.fn(),
     flipEnabled: vi.fn(),
+    listening: vi.fn(),
   };
   const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5), setPageSize: vi.fn() };
   const cropOverlay = {
     applyViewportScale: vi.fn(),
     show: vi.fn(),
+    showBlock: vi.fn(),
+    refreshBlock: vi.fn(),
+    setRatio: vi.fn(),
     hide: vi.fn(),
     destroy: vi.fn(),
+    isBlockMode: vi.fn(() => false),
   };
   const nodeFactory = { createNode: vi.fn(), updateNode: vi.fn() };
   return { contentLayer, uiLayer, stage, transformer, camera, cropOverlay, nodeFactory };

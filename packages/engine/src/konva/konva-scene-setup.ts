@@ -30,6 +30,7 @@ export interface SceneCallbacks {
   onCropChange?: (rect: CropRect) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
   getGroupContext?: () => number[];
+  isInteractionEnabled?: () => boolean;
 }
 
 export function createKonvaScene(
@@ -87,6 +88,7 @@ export function createKonvaScene(
     nodeMap,
     camera,
     getGroupContext: callbacks.getGroupContext ?? (() => []),
+    isInteractionEnabled: callbacks.isInteractionEnabled,
     callbacks: {
       onBlockClick: (blockId, event) => callbacks.onBlockClick?.(blockId, event),
       onBlockDblClick: (blockId, screenPos) => callbacks.onBlockDblClick?.(blockId, screenPos),
@@ -103,6 +105,7 @@ export function createKonvaScene(
   camera.setZoomChangeListener((zoom) => {
     selectionRect.strokeWidth(1 / zoom);
     cropOverlay.applyViewportScale(zoom);
+    cropOverlay.refreshBlock();
   });
 
   camera.setPageSize(pageW, pageH);

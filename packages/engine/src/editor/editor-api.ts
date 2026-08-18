@@ -1,5 +1,13 @@
 import type { BlockAPI } from "../block/block-api";
-import type { CursorType, EditMode, EditModeConfig } from "../editor-types";
+import type {
+  CropEditTarget,
+  CursorType,
+  EditMode,
+  EditModeConfig,
+  ImageFillCrop,
+  ImageFillCropChange,
+  ImageFillCropUpdate,
+} from "../editor-types";
 import { EDIT_MODE_DEFAULTS } from "../editor-types";
 import type { EngineCore } from "../engine-core";
 import type { CropRect } from "../utils/crop-math";
@@ -7,6 +15,7 @@ import type { EditorContext } from "./editor-context";
 import { EditorCrop } from "./editor-crop";
 import { EditorCursor } from "./editor-cursor";
 import { EditorHistory } from "./editor-history";
+import { EditorImageFillCrop } from "./editor-image-fill-crop";
 import { EditorViewport } from "./editor-viewport";
 
 export class EditorAPI {
@@ -16,6 +25,7 @@ export class EditorAPI {
   #crop: EditorCrop;
   #cursor: EditorCursor;
   #history: EditorHistory;
+  #imageFillCrop: EditorImageFillCrop;
   #viewport: EditorViewport;
 
   // ── Edit-mode state (cross-cuts crop & cursor) ─────────
@@ -32,6 +42,7 @@ export class EditorAPI {
     this.#crop = new EditorCrop(this.#ctx);
     this.#cursor = new EditorCursor(this.#ctx);
     this.#history = new EditorHistory(this.#ctx);
+    this.#imageFillCrop = new EditorImageFillCrop(this.#ctx);
     this.#viewport = new EditorViewport(this.#ctx);
 
     // Auto-refresh the crop overlay after undo/redo so it reflects
@@ -76,13 +87,18 @@ export class EditorAPI {
     if (mode === "Crop") {
       const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
       if (targetId === null) return;
-      this.#crop.setupCropOverlay(targetId);
+      if (this.getCropEditTarget(targetId) === "image-fill") {
+        this.#imageFillCrop.setup(targetId);
+      } else {
+        this.#crop.setupCropOverlay(targetId);
+      }
     }
   }
 
   #exitMode(mode: EditMode): void {
     if (mode === "Crop") {
-      this.#crop.teardownCropOverlay();
+      if (this.#imageFillCrop.get()) this.#imageFillCrop.teardown(false);
+      else this.#crop.teardownCropOverlay();
     }
   }
 
@@ -196,10 +212,42 @@ export class EditorAPI {
   }
 
   commitCrop(): CropRect | null {
+    if (this.#imageFillCrop.get()) {
+      this.#imageFillCrop.teardown(true);
+      this.setEditMode("Transform");
+      return null;
+    }
     if (this.#crop.getCropBlockId() === null) return null;
     const rect = this.#ctx.renderer?.getCropRect() ?? null;
     this.setEditMode("Transform");
     return rect;
+  }
+
+  cancelCrop(): void {
+    if (this.#imageFillCrop.get()) this.#imageFillCrop.teardown(false);
+    else this.#crop.teardownCropOverlay(false);
+    this.setEditMode("Transform");
+  }
+
+  getCropEditTarget(blockId: number): CropEditTarget | null {
+    if (this.#imageFillCrop.isEligible(blockId)) return "image-fill";
+    return this.#ctx.block?.supportsCrop(blockId) ? "source-crop" : null;
+  }
+
+  getImageFillCrop(): ImageFillCrop | null {
+    return this.#imageFillCrop.get();
+  }
+
+  updateImageFillCrop(update: ImageFillCropUpdate): ImageFillCrop | null {
+    return this.#imageFillCrop.update(update);
+  }
+
+  resetImageFillCrop(): ImageFillCrop | null {
+    return this.#imageFillCrop.reset();
+  }
+
+  onImageFillCropChanged(cb: (change: ImageFillCropChange) => void): () => void {
+    return this.#imageFillCrop.onChanged(cb);
   }
 
   resetCrop(blockId?: number): void {
@@ -212,7 +260,21 @@ export class EditorAPI {
   }
 
   applyCropRatio(ratio: number | null): CropRect | null {
-    return this.#crop.applyCropRatio(ratio);
+    return this.#imageFillCrop.get()
+      ? this.#imageFillCrop.applyRatio(ratio)
+      : this.#crop.applyCropRatio(ratio);
+  }
+
+  applyCropDimensions(width: number, height: number): CropRect | null {
+    return this.#imageFillCrop.get()
+      ? this.#imageFillCrop.applyDimensions(width, height)
+      : this.#crop.applyCropDimensions(width, height);
+  }
+
+  getCropVisualDimensions(): { width: number; height: number } | null {
+    return this.#imageFillCrop.get()
+      ? this.#imageFillCrop.getDimensions()
+      : this.#crop.getCropVisualDimensions();
   }
 
   refreshCropOverlay(): void {

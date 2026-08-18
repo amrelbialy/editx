@@ -7,6 +7,7 @@ import {
   SHAPE_PATH_VIEWBOX_WIDTH,
 } from "../block/property-keys";
 import { applyShapeFillStroke } from "./konva-fill";
+import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 /** Create a Konva.Path node for a "path" shape block (data filled in on update). */
 export function createPathNode(id: number): Konva.Path {
@@ -58,6 +59,7 @@ export function updatePathNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   const { data, viewBoxWidth, viewBoxHeight, preserveAspect } = readPathShapeProps(
     block,
@@ -81,5 +83,12 @@ export function updatePathNode(
   node.setAttr("blockHeight", vbH);
   node.getSelfRect = () => ({ x: 0, y: 0, width: vbW, height: vbH });
 
-  applyShapeFillStroke(node, props, { x: 0, y: 0, width: vbW, height: vbH }, block, resolveBlock);
+  applyShapeFillStroke(
+    node,
+    props,
+    { x: 0, y: 0, width: vbW, height: vbH },
+    block,
+    resolveBlock,
+    webgl,
+  );
 }

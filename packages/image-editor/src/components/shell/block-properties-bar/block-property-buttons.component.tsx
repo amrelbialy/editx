@@ -1,23 +1,12 @@
 import type { EditxEngine } from "@editx/engine";
-import {
-  ChevronDown,
-  Grid2x2,
-  ImageIcon,
-  Move,
-  PaintBucket,
-  Paintbrush,
-  Palette,
-  Shapes,
-  SlidersHorizontal,
-  Sparkles,
-  Sun,
-} from "lucide-react";
+import { Grid2x2, Move, PaintBucket, Paintbrush, Shapes, Sun } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "../../../i18n/i18n-context";
 import type { PropertySidePanel } from "../../../store/image-editor-store";
 import { cn } from "../../../utils/cn";
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Slider } from "../../ui";
-import { ACTIVE_PANEL_TINT, PanelButton } from "./panel-button.component";
+import { ImagePropertyActions } from "./image-property-actions.component";
+import { PanelButton } from "./panel-button.component";
 import { ShapeGeometryButton } from "./shape-geometry-button.component";
 
 const triggerBase = "gap-1.5 px-2.5 h-8 text-xs whitespace-nowrap";
@@ -27,11 +16,13 @@ export interface BlockPropertyButtonsProps {
   blockId: number;
   isText: boolean;
   isImage: boolean;
+  hasImageFill: boolean;
   colorSwatch: string;
   opacity: number;
   propertySidePanel: PropertySidePanel;
   onTogglePanel: (panel: PropertySidePanel) => void;
   onOpacityChange: (value: number[]) => void;
+  onCropImageFill?: () => void;
 }
 
 export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props) => {
@@ -40,16 +31,17 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
     blockId,
     isText,
     isImage,
+    hasImageFill,
     colorSwatch,
     opacity,
     propertySidePanel,
     onTogglePanel,
     onOpacityChange,
+    onCropImageFill,
   } = props;
 
   const { t } = useTranslation();
 
-  const styleActive = propertySidePanel === "adjust" || propertySidePanel === "filter";
   return (
     <>
       {!isText && !isImage && (
@@ -108,63 +100,13 @@ export const BlockPropertyButtons: React.FC<BlockPropertyButtonsProps> = (props)
         />
       )}
 
-      {isImage && (
-        <PanelButton
-          panel="imageFill"
-          icon={<ImageIcon className="h-4 w-4" />}
-          label={t("block.image")}
-          active={propertySidePanel === "imageFill"}
-          onToggle={onTogglePanel}
-        />
-      )}
-
-      {isImage && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={cn(
-                triggerBase,
-                styleActive
-                  ? cn(ACTIVE_PANEL_TINT, "hover:bg-primary/20 hover:text-primary")
-                  : "text-muted-foreground",
-              )}
-            >
-              <Sparkles className="h-4 w-4" />
-              {t("block.style")}
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-auto p-1" align="center">
-            <Button
-              variant="ghost"
-              onClick={() => onTogglePanel("adjust")}
-              className={cn(
-                "w-full justify-start gap-2",
-                propertySidePanel === "adjust"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground",
-              )}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {t("panel.adjustments")}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => onTogglePanel("filter")}
-              className={cn(
-                "w-full justify-start gap-2",
-                propertySidePanel === "filter"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground",
-              )}
-            >
-              <Palette className="h-4 w-4" />
-              {t("panel.filters")}
-            </Button>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      <ImagePropertyActions
+        isImage={isImage}
+        hasImageFill={hasImageFill}
+        propertySidePanel={propertySidePanel}
+        onTogglePanel={onTogglePanel}
+        onCropImageFill={onCropImageFill}
+      />
 
       <PanelButton
         panel="shadow"

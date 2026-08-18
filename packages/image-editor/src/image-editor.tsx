@@ -216,11 +216,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   }, [tools.activeTool, userConfig?.customTools]);
 
   // Track unsaved changes via engine block events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: engine triggers re-subscribe when instance is created
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce) return;
     return ce.event.subscribe([], () => markDirty());
-    // biome-ignore lint/correctness/useExhaustiveDependencies: engine triggers re-subscribe when instance is created
   }, [engine, engineRef, markDirty]);
 
   // Surface the imperative editor handle once the engine is ready.
@@ -246,13 +246,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   }, [isLoading, error, engine, userConfig?.defaultTool, tools.handleSidebarToolSelect]);
 
   // Sync theme accent color to engine transformer
+  // biome-ignore lint/correctness/useExhaustiveDependencies: userConfig triggers re-read of computed theme vars
   useEffect(() => {
     if (!engine || !containerRef.current) return;
     const el = containerRef.current.closest(".ie-theme") as HTMLElement | null;
     if (!el) return;
     const primary = getComputedStyle(el).getPropertyValue("--primary").trim();
     if (primary && engine.setAccentColor) engine.setAccentColor(primary);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: userConfig triggers re-read of computed theme vars
   }, [engine, containerRef, userConfig]);
 
   // --- Derived state ---
@@ -330,6 +330,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               slots={slots}
               onContextualReset={tools.handleContextualReset}
               onDone={tools.handleDone}
+              onCropImageFill={tools.imageFillCrop.enter}
+              onCropCancel={tools.crop.handleCropCancel}
+              imageFillCrop={tools.imageFillCrop}
             />
           </div>
         </div>

@@ -53,6 +53,12 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
 
   if (!panel) return null;
 
+  const supportsImageEffects =
+    blockType === "image" ||
+    ((panel === "adjust" || panel === "filter") &&
+      blockType === "graphic" &&
+      engine.block.getFillImage(blockId) !== null);
+
   switch (panel) {
     case "shape":
       if (blockType !== "graphic") return null;
@@ -105,7 +111,7 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
       if (blockType !== "text") return null;
       return <TextAdvancedPanel engine={engine} blockId={blockId} />;
     case "adjust":
-      if (blockType !== "image") return null;
+      if (!supportsImageEffects) return null;
       return (
         <AdjustPanel
           values={blockEffects.adjustValues}
@@ -115,7 +121,7 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
         />
       );
     case "filter":
-      if (blockType !== "image") return null;
+      if (!supportsImageEffects) return null;
       return (
         <FilterPanel
           activeFilter={blockEffects.activeFilter}

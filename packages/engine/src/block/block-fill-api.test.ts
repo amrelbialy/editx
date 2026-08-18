@@ -12,7 +12,7 @@ function makeGraphicWithFill(block: BlockAPI, kind: FillType): { gid: number; fi
   return { gid, fid };
 }
 
-describe("BlockFillAPI gradient/image fills", () => {
+describe("BlockFillAPI gradient fills and kind changes", () => {
   let engine: EditxEngine;
   let block: BlockAPI;
 
@@ -77,51 +77,6 @@ describe("BlockFillAPI gradient/image fills", () => {
     engine.redo();
     expect(block.getFillGradient(gid)!.stops).toEqual(stops);
     expect(block.getFillGradient(gid)!.angle).toBe(90);
-  });
-
-  // ── Image ────────────────────────────────────────
-
-  it("setFillImage applies defaults for omitted fields", () => {
-    const { gid } = makeGraphicWithFill(block, "image");
-    block.setFillImage(gid, { src: "https://example.com/a.png" });
-
-    const img = block.getFillImage(gid);
-    expect(img).toEqual({
-      src: "https://example.com/a.png",
-      fit: "cover",
-      offsetX: 0,
-      offsetY: 0,
-      scale: 1,
-    });
-  });
-
-  it("setFillImage / getFillImage round-trips explicit values", () => {
-    const { gid } = makeGraphicWithFill(block, "image");
-    block.setFillImage(gid, {
-      src: "img.png",
-      fit: "tile",
-      offsetX: 12,
-      offsetY: -8,
-      scale: 2,
-    });
-    expect(block.getFillImage(gid)).toEqual({
-      src: "img.png",
-      fit: "tile",
-      offsetX: 12,
-      offsetY: -8,
-      scale: 2,
-    });
-  });
-
-  it("getFillImage returns null when fill kind is not image", () => {
-    const { gid } = makeGraphicWithFill(block, "gradient");
-    expect(block.getFillImage(gid)).toBeNull();
-  });
-
-  it("setFillImage is a no-op when fill kind is not image", () => {
-    const { gid } = makeGraphicWithFill(block, "color");
-    block.setFillImage(gid, { src: "img.png" });
-    expect(block.getFillImage(gid)).toBeNull();
   });
 
   // ── changeFillKind ───────────────────────────────

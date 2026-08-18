@@ -32,6 +32,18 @@ export type GradientType = "linear" | "radial";
 /** How an image fill is fitted into the shape bounds. */
 export type ImageFillFit = "cover" | "contain" | "tile" | "stretch";
 
+/** Alignment of an automatic image fill within its frame. */
+export type ImageFillAlignment =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "center-left"
+  | "center"
+  | "center-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
+
 /**
  * A single gradient color stop.
  * `offset` is a 0..1 position along the gradient axis; `color` is a CSS color
@@ -62,10 +74,25 @@ export interface StrokeGradient {
 export interface ImageFill {
   src: string;
   fit: ImageFillFit;
+  alignment?: ImageFillAlignment;
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation?: number;
+  flipHorizontal?: boolean;
+  flipVertical?: boolean;
 }
+
+export interface ResolvedImageFill extends ImageFill {
+  alignment: ImageFillAlignment;
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+}
+
+export type ImageFillOptions = Pick<ResolvedImageFill, "src"> &
+  Partial<Omit<ResolvedImageFill, "src">>;
+export type ImageFillUpdate = Partial<ResolvedImageFill>;
 
 /** Direction a curved text baseline bows. */
 export type TextCurveDirection = "up" | "down";

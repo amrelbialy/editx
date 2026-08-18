@@ -49,13 +49,9 @@ export class EditxEngine implements EngineCore {
     this.block = new BlockAPI(this);
     this.editor = new EditorAPI(this);
     this.editor._setBlockAPI(this.block);
-    this.block._setApplyCropRatioHandler((r) => this.editor._getCrop().applyCropRatio(r));
-    this.block._setApplyCropDimensionsHandler((w, h) =>
-      this.editor._getCrop().applyCropDimensions(w, h),
-    );
-    this.block._setGetCropVisualDimensionsHandler(() =>
-      this.editor._getCrop().getCropVisualDimensions(),
-    );
+    this.block._setApplyCropRatioHandler((r) => this.editor.applyCropRatio(r));
+    this.block._setApplyCropDimensionsHandler((w, h) => this.editor.applyCropDimensions(w, h));
+    this.block._setGetCropVisualDimensionsHandler(() => this.editor.getCropVisualDimensions());
     this.scene = new SceneAPI(this, this.block);
   }
 

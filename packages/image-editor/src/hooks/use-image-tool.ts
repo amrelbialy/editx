@@ -72,6 +72,14 @@ export function useImageTool({ engineRef, imageConfig }: UseImageToolOptions) {
 
       const processed = await processImageFile(file, imageConfig);
 
+      if (ce.block.getType(blockId) === "graphic") {
+        const currentFill = ce.block.getFillImage(blockId);
+        if (currentFill) {
+          ce.block.updateFillImage(blockId, { src: processed.src });
+        }
+        return;
+      }
+
       ce.beginBatch();
       ce.block.setString(blockId, IMAGE_SRC, processed.src);
       ce.block.setFloat(blockId, IMAGE_ORIGINAL_WIDTH, processed.width);

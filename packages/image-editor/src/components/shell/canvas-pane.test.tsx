@@ -17,7 +17,9 @@ vi.mock("./block-properties-bar", () => ({
   ),
 }));
 vi.mock("./canvas-block-overlay", () => ({
-  CanvasBlockOverlay: () => <div data-testid="block-overlay" />,
+  CanvasBlockOverlay: (props: { onReplaceImage?: (file: File) => void }) => (
+    <div data-testid="block-overlay" data-can-replace={Boolean(props.onReplaceImage)} />
+  ),
 }));
 
 afterEach(() => {
@@ -28,12 +30,18 @@ afterEach(() => {
 type DblClickCb = (blockId: number, pos: { x: number; y: number }) => void;
 
 /** Minimal engine mock capturing the dblclick handler + group-context queries. */
-function makeEngine(opts: { type: string; parent: number | null; context: number[] }) {
+function makeEngine(opts: {
+  type: string;
+  parent: number | null;
+  context: number[];
+  imageFill?: { src: string } | null;
+}) {
   let dblCb: DblClickCb | null = null;
   return {
     engine: {
       on: vi.fn(),
       off: vi.fn(),
+      onHistoryChanged: () => () => {},
       block: {
         onBlockDoubleClick: (cb: DblClickCb) => {
           dblCb = cb;
@@ -42,6 +50,8 @@ function makeEngine(opts: { type: string; parent: number | null; context: number
         getType: () => opts.type,
         getParent: () => opts.parent,
         getGroupContext: () => opts.context,
+        getFillImage: () => opts.imageFill ?? null,
+        onStateChanged: () => () => {},
         select: vi.fn(),
       },
     },
@@ -77,6 +87,41 @@ function renderPane(engine: unknown) {
 }
 
 describe("CanvasPane dblclick gating", () => {
+  it("routes Replace to the overlay only for an image-filled graphic", () => {
+    const renderGraphic = (imageFill: { src: string } | null) => {
+      const mock = makeEngine({ type: "graphic", parent: 1, context: [], imageFill });
+      return render(
+        <ImageEditorProvider>
+          <CanvasPane
+            canvasRef={React.createRef<HTMLDivElement>()}
+            engine={mock.engine as never}
+            activeTool="select"
+            selectedShapeId={7}
+            selectedBlockType="graphic"
+            hasSelectedBlock
+            blockActions={{} as never}
+            rotateFlip={{
+              handleRotateClockwise: vi.fn(),
+              handleRotateCounterClockwise: vi.fn(),
+              handleFlipHorizontal: vi.fn(),
+              handleFlipVertical: vi.fn(),
+            }}
+            replaceImage={vi.fn()}
+            onContextualReset={vi.fn()}
+            onDone={vi.fn()}
+          />
+        </ImageEditorProvider>,
+      );
+    };
+
+    const imageGraphic = renderGraphic({ src: "fill.png" });
+    expect(imageGraphic.getByTestId("block-overlay").dataset.canReplace).toBe("true");
+    imageGraphic.unmount();
+
+    const colorGraphic = renderGraphic(null);
+    expect(colorGraphic.getByTestId("block-overlay").dataset.canReplace).toBe("false");
+  });
+
   it("shows the contextual header and action overlay for a group", () => {
     const mock = makeEngine({ type: "group", parent: 1, context: [] });
     const { getByTestId } = render(

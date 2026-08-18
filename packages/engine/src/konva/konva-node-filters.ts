@@ -1,96 +1,16 @@
 import type Konva from "konva";
 import type { Filter } from "konva/lib/Node";
 import type { BlockData } from "../block/block.types";
-import {
-  EFFECT_ADJUSTMENTS_BLACKS,
-  EFFECT_ADJUSTMENTS_BRIGHTNESS,
-  EFFECT_ADJUSTMENTS_CLARITY,
-  EFFECT_ADJUSTMENTS_CONTRAST,
-  EFFECT_ADJUSTMENTS_EXPOSURE,
-  EFFECT_ADJUSTMENTS_GAMMA,
-  EFFECT_ADJUSTMENTS_HIGHLIGHTS,
-  EFFECT_ADJUSTMENTS_SATURATION,
-  EFFECT_ADJUSTMENTS_SHADOWS,
-  EFFECT_ADJUSTMENTS_SHARPNESS,
-  EFFECT_ADJUSTMENTS_TEMPERATURE,
-  EFFECT_ADJUSTMENTS_WHITES,
-  EFFECT_ENABLED,
-  EFFECT_FILTER_NAME,
-} from "../block/property-keys";
-import { type AdjustmentValues, hasAnyAdjustment } from "./filters/build-filter-pipeline";
 import { applyFilterChain } from "./filters/cpu-chain";
 import { getPresetOps } from "./filters/presets";
+import {
+  collectAdjustmentValues,
+  collectFilterPresetName,
+  resolveImageEffects,
+} from "./konva-image-effects";
 import type { FilterParams, WebGLFilterRenderer } from "./webgl-filter-renderer";
 
-/** True unless the effect block explicitly has its enabled flag set to false. */
-function isEffectEnabled(effectBlock: BlockData): boolean {
-  return effectBlock.properties[EFFECT_ENABLED] !== false;
-}
-
-/** Collect adjustment values from all adjustments-type effect blocks. */
-export function collectAdjustmentValues(
-  block: BlockData,
-  resolveBlock?: (id: number) => BlockData | undefined,
-): AdjustmentValues | null {
-  if (!resolveBlock || block.effectIds.length === 0) return null;
-
-  for (const effectId of block.effectIds) {
-    const effectBlock = resolveBlock(effectId);
-    if (!effectBlock || effectBlock.kind !== "adjustments") continue;
-    if (!isEffectEnabled(effectBlock)) continue;
-
-    const p = effectBlock.properties;
-    return {
-      brightness: (p[EFFECT_ADJUSTMENTS_BRIGHTNESS] as number) ?? 0,
-      saturation: (p[EFFECT_ADJUSTMENTS_SATURATION] as number) ?? 0,
-      contrast: (p[EFFECT_ADJUSTMENTS_CONTRAST] as number) ?? 0,
-      gamma: (p[EFFECT_ADJUSTMENTS_GAMMA] as number) ?? 0,
-      clarity: (p[EFFECT_ADJUSTMENTS_CLARITY] as number) ?? 0,
-      exposure: (p[EFFECT_ADJUSTMENTS_EXPOSURE] as number) ?? 0,
-      shadows: (p[EFFECT_ADJUSTMENTS_SHADOWS] as number) ?? 0,
-      highlights: (p[EFFECT_ADJUSTMENTS_HIGHLIGHTS] as number) ?? 0,
-      blacks: (p[EFFECT_ADJUSTMENTS_BLACKS] as number) ?? 0,
-      whites: (p[EFFECT_ADJUSTMENTS_WHITES] as number) ?? 0,
-      temperature: (p[EFFECT_ADJUSTMENTS_TEMPERATURE] as number) ?? 0,
-      sharpness: (p[EFFECT_ADJUSTMENTS_SHARPNESS] as number) ?? 0,
-    };
-  }
-
-  return null;
-}
-
-/** Collect filter preset name from the first filter-type effect block. */
-export function collectFilterPresetName(
-  block: BlockData,
-  resolveBlock?: (id: number) => BlockData | undefined,
-): string {
-  if (!resolveBlock || block.effectIds.length === 0) return "";
-
-  for (const effectId of block.effectIds) {
-    const effectBlock = resolveBlock(effectId);
-    if (!effectBlock || effectBlock.kind !== "filter") continue;
-    if (!isEffectEnabled(effectBlock)) continue;
-    return (effectBlock.properties[EFFECT_FILTER_NAME] as string) ?? "";
-  }
-
-  return "";
-}
-
-/**
- * Stable cache key from the effective filter inputs. Two runs with the same
- * key AND the same source image produce identical pixels, so the pipeline can
- * be skipped. Crop/flip are intentionally excluded — they change how the node
- * is drawn, not the filtered pixel buffer, so the cached result stays valid.
- */
-function computeFilterKey(values: AdjustmentValues | null, presetName: string): string {
-  if (!values) return `|${presetName}`;
-  return (
-    `${values.brightness},${values.saturation},${values.contrast},${values.gamma},` +
-    `${values.clarity},${values.exposure},${values.shadows},${values.highlights},` +
-    `${values.blacks},${values.whites},${values.temperature},${values.sharpness}` +
-    `|${presetName}`
-  );
-}
+export { collectAdjustmentValues, collectFilterPresetName };
 
 function perfLog(message: string): void {
   if (typeof window !== "undefined" && (window as { __EX_PERF?: boolean }).__EX_PERF) {
@@ -106,16 +26,12 @@ export function applyFilters(
   webgl: WebGLFilterRenderer | null,
   resolveBlock?: (id: number) => BlockData | undefined,
 ): void {
-  const values = collectAdjustmentValues(block, resolveBlock);
-  const presetName = collectFilterPresetName(block, resolveBlock);
-  const hasPreset = presetName !== "";
-  const hasEffective = (values != null && hasAnyAdjustment(values)) || hasPreset;
-  const effectiveValues = hasEffective ? values : null;
+  const effects = resolveImageEffects(block, resolveBlock);
+  const { values, presetName, hasEffective, key } = effects;
 
   const sourceImg = imgNode.getAttr("_sourceImage") as HTMLImageElement | undefined;
 
   // ── Dirty check: skip when nothing that affects the pixels changed ──
-  const key = computeFilterKey(effectiveValues, presetName);
   const lastKey = imgNode.getAttr("_lastFilterKey") as string | undefined;
   const lastSource = imgNode.getAttr("_lastFilterSource") as HTMLImageElement | undefined;
   if (lastKey === key && lastSource === sourceImg) {

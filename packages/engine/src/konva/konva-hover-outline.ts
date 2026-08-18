@@ -21,6 +21,7 @@ export class KonvaHoverOutline {
     camera: KonvaCamera,
     private readonly getGroupContext: () => number[],
     accentColor: string,
+    private readonly isEnabled: () => boolean = () => true,
   ) {
     this.#uiLayer = uiLayer;
     this.#contentLayer = contentLayer;
@@ -42,6 +43,10 @@ export class KonvaHoverOutline {
     if (node.getAttr("isPage")) return;
 
     node.on("mouseenter", (event) => {
+      if (!this.isEnabled()) {
+        this.#hideAndDraw();
+        return;
+      }
       const resolved = resolveHit(event.target as Konva.Node, this.getGroupContext());
       if (!resolved || resolved.node.getAttr("isPage")) return;
       if (this.#transformer.nodes().includes(resolved.node)) {

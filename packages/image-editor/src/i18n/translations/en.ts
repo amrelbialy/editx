@@ -186,6 +186,17 @@ export const en = {
   "fill.fitContain": "Contain",
   "fill.fitTile": "Tile",
   "fill.fitStretch": "Stretch",
+  "fill.alignment": "Alignment",
+  "fill.alignmentTopLeft": "Top left",
+  "fill.alignmentTopCenter": "Top center",
+  "fill.alignmentTopRight": "Top right",
+  "fill.alignmentCenterLeft": "Center left",
+  "fill.alignmentCenter": "Center",
+  "fill.alignmentCenterRight": "Center right",
+  "fill.alignmentBottomLeft": "Bottom left",
+  "fill.alignmentBottomCenter": "Bottom center",
+  "fill.alignmentBottomRight": "Bottom right",
+  "fill.scale": "Scale",
 
   // Curved text
   "curve.title": "Curve",

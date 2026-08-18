@@ -1,27 +1,17 @@
 import type Konva from "konva";
-import type {
-  BlockData,
-  Color,
-  GradientStop,
-  GradientType,
-  ImageFillFit,
-} from "../block/block.types";
+import type { BlockData, Color, GradientStop, GradientType } from "../block/block.types";
 import {
   FILL_COLOR,
   FILL_ENABLED,
   FILL_GRADIENT_ANGLE,
   FILL_GRADIENT_STOPS,
   FILL_GRADIENT_TYPE,
-  FILL_IMAGE_FIT,
-  FILL_IMAGE_OFFSET_X,
-  FILL_IMAGE_OFFSET_Y,
-  FILL_IMAGE_SCALE,
-  FILL_IMAGE_SRC,
   FILL_SOLID_COLOR,
 } from "../block/property-keys";
 import { colorToHex } from "../utils/color";
-import { loadImage } from "../utils/image-loader";
+import { applyImageFill, invalidatePendingImageFill } from "./konva-image-fill";
 import { applyStrokeAndShadow } from "./konva-stroke-shadow";
+import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 /**
  * Bounding box of a shape in its own local coordinate space. Rect/arrow are
@@ -42,8 +32,9 @@ export function applyShapeFillStroke(
   box: FillBox,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
-  applyFill(node, props, box, block, resolveBlock);
+  applyFill(node, props, box, block, resolveBlock, webgl);
   applyStrokeAndShadow(node, props, box);
 }
 
@@ -53,10 +44,14 @@ function applyFill(
   box: FillBox,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   const fillEnabled = (props[FILL_ENABLED] as boolean) ?? true;
   node.fillEnabled(fillEnabled);
   if (!fillEnabled) {
+    invalidatePendingImageFill(node);
+    node.fillPatternImage(undefined as unknown as HTMLImageElement);
+    node.fill("");
     return;
   }
 
@@ -64,11 +59,13 @@ function applyFill(
   const kind = fillBlock?.kind;
 
   if (fillBlock && kind === "gradient") {
+    invalidatePendingImageFill(node);
     applyGradientFill(node, fillBlock, box);
     return;
   }
   if (fillBlock && kind === "image") {
-    applyImageFill(node, fillBlock, box);
+    if (!block) return;
+    applyImageFill(node, fillBlock, block, box, webgl, resolveBlock);
     return;
   }
 
@@ -85,6 +82,7 @@ function applyFill(
 }
 
 function setColorFill(node: Konva.Shape, hex: string): void {
+  invalidatePendingImageFill(node);
   node.fillPriority("color");
   node.fillPatternImage(undefined as unknown as HTMLImageElement);
   node.fill(hex);
@@ -128,71 +126,4 @@ function applyGradientFill(node: Konva.Shape, fillBlock: BlockData, box: FillBox
   node.fillLinearGradientStartPoint({ x: cx - dx * len, y: cy - dy * len });
   node.fillLinearGradientEndPoint({ x: cx + dx * len, y: cy + dy * len });
   node.fillLinearGradientColorStops(colorStops);
-}
-
-// ── Image (pattern) resolution ─────────────────────────────────────
-
-function computePatternScale(
-  fit: ImageFillFit,
-  box: FillBox,
-  img: HTMLImageElement,
-  userScale: number,
-): { x: number; y: number } {
-  const iw = img.width || 1;
-  const ih = img.height || 1;
-  let sx = 1;
-  let sy = 1;
-  if (fit === "cover") sx = sy = Math.max(box.width / iw, box.height / ih);
-  else if (fit === "contain") sx = sy = Math.min(box.width / iw, box.height / ih);
-  else if (fit === "stretch") {
-    sx = box.width / iw;
-    sy = box.height / ih;
-  }
-  return { x: sx * userScale, y: sy * userScale };
-}
-
-function applyImageFill(node: Konva.Shape, fillBlock: BlockData, box: FillBox): void {
-  const src = (fillBlock.properties[FILL_IMAGE_SRC] as string) ?? "";
-  if (!src) {
-    setColorFill(node, "");
-    return;
-  }
-  const fit = (fillBlock.properties[FILL_IMAGE_FIT] as ImageFillFit) ?? "cover";
-  const offsetX = (fillBlock.properties[FILL_IMAGE_OFFSET_X] as number) ?? 0;
-  const offsetY = (fillBlock.properties[FILL_IMAGE_OFFSET_Y] as number) ?? 0;
-  const userScale = (fillBlock.properties[FILL_IMAGE_SCALE] as number) ?? 1;
-
-  node.fillPriority("pattern");
-  node.fillPatternRepeat(fit === "tile" ? "repeat" : "no-repeat");
-  node.fillPatternOffset({ x: offsetX, y: offsetY });
-  node.fillPatternX(box.x);
-  node.fillPatternY(box.y);
-
-  const cached = node.getAttr("__fillImage") as HTMLImageElement | undefined;
-  if (cached && node.getAttr("__fillLoadedSrc") === src) {
-    node.fillPatternImage(cached);
-    node.fillPatternScale(computePatternScale(fit, box, cached, userScale));
-    return;
-  }
-
-  // Track the most recent requested src so a stale async load can't clobber a
-  // newer one when it resolves out of order (mirrors updateImageNode).
-  node.setAttr("__pendingFillSrc", src);
-  node.setAttr("__fillImageLoadError", undefined);
-  const imageReady = loadImage(src)
-    .then((img) => {
-      if (node.getAttr("__pendingFillSrc") !== src) return;
-      if (!node.getStage()) return;
-      node.setAttr("__fillImage", img);
-      node.setAttr("__fillLoadedSrc", src);
-      node.fillPatternImage(img);
-      node.fillPatternScale(computePatternScale(fit, box, img, userScale));
-      node.getLayer()?.batchDraw();
-    })
-    .catch((error: unknown) => {
-      if (node.getAttr("__pendingFillSrc") !== src) return;
-      node.setAttr("__fillImageLoadError", error);
-      console.error(`[editx] Failed to load fill image: ${src}`, error);
-    });
-  node.setAttr("__fillImageReady", imageReady);
 }

@@ -77,6 +77,11 @@ export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
       const next = { ...current, kind };
       stateRef.current = next;
       setState(next);
+
+      const fillId = engine.block.getFill(blockId);
+      const activeKind = fillId == null ? null : engine.block.getKind(fillId);
+      if (activeKind === kind || (kind === "image" && !current.image.src)) return;
+
       engine.block.changeFillKind(blockId, kind);
       if (kind === "color") {
         engine.block.setFillSolidColor(blockId, hexToColor(current.solidColor));
@@ -130,8 +135,17 @@ export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
 
   const handleImageChange = useCallback(
     (image: ImageFill) => {
-      engine.block.setFillImage(blockId, image);
-      setState((current) => ({ ...current, image }));
+      const fillId = engine.block.getFill(blockId);
+      const activeKind = fillId == null ? null : engine.block.getKind(fillId);
+      if (activeKind !== "image" && image.src) {
+        engine.beginBatch();
+        engine.block.changeFillKind(blockId, "image");
+        engine.block.setFillImage(blockId, image);
+        engine.endBatch();
+      } else if (activeKind === "image") {
+        engine.block.setFillImage(blockId, image);
+      }
+      setState((current) => ({ ...current, kind: "image", image }));
     },
     [engine, blockId],
   );

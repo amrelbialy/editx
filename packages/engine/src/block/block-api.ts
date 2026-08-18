@@ -24,11 +24,12 @@ import type {
   GradientFill,
   GradientStop,
   GradientType,
-  ImageFill,
-  ImageFillFit,
+  ImageFillOptions,
+  ImageFillUpdate,
   PathViewBox,
   PropertyValue,
   ReadonlyBlockData,
+  ResolvedImageFill,
   ResolvedTextBackground,
   ShapeGeometry,
   ShapeType,
@@ -618,13 +619,13 @@ export class BlockAPI {
   getFillGradient(blockId: number): GradientFill | null {
     return this.#fill.getFillGradient(blockId);
   }
-  setFillImage(
-    blockId: number,
-    img: { src: string; fit?: ImageFillFit; offsetX?: number; offsetY?: number; scale?: number },
-  ): void {
+  setFillImage(blockId: number, img: ImageFillOptions): void {
     this.#fill.setFillImage(blockId, img);
   }
-  getFillImage(blockId: number): ImageFill | null {
+  updateFillImage(blockId: number, update: ImageFillUpdate): void {
+    this.#fill.updateFillImage(blockId, update);
+  }
+  getFillImage(blockId: number): ResolvedImageFill | null {
     return this.#fill.getFillImage(blockId);
   }
   changeFillKind(blockId: number, kind: FillType): void {

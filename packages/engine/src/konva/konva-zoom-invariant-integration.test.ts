@@ -25,12 +25,15 @@ Konva.showWarnings = false;
 /** Minimal Konva.Layer stub: only the members the overlay/transformer touch. */
 function makeLayerStub(scale: number) {
   let s = scale;
+  const transformNode = new Konva.Group({ scaleX: scale, scaleY: scale });
   return {
     add: vi.fn(),
     batchDraw: vi.fn(),
     scaleX: () => s,
     scaleY: () => s,
     position: () => ({ x: 0, y: 0 }),
+    getAbsoluteTransform: () => transformNode.getAbsoluteTransform(),
+    getStage: () => ({ width: () => 1000, height: () => 800 }),
     setScale: (next: number) => {
       s = next;
     },
@@ -157,5 +160,82 @@ describe("crop overlay sizing across zoom", () => {
     // Plain stroke follows 1/zoom; transformer handles stay at base size.
     expect(cutout.strokeWidth()).toBeCloseTo(0.5); // 2 / 4
     expect(transformer.anchorSize()).toBeCloseTo(12);
+  });
+
+  it("targets a graphic with the dedicated transformer and restores source mode", () => {
+    const { overlay, layer } = makeOverlay(1);
+    const parent = new Konva.Group();
+    const node = new Konva.Rect({ width: 200, height: 100 });
+    const onFrameChange = vi.fn();
+    const onNodeTransform = vi.fn();
+    node.on("transform", onNodeTransform);
+    parent.add(node);
+
+    overlay.showBlock(node, { onChange: onFrameChange });
+
+    const { cutout, transformer } = internals(layer);
+    expect(transformer.nodes()).not.toContain(node);
+    const proxy = transformer.nodes()[0] as Konva.Rect;
+    expect(proxy.name()).toBe("crop-frame-proxy");
+    expect(cutout.draggable()).toBe(false);
+    expect(cutout.getParent()?.listening()).toBe(false);
+
+    proxy.fire("transformstart");
+    proxy.scaleX(0.5);
+    proxy.fire("transform");
+    expect(onFrameChange).toHaveBeenLastCalledWith({ x: 0, y: 0, width: 100, height: 100 });
+    expect(onNodeTransform).not.toHaveBeenCalled();
+    expect(node.scale()).toEqual({ x: 1, y: 1 });
+
+    overlay.show({ x: 0, y: 0, width: 300, height: 200 });
+    expect(transformer.nodes()).toEqual([cutout]);
+    expect(cutout.draggable()).toBe(true);
+    expect(cutout.getParent()?.listening()).toBe(true);
+  });
+
+  it("keeps block overlay strokes screen-constant across zoom", () => {
+    const { overlay, layer } = makeOverlay(2);
+    const parent = new Konva.Group();
+    const node = new Konva.Rect({ width: 200, height: 100 });
+    parent.add(node);
+
+    overlay.showBlock(node, { onChange: () => {} });
+    const { cutout } = internals(layer);
+    expect(cutout.strokeScaleEnabled()).toBe(false);
+    expect(cutout.strokeWidth()).toBe(2);
+
+    layer.setScale(0.5);
+    overlay.applyViewportScale(0.5);
+    expect(cutout.strokeWidth()).toBe(2);
+  });
+
+  it("freezes finite Cover bounds for the full frame gesture", () => {
+    const { overlay, layer } = makeOverlay(1);
+    const parent = new Konva.Group();
+    const node = new Konva.Rect({ width: 200, height: 100 });
+    parent.add(node);
+    node.fillPatternImage({ width: 100, height: 100 } as HTMLImageElement);
+    node.setAttr("__fillPatternFit", "cover");
+    node.fillPatternScale({ x: 2, y: 2 });
+    node.fillPatternOffset({ x: 50, y: 50 });
+    node.fillPatternX(100);
+    node.fillPatternY(50);
+
+    overlay.showBlock(node, { onChange: () => {} });
+    const { transformer } = internals(layer);
+    const proxy = transformer.nodes()[0] as Konva.Rect;
+    proxy.fire("transformstart");
+    node.fillPatternScale({ x: 4, y: 4 });
+    const bound = transformer.boundBoxFunc();
+    expect(
+      bound?.(
+        { x: 0, y: 0, width: 200, height: 100, rotation: 0 },
+        { x: 0, y: 0, width: 300, height: 100, rotation: 0 },
+      ),
+    ).toMatchObject({
+      x: 0,
+      width: 200,
+    });
+    proxy.fire("transformend");
   });
 });

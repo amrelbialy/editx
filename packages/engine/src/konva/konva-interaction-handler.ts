@@ -22,6 +22,7 @@ export interface InteractionDeps {
   callbacks: InteractionCallbacks;
   /** Active group-context stack (outermost-first); `[]` = top level. */
   getGroupContext: () => number[];
+  isInteractionEnabled?: () => boolean;
 }
 
 /** Returns true if the target is a background element (stage or page background). */
@@ -36,6 +37,7 @@ function isBackground(target: Konva.Node, stage: Konva.Stage): boolean {
  */
 export function setupInteraction(deps: InteractionDeps): void {
   const { stage, selectionRect, uiLayer, nodeMap, camera, callbacks, getGroupContext } = deps;
+  const isEnabled = deps.isInteractionEnabled ?? (() => true);
 
   let x1 = 0,
     y1 = 0,
@@ -93,6 +95,7 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Marquee — mousedown
   stage.on("mousedown touchstart", (e) => {
+    if (!isEnabled()) return;
     if (!isBackground(e.target, stage)) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
@@ -107,6 +110,11 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Marquee — mousemove
   stage.on("mousemove touchmove", () => {
+    if (!isEnabled()) {
+      selecting = false;
+      selectionRect.visible(false);
+      return;
+    }
     if (!selecting) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
@@ -124,6 +132,11 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Marquee — mouseup (scoped to the active context's direct children)
   stage.on("mouseup touchend", () => {
+    if (!isEnabled()) {
+      selecting = false;
+      selectionRect.visible(false);
+      return;
+    }
     if (!selecting) return;
     selecting = false;
 

@@ -179,6 +179,7 @@ describe("updatePathNode", () => {
       { x: 0, y: 0, width: 40, height: 20 },
       graphic,
       resolve,
+      null,
     );
   });
 });

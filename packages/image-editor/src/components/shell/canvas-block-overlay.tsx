@@ -36,7 +36,7 @@ export const CanvasBlockOverlay: React.FC<CanvasBlockOverlayProps> = (props) => 
           <BlockActionBar
             blockType={blockType}
             onEdit={blockType === "text" ? onEditText : undefined}
-            onReplace={blockType === "image" ? onReplaceImage : undefined}
+            onReplace={onReplaceImage}
             onBringForward={blockActions.bringForward}
             onSendBackward={blockActions.sendBackward}
             onBringToFront={blockActions.bringToFront}

@@ -124,9 +124,9 @@ export class EditorCrop {
     return initialCrop ?? imageRect;
   }
 
-  /** Tear down the crop overlay — auto-commits before hiding. */
-  teardownCropOverlay(): void {
-    this.#commitCropToBlock();
+  /** Tear down the crop overlay, optionally committing before hiding. */
+  teardownCropOverlay(commit = true): void {
+    if (commit) this.#commitCropToBlock();
 
     const blockId = this.#cropBlockId;
     this.#ctx.renderer?.hideCropOverlay();

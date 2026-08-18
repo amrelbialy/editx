@@ -1,14 +1,16 @@
-import type { EditxEngine } from "@editx/engine";
+import type { EditxEngine, ImageFillCrop, ImageFillCropUpdate } from "@editx/engine";
 import React, { useCallback, useEffect, useRef } from "react";
 import type { EditorSlots } from "../../config/config.types";
 import { useConfig } from "../../config/config-context";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
+import { useBlockImageFill } from "../../hooks/use-block-image-fill";
 import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import { TextEditorOverlay } from "../text-editor-overlay";
 import { BlockPropertiesBar } from "./block-properties-bar";
 import { CanvasArea } from "./canvas-area";
 import { CanvasBlockOverlay } from "./canvas-block-overlay";
+import { ImageFillCropToolbar } from "./image-fill-crop-toolbar";
 import { ToolPropertiesBar } from "./tool-properties-bar";
 
 interface CanvasPaneProps {
@@ -30,6 +32,17 @@ interface CanvasPaneProps {
   slots?: EditorSlots;
   onContextualReset: () => void;
   onDone: () => void;
+  onCropImageFill?: (blockId: number) => void;
+  onCropCancel?: () => void;
+  imageFillCrop?: {
+    isActive: boolean;
+    crop: ImageFillCrop | null;
+    update: (change: ImageFillCropUpdate) => void;
+    rotateLeft: () => void;
+    rotateRight: () => void;
+    flipHorizontal: () => void;
+    flipVertical: () => void;
+  };
 }
 
 export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
@@ -47,9 +60,15 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
     slots,
     onContextualReset,
     onDone,
+    onCropImageFill,
+    onCropCancel,
+    imageFillCrop,
   } = props;
 
+  const editingRef = useRef<number | null>(null);
+
   const blockScreenRect = useBlockScreenRect(engine ?? null, selectedShapeId);
+  const hasImageFill = useBlockImageFill(engine, selectedShapeId, selectedBlockType);
   const config = useConfig();
 
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
@@ -57,8 +76,12 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
   const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
 
-  const editingRef = useRef(editingTextBlockId);
   editingRef.current = editingTextBlockId;
+
+  const handleCloseTextEditor = useCallback(() => {
+    setEditingTextBlockId(null);
+    setTextSelectionRange(null);
+  }, [setEditingTextBlockId, setTextSelectionRange]);
 
   // Subscribe to dblclick on text blocks to enter inline editing.
   // Gate on group context: only open the editor when the resolved text block is
@@ -102,30 +125,49 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
     return () => engine.off("stage:click", handler);
   }, [engine, setEditingTextBlockId, setTextSelectionRange]);
 
-  const handleCloseTextEditor = useCallback(() => {
-    setEditingTextBlockId(null);
-    setTextSelectionRange(null);
-  }, [setEditingTextBlockId, setTextSelectionRange]);
-
+  const isImageFillCropping = imageFillCrop?.isActive === true;
   const header =
-    engine && selectedShapeId !== null && hasSelectedBlock ? (
+    !isImageFillCropping && engine && selectedShapeId !== null && hasSelectedBlock ? (
       <BlockPropertiesBar
         engine={engine}
         blockId={selectedShapeId}
         blockType={selectedBlockType as "text" | "graphic" | "image" | "group"}
+        onCropImageFill={onCropImageFill}
       />
     ) : activeTool !== "select" ? (
       <ToolPropertiesBar
         activeTool={activeTool}
         onReset={onContextualReset}
         onDone={onDone}
-        onRotateClockwise={rotateFlip.handleRotateClockwise}
-        onRotateCounterClockwise={rotateFlip.handleRotateCounterClockwise}
-        onFlipHorizontal={rotateFlip.handleFlipHorizontal}
-        onFlipVertical={rotateFlip.handleFlipVertical}
-        showRotateFlip={activeTool === "crop" ? config.crop?.showRotateFlip !== false : true}
+        onCancel={imageFillCrop?.isActive ? onCropCancel : undefined}
+        onRotateClockwise={
+          imageFillCrop?.isActive ? imageFillCrop.rotateRight : rotateFlip.handleRotateClockwise
+        }
+        onRotateCounterClockwise={
+          imageFillCrop?.isActive
+            ? imageFillCrop.rotateLeft
+            : rotateFlip.handleRotateCounterClockwise
+        }
+        onFlipHorizontal={
+          imageFillCrop?.isActive ? imageFillCrop.flipHorizontal : rotateFlip.handleFlipHorizontal
+        }
+        onFlipVertical={
+          imageFillCrop?.isActive ? imageFillCrop.flipVertical : rotateFlip.handleFlipVertical
+        }
+        showRotateFlip={
+          activeTool === "crop"
+            ? imageFillCrop?.isActive || config.crop?.showRotateFlip !== false
+            : true
+        }
         customContent={
-          activeCustomToolBar ? React.createElement(activeCustomToolBar) : slots?.contextualBarExtra
+          <>
+            {imageFillCrop?.isActive && imageFillCrop.crop && (
+              <ImageFillCropToolbar crop={imageFillCrop.crop} onChange={imageFillCrop.update} />
+            )}
+            {activeCustomToolBar
+              ? React.createElement(activeCustomToolBar)
+              : slots?.contextualBarExtra}
+          </>
         }
       />
     ) : undefined;
@@ -136,13 +178,22 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
     selectedBlockType === "image" ||
     selectedBlockType === "group";
   const overlay =
-    engine && selectedShapeId !== null && hasSelectedBlock && supportsOverlay && blockScreenRect ? (
+    !isImageFillCropping &&
+    engine &&
+    selectedShapeId !== null &&
+    hasSelectedBlock &&
+    supportsOverlay &&
+    blockScreenRect ? (
       <CanvasBlockOverlay
         blockType={selectedBlockType!}
         screenRect={blockScreenRect}
         isEditingText={editingTextBlockId !== null}
         onEditText={() => setEditingTextBlockId(selectedShapeId)}
-        onReplaceImage={(file: File) => replaceImage(file, selectedShapeId)}
+        onReplaceImage={
+          selectedBlockType === "image" || hasImageFill
+            ? (file: File) => replaceImage(file, selectedShapeId)
+            : undefined
+        }
         blockActions={blockActions}
       />
     ) : undefined;

@@ -1,5 +1,5 @@
 import type { BlockData } from "./block/block.types";
-import type { BlockExportOptions, CursorType, ExportOptions } from "./editor-types";
+import type { BlockExportOptions, CursorType, ExportOptions, ImageFillCrop } from "./editor-types";
 import type { CropRect } from "./utils/crop-math";
 
 /**
@@ -149,6 +149,13 @@ export interface RendererAdapter {
   getCropImageRect(): CropRect | null;
 
   //
+  // Graphic image-fill crop preview
+  //
+  showImageFillCropPreview?(blockId: number, crop: ImageFillCrop): ImageFillCrop | null;
+  setImageFillCropPreview?(crop: ImageFillCrop, ratio?: number | null): ImageFillCrop | null;
+  hideImageFillCropPreview?(): void;
+
+  //
   // Interaction callbacks (renderer → engine)
   //
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
@@ -160,6 +167,10 @@ export interface RendererAdapter {
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   /** Called when the user drags/resizes the crop overlay. */
   onCropChange?: (rect: CropRect) => void;
+  /** Called for renderer-only graphic image-fill crop previews. */
+  onImageFillCropPreviewChange?: (crop: ImageFillCrop) => void;
+  /** Called when the dimmed area outside a graphic image-fill crop is clicked. */
+  onImageFillCropDismiss?: () => void;
   /**
    * Called on every frame while a block is being dragged or resized on-canvas
    * (live, before the gesture is committed). Lets consumers track a block's

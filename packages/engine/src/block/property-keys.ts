@@ -127,9 +127,13 @@ export const FILL_GRADIENT_STOPS = "fill/gradient/stops" as const;
 export const FILL_GRADIENT_ANGLE = "fill/gradient/angle" as const;
 export const FILL_IMAGE_SRC = "fill/image/src" as const;
 export const FILL_IMAGE_FIT = "fill/image/fit" as const;
+export const FILL_IMAGE_ALIGNMENT = "fill/image/alignment" as const;
 export const FILL_IMAGE_OFFSET_X = "fill/image/offsetX" as const;
 export const FILL_IMAGE_OFFSET_Y = "fill/image/offsetY" as const;
 export const FILL_IMAGE_SCALE = "fill/image/scale" as const;
+export const FILL_IMAGE_ROTATION = "fill/image/rotation" as const;
+export const FILL_IMAGE_FLIP_HORIZONTAL = "fill/image/flipHorizontal" as const;
+export const FILL_IMAGE_FLIP_VERTICAL = "fill/image/flipVertical" as const;
 
 // ── Fill & Stroke toggles (on graphic block) ─────────
 export const FILL_ENABLED = "fill/enabled" as const;

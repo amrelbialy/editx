@@ -1,7 +1,7 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
-import type { BlockExportOptions, ExportOptions } from "../editor-types";
+import type { BlockExportOptions, ExportOptions, ImageFillCrop } from "../editor-types";
 import type { BlockClickEvent, BlockTransform, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
@@ -14,6 +14,8 @@ import { exportBlockNode } from "./konva-export-block";
 import { applyGroupContext, createGroupOutline } from "./konva-group-affordance";
 import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { KonvaHoverOutline } from "./konva-hover-outline";
+import { KonvaImageFillCrop } from "./konva-image-fill-crop";
+import { applyImageFillCropPreviewFrame } from "./konva-image-fill-crop-preview";
 import type { KonvaNodeFactory } from "./konva-node-factory";
 import { replaceIncompatibleNode } from "./konva-node-replacement";
 import { createKonvaScene } from "./konva-scene-setup";
@@ -37,6 +39,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #webgl: WebGLFilterRenderer | null = null;
   #updateAccentColor?: (color: string) => void;
   #hoverOutline!: KonvaHoverOutline;
+  #imageFillCrop!: KonvaImageFillCrop;
   #groupContext: number[] = [];
   #groupOutline!: Konva.Rect;
 
@@ -47,6 +50,8 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onBlockTransformEnd?: (blockId: number, transform: BlockTransform, anchorName?: string) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
+  onImageFillCropPreviewChange?: (crop: ImageFillCrop) => void;
+  onImageFillCropDismiss?: () => void;
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (pan: { x: number; y: number }) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
@@ -76,14 +81,25 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
 
     const scene = createKonvaScene(this.#rootEl, pageW, pageH, this.#nodeMap, {
-      onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
-      onBlockDblClick: (blockId, screenPos) => this.onBlockDblClick?.(blockId, screenPos),
-      onEnterGroup: (groupId, childId) => this.onEnterGroup?.(groupId, childId),
-      onStageClick: (worldPos) => this.onStageClick?.(worldPos),
+      onBlockClick: (blockId, event) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockClick?.(blockId, event);
+      },
+      onBlockDblClick: (blockId, screenPos) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockDblClick?.(blockId, screenPos);
+      },
+      onEnterGroup: (groupId, childId) => {
+        if (!this.#imageFillCrop?.isActive()) this.onEnterGroup?.(groupId, childId);
+      },
+      onStageClick: (worldPos) => {
+        if (!this.#imageFillCrop?.isActive()) this.onStageClick?.(worldPos);
+      },
       onZoomChange: (zoom) => this.onZoomChange?.(zoom),
-      onBlockTransform: (blockId, phase) => this.onBlockTransform?.(blockId, phase),
+      onBlockTransform: (blockId, phase) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockTransform?.(blockId, phase);
+      },
       onCropChange: (rect) => this.onCropChange?.(rect),
       getGroupContext: () => this.#groupContext,
+      isInteractionEnabled: () => !this.#imageFillCrop?.isActive(),
     });
 
     this.#stage = scene.stage;
@@ -92,9 +108,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#transformer = scene.transformer;
     this.#selectionRect = scene.selectionRect;
     this.#camera = scene.camera;
-    this.#camera.setPanChangeListener((pan) => this.onPanChange?.(pan));
-    this.#nodeFactory = scene.nodeFactory;
     this.#cropOverlay = scene.cropOverlay;
+    this.#camera.setPanChangeListener((pan) => {
+      this.#cropOverlay.refreshBlock();
+      this.onPanChange?.(pan);
+    });
+    this.#nodeFactory = scene.nodeFactory;
     this.#webgl = scene.webgl;
     this.#updateAccentColor = scene.updateAccentColor;
     this.#lastPageSize = { width: pageW, height: pageH };
@@ -106,6 +125,22 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#camera,
       () => this.#groupContext,
       "#4971FF",
+      () => !this.#imageFillCrop?.isActive(),
+    );
+    this.#imageFillCrop = new KonvaImageFillCrop(
+      this.#stage,
+      this.#nodeMap,
+      this.#cropOverlay,
+      (crop) => this.onImageFillCropPreviewChange?.(crop),
+      (blockId, frame, preview) =>
+        applyImageFillCropPreviewFrame(
+          this.#nodeFactory,
+          this.resolveBlock,
+          blockId,
+          frame,
+          preview,
+        ),
+      () => this.onImageFillCropDismiss?.(),
     );
 
     this.#groupContext = [];
@@ -119,6 +154,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       camera: this.#camera,
       getPageSize: () => this.#lastPageSize,
       getCropFitRect: () => this.#getCropFitRect(),
+      onResize: () => this.#cropOverlay.refreshBlock(),
     });
   }
 
@@ -129,7 +165,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
    * same framing the crop entry established.
    */
   #getCropFitRect(): CropRect | null {
-    if (!this.#cropOverlay?.isVisible()) return null;
+    if (!this.#cropOverlay?.isVisible() || this.#cropOverlay.isBlockMode()) return null;
     return this.#cropOverlay.getCropRect() ?? this.#cropOverlay.getImageRect();
   }
 
@@ -147,6 +183,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const callbacks = {
       onDragEnd: (blockId: number, x: number, y: number) => this.onBlockDragEnd?.(blockId, x, y),
       onTransformEnd: (blockId: number, transform: BlockTransform) => {
+        if (this.#imageFillCrop?.captureTransform(blockId, transform)) return;
         const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
         this.onBlockTransformEnd?.(blockId, transform, anchor);
       },
@@ -176,6 +213,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
+    this.#imageFillCrop?.reapply(id);
 
     // Keep the Konva tree mirroring the block tree: nest grouped children inside
     // their group node so their stored coords stay parent-relative (no abs↔local
@@ -243,6 +281,10 @@ export class KonvaRendererAdapter implements RendererAdapter {
   }
 
   showTransformer(blockIds: number[], blockType?: string): void {
+    if (this.#imageFillCrop?.isActive()) {
+      this.hideTransformer();
+      return;
+    }
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
     const isGroup = blockType === "group";
     this.#hoverOutline.hide();
@@ -393,6 +435,24 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return this.#cropOverlay.isVisible() ? this.#cropOverlay.getImageRect() : null;
   }
 
+  showImageFillCropPreview(blockId: number, crop: ImageFillCrop): ImageFillCrop | null {
+    this.hideTransformer();
+    this.#hoverOutline.hide();
+    this.#selectionRect.visible(false);
+    const shown = this.#imageFillCrop.show(blockId, crop);
+    this.#uiLayer.batchDraw();
+    return shown;
+  }
+
+  setImageFillCropPreview(crop: ImageFillCrop, ratio?: number | null): ImageFillCrop | null {
+    return this.#imageFillCrop.set(crop, ratio);
+  }
+
+  hideImageFillCropPreview(): void {
+    this.#imageFillCrop.hide();
+    this.#uiLayer.batchDraw();
+  }
+
   renderFrame(): void {
     // Scoped, batched redraws — avoid synchronous full-stage draws.
     this.#applyGroupContext();
@@ -425,6 +485,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   dispose(): void {
     this.#resizeObserver?.disconnect();
+    this.#imageFillCrop?.hide();
     this.#cropOverlay?.destroy();
     this.#webgl?.dispose();
     this.#webgl = null;

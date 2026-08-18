@@ -48,7 +48,6 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
   onDelete,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isImage = blockType === "image";
   const isText = blockType === "text";
   const { t } = useTranslation();
 
@@ -73,8 +72,7 @@ export const BlockActionBar: React.FC<BlockActionBarProps> = ({
         </>
       )}
 
-      {/* Replace (image only) */}
-      {isImage && onReplace && (
+      {onReplace && (
         <>
           <ActionButton
             icon={<Replace className="h-4 w-4" />}

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ImageEditor } from "./image-editor";
@@ -91,6 +91,7 @@ const createMockEngine = () => {
       canUndo: vi.fn().mockReturnValue(false),
       canRedo: vi.fn().mockReturnValue(false),
       clearHistory: vi.fn(),
+      onImageFillCropChanged: vi.fn().mockReturnValue(() => {}),
     },
     event: {
       subscribe: vi.fn().mockReturnValue(() => {}),
@@ -413,9 +414,7 @@ describe("ImageEditor", () => {
     });
 
     // Re-render with a new source to simulate what drop does
-    const { container: container2 } = render(
-      React.createElement(ImageEditor, { src: "blob:http://localhost/mock-dropped" }),
-    );
+    render(React.createElement(ImageEditor, { src: "blob:http://localhost/mock-dropped" }));
 
     await waitFor(() => {
       expect(mockLoadImage).toHaveBeenCalledTimes(2);

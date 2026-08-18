@@ -167,6 +167,34 @@ describe("ShapeFillPanel", () => {
     );
   });
 
+  it("keeps the current fill until the first image is selected", async () => {
+    const engine = makeEngine("color");
+    const { container } = renderPanel(engine);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Image" }));
+
+    expect(engine.block.changeFillKind).not.toHaveBeenCalled();
+    expect(engine.block.setFillImage).not.toHaveBeenCalled();
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File(["image"], "fill.png", { type: "image/png" })] },
+    });
+
+    await waitFor(() => {
+      expect(engine.beginBatch).toHaveBeenCalledOnce();
+      expect(engine.block.changeFillKind).toHaveBeenCalledWith(7, "image");
+      expect(engine.block.setFillImage).toHaveBeenCalledWith(7, {
+        src: "data:image/png;base64,processed",
+        fit: "cover",
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
+      });
+      expect(engine.endBatch).toHaveBeenCalledOnce();
+    });
+  });
+
   it("preserves gradient settings while another fill tab is active", () => {
     const engine = makeEngine("gradient");
     renderPanel(engine);
@@ -226,12 +254,6 @@ describe("ShapeFillPanel", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Color" }));
     fireEvent.click(screen.getByRole("tab", { name: "Image" }));
 
-    expect(engine.block.setFillImage).toHaveBeenLastCalledWith(7, {
-      src: "",
-      fit: "contain",
-      offsetX: 12,
-      offsetY: 18,
-      scale: 1.5,
-    });
+    expect(engine.block.setFillImage).not.toHaveBeenCalled();
   });
 });

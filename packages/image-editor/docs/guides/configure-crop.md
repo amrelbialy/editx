@@ -35,7 +35,15 @@ rest. Both `ResizePreset` and `ResizePresetGroup` are exported from
 
 ## Crop controls
 
-Three booleans gate the interactive controls around the crop — all default to
+Crop also applies to graphics that use an image fill. For those graphics, the existing Crop panel
+controls frame dimensions, aspect ratios, and resize presets. Canvas handles resize the graphic
+frame, while dragging inside the graphic moves the image under its shape mask. The contextual bar
+provides all four fit modes, scale, rotation, flips, reset, apply, and cancel. Apply records the
+frame and image transform as one undo step; cancel restores the entry state without undoing other
+work. The normal Image Fill panel remains available outside Crop for source replacement, fit,
+offsets, scale, and opacity.
+
+Two booleans gate the interactive controls around the crop — both default to
 `true`:
 
 - `allowCustomRatio` — when `true`, users can crop to a free, unconstrained
@@ -44,7 +52,8 @@ Three booleans gate the interactive controls around the crop — all default to
   stays engaged (its toggle is hidden), and the active preset snaps to the first
   constrained ratio.
 - `showRotateFlip` — controls the rotate / flip cluster in the crop contextual
-  bar above the canvas. Set it to `false` to hide those buttons.
+  bar above the canvas for page and standalone-image crop. Image-filled graphic
+  crop always shows these image-transform controls.
 
 ```tsx
 <ImageEditor

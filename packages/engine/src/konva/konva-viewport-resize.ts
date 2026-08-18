@@ -16,6 +16,7 @@ export interface ViewportResizeDeps {
    * change that opening the crop panel triggers.
    */
   getCropFitRect?: () => CropRect | null;
+  onResize?: () => void;
 }
 
 /**
@@ -52,6 +53,7 @@ export function observeViewportResize(deps: ViewportResizeDeps): ResizeObserver 
     } else {
       deps.camera.reapplyViewport();
     }
+    deps.onResize?.();
   });
 
   observer.observe(deps.rootEl);

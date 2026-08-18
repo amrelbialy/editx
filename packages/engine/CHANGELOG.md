@@ -13,6 +13,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 	geometry.
 * **engine:** add undoable linear gradient strokes for graphic blocks and text runs through
 	`setStrokeGradient` and selection-aware `setTextStroke` updates.
+* **engine:** add image-filled graphic crop sessions with frame previews, image offsets, scale,
+	rotation, flips, explicit commit/cancel, and one-entry undo/redo.
+* **engine:** add `updateFillImage` for partial image-fill updates and persist image rotation and
+	horizontal or vertical flips.
 
 ### Changed
 

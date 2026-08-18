@@ -17,16 +17,18 @@ interface BlockPropertiesBarProps {
   engine: EditxEngine;
   blockId: number;
   blockType: "text" | "graphic" | "image" | "group";
+  onCropImageFill?: (blockId: number) => void;
 }
 
 export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => {
-  const { engine, blockId, blockType } = props;
+  const { engine, blockId, blockType, onCropImageFill } = props;
 
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
 
   const isText = blockType === "text";
   const isImage = blockType === "image";
+  const isGraphic = blockType === "graphic";
   const config = useConfig();
   const fontFamilies = config.text?.fonts ?? DEFAULT_FONT_FAMILIES;
 
@@ -34,11 +36,12 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     textState,
     fillColor,
     opacity,
+    hasImageFill,
     refresh,
     getStyleRange,
     handleOpacityChange,
     textSelectionRange,
-  } = useBlockPropertiesState({ engine, blockId, isText, isImage });
+  } = useBlockPropertiesState({ engine, blockId, isText, isImage, isGraphic });
 
   const textFormat = useBlockTextFormat({
     engine,
@@ -93,11 +96,17 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
         blockId={blockId}
         isText={isText}
         isImage={isImage}
+        hasImageFill={hasImageFill}
         colorSwatch={colorSwatch}
         opacity={opacity}
         propertySidePanel={propertySidePanel}
         onTogglePanel={togglePanel}
         onOpacityChange={handleOpacityChange}
+        onCropImageFill={
+          onCropImageFill && engine.editor.getCropEditTarget(blockId) === "image-fill"
+            ? () => onCropImageFill?.(blockId)
+            : undefined
+        }
       />
 
       <GroupControls engine={engine} blockId={blockId} />

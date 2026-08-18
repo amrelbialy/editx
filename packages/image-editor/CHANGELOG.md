@@ -11,6 +11,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
 * **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls
 * **image-editor:** add solid and linear gradient modes to graphic and text stroke controls
+* **image-editor:** add image-filled graphic crop with the existing Crop panel and transformer,
+	plus fit, scale, rotate, flip, reset, apply, and cancel controls in the contextual toolbar
+* **image-editor:** add image-fill Styles and Replace actions while preserving the current fill
+	transform during source replacement
 
 ### Bug Fixes
 

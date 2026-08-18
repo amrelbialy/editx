@@ -21,6 +21,7 @@ function makeEngine(shapeKind = "rect") {
     getOpacity: vi.fn().mockReturnValue(1),
     getTextContent: vi.fn().mockReturnValue("Hello"),
     getFill: vi.fn().mockReturnValue(null),
+    getFillImage: vi.fn().mockReturnValue(null),
     getColor: vi.fn().mockReturnValue(null),
     isFillEnabled: vi.fn().mockReturnValue(true),
     setFillEnabled: vi.fn(),
@@ -60,7 +61,12 @@ function renderBar(blockType: BlockType, engine: EditxEngine = makeEngine()) {
     <I18nProvider>
       <ImageEditorProvider>
         <TooltipProvider>
-          <BlockPropertiesBar engine={engine} blockId={7} blockType={blockType} />
+          <BlockPropertiesBar
+            engine={engine}
+            blockId={7}
+            blockType={blockType}
+            onReplaceImage={vi.fn()}
+          />
         </TooltipProvider>
       </ImageEditorProvider>
     </I18nProvider>,
@@ -80,11 +86,9 @@ describe("BlockPropertiesBar", () => {
 
   it("renders shared controls for a graphic block", () => {
     renderBar("graphic");
-    // Shared controls present for every block type.
     expect(screen.getByRole("button", { name: "Shadow" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opacity" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Position" })).toBeDefined();
-    // Graphic-specific: fill + stroke panels. Color is owned by Fill.
     expect(screen.getByRole("button", { name: "Shapes" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Corner Radius" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Fill" })).toBeDefined();
@@ -120,9 +124,7 @@ describe("BlockPropertiesBar", () => {
   it("renders image-specific controls for an image block", () => {
     renderBar("image");
     expect(screen.getByRole("button", { name: "Image" })).toBeDefined();
-    // Style dropdown (Adjustments / Filters) exists for images only.
     expect(screen.getByRole("button", { name: "Style" })).toBeDefined();
-    // No text-only color swatch for images.
     expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
   });
 
@@ -197,7 +199,12 @@ describe("BlockPropertiesBar", () => {
         <I18nProvider>
           <ImageEditorProvider>
             <TooltipProvider>
-              <BlockPropertiesBar engine={engine} blockId={7} blockType="graphic" />
+              <BlockPropertiesBar
+                engine={engine}
+                blockId={7}
+                blockType="graphic"
+                onReplaceImage={vi.fn()}
+              />
             </TooltipProvider>
           </ImageEditorProvider>
         </I18nProvider>
@@ -206,8 +213,7 @@ describe("BlockPropertiesBar", () => {
 
     render(<Harness />);
     const before = screen.getByRole("button", { name: "Shadow" });
-    // Trigger an unrelated parent state change.
-    fireEvent.click(before); // open panel (real state that should persist)
+    fireEvent.click(before);
     bump();
     bump();
     const after = screen.getByRole("button", { name: "Shadow" });

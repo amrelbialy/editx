@@ -74,6 +74,35 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Image fills and graphic crop
+
+Graphic image fills support `cover`, `contain`, `tile`, and `stretch` fitting plus source-pixel
+offsets, scale, rotation, and horizontal or vertical flips. `setFillImage` replaces the complete
+image-fill value; use `updateFillImage` when changing only selected fields, such as replacing the
+source while preserving its transform.
+
+```ts
+engine.block.changeFillKind(graphicId, "image");
+engine.block.setFillImage(graphicId, {
+  src: "/photo.jpg",
+  fit: "cover",
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
+  rotation: 0,
+  flipHorizontal: false,
+  flipVertical: false,
+});
+engine.block.updateFillImage(graphicId, { src: "/replacement.jpg" });
+```
+
+Start a renderer-backed crop session with `editor.setEditMode("Crop", { blockId: graphicId })`.
+Use `getImageFillCrop`, `updateImageFillCrop`, and `resetImageFillCrop` for live preview state.
+`commitCrop()` writes the graphic frame and image transform as one undo entry; `cancelCrop()`
+discards the preview without changing document history. Existing image and page crop targets keep
+their source-crop behavior. For graphic image-fill sessions, `commitCrop()` returns `null`; read
+`getImageFillCrop()` before committing when the final preview frame is needed by the caller.
+
 ### Replacing shape geometry
 
 Use `engine.block.setShapeGeometry(graphicId, geometry)` to replace a graphic's shape without

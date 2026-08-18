@@ -6,8 +6,11 @@ import type {
   GradientFill,
   GradientStop,
   GradientType,
-  ImageFill,
+  ImageFillAlignment,
   ImageFillFit,
+  ImageFillOptions,
+  ImageFillUpdate,
+  ResolvedImageFill,
 } from "./block.types";
 import * as H from "./block-api-helpers";
 import {
@@ -15,13 +18,21 @@ import {
   FILL_GRADIENT_ANGLE,
   FILL_GRADIENT_STOPS,
   FILL_GRADIENT_TYPE,
+  FILL_IMAGE_ALIGNMENT,
   FILL_IMAGE_FIT,
+  FILL_IMAGE_FLIP_HORIZONTAL,
+  FILL_IMAGE_FLIP_VERTICAL,
   FILL_IMAGE_OFFSET_X,
   FILL_IMAGE_OFFSET_Y,
+  FILL_IMAGE_ROTATION,
   FILL_IMAGE_SCALE,
   FILL_IMAGE_SRC,
   FILL_SOLID_COLOR,
 } from "./property-keys";
+
+function normalizeRotation(rotation: number): number {
+  return ((rotation % 360) + 360) % 360;
+}
 
 /** Fill sub-block CRUD — create, attach, enable/disable fills on graphic blocks. */
 export class BlockFillAPI {
@@ -115,10 +126,7 @@ export class BlockFillAPI {
   // ── Image fill ────────────────────────────────────
 
   /** Set image-fill properties. No-op unless the block's fill sub-block kind is "image". */
-  setFillImage(
-    blockId: number,
-    img: { src: string; fit?: ImageFillFit; offsetX?: number; offsetY?: number; scale?: number },
-  ): void {
+  setFillImage(blockId: number, img: ImageFillOptions): void {
     const store = this.#engine._getBlockStore();
     const fillId = this.getFill(blockId);
     if (fillId == null || store.getKind(fillId) !== "image") return;
@@ -126,13 +134,23 @@ export class BlockFillAPI {
     this.#engine.beginBatch();
     H.setString(this.#engine, fillId, FILL_IMAGE_SRC, img.src);
     H.setString(this.#engine, fillId, FILL_IMAGE_FIT, img.fit ?? "cover");
+    H.setString(this.#engine, fillId, FILL_IMAGE_ALIGNMENT, img.alignment ?? "center");
     H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_X, img.offsetX ?? 0);
     H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_Y, img.offsetY ?? 0);
     H.setFloat(this.#engine, fillId, FILL_IMAGE_SCALE, img.scale ?? 1);
+    H.setFloat(this.#engine, fillId, FILL_IMAGE_ROTATION, normalizeRotation(img.rotation ?? 0));
+    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_HORIZONTAL, img.flipHorizontal ?? false);
+    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_VERTICAL, img.flipVertical ?? false);
     this.#engine.endBatch();
   }
 
-  getFillImage(blockId: number): ImageFill | null {
+  updateFillImage(blockId: number, update: ImageFillUpdate): void {
+    const current = this.getFillImage(blockId);
+    if (!current) return;
+    this.setFillImage(blockId, { ...current, ...update });
+  }
+
+  getFillImage(blockId: number): ResolvedImageFill | null {
     const store = this.#engine._getBlockStore();
     const fillId = this.getFill(blockId);
     if (fillId == null || store.getKind(fillId) !== "image") return null;
@@ -140,9 +158,13 @@ export class BlockFillAPI {
     return {
       src: store.getString(fillId, FILL_IMAGE_SRC),
       fit: (store.getString(fillId, FILL_IMAGE_FIT) as ImageFillFit) || "cover",
+      alignment: (store.getString(fillId, FILL_IMAGE_ALIGNMENT) as ImageFillAlignment) || "center",
       offsetX: store.getFloat(fillId, FILL_IMAGE_OFFSET_X),
       offsetY: store.getFloat(fillId, FILL_IMAGE_OFFSET_Y),
       scale: store.getFloat(fillId, FILL_IMAGE_SCALE),
+      rotation: normalizeRotation(store.getFloat(fillId, FILL_IMAGE_ROTATION)),
+      flipHorizontal: store.getBool(fillId, FILL_IMAGE_FLIP_HORIZONTAL),
+      flipVertical: store.getBool(fillId, FILL_IMAGE_FLIP_VERTICAL),
     };
   }
 

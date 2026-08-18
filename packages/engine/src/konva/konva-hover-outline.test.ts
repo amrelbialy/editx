@@ -8,6 +8,7 @@ describe("KonvaHoverOutline", () => {
   let uiLayer: Konva.Layer;
   let transformer: Konva.Transformer;
   let context: number[];
+  let enabled: boolean;
   let outline: KonvaHoverOutline;
 
   beforeEach(() => {
@@ -27,6 +28,7 @@ describe("KonvaHoverOutline", () => {
     transformer = new Konva.Transformer();
     uiLayer.add(transformer);
     context = [];
+    enabled = true;
     outline = new KonvaHoverOutline(
       uiLayer,
       contentLayer,
@@ -34,6 +36,7 @@ describe("KonvaHoverOutline", () => {
       { getZoom: () => 1.75 } as KonvaCamera,
       () => context,
       "#4971FF",
+      () => enabled,
     );
   });
 
@@ -99,6 +102,15 @@ describe("KonvaHoverOutline", () => {
   it("suppresses the outline when the resolved node is selected", () => {
     const { outer, child } = addTree();
     transformer.nodes([outer]);
+
+    child.fire("mouseenter", { target: child }, false);
+
+    expect(hoverRect().visible()).toBe(false);
+  });
+
+  it("suppresses the outline while normal interactions are disabled", () => {
+    const { child } = addTree();
+    enabled = false;
 
     child.fire("mouseenter", { target: child }, false);
 

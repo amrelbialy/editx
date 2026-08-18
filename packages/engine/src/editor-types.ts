@@ -1,3 +1,5 @@
+import type { ImageFillAlignment, ImageFillFit } from "./block/block.types";
+
 // ── Export ──
 
 export interface ExportOptions {
@@ -32,6 +34,31 @@ export interface BlockExportOptions {
  * Custom string values are also accepted by `setEditMode()`.
  */
 export type EditMode = "Transform" | "Crop" | "Text" | "Playback" | "Trim" | (string & {});
+
+export type CropEditTarget = "source-crop" | "image-fill";
+
+export interface ImageFillCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sourceAspectRatio?: number;
+  fit: ImageFillFit;
+  alignment: ImageFillAlignment;
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+}
+
+export type ImageFillCropUpdate = Partial<Omit<ImageFillCrop, "sourceAspectRatio">>;
+
+export interface ImageFillCropChange {
+  blockId: number;
+  crop: ImageFillCrop;
+}
 
 /**
  * Cursor types the renderer may display based on edit mode and hover target.

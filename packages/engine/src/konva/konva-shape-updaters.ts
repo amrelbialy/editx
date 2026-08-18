@@ -9,6 +9,7 @@ import {
   SHAPE_STAR_POINTS,
 } from "../block/property-keys";
 import { applyShapeFillStroke } from "./konva-fill";
+import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 // ── Stretched polygon/star vertex helpers ──────────────────────────
 
@@ -88,12 +89,13 @@ export function updateEllipseNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.radiusX(width / 2);
   node.radiusY(height / 2);
   node.setAttr("blockWidth", width);
   node.setAttr("blockHeight", height);
-  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateRectNode(
@@ -103,6 +105,7 @@ export function updateRectNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.width(width);
   node.height(height);
@@ -116,7 +119,7 @@ export function updateRectNode(
   }
   node.cornerRadius(cornerRadius);
 
-  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock);
+  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updatePolygonNode(
@@ -126,6 +129,7 @@ export function updatePolygonNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   let sides = 5;
   if (block?.shapeId != null && resolveBlock) {
@@ -150,7 +154,7 @@ export function updatePolygonNode(
   node.sceneFunc(createPolySceneFunc(points));
   node.hitFunc(createPolyHitFunc(points));
 
-  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateStarNode(
@@ -160,6 +164,7 @@ export function updateStarNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   let numPoints = 5;
   let innerDiameter = 0.5;
@@ -186,7 +191,7 @@ export function updateStarNode(
   node.sceneFunc(createPolySceneFunc(points));
   node.hitFunc(createPolyHitFunc(points));
 
-  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateArrowNode(
@@ -196,6 +201,7 @@ export function updateArrowNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.points([0, height / 2, width, height / 2]);
   node.setAttr("blockWidth", width);
@@ -217,5 +223,5 @@ export function updateArrowNode(
   node.pointerWidth(pointerWidth);
   node.hitStrokeWidth(12);
 
-  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock);
+  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock, webgl);
 }

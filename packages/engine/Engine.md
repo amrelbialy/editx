@@ -90,6 +90,14 @@ selection, and grouping while giving undo/redo ownership of both shape lifetimes
 fields use fresh shape defaults; invalid descriptors throw before history, and unsupported targets
 are no-ops.
 
+Image-filled graphics use the same command-backed fill API. `setFillImage` replaces the resolved
+fill value, while `updateFillImage` patches only supplied source or transform fields. Graphic crop
+is an editor session: the renderer previews parent-local frame geometry and image pattern
+transforms without document writes, then `commitCrop` batches frame and fill commands into one
+history entry. `cancelCrop` tears down the preview without an undo or document mutation. Source
+image and page crop continue through the existing crop-overlay path. Graphic crop commits return
+`null`; consumers can read the final session value before committing when they need its frame.
+
 ### Commands — the only mutation path
 
 Every document mutation is a `Command` with a single `do(): Patch[]` method (see
