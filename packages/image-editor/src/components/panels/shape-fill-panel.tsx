@@ -196,6 +196,7 @@ export const ShapeFillPanel: React.FC<ShapeFillPanelProps> = (props) => {
       {state.kind === "image" && (
         <ShapeImageFillControls
           image={state.image}
+          displayDimensions={engine.block.getSize(blockId)}
           opacity={state.opacity}
           imageConfig={config.image}
           onChange={handleImageChange}

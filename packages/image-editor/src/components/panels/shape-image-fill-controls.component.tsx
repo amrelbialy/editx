@@ -1,6 +1,6 @@
 import type { ImageFill, ImageFillAlignment, ImageFillMode } from "@editx/engine";
 import type React from "react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ImageToolConfig } from "../../config/config.types";
 import { useTranslation } from "../../i18n/i18n-context";
 import type { TranslationKey } from "../../i18n/translations/en";
@@ -19,6 +19,7 @@ import { ImagePicker } from "./image-picker.component";
 
 export interface ShapeImageFillControlsProps {
   image: ImageFill;
+  displayDimensions: { width: number; height: number };
   opacity: number;
   imageConfig?: ImageToolConfig;
   onChange: (image: ImageFill) => void;
@@ -39,14 +40,44 @@ const ALIGNMENT_VALUES: ImageFillAlignment[] = [
 ];
 
 export const ShapeImageFillControls: React.FC<ShapeImageFillControlsProps> = (props) => {
-  const { image, opacity, imageConfig, onChange, onOpacityChange } = props;
+  const { image, displayDimensions, opacity, imageConfig, onChange, onOpacityChange } = props;
 
   const { t } = useTranslation();
+
+  const [originalDimensions, setOriginalDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
   const automatic = image.mode === "cover" || image.mode === "fit";
+
+  useEffect(() => {
+    if (!image.src) {
+      setOriginalDimensions(null);
+      return;
+    }
+
+    let active = true;
+    const source = new Image();
+    source.onload = () => {
+      if (active) {
+        setOriginalDimensions({ width: source.naturalWidth, height: source.naturalHeight });
+      }
+    };
+    source.onerror = () => {
+      if (active) setOriginalDimensions(null);
+    };
+    source.src = image.src;
+
+    return () => {
+      active = false;
+    };
+  }, [image.src]);
 
   const handleFile = useCallback(
     async (file: File) => {
       const processed = await processImageFile(file, imageConfig);
+      setOriginalDimensions({ width: processed.width, height: processed.height });
       onChange({ ...image, src: processed.src });
     },
     [image, imageConfig, onChange],
@@ -68,6 +99,25 @@ export const ShapeImageFillControls: React.FC<ShapeImageFillControlsProps> = (pr
   return (
     <div className="flex flex-col gap-3">
       <ImagePicker src={image.src} onSelect={handleFile} />
+
+      <Section label="Dimensions">
+        <div className="grid grid-cols-2 gap-2 text-fluid">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-fluid text-muted-foreground">Display</span>
+            <span className="tabular-nums">
+              {Math.round(displayDimensions.width)} × {Math.round(displayDimensions.height)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-fluid text-muted-foreground">Original</span>
+            <span className="tabular-nums">
+              {originalDimensions
+                ? `${Math.round(originalDimensions.width)} × ${Math.round(originalDimensions.height)}`
+                : "-"}
+            </span>
+          </div>
+        </div>
+      </Section>
 
       <Section label={t("fill.mode")}>
         <Select

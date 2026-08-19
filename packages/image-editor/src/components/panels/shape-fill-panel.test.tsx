@@ -54,6 +54,7 @@ function makeEngine(kind: "color" | "gradient" | "image" = "color") {
           }
         : null,
     ),
+    getSize: vi.fn().mockReturnValue({ width: 533, height: 357 }),
     isFillEnabled: vi.fn().mockReturnValue(true),
     getOpacity: vi.fn().mockReturnValue(0.75),
     setFillEnabled: vi.fn(),
@@ -173,6 +174,8 @@ describe("ShapeFillPanel", () => {
         scale: 1,
       }),
     );
+    expect(screen.getByText("533 × 357")).toBeDefined();
+    expect(screen.getByText("640 × 480")).toBeDefined();
   });
 
   it("keeps the current fill until the first image is selected", async () => {
