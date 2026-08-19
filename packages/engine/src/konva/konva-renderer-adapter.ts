@@ -265,7 +265,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
         childNode.moveToTop();
       }
     }
-    this.#transformer.moveToTop();
+    this.#transformer?.moveToTop();
   }
 
   removeBlock(id: number): void {

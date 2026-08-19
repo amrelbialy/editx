@@ -54,7 +54,7 @@ export function flushDirtyBlocks(
 
   for (const id of dirtyIds) {
     const block = blockStore.get(id);
-    if (block?.type === "page" && block.children.length > 0) {
+    if ((block?.type === "page" || block?.type === "group") && block.children.length > 0) {
       renderer.syncChildOrder?.(block.children);
     }
   }
