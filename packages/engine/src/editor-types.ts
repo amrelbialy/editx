@@ -1,4 +1,4 @@
-import type { ImageFillAlignment, ImageFillFit } from "./block/block.types";
+import type { ImageFillAlignment, ImageFillMode } from "./block/block.types";
 
 // ── Export ──
 
@@ -43,7 +43,7 @@ export interface ImageFillCrop {
   width: number;
   height: number;
   sourceAspectRatio?: number;
-  fit: ImageFillFit;
+  mode: ImageFillMode;
   alignment: ImageFillAlignment;
   offsetX: number;
   offsetY: number;

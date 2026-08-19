@@ -1,10 +1,10 @@
 import type Konva from "konva";
-import type { BlockData, ImageFillAlignment, ImageFillFit } from "../block/block.types";
+import type { BlockData, ImageFillAlignment, ImageFillMode } from "../block/block.types";
 import {
   FILL_IMAGE_ALIGNMENT,
-  FILL_IMAGE_FIT,
   FILL_IMAGE_FLIP_HORIZONTAL,
   FILL_IMAGE_FLIP_VERTICAL,
+  FILL_IMAGE_MODE,
   FILL_IMAGE_OFFSET_X,
   FILL_IMAGE_OFFSET_Y,
   FILL_IMAGE_ROTATION,
@@ -35,7 +35,7 @@ export function invalidatePendingImageFill(node: Konva.Shape): void {
 }
 
 export function computePatternScale(
-  fit: ImageFillFit,
+  mode: ImageFillMode,
   box: FillBox,
   source: PatternSource,
   userScale: number,
@@ -48,7 +48,7 @@ export function computePatternScale(
       imageWidth: source.width || 1,
       imageHeight: source.height || 1,
     },
-    fit,
+    mode,
     userScale,
     rotation,
   );
@@ -57,7 +57,7 @@ export function computePatternScale(
 export function applyImagePatternTransform(
   node: Konva.Shape,
   source: PatternSource,
-  fit: ImageFillFit,
+  mode: ImageFillMode,
   box: FillBox,
   options: {
     alignment?: ImageFillAlignment;
@@ -69,7 +69,7 @@ export function applyImagePatternTransform(
     flipVertical: boolean;
   },
 ): void {
-  const patternScale = computePatternScale(fit, box, source, options.scale, options.rotation);
+  const patternScale = computePatternScale(mode, box, source, options.scale, options.rotation);
   const scaleX = patternScale.x * (options.flipHorizontal ? -1 : 1);
   const scaleY = patternScale.y * (options.flipVertical ? -1 : 1);
   const centerX = (source.width || 1) / 2;
@@ -81,7 +81,7 @@ export function applyImagePatternTransform(
       imageWidth: source.width || 1,
       imageHeight: source.height || 1,
     },
-    fit,
+    mode,
     options.alignment,
     options.scale,
     options.rotation,
@@ -89,7 +89,7 @@ export function applyImagePatternTransform(
 
   node.fillPatternImage(source);
   node.setAttr("__fillPatternSource", source);
-  node.setAttr("__fillPatternFit", fit);
+  node.setAttr("__fillPatternMode", mode);
   node.fillPatternScale({ x: scaleX, y: scaleY });
   node.fillPatternRotation(options.rotation);
   node.fillPatternOffset({ x: centerX + options.offsetX, y: centerY + options.offsetY });
@@ -136,7 +136,7 @@ export function applyImageFill(
     return;
   }
 
-  const fit = (fillBlock.properties[FILL_IMAGE_FIT] as ImageFillFit) ?? "cover";
+  const mode = (fillBlock.properties[FILL_IMAGE_MODE] as ImageFillMode) ?? "crop";
   const alignment = (fillBlock.properties[FILL_IMAGE_ALIGNMENT] as ImageFillAlignment) ?? "center";
   const offsetX = (fillBlock.properties[FILL_IMAGE_OFFSET_X] as number) ?? 0;
   const offsetY = (fillBlock.properties[FILL_IMAGE_OFFSET_Y] as number) ?? 0;
@@ -155,13 +155,13 @@ export function applyImageFill(
   };
 
   node.fillPriority("pattern");
-  node.fillPatternRepeat(fit === "tile" ? "repeat" : "no-repeat");
+  node.fillPatternRepeat(mode === "tile" ? "repeat" : "no-repeat");
 
   const rawSource = node.getAttr("__fillSourceImage") as HTMLImageElement | undefined;
   if (rawSource && node.getAttr("__fillLoadedSrc") === src) {
     invalidatePendingImageFill(node);
     const processed = processFillSource(node, rawSource, block, webgl, resolveBlock);
-    applyImagePatternTransform(node, processed, fit, box, transform);
+    applyImagePatternTransform(node, processed, mode, box, transform);
     node.setAttr("__fillImageReady", Promise.resolve());
     return;
   }
@@ -177,7 +177,7 @@ export function applyImageFill(
       const processed = processFillSource(node, source, block, webgl, resolveBlock);
       node.setAttr("__fillSourceImage", source);
       node.setAttr("__fillLoadedSrc", src);
-      applyImagePatternTransform(node, processed, fit, box, transform);
+      applyImagePatternTransform(node, processed, mode, box, transform);
       node.getLayer()?.batchDraw();
     })
     .catch((error: unknown) => {

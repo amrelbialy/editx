@@ -28,7 +28,7 @@ export const INITIAL_IMAGE_FILL_CROP: ImageFillCrop = {
   y: 24,
   width: 200,
   height: 100,
-  fit: "cover",
+  mode: "crop",
   alignment: "center",
   offsetX: 0,
   offsetY: 20,

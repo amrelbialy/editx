@@ -56,7 +56,7 @@ describe("CanvasPane graphic image-fill crop toolbar", () => {
                 y: 0,
                 width: 200,
                 height: 100,
-                fit: "cover",
+                mode: "crop",
                 alignment: "center",
                 offsetX: 0,
                 offsetY: 0,

@@ -10,8 +10,8 @@ import {
   FILL_GRADIENT_STOPS,
   FILL_GRADIENT_TYPE,
   FILL_IMAGE_ALIGNMENT,
-  FILL_IMAGE_FIT,
   FILL_IMAGE_FLIP_HORIZONTAL,
+  FILL_IMAGE_MODE,
   FILL_IMAGE_ROTATION,
   FILL_IMAGE_SCALE,
   FILL_IMAGE_SRC,
@@ -140,7 +140,7 @@ describe("applyShapeFillStroke", () => {
       effectIds: [],
       properties: {
         [FILL_IMAGE_SRC]: "photo.png",
-        [FILL_IMAGE_FIT]: "cover",
+        [FILL_IMAGE_MODE]: "cover",
         [FILL_IMAGE_ALIGNMENT]: "top-left",
         [FILL_IMAGE_FLIP_HORIZONTAL]: true,
         [FILL_IMAGE_ROTATION]: 90,
@@ -164,11 +164,11 @@ describe("applyShapeFillStroke", () => {
 
     expect(loadImageMock).toHaveBeenCalledWith("photo.png");
     expect(node.fillPatternImage).toHaveBeenCalledWith(image);
-    expect(node.fillPatternScale).toHaveBeenCalledWith({ x: -9, y: 9 });
+    expect(node.fillPatternScale).toHaveBeenCalledWith({ x: -6, y: 6 });
     expect(node.fillPatternRotation).toHaveBeenCalledWith(90);
     expect(node.fillPatternOffset).toHaveBeenCalledWith({ x: 50, y: 25 });
-    expect(node.fillPatternX).toHaveBeenCalledWith(225);
-    expect(node.fillPatternY).toHaveBeenCalledWith(450);
+    expect(node.fillPatternX).toHaveBeenCalledWith(150);
+    expect(node.fillPatternY).toHaveBeenCalledWith(300);
     expect(attrs.get("__fillLoadedSrc")).toBe("photo.png");
     expect(batchDraw).toHaveBeenCalledOnce();
   });

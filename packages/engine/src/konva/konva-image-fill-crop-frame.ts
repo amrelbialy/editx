@@ -23,18 +23,22 @@ export function resizeImageFillCropFrame(
   const newGeometry = { ...oldGeometry, boxWidth: frame.width, boxHeight: frame.height };
   const value = { ...current, ...frame };
 
-  if (value.fit !== "stretch") {
+  if (value.mode === "crop") {
     const oldScale = getImageFillPatternScale(
       oldGeometry,
-      value.fit,
+      value.mode,
       value.scale,
       value.rotation,
     ).x;
-    const nextBase = getImageFillPatternScale(newGeometry, value.fit, 1, value.rotation).x;
+    const nextBase = getImageFillPatternScale(newGeometry, value.mode, 1, value.rotation).x;
     value.scale = Math.min(
       IMAGE_FILL_CROP_SCALE_MAX,
       Math.max(IMAGE_FILL_CROP_SCALE_MIN, oldScale / Math.max(nextBase, 0.0001)),
     );
+  }
+
+  if (value.mode === "cover" || value.mode === "fit") {
+    return { ...value, offsetX: 0, offsetY: 0, scale: 1 };
   }
 
   const oldCenter = { x: current.x + current.width / 2, y: current.y + current.height / 2 };

@@ -215,7 +215,7 @@ describe("crop overlay sizing across zoom", () => {
     const node = new Konva.Rect({ width: 200, height: 100 });
     parent.add(node);
     node.fillPatternImage({ width: 100, height: 100 } as HTMLImageElement);
-    node.setAttr("__fillPatternFit", "cover");
+    node.setAttr("__fillPatternMode", "cover");
     node.fillPatternScale({ x: 2, y: 2 });
     node.fillPatternOffset({ x: 50, y: 50 });
     node.fillPatternX(100);

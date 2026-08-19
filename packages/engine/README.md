@@ -85,7 +85,7 @@ source while preserving its transform.
 engine.block.changeFillKind(graphicId, "image");
 engine.block.setFillImage(graphicId, {
   src: "/photo.jpg",
-  fit: "cover",
+  mode: "crop",
   offsetX: 0,
   offsetY: 0,
   scale: 1,

@@ -30,7 +30,7 @@ const gradientPaint: PresetPaint = {
   },
 };
 const imagePaint: PresetPaint = {
-  fill: { kind: "image", image: { src: SAMPLE_IMAGE, fit: "cover" } },
+  fill: { kind: "image", image: { src: SAMPLE_IMAGE, mode: "crop" } },
 };
 
 function createStyledPresets(

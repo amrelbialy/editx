@@ -16,6 +16,7 @@ describe("useBlockPropertiesState", () => {
     let imageFill: { src: string } | null = null;
     const ownerChangedListeners: Array<() => void> = [];
     const engine = {
+      onHistoryChanged: vi.fn(() => () => {}),
       block: {
         getOpacity: vi.fn(() => 1),
         getFillImage: vi.fn(() => imageFill),

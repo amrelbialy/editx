@@ -16,6 +16,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **image-editor:** add image-fill Styles and Replace actions while preserving the current fill
 	transform during source replacement
 
+### Changed
+
+* **image-editor:** expose Crop, Cover, Fit, and Tile image-fill modes with mode-specific alignment,
+	offset, and scale controls.
+
 ### Bug Fixes
 
 * **image-editor:** derive shape preset thumbnails and insertion geometry from authored shape, fill, and stroke semantics

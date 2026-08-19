@@ -117,7 +117,7 @@ describe("SceneAPI — serialization v2", () => {
       block.changeFillKind(gfx, "image");
       block.setFillImage(gfx, {
         src: "data:image/png;base64,AAAA",
-        fit: "contain",
+        mode: "fit",
         offsetX: 12,
         offsetY: -8,
         scale: 1.5,

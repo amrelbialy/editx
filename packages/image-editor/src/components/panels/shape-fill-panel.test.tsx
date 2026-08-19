@@ -44,7 +44,14 @@ function makeEngine(kind: "color" | "gradient" | "image" = "color") {
     ),
     getFillImage: vi.fn(() =>
       activeKind === "image"
-        ? { src: "", fit: "contain", offsetX: 12, offsetY: 18, scale: 1.5 }
+        ? {
+            src: "",
+            mode: "fit",
+            alignment: "bottom-right",
+            offsetX: 0,
+            offsetY: 0,
+            scale: 1,
+          }
         : null,
     ),
     isFillEnabled: vi.fn().mockReturnValue(true),
@@ -159,10 +166,11 @@ describe("ShapeFillPanel", () => {
     await waitFor(() =>
       expect(engine.block.setFillImage).toHaveBeenCalledWith(7, {
         src: "data:image/png;base64,processed",
-        fit: "contain",
-        offsetX: 12,
-        offsetY: 18,
-        scale: 1.5,
+        mode: "fit",
+        alignment: "bottom-right",
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
       }),
     );
   });
@@ -186,7 +194,7 @@ describe("ShapeFillPanel", () => {
       expect(engine.block.changeFillKind).toHaveBeenCalledWith(7, "image");
       expect(engine.block.setFillImage).toHaveBeenCalledWith(7, {
         src: "data:image/png;base64,processed",
-        fit: "cover",
+        mode: "crop",
         offsetX: 0,
         offsetY: 0,
         scale: 1,

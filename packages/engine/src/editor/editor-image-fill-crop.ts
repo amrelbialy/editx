@@ -1,9 +1,7 @@
+import { normalizeImageFillUpdate } from "../block/image-fill-normalization";
 import type { ImageFillCrop, ImageFillCropChange, ImageFillCropUpdate } from "../editor-types";
 import type { CropRect } from "../utils/crop-math";
 import type { EditorContext } from "./editor-context";
-
-const SCALE_MIN = 0.1;
-const SCALE_MAX = 4;
 
 interface CropSession {
   blockId: number;
@@ -11,8 +9,20 @@ interface CropSession {
   value: ImageFillCrop;
 }
 
-function clampScale(scale: number): number {
-  return Math.min(Math.max(scale, SCALE_MIN), SCALE_MAX);
+function normalizeUpdate(current: ImageFillCrop, update: ImageFillCropUpdate): ImageFillCrop {
+  const fill = normalizeImageFillUpdate({ src: "", ...current }, update);
+  return {
+    ...current,
+    ...update,
+    mode: fill.mode,
+    alignment: fill.alignment,
+    offsetX: fill.offsetX,
+    offsetY: fill.offsetY,
+    scale: fill.scale,
+    rotation: fill.rotation,
+    flipHorizontal: fill.flipHorizontal,
+    flipVertical: fill.flipVertical,
+  };
 }
 
 export class EditorImageFillCrop {
@@ -48,11 +58,11 @@ export class EditorImageFillCrop {
     const initial: ImageFillCrop = {
       ...position,
       ...size,
-      fit: fill.fit,
-      alignment: fill.alignment ?? "center",
+      mode: fill.mode,
+      alignment: fill.alignment,
       offsetX: fill.offsetX,
       offsetY: fill.offsetY,
-      scale: clampScale(fill.scale),
+      scale: fill.scale,
       rotation: fill.rotation,
       flipHorizontal: fill.flipHorizontal,
       flipVertical: fill.flipVertical,
@@ -80,11 +90,7 @@ export class EditorImageFillCrop {
 
   update(update: ImageFillCropUpdate): ImageFillCrop | null {
     if (!this.#session) return null;
-    const normalized = {
-      ...this.#session.value,
-      ...update,
-      scale: clampScale(update.scale ?? this.#session.value.scale),
-    };
+    const normalized = normalizeUpdate(this.#session.value, update);
     this.#session.value = this.#ctx.renderer?.setImageFillCropPreview?.(normalized) ?? normalized;
     this.#notify();
     return { ...this.#session.value };
@@ -98,7 +104,7 @@ export class EditorImageFillCrop {
       y: initial.y,
       width: initial.width,
       height: initial.height,
-      fit: "cover",
+      mode: "crop",
       alignment: "center",
       offsetX: 0,
       offsetY: 0,
@@ -160,7 +166,7 @@ export class EditorImageFillCrop {
     block.setSize(session.blockId, value.width, value.height);
     block.setFillImage(session.blockId, {
       ...fill,
-      fit: value.fit,
+      mode: value.mode,
       alignment: value.alignment ?? "center",
       offsetX: value.offsetX,
       offsetY: value.offsetY,

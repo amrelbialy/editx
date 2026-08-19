@@ -29,8 +29,8 @@ export type FillType = "color" | "gradient" | "image";
 /** Gradient geometry type for a gradient fill. */
 export type GradientType = "linear" | "radial";
 
-/** How an image fill is fitted into the shape bounds. */
-export type ImageFillFit = "cover" | "contain" | "tile" | "stretch";
+/** How an image fill is rendered within the shape bounds. */
+export type ImageFillMode = "crop" | "cover" | "fit" | "tile";
 
 /** Alignment of an automatic image fill within its frame. */
 export type ImageFillAlignment =
@@ -73,7 +73,7 @@ export interface StrokeGradient {
 /** Resolved image (pattern) fill descriptor returned by `getFillImage`. */
 export interface ImageFill {
   src: string;
-  fit: ImageFillFit;
+  mode: ImageFillMode;
   alignment?: ImageFillAlignment;
   offsetX: number;
   offsetY: number;

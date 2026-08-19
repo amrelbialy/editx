@@ -10,7 +10,7 @@ export type {
   GradientType,
   ImageFill,
   ImageFillAlignment,
-  ImageFillFit,
+  ImageFillMode,
   ImageFillOptions,
   ImageFillUpdate,
   PageLayoutMode,

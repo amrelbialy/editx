@@ -14,7 +14,7 @@ export function resolveImageFillCropSet(
     incoming.width !== previous.width ||
     incoming.height !== previous.height;
   const contentChanged =
-    incoming.fit !== previous.fit ||
+    incoming.mode !== previous.mode ||
     incoming.alignment !== previous.alignment ||
     incoming.offsetX !== previous.offsetX ||
     incoming.offsetY !== previous.offsetY ||

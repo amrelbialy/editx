@@ -83,7 +83,7 @@ export function syncImageFillCropPreviewPlane(preview: ImageFillCropPreview): vo
   pattern.rotate((node.fillPatternRotation() * Math.PI) / 180);
   pattern.scale(scale.x, scale.y);
   pattern.translate(-offset.x, -offset.y);
-  if (node.getAttr("__fillPatternFit") === "tile") {
+  if (node.getAttr("__fillPatternMode") === "tile") {
     plane.visible(false);
     node.fillPriority("pattern");
     node.fillPatternRepeat("repeat");
@@ -109,7 +109,7 @@ export function getImageFillCropPreviewPolygon(
 ): { x: number; y: number }[] | null {
   const { plane } = preview;
   if (
-    preview.node.getAttr("__fillPatternFit") === "tile" ||
+    preview.node.getAttr("__fillPatternMode") === "tile" ||
     !plane.image() ||
     plane.width() <= 0 ||
     plane.height() <= 0

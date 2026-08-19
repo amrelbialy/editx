@@ -18,6 +18,7 @@ interface ImageFillCropEventOptions {
   getActive: () => ImageFillCropInteraction | null;
   move: () => void;
   dismiss: () => void;
+  containsImagePoint: (point: { x: number; y: number }) => boolean;
   setCursor: (cursor: string) => void;
 }
 
@@ -25,7 +26,7 @@ export function bindImageFillCropEvents(
   node: Konva.Shape,
   options: ImageFillCropEventOptions,
 ): void {
-  const { stage, cropOverlay, getActive, move, dismiss, setCursor } = options;
+  const { stage, cropOverlay, getActive, move, dismiss, containsImagePoint, setCursor } = options;
   node.on("mouseenter.imageFillCrop", () => setCursor("grab"));
   node.on("mouseleave.imageFillCrop", () => {
     if (!getActive()?.lastPoint) setCursor("");
@@ -54,7 +55,7 @@ export function bindImageFillCropEvents(
     }
     if (!isImageFillCropDismissTarget(event.target)) return;
     const point = stage.getPointerPosition();
-    if (point && cropOverlay.containsBlockPoint(point)) return;
+    if (point && (cropOverlay.containsBlockPoint(point) || containsImagePoint(point))) return;
     event.cancelBubble = true;
     active.dismissed = true;
     dismiss();

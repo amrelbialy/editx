@@ -7,21 +7,22 @@ import type {
   GradientStop,
   GradientType,
   ImageFillAlignment,
-  ImageFillFit,
+  ImageFillMode,
   ImageFillOptions,
   ImageFillUpdate,
   ResolvedImageFill,
 } from "./block.types";
 import * as H from "./block-api-helpers";
+import { normalizeImageFill, normalizeImageFillUpdate } from "./image-fill-normalization";
 import {
   FILL_ENABLED,
   FILL_GRADIENT_ANGLE,
   FILL_GRADIENT_STOPS,
   FILL_GRADIENT_TYPE,
   FILL_IMAGE_ALIGNMENT,
-  FILL_IMAGE_FIT,
   FILL_IMAGE_FLIP_HORIZONTAL,
   FILL_IMAGE_FLIP_VERTICAL,
+  FILL_IMAGE_MODE,
   FILL_IMAGE_OFFSET_X,
   FILL_IMAGE_OFFSET_Y,
   FILL_IMAGE_ROTATION,
@@ -29,10 +30,6 @@ import {
   FILL_IMAGE_SRC,
   FILL_SOLID_COLOR,
 } from "./property-keys";
-
-function normalizeRotation(rotation: number): number {
-  return ((rotation % 360) + 360) % 360;
-}
 
 /** Fill sub-block CRUD — create, attach, enable/disable fills on graphic blocks. */
 export class BlockFillAPI {
@@ -131,23 +128,24 @@ export class BlockFillAPI {
     const fillId = this.getFill(blockId);
     if (fillId == null || store.getKind(fillId) !== "image") return;
 
+    const normalized = normalizeImageFill(img);
     this.#engine.beginBatch();
-    H.setString(this.#engine, fillId, FILL_IMAGE_SRC, img.src);
-    H.setString(this.#engine, fillId, FILL_IMAGE_FIT, img.fit ?? "cover");
-    H.setString(this.#engine, fillId, FILL_IMAGE_ALIGNMENT, img.alignment ?? "center");
-    H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_X, img.offsetX ?? 0);
-    H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_Y, img.offsetY ?? 0);
-    H.setFloat(this.#engine, fillId, FILL_IMAGE_SCALE, img.scale ?? 1);
-    H.setFloat(this.#engine, fillId, FILL_IMAGE_ROTATION, normalizeRotation(img.rotation ?? 0));
-    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_HORIZONTAL, img.flipHorizontal ?? false);
-    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_VERTICAL, img.flipVertical ?? false);
+    H.setString(this.#engine, fillId, FILL_IMAGE_SRC, normalized.src);
+    H.setString(this.#engine, fillId, FILL_IMAGE_MODE, normalized.mode);
+    H.setString(this.#engine, fillId, FILL_IMAGE_ALIGNMENT, normalized.alignment);
+    H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_X, normalized.offsetX);
+    H.setFloat(this.#engine, fillId, FILL_IMAGE_OFFSET_Y, normalized.offsetY);
+    H.setFloat(this.#engine, fillId, FILL_IMAGE_SCALE, normalized.scale);
+    H.setFloat(this.#engine, fillId, FILL_IMAGE_ROTATION, normalized.rotation);
+    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_HORIZONTAL, normalized.flipHorizontal);
+    H.setBool(this.#engine, fillId, FILL_IMAGE_FLIP_VERTICAL, normalized.flipVertical);
     this.#engine.endBatch();
   }
 
   updateFillImage(blockId: number, update: ImageFillUpdate): void {
     const current = this.getFillImage(blockId);
     if (!current) return;
-    this.setFillImage(blockId, { ...current, ...update });
+    this.setFillImage(blockId, normalizeImageFillUpdate(current, update));
   }
 
   getFillImage(blockId: number): ResolvedImageFill | null {
@@ -155,17 +153,17 @@ export class BlockFillAPI {
     const fillId = this.getFill(blockId);
     if (fillId == null || store.getKind(fillId) !== "image") return null;
 
-    return {
+    return normalizeImageFill({
       src: store.getString(fillId, FILL_IMAGE_SRC),
-      fit: (store.getString(fillId, FILL_IMAGE_FIT) as ImageFillFit) || "cover",
+      mode: (store.getString(fillId, FILL_IMAGE_MODE) as ImageFillMode) || "crop",
       alignment: (store.getString(fillId, FILL_IMAGE_ALIGNMENT) as ImageFillAlignment) || "center",
       offsetX: store.getFloat(fillId, FILL_IMAGE_OFFSET_X),
       offsetY: store.getFloat(fillId, FILL_IMAGE_OFFSET_Y),
       scale: store.getFloat(fillId, FILL_IMAGE_SCALE),
-      rotation: normalizeRotation(store.getFloat(fillId, FILL_IMAGE_ROTATION)),
+      rotation: ((store.getFloat(fillId, FILL_IMAGE_ROTATION) % 360) + 360) % 360,
       flipHorizontal: store.getBool(fillId, FILL_IMAGE_FLIP_HORIZONTAL),
       flipVertical: store.getBool(fillId, FILL_IMAGE_FLIP_VERTICAL),
-    };
+    });
   }
 
   // ── Fill kind switching ───────────────────────────

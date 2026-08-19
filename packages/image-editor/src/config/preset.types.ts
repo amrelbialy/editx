@@ -223,7 +223,7 @@ export interface ShapePreset {
     kind: FillType;
     color?: string;
     gradient?: { type: "linear" | "radial"; angle?: number; stops: GradientStop[] };
-    image?: { src: string; fit?: "cover" | "contain" | "tile" | "stretch" };
+    image?: { src: string; mode?: "crop" | "cover" | "fit" | "tile" };
   };
   stroke?: { color: string; width: number };
   /** Starting size as a fraction of the smaller canvas edge (0..1). */

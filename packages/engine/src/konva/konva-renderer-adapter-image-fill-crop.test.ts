@@ -75,7 +75,7 @@ const INITIAL: ImageFillCrop = {
   y: 20,
   width: 200,
   height: 100,
-  fit: "cover",
+  mode: "crop",
   alignment: "center",
   offsetX: 0,
   offsetY: 0,

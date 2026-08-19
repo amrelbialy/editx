@@ -18,7 +18,7 @@ function makeEngine(blockType: "graphic" | "image") {
     getType: vi.fn(() => blockType),
     getFillImage: vi.fn(() => ({
       src: "original.png",
-      fit: "contain" as const,
+      mode: "fit" as const,
       offsetX: 0.25,
       offsetY: -0.2,
       scale: 1.5,

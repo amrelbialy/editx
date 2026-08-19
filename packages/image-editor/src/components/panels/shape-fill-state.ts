@@ -39,7 +39,7 @@ export function readShapeFillState(engine: EditxEngine, blockId: number): ShapeF
     gradientStart: toHex(gradient?.stops[0]?.color ?? "#f97316"),
     gradientEnd: toHex(gradient?.stops[gradient.stops.length - 1]?.color ?? "#ec4899"),
     gradientAngle: gradient?.angle ?? 0,
-    image: image ?? { src: "", fit: "cover", offsetX: 0, offsetY: 0, scale: 1 },
+    image: image ?? { src: "", mode: "crop", offsetX: 0, offsetY: 0, scale: 1 },
   };
 }
 

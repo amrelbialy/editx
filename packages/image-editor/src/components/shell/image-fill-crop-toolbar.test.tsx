@@ -8,7 +8,7 @@ const CROP = {
   y: 0,
   width: 200,
   height: 100,
-  fit: "cover" as const,
+  mode: "crop" as const,
   alignment: "center" as const,
   offsetX: 0,
   offsetY: 0,
@@ -21,7 +21,7 @@ const CROP = {
 afterEach(cleanup);
 
 describe("ImageFillCropToolbar", () => {
-  it("offers all image fill modes and updates the selected fit", () => {
+  it("offers exactly Crop, Cover, Fit, and Tile", () => {
     const onChange = vi.fn();
     render(
       <I18nProvider>
@@ -31,19 +31,21 @@ describe("ImageFillCropToolbar", () => {
 
     fireEvent.click(screen.getAllByRole("combobox")[0]);
 
-    expect(screen.getByRole("option", { name: "Cover" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "Contain" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "Tile" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "Stretch" })).toBeDefined();
-    fireEvent.click(screen.getByRole("option", { name: "Stretch" }));
-    expect(onChange).toHaveBeenCalledWith({ fit: "stretch" });
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Crop",
+      "Cover",
+      "Fit",
+      "Tile",
+    ]);
+    fireEvent.click(screen.getByRole("option", { name: "Fit" }));
+    expect(onChange).toHaveBeenCalledWith({ mode: "fit" });
   });
 
-  it("offers nine alignments and resets residual pan when one is selected", () => {
+  it.each(["cover", "fit"] as const)("offers nine alignments for %s", (mode) => {
     const onChange = vi.fn();
     render(
       <I18nProvider>
-        <ImageFillCropToolbar crop={CROP} onChange={onChange} />
+        <ImageFillCropToolbar crop={{ ...CROP, mode }} onChange={onChange} />
       </I18nProvider>,
     );
 
@@ -51,26 +53,39 @@ describe("ImageFillCropToolbar", () => {
 
     expect(screen.getAllByRole("option")).toHaveLength(9);
     fireEvent.click(screen.getByRole("option", { name: "Bottom right" }));
-    expect(onChange).toHaveBeenCalledWith({
-      alignment: "bottom-right",
-      offsetX: 0,
-      offsetY: 0,
-    });
+    expect(onChange).toHaveBeenCalledWith({ alignment: "bottom-right" });
   });
 
-  it("clamps scale updates to 0.1 through 4", () => {
+  it.each(["crop", "tile"] as const)("hides alignment for %s", (mode) => {
+    render(
+      <I18nProvider>
+        <ImageFillCropToolbar crop={{ ...CROP, mode }} onChange={vi.fn()} />
+      </I18nProvider>,
+    );
+
+    expect(screen.queryByRole("combobox", { name: "Alignment" })).toBeNull();
+  });
+
+  it.each([
+    ["crop", 1],
+    ["tile", 0.1],
+  ] as const)("clamps %s scale between %s and 4", (mode, minimum) => {
     const onChange = vi.fn();
     render(
       <I18nProvider>
-        <ImageFillCropToolbar crop={CROP} onChange={onChange} />
+        <ImageFillCropToolbar
+          crop={{ ...CROP, mode, scale: mode === "tile" ? 0.1 : 1 }}
+          onChange={onChange}
+        />
       </I18nProvider>,
     );
     const scale = screen.getByRole("spinbutton", { name: "Scale" });
+    if (mode === "tile") expect(scale).toHaveValue(0.1);
 
-    fireEvent.change(scale, { target: { value: "9" } });
     fireEvent.change(scale, { target: { value: "0" } });
+    fireEvent.change(scale, { target: { value: "9" } });
 
-    expect(onChange).toHaveBeenNthCalledWith(1, { scale: 4 });
-    expect(onChange).toHaveBeenNthCalledWith(2, { scale: 0.1 });
+    expect(onChange).toHaveBeenNthCalledWith(1, { scale: minimum });
+    expect(onChange).toHaveBeenNthCalledWith(2, { scale: 4 });
   });
 });

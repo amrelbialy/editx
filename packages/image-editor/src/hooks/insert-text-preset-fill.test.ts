@@ -30,7 +30,7 @@ describe("insertTextPreset composition fills", () => {
         },
       },
     ],
-    ["image", { kind: "image", image: { src: "data:image/png;base64,AA==", fit: "cover" } }],
+    ["image", { kind: "image", image: { src: "data:image/png;base64,AA==", mode: "crop" } }],
   ] as const)("sets %s data without replacing the fill", (kind, fill) => {
     const { engine, block } = makeEngine();
     const preset: TextPreset = {

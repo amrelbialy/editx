@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { EditxEngine } from "../editx-engine";
 import { BlockAPI } from "./block-api";
+import {
+  FILL_IMAGE_ALIGNMENT,
+  FILL_IMAGE_MODE,
+  FILL_IMAGE_OFFSET_X,
+  FILL_IMAGE_SCALE,
+} from "./property-keys";
 
 describe("BlockFillAPI image fills", () => {
   let block: BlockAPI;
@@ -18,7 +24,7 @@ describe("BlockFillAPI image fills", () => {
 
     expect(block.getFillImage(graphicId)).toEqual({
       src: "https://example.com/a.png",
-      fit: "cover",
+      mode: "crop",
       alignment: "center",
       offsetX: 0,
       offsetY: 0,
@@ -32,7 +38,7 @@ describe("BlockFillAPI image fills", () => {
   it("round-trips explicit values", () => {
     block.setFillImage(graphicId, {
       src: "img.png",
-      fit: "tile",
+      mode: "tile",
       alignment: "bottom-right",
       offsetX: 12,
       offsetY: -8,
@@ -44,8 +50,8 @@ describe("BlockFillAPI image fills", () => {
 
     expect(block.getFillImage(graphicId)).toEqual({
       src: "img.png",
-      fit: "tile",
-      alignment: "bottom-right",
+      mode: "tile",
+      alignment: "center",
       offsetX: 12,
       offsetY: -8,
       scale: 2,
@@ -58,7 +64,7 @@ describe("BlockFillAPI image fills", () => {
   it("updates only supplied fields", () => {
     block.setFillImage(graphicId, {
       src: "before.png",
-      fit: "tile",
+      mode: "tile",
       alignment: "top-left",
       offsetX: 12,
       offsetY: -8,
@@ -71,14 +77,72 @@ describe("BlockFillAPI image fills", () => {
 
     expect(block.getFillImage(graphicId)).toEqual({
       src: "after.png",
-      fit: "tile",
-      alignment: "top-left",
+      mode: "tile",
+      alignment: "center",
       offsetX: 12,
       offsetY: -8,
       scale: 2,
       rotation: 90,
       flipHorizontal: true,
       flipVertical: false,
+    });
+  });
+
+  it("normalizes fields by mode and resets destructive transitions", () => {
+    block.setFillImage(graphicId, {
+      src: "img.png",
+      mode: "crop",
+      alignment: "top-left",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 0.5,
+    });
+    expect(block.getFillImage(graphicId)).toMatchObject({
+      mode: "crop",
+      alignment: "center",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1,
+    });
+
+    block.updateFillImage(graphicId, { mode: "cover" });
+    expect(block.getFillImage(graphicId)).toMatchObject({
+      mode: "cover",
+      alignment: "center",
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+    });
+
+    block.updateFillImage(graphicId, { mode: "fit", alignment: "bottom-right" });
+    block.updateFillImage(graphicId, { mode: "cover" });
+    expect(block.getFillImage(graphicId)).toMatchObject({
+      mode: "cover",
+      alignment: "bottom-right",
+    });
+
+    block.updateFillImage(graphicId, { mode: "tile", offsetX: 3, scale: 0.1 });
+    expect(block.getFillImage(graphicId)).toMatchObject({
+      mode: "tile",
+      alignment: "center",
+      offsetX: 3,
+      offsetY: 0,
+      scale: 0.1,
+    });
+  });
+
+  it("normalizes mode relevance when reading directly loaded properties", () => {
+    const fillId = block.getFill(graphicId)!;
+    block.setString(fillId, FILL_IMAGE_MODE, "cover");
+    block.setString(fillId, FILL_IMAGE_ALIGNMENT, "top-left");
+    block.setFloat(fillId, FILL_IMAGE_OFFSET_X, 25);
+    block.setFloat(fillId, FILL_IMAGE_SCALE, 3);
+
+    expect(block.getFillImage(graphicId)).toMatchObject({
+      mode: "cover",
+      alignment: "top-left",
+      offsetX: 0,
+      scale: 1,
     });
   });
 

@@ -42,3 +42,23 @@ export function isImageFillCropDismissTarget(target: Konva.Node): boolean {
   }
   return true;
 }
+
+export function isPointInImageFillPolygon(
+  point: { x: number; y: number },
+  polygon: { x: number; y: number }[] | null,
+): boolean {
+  if (!polygon || polygon.length < 3) return false;
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const currentPoint = polygon[index];
+    const previousPoint = polygon[previous];
+    const crosses =
+      currentPoint.y > point.y !== previousPoint.y > point.y &&
+      point.x <
+        ((previousPoint.x - currentPoint.x) * (point.y - currentPoint.y)) /
+          (previousPoint.y - currentPoint.y) +
+          currentPoint.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}

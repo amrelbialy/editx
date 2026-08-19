@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockRenderer } from "../__tests__/mocks/mock-renderer";
-import type { ImageFillFit } from "../block/block.types";
+import type { ImageFillMode } from "../block/block.types";
 import { CROP_ENABLED } from "../block/property-keys";
 import { EditxEngine } from "../editx-engine";
 import type { RendererAdapter } from "../render-adapter";
@@ -14,7 +14,7 @@ describe("graphic image-fill crop", () => {
     engine = new EditxEngine({ renderer });
   });
 
-  function createGraphic(fit: ImageFillFit = "cover", src = "fill.png"): number {
+  function createGraphic(mode: ImageFillMode = "crop", src = "fill.png"): number {
     const blockId = engine.block.create("graphic");
     const fillId = engine.block.createFill("image");
     engine.block.setFill(blockId, fillId);
@@ -23,7 +23,7 @@ describe("graphic image-fill crop", () => {
     engine.block.setSize(blockId, 240, 160);
     engine.block.setFillImage(blockId, {
       src,
-      fit,
+      mode,
       offsetX: 12,
       offsetY: 18,
       scale: 1,
@@ -36,12 +36,12 @@ describe("graphic image-fill crop", () => {
   }
 
   it.each([
+    "crop",
     "cover",
-    "contain",
+    "fit",
     "tile",
-    "stretch",
-  ] as const)("routes an enabled %s image fill to graphic crop", (fit) => {
-    const blockId = createGraphic(fit);
+  ] as const)("enters an enabled %s image fill with its persisted mode", (mode) => {
+    const blockId = createGraphic(mode);
 
     expect(engine.editor.getCropEditTarget(blockId)).toBe("image-fill");
     engine.editor.setEditMode("Crop", { blockId });
@@ -51,10 +51,10 @@ describe("graphic image-fill crop", () => {
       y: 24,
       width: 240,
       height: 160,
-      fit,
+      mode,
       alignment: "center",
-      offsetX: 12,
-      offsetY: 18,
+      offsetX: mode === "crop" || mode === "tile" ? 12 : 0,
+      offsetY: mode === "crop" || mode === "tile" ? 18 : 0,
       scale: 1,
       rotation: 90,
       flipHorizontal: true,
@@ -64,7 +64,7 @@ describe("graphic image-fill crop", () => {
   });
 
   it("requires a graphic, enabled fill, and non-empty source", () => {
-    const empty = createGraphic("cover", "  ");
+    const empty = createGraphic("crop", "  ");
     const disabled = createGraphic();
     engine.block.setFillEnabled(disabled, false);
     const image = engine.block.create("image");
@@ -132,7 +132,7 @@ describe("graphic image-fill crop", () => {
       y: 20,
       width: 300,
       height: 200,
-      fit: "stretch",
+      mode: "tile",
       alignment: "bottom-right",
       offsetX: 30,
       offsetY: 40,
@@ -147,8 +147,8 @@ describe("graphic image-fill crop", () => {
     expect(engine.block.getSize(blockId)).toEqual({ width: 300, height: 200 });
     expect(engine.block.getFillImage(blockId)).toEqual({
       src: "fill.png",
-      fit: "stretch",
-      alignment: "bottom-right",
+      mode: "tile",
+      alignment: "center",
       offsetX: 30,
       offsetY: 40,
       scale: 2,
@@ -160,7 +160,7 @@ describe("graphic image-fill crop", () => {
     engine.editor.undo();
     expect(engine.block.getPosition(blockId)).toEqual({ x: 42, y: 24 });
     expect(engine.block.getSize(blockId)).toEqual({ width: 240, height: 160 });
-    expect(engine.block.getFillImage(blockId)).toMatchObject({ fit: "cover", rotation: 90 });
+    expect(engine.block.getFillImage(blockId)).toMatchObject({ mode: "crop", rotation: 90 });
     expect(engine.editor.canUndo()).toBe(false);
   });
 
@@ -191,6 +191,43 @@ describe("graphic image-fill crop", () => {
         offsetX: 30,
         offsetY: 45,
         scale: 2,
+      }),
+    );
+  });
+
+  it("does not rewrite an unchanged Cover fill when Done is pressed", () => {
+    const blockId = createGraphic("cover");
+    engine.editor.setEditMode("Crop", { blockId });
+
+    engine.editor.commitCrop();
+
+    expect(engine.block.getFillImage(blockId)).toMatchObject({
+      mode: "cover",
+      alignment: "center",
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+    });
+    expect(engine.editor.canUndo()).toBe(false);
+  });
+
+  it.each(["cover", "fit"] as const)("restores committed %s state when reopened", (mode) => {
+    const blockId = createGraphic();
+    engine.editor.setEditMode("Crop", { blockId });
+    engine.editor.updateImageFillCrop({ mode, alignment: "bottom-right" });
+    engine.editor.commitCrop();
+    vi.mocked(renderer.showImageFillCropPreview!).mockClear();
+
+    engine.editor.setEditMode("Crop", { blockId });
+
+    expect(renderer.showImageFillCropPreview).toHaveBeenCalledWith(
+      blockId,
+      expect.objectContaining({
+        mode,
+        alignment: "bottom-right",
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
       }),
     );
   });

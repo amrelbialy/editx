@@ -1,4 +1,4 @@
-import type { ImageFillAlignment, ImageFillFit } from "../block/block.types";
+import type { ImageFillAlignment, ImageFillMode } from "../block/block.types";
 import type { ImageFillCrop } from "../editor-types";
 
 export interface ImageFillCropGeometry {
@@ -26,25 +26,23 @@ function getRotation(rotation: number): {
 
 export function getImageFillPatternScale(
   geometry: ImageFillCropGeometry,
-  fit: ImageFillFit,
+  mode: ImageFillMode,
   scale: number,
   rotation = 0,
 ): { x: number; y: number } {
-  const widthScale = geometry.boxWidth / Math.max(geometry.imageWidth, 1);
-  const heightScale = geometry.boxHeight / Math.max(geometry.imageHeight, 1);
-  if (fit === "stretch") return { x: widthScale * scale, y: heightScale * scale };
-  if (fit === "tile") return { x: scale, y: scale };
+  if (mode === "tile") return { x: scale, y: scale };
   const { absCos, absSin } = getRotation(rotation);
   const rotatedWidth = absCos * geometry.imageWidth + absSin * geometry.imageHeight;
   const rotatedHeight = absSin * geometry.imageWidth + absCos * geometry.imageHeight;
   const base =
-    fit === "cover"
-      ? Math.max(
+    mode === "fit"
+      ? Math.min(geometry.boxWidth / rotatedWidth, geometry.boxHeight / rotatedHeight)
+      : Math.max(
           (absCos * geometry.boxWidth + absSin * geometry.boxHeight) / geometry.imageWidth,
           (absSin * geometry.boxWidth + absCos * geometry.boxHeight) / geometry.imageHeight,
-        )
-      : Math.min(geometry.boxWidth / rotatedWidth, geometry.boxHeight / rotatedHeight);
-  return { x: base * scale, y: base * scale };
+        );
+  const resolvedScale = mode === "crop" ? base * scale : base;
+  return { x: resolvedScale, y: resolvedScale };
 }
 
 export function getImageFillCropOffsetLimits(
@@ -52,7 +50,7 @@ export function getImageFillCropOffsetLimits(
   scale: number,
   rotation = 0,
 ): { x: number; y: number } {
-  const absoluteScale = Math.abs(getImageFillPatternScale(geometry, "cover", scale, rotation).x);
+  const absoluteScale = Math.abs(getImageFillPatternScale(geometry, "crop", scale, rotation).x);
   const { absCos, absSin } = getRotation(rotation);
   const qx =
     (absCos * geometry.boxWidth + absSin * geometry.boxHeight) /
@@ -70,20 +68,14 @@ export function constrainImageFillCrop(
   value: ImageFillCrop,
   geometry: ImageFillCropGeometry,
 ): ImageFillCrop {
-  if (value.fit !== "cover") return value;
+  if (value.mode !== "crop") return value;
   const scale = Math.min(
     IMAGE_FILL_CROP_SCALE_MAX,
     Math.max(IMAGE_FILL_CROP_SCALE_MIN, value.scale),
   );
   const limits = getImageFillCropOffsetLimits(geometry, scale, value.rotation);
-  const patternScale = getImageFillPatternScale(geometry, "cover", scale, value.rotation).x;
-  const alignment = getImageFillAlignmentDisplacement(
-    geometry,
-    "cover",
-    value.alignment,
-    scale,
-    value.rotation,
-  );
+  const patternScale = getImageFillPatternScale(geometry, "crop", scale, value.rotation).x;
+  const alignment = getImageFillAlignmentDisplacement(geometry, "crop", value.alignment, scale);
   const { cos, sin } = getRotation(value.rotation);
   const alignedSourceX = (cos * alignment.x + sin * alignment.y) / patternScale;
   const alignedSourceY = (-sin * alignment.x + cos * alignment.y) / patternScale;
@@ -109,13 +101,13 @@ function getAlignmentAxis(alignment: ImageFillAlignment): { x: -1 | 0 | 1; y: -1
 
 export function getImageFillAlignmentDisplacement(
   geometry: ImageFillCropGeometry,
-  fit: ImageFillFit,
+  mode: ImageFillMode,
   alignment: ImageFillAlignment = "center",
   scale = 1,
   rotation = 0,
 ): { x: number; y: number } {
-  if (fit !== "cover" && fit !== "contain") return { x: 0, y: 0 };
-  const patternScale = getImageFillPatternScale(geometry, fit, scale, rotation).x;
+  if (mode !== "cover" && mode !== "fit") return { x: 0, y: 0 };
+  const patternScale = getImageFillPatternScale(geometry, mode, scale, rotation).x;
   const { cos, sin, absCos, absSin } = getRotation(rotation);
   const imageHalfWidth =
     (patternScale * (absCos * geometry.imageWidth + absSin * geometry.imageHeight)) / 2;
@@ -127,7 +119,7 @@ export function getImageFillAlignmentDisplacement(
     y: axis.y * (imageHalfHeight - geometry.boxHeight / 2),
   };
   if (axis.x === 0 && axis.y === 0) return { x: 0, y: 0 };
-  if (fit === "contain") return requested;
+  if (mode === "fit") return requested;
 
   const localX = cos * requested.x + sin * requested.y;
   const localY = -sin * requested.x + cos * requested.y;
@@ -156,8 +148,8 @@ export function panImageFillCrop(
   geometry: ImageFillCropGeometry,
   localDelta: { x: number; y: number },
 ): ImageFillCrop {
-  if (value.fit !== "cover" && value.fit !== "tile") return value;
-  const patternScale = getImageFillPatternScale(geometry, value.fit, value.scale, value.rotation);
+  if (value.mode !== "crop" && value.mode !== "tile") return value;
+  const patternScale = getImageFillPatternScale(geometry, value.mode, value.scale, value.rotation);
   const { cos, sin } = getRotation(value.rotation);
   const rotatedX = cos * localDelta.x + sin * localDelta.y;
   const rotatedY = -sin * localDelta.x + cos * localDelta.y;

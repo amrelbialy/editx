@@ -41,7 +41,7 @@ function renderGraphic(imageFill: ImageFill | null) {
 
 const imageFill: ImageFill = {
   src: "fill.png",
-  fit: "contain",
+  mode: "fit",
   offsetX: 0.2,
   offsetY: -0.1,
   scale: 1.4,

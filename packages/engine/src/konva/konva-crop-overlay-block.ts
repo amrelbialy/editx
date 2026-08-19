@@ -165,7 +165,7 @@ export class KonvaCropOverlayBlock {
     if (supplied) return supplied;
     const node = this.#node;
     const source = node?.fillPatternImage();
-    if (!node || !source || node.getAttr("__fillPatternFit") === "tile") return null;
+    if (!node || !source || node.getAttr("__fillPatternMode") === "tile") return null;
     const scale = node.fillPatternScale();
     const offset = node.fillPatternOffset();
     const pattern = new Konva.Transform();

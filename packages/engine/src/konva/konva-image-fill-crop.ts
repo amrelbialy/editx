@@ -9,6 +9,7 @@ import { resizeImageFillCropFrame } from "./konva-image-fill-crop-frame";
 import {
   getImageFillCropGeometry,
   getImageFillCropLocalPointer,
+  isPointInImageFillPolygon,
 } from "./konva-image-fill-crop-node";
 import {
   createImageFillCropPreview,
@@ -88,6 +89,8 @@ export class KonvaImageFillCrop {
       getActive: () => this.#active,
       move: () => this.#move(),
       dismiss: () => this.onDismiss?.(),
+      containsImagePoint: (point) =>
+        isPointInImageFillPolygon(point, getImageFillCropPreviewPolygon(preview)),
       setCursor: (cursor) => this.#setCursor(cursor),
     });
     this.cropOverlay.setRatio(null);
@@ -175,9 +178,9 @@ export class KonvaImageFillCrop {
     const source = active.node.getAttr("__fillPatternSource") as PatternSource | undefined;
     if (!source?.width || !source.height) return;
     const box = active.node.getSelfRect();
-    applyImagePatternTransform(active.node, source, active.value.fit, box, active.value);
+    applyImagePatternTransform(active.node, source, active.value.mode, box, active.value);
     syncImageFillCropPreviewPlane(active.preview);
-    active.node.fillPatternRepeat(active.value.fit === "tile" ? "repeat" : "no-repeat");
+    active.node.fillPatternRepeat(active.value.mode === "tile" ? "repeat" : "no-repeat");
   }
 
   #move(): void {
@@ -204,7 +207,7 @@ export class KonvaImageFillCrop {
     if (!active) return;
     const value = this.#resizeFrame(active.frameGestureStart ?? active.value, frame);
     active.value = value;
-    if (value.fit === "tile") this.#apply();
+    if (value.mode !== "crop") this.#apply();
     this.onChange({ ...value });
   }
 
@@ -226,7 +229,10 @@ export class KonvaImageFillCrop {
   }
 
   #endFrameGesture(): void {
-    if (this.#active) this.#active.frameGestureStart = undefined;
+    const active = this.#active;
+    if (!active) return;
+    active.frameGestureStart = undefined;
+    if (active.value.mode === "crop") this.#apply();
   }
 
   #reapplyWhenReady(node: Konva.Shape, blockId: number): void {

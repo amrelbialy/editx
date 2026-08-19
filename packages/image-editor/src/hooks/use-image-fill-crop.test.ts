@@ -10,7 +10,7 @@ const CROP: ImageFillCrop = {
   width: 100,
   height: 80,
   sourceAspectRatio: 2,
-  fit: "cover",
+  mode: "crop",
   alignment: "center",
   offsetX: 0,
   offsetY: 0,

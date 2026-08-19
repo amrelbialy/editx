@@ -6,6 +6,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Breaking Changes
+
+* **engine:** replace `ImageFillFit`, `ImageFill.fit`, and `FILL_IMAGE_FIT` with
+	`ImageFillMode`, `ImageFill.mode`, and `FILL_IMAGE_MODE` at `fill/image/mode`. Supported modes
+	are `crop`, `cover`, `fit`, and `tile`; newly authored image fills default to `crop`.
+
 ### Added
 
 * **engine:** export the `ShapeGeometry` descriptor union and add undoable
@@ -21,6 +27,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Changed
 
 * **engine:** `hexToColor` now accepts `#RRGGBBAA` input while `colorToHex` output is unchanged.
+* **engine:** normalize image-fill alignment, pan, and scale by mode and keep Crop content stable
+	while resizing its frame.
 
 ## [0.1.0-alpha.11](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.10...@editx/engine@0.1.0-alpha.11) (2026-08-05)
 

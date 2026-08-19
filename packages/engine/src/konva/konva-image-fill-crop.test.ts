@@ -36,24 +36,24 @@ describe("KonvaImageFillCrop", () => {
   });
 
   it.each([
+    "crop",
     "cover",
-    "contain",
+    "fit",
     "tile",
-    "stretch",
-  ] as const)("previews %s using the cached processed source", (fit) => {
+  ] as const)("previews %s using the cached processed source", (mode) => {
     const { crop, node, preview } = setup();
     const source = node.getAttr("__fillPatternSource");
 
-    crop.show(7, { ...INITIAL, fit, rotation: 90, flipHorizontal: true });
+    crop.show(7, { ...INITIAL, mode, rotation: 90, flipHorizontal: true });
 
     const previewNode = preview();
     const plane = previewNode.getParent()?.findOne(".image-fill-crop-plane") as Konva.Image;
     expect(previewNode.fillPatternImage()).toEqual(source);
-    expect(fit === "tile" ? previewNode.fillPatternImage() : plane.image()).toEqual(source);
-    expect(previewNode.fillPriority()).toBe(fit === "tile" ? "pattern" : "color");
-    expect(plane.visible()).toBe(fit !== "tile");
+    expect(mode === "tile" ? previewNode.fillPatternImage() : plane.image()).toEqual(source);
+    expect(previewNode.fillPriority()).toBe(mode === "tile" ? "pattern" : "color");
+    expect(plane.visible()).toBe(mode !== "tile");
     expect(previewNode.fill()).toBe("rgba(0,0,0,0)");
-    expect(previewNode.fillPatternRepeat()).toBe(fit === "tile" ? "repeat" : "no-repeat");
+    expect(previewNode.fillPatternRepeat()).toBe(mode === "tile" ? "repeat" : "no-repeat");
     expect(previewNode.fillPatternRotation()).toBe(90);
     expect(previewNode.fillPatternScale().x).toBeLessThan(0);
     expect(previewNode.fillPatternX()).toBe(100);
@@ -61,23 +61,23 @@ describe("KonvaImageFillCrop", () => {
     expect(node.fillPatternImage()).toBeUndefined();
   });
 
-  it("switches fit preview surfaces without waiting for crop to close", () => {
+  it("switches mode preview surfaces without waiting for crop to close", () => {
     const { crop, preview } = setup();
     crop.show(7, INITIAL);
     const previewNode = preview();
     const plane = previewNode.getParent()?.findOne(".image-fill-crop-plane") as Konva.Image;
 
-    crop.set({ ...INITIAL, fit: "tile" });
+    crop.set({ ...INITIAL, mode: "tile" });
     expect(previewNode.fillPriority()).toBe("pattern");
     expect(previewNode.fillPatternRepeat()).toBe("repeat");
     expect(plane.visible()).toBe(false);
 
-    crop.set({ ...INITIAL, fit: "contain" });
+    crop.set({ ...INITIAL, mode: "fit" });
     expect(previewNode.fillPriority()).toBe("color");
     expect(plane.visible()).toBe(true);
 
-    crop.set({ ...INITIAL, alignment: "bottom-right" });
-    expect(previewNode.fillPatternY()).toBeLessThan(50);
+    crop.set({ ...INITIAL, mode: "fit", alignment: "bottom-right" });
+    expect(previewNode.fillPatternX()).toBeGreaterThan(100);
   });
 
   it("reapplies the latest preview after a pending image load", async () => {
@@ -94,7 +94,7 @@ describe("KonvaImageFillCrop", () => {
     crop.set({ ...INITIAL, rotation: 90 });
     crop.set({
       ...INITIAL,
-      fit: "tile",
+      mode: "tile",
       scale: 2,
       rotation: 180,
       flipHorizontal: true,
@@ -155,8 +155,8 @@ describe("KonvaImageFillCrop", () => {
     expect(cropOverlay.refreshBlock).toHaveBeenCalled();
   });
 
-  it("keeps preview geometry stationary through frame drag and release", () => {
-    const { crop, cropOverlay, onChange, applyFrame, preview } = setup();
+  it("normalizes the final Crop frame once before the first post-resize drag", () => {
+    const { crop, cropOverlay, onChange, applyFrame, preview, setPointer, move } = setup();
     crop.show(7, INITIAL);
     const callbacks = vi.mocked(cropOverlay.showBlock).mock.calls[0][1];
 
@@ -167,18 +167,25 @@ describe("KonvaImageFillCrop", () => {
     const callsBeforeRelease = applyFrame.mock.calls.length;
     callbacks.onEnd?.();
 
-    expect(applyFrame).toHaveBeenCalledTimes(callsBeforeRelease);
+    expect(applyFrame).toHaveBeenCalledTimes(callsBeforeRelease + 1);
+    expect(preview().size()).toEqual({ width: INITIAL.width, height: 150 });
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ height: 150 }));
+    const scaleAfterRelease = preview().fillPatternScale();
+    setPointer(preview().getAbsoluteTransform().point({ x: 50, y: 50 }));
+    preview().fire("mousedown", { cancelBubble: false, evt: { button: 0 } });
+    setPointer(preview().getAbsoluteTransform().point({ x: 60, y: 50 }));
+    move();
+    expect(preview().fillPatternScale()).toEqual(scaleAfterRelease);
   });
 
   it("keeps tile repetition filling the pending frame without applying on release", () => {
     const { crop, cropOverlay, applyFrame, preview } = setup();
-    crop.show(7, { ...INITIAL, fit: "tile" });
+    crop.show(7, { ...INITIAL, mode: "tile" });
     const callbacks = vi.mocked(cropOverlay.showBlock).mock.calls[0][1];
 
     callbacks.onStart?.();
     applyFrame.mockClear();
-    callbacks.onChange({ ...INITIAL, fit: "tile", height: 150 });
+    callbacks.onChange({ ...INITIAL, mode: "tile", height: 150 });
     expect(preview().size()).toEqual({ width: INITIAL.width, height: 150 });
     expect(preview().fillPatternRepeat()).toBe("repeat");
     const callsBeforeRelease = applyFrame.mock.calls.length;
@@ -231,13 +238,22 @@ describe("KonvaImageFillCrop", () => {
     click(new Konva.Rect());
     expect(onDismiss).not.toHaveBeenCalled();
 
+    const polygon = imagePlanePolygon(preview());
+    setPointer({
+      x: polygon.reduce((sum, point) => sum + point.x, 0) / polygon.length,
+      y: polygon.reduce((sum, point) => sum + point.y, 0) / polygon.length,
+    });
+    click(new Konva.Rect());
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    setPointer({ x: -10_000, y: -10_000 });
     click(new Konva.Rect());
     expect(onDismiss).toHaveBeenCalledOnce();
     click(new Konva.Rect());
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
-  it("normalizes finite cover before the crop preview is shown", () => {
+  it("normalizes finite Crop before the crop preview is shown", () => {
     const { crop } = setup();
 
     expect(crop.show(7, { ...INITIAL, scale: 0.1, offsetY: 999 })).toMatchObject({

@@ -15,8 +15,11 @@ const geometry = {
 };
 
 describe("getImageFillPatternScale", () => {
-  it("keeps an unrotated cover fill over the full frame", () => {
+  it("distinguishes Crop zoom, canonical Cover, and Fit for unequal ratios", () => {
+    expect(getImageFillPatternScale(geometry, "crop", 2, 0)).toEqual({ x: 6, y: 6 });
     expect(getImageFillPatternScale(geometry, "cover", 1, 0)).toEqual({ x: 3, y: 3 });
+    expect(getImageFillPatternScale(geometry, "cover", 3, 0)).toEqual({ x: 3, y: 3 });
+    expect(getImageFillPatternScale(geometry, "fit", 1, 0)).toEqual({ x: 2, y: 2 });
   });
 
   it("expands a rotated cover fill enough to cover a non-square frame", () => {
@@ -24,12 +27,11 @@ describe("getImageFillPatternScale", () => {
   });
 
   it("fits the rotated source bounds inside the frame", () => {
-    expect(getImageFillPatternScale(geometry, "contain", 1, 90)).toEqual({ x: 1, y: 1 });
+    expect(getImageFillPatternScale(geometry, "fit", 1, 90)).toEqual({ x: 1, y: 1 });
   });
 
-  it("preserves tile and stretch mode scale semantics", () => {
+  it("uses direct source scale for Tile", () => {
     expect(getImageFillPatternScale(geometry, "tile", 2, 90)).toEqual({ x: 2, y: 2 });
-    expect(getImageFillPatternScale(geometry, "stretch", 2, 90)).toEqual({ x: 6, y: 4 });
   });
 });
 
@@ -40,7 +42,7 @@ describe("crop constraints", () => {
     y: 0,
     width: 100,
     height: 100,
-    fit: "cover" as const,
+    mode: "crop" as const,
     alignment: "center" as const,
     offsetX: 0,
     offsetY: 0,
@@ -90,10 +92,9 @@ describe("crop constraints", () => {
     expect(Math.abs(normal.offsetX)).toBe(Math.abs(flipped.offsetX));
   });
 
-  it("constrains rotated cover pan relative to its alignment", () => {
+  it("constrains rotated Crop pan", () => {
     const rotated = {
       ...crop,
-      alignment: "top-left" as const,
       rotation: 30,
       flipHorizontal: true,
     };
@@ -104,18 +105,18 @@ describe("crop constraints", () => {
     expect(panned.offsetX).not.toBe(0);
   });
 
-  it("keeps Tile pan unbounded and disables Contain and Stretch pan", () => {
+  it("allows pan only for Crop and Tile", () => {
     const delta = { x: 10_000, y: -10_000 };
-    const tile = panImageFillCrop({ ...crop, fit: "tile" }, cropGeometry, delta);
+    const tile = panImageFillCrop({ ...crop, mode: "tile" }, cropGeometry, delta);
 
     expect(Math.abs(tile.offsetX)).toBeGreaterThan(1_000);
-    expect(panImageFillCrop({ ...crop, fit: "contain" }, cropGeometry, delta)).toEqual({
+    expect(panImageFillCrop({ ...crop, mode: "cover" }, cropGeometry, delta)).toEqual({
       ...crop,
-      fit: "contain",
+      mode: "cover",
     });
-    expect(panImageFillCrop({ ...crop, fit: "stretch" }, cropGeometry, delta)).toEqual({
+    expect(panImageFillCrop({ ...crop, mode: "fit" }, cropGeometry, delta)).toEqual({
       ...crop,
-      fit: "stretch",
+      mode: "fit",
     });
   });
 });
@@ -123,26 +124,34 @@ describe("crop constraints", () => {
 describe("automatic alignment", () => {
   const square = { boxWidth: 300, boxHeight: 300, imageWidth: 100, imageHeight: 50 };
   const alignments = [
-    ["top-left", -75, -112.5],
-    ["top-center", 0, -112.5],
-    ["top-right", 75, -112.5],
-    ["center-left", -75, 0],
+    ["top-left", 0, -75],
+    ["top-center", 0, -75],
+    ["top-right", 0, -75],
+    ["center-left", 0, 0],
     ["center", 0, 0],
-    ["center-right", 75, 0],
-    ["bottom-left", -75, 112.5],
-    ["bottom-center", 0, 112.5],
-    ["bottom-right", 75, 112.5],
+    ["center-right", 0, 0],
+    ["bottom-left", 0, 75],
+    ["bottom-center", 0, 75],
+    ["bottom-right", 0, 75],
   ] as const;
 
   it.each(alignments)("places Fit at %s against its transformed AABB", (alignment, x, y) => {
-    const displacement = getImageFillAlignmentDisplacement(square, "contain", alignment, 0.5);
+    const displacement = getImageFillAlignmentDisplacement(square, "fit", alignment, 0.5);
     expect(displacement.x).toBeCloseTo(x);
     expect(displacement.y).toBeCloseTo(y);
   });
 
   it("defaults missing alignment to exact center", () => {
-    expect(getImageFillAlignmentDisplacement(square, "contain", undefined)).toEqual({ x: 0, y: 0 });
+    expect(getImageFillAlignmentDisplacement(square, "fit", undefined)).toEqual({ x: 0, y: 0 });
     expect(getImageFillAlignmentDisplacement(square, "cover", undefined)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("ignores alignment for Crop and Tile", () => {
+    expect(getImageFillAlignmentDisplacement(square, "crop", "top-left")).toEqual({ x: 0, y: 0 });
+    expect(getImageFillAlignmentDisplacement(square, "tile", "bottom-right")).toEqual({
+      x: 0,
+      y: 0,
+    });
   });
 
   it("projects Cover alignment into the rotated coverage parallelogram", () => {
