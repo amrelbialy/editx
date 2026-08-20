@@ -24,6 +24,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Local diagnostic artifacts
+/last_lines.py
+/parse_details.py
+/parser.py
+/truncated_log.txt
+/test-results.log
+/test_result.log
+/test_output.txt
+
 # Local env files
 .env*.local
 .env

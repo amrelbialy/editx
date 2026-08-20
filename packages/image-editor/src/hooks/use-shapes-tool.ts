@@ -46,7 +46,6 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
 
       const shapeW = shapeType === "line" ? pageW * 0.5 : size;
       const shapeH = size;
-      console.log("Adding shape", shapeType, "with geometry", geometry, "at size", shapeW, shapeH);
       const x = (pageW - shapeW) / 2;
       const y = (pageH - shapeH) / 2;
 
