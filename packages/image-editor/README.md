@@ -24,8 +24,8 @@ Crop, adjust, filter, annotate &amp; export — in **any** app. Ship it as a **W
 | 🔄 | **Rotate & Flip** | 90° steps, free-angle straightening, horizontal/vertical flip |
 | 🎚️ | **Adjustments** | Brightness, contrast, saturation, temperature, exposure, shadows, highlights, and more |
 | ✨ | **Filters** | 40+ built-in presets with adjustable intensity, WebGL-accelerated |
-| 🔤 | **Text** | Rich-text annotations via Lexical — fonts, colors, formatting |
-| 🔷 | **Shapes** | Rectangles, ellipses, lines, arrows, polygons, stars — filled or outlined |
+| 🔤 | **Text** | Rich text presets with curved styles, gradients, highlights, and editable layered compositions, organized in a searchable gallery |
+| 🔷 | **Shapes** | Filled, outlined, gradient, image-filled, and abstract shape presets with searchable categories and custom catalog support |
 | 🖼️ | **Image Overlays** | Add and position images on the canvas |
 | 💾 | **Export** | PNG, JPEG, WebP with quality control |
 | ↩️ | **Undo / Redo** | Full command-based history with keyboard shortcuts |
@@ -33,9 +33,10 @@ Crop, adjust, filter, annotate &amp; export — in **any** app. Ship it as a **W
 | 📐 | **Responsive** | CSS Container Queries — adapts to its container, not the viewport |
 | 🌍 | **i18n** | Built-in translations, custom-locale support |
 
-Text presets support backward-compatible style blocks plus optional layered
-compositions with editable text and shape elements. See
-[Configure Text](docs/guides/configure-fonts.md#layered-text-combinations).
+Text and shape galleries support replaceable or extensible categorized catalogs.
+Text presets can insert editable layered text-and-shape compositions. See
+[Configure Text](docs/guides/configure-fonts.md#layered-text-combinations) and
+[Configure Shapes](docs/guides/configure-shapes.md#customize-the-gallery).
 
 ## Installation
 
@@ -154,8 +155,6 @@ function App() {
 
 ## Configuration
 
-Everything is driven by a single `config` object — enable only the tools you need, theme it, and localize it:
-
 Everything is driven by a single `config` object — the same shape across every integration (React prop, vanilla option, or Web Component property). Enable only the tools you need, theme it, and localize it:
 
 ```ts
@@ -171,7 +170,7 @@ const config = {
 // Web Component:  document.querySelector("editx-image-editor").config = config;
 ```
 
-Go further without forking: register **custom tools**, inject content into **UI slots** (`topbarRight`, `sidebarBottom`, `contextualBarExtra`), and hook into **editor events** (`onToolChange`, `onBeforeSave`).
+Go further without forking: add or replace categorized **text and shape preset catalogs** with built-in search, register **custom tools**, inject content into **UI slots** (`topbarRight`, `sidebarBottom`, `contextualBarExtra`), and hook into **editor events** (`onToolChange`, `onBeforeSave`).
 
 ## Theming
 

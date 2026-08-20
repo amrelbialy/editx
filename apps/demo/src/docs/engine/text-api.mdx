@@ -1,0 +1,169 @@
+# Text API
+
+Text blocks store rich content as styled runs. The public API supports range
+styles, gradients, highlights, block-level backgrounds, curves, auto width, and
+laid-out caret geometry. All text ranges use half-open UTF-16 offsets:
+`[start, end)`.
+
+## Create and inspect text
+
+```ts
+const textId = engine.block.addText(pageId, 120, 100, 520, 160, "Hello Editx");
+
+const content = engine.block.getTextContent(textId);
+const runs = engine.block.getTextRuns(textId);
+```
+
+## Apply run styles
+
+`setTextStyle` accepts a `TextRunStyleUpdate`. Omitted fields remain unchanged;
+`null` explicitly removes an existing style.
+
+```ts
+engine.block.setTextStyle(textId, 0, 5, {
+  fontFamily: "Inter",
+  fontSize: 72,
+  fontWeight: "bold",
+  fill: "#ffffff",
+  textTransform: "uppercase",
+  letterSpacing: 2,
+});
+
+engine.block.setTextStyle(textId, 0, 5, {
+  letterSpacing: null,
+});
+```
+
+Convenience methods such as `setTextColor`, `setTextFontSize`,
+`setTextFontFamily`, `toggleBoldText`, and `toggleItalicText` use the same run
+model.
+
+## Fill and stroke gradients
+
+Text fills support linear and radial gradients. Text stroke gradients are
+linear. A gradient takes precedence over its solid fill or stroke fallback.
+
+```ts
+engine.block.setTextGradient(textId, 0, 5, {
+  type: "linear",
+  angle: 45,
+  stops: [
+    { offset: 0, color: "#f97316" },
+    { offset: 1, color: "#ec4899" },
+  ],
+});
+
+engine.block.setTextStroke(textId, 0, 5, {
+  color: "#111827",
+  width: 3,
+  gradient: {
+    type: "linear",
+    angle: 90,
+    stops: [
+      { offset: 0, color: "#ffffff" },
+      { offset: 1, color: "#60a5fa" },
+    ],
+  },
+});
+
+engine.block.setTextGradient(textId, 0, 5, null);
+engine.block.setTextStroke(textId, 0, 5, { gradient: null });
+```
+
+Curved text currently renders a text gradient using its first stop as a solid
+fallback.
+
+## Run highlights
+
+Run highlights are boxes behind selected glyph ranges. They are distinct from
+the block-level background described below.
+
+```ts
+engine.block.setTextBackgroundColor(textId, 6, 11, "#fde68a");
+engine.block.setTextBackgroundOpacity(textId, 6, 11, 0.9);
+engine.block.setTextBackgroundCornerRadius(textId, 6, 11, 8);
+engine.block.setTextBackgroundPadding(textId, 6, 11, {
+  top: 4,
+  right: 8,
+  bottom: 4,
+  left: 8,
+});
+
+// These three helpers map undefined to an explicit clear.
+engine.block.setTextBackgroundOpacity(textId, 6, 11, undefined);
+engine.block.setTextBackgroundCornerRadius(textId, 6, 11, undefined);
+engine.block.setTextBackgroundPadding(textId, 6, 11, undefined);
+
+engine.block.setTextStyle(textId, 6, 11, { backgroundColor: null });
+```
+
+## Block-level backgrounds
+
+A text block can own one background box. `text-union` follows the laid-out
+glyphs; `frame` uses the text block's rectangular frame.
+
+```ts
+engine.block.setTextBackground(textId, {
+  enabled: true,
+  color: "#111827",
+  geometry: "frame",
+  cornerRadius: 16,
+  padding: { top: 12, right: 16, bottom: 12, left: 16 },
+});
+
+const background = engine.block.getTextBackground(textId);
+engine.block.setTextBackgroundEnabled(textId, false);
+```
+
+`getTextBackground` always returns resolved defaults. Frame padding and corner
+radius are normalized to nonnegative values. Text-union padding remains signed
+for compatibility. A multi-field update is one undo entry.
+
+## Curves and auto width
+
+```ts
+engine.block.setTextCurve(textId, 180, "up");
+const curve = engine.block.getTextCurve(textId);
+
+engine.block.setTextAutoWidth(textId, true);
+const autoWidth = engine.block.getTextAutoWidth(textId);
+
+engine.block.setTextCurve(textId, 0, "up"); // clear the curve
+```
+
+Curved text disables wrapping. Auto width also disables wrapping, keeps the
+center or right anchor stable, and refits a direct parent group when its measured
+width changes.
+
+## Alignment and layout
+
+```ts
+engine.block.setTextAlign(textId, "center");
+engine.block.setTextVerticalAlign(textId, "middle");
+engine.block.setTextLineHeight(textId, 1.4);
+
+const caret = engine.block.getTextCaretRect(textId, 5);
+const selection = engine.block.getTextSelectionRects(textId, 0, 11);
+```
+
+Caret and selection rectangles are returned in block-local coordinates and
+account for wrapping, alignment, line height, auto width, and frame-background
+padding. Empty or invalid selections return no rectangles.
+
+## Editing sessions
+
+```ts
+const session = engine.block.beginTextEditing(textId);
+session.setTextStyle(0, 5, { fill: "#22c55e" });
+engine.block.endTextEditing(textId);
+```
+
+The Lexical bridge helpers exported from `@editx/engine` round-trip gradients,
+stroke gradients, and highlight geometry through editor state. Malformed encoded
+style values are ignored rather than throwing.
+
+## Next steps
+
+- [Block API](/docs/engine/block-api) — lifecycle, layout, and properties.
+- [Groups API](/docs/engine/groups-api) — compose text and graphics.
+- [Scene & Events](/docs/engine/scene-api) — persist rich text in scene JSON.

@@ -76,7 +76,7 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 
 ### Image fills and graphic crop
 
-Graphic image fills support `cover`, `contain`, `tile`, and `stretch` fitting plus source-pixel
+Graphic image fills support `crop`, `cover`, `fit`, and `tile` modes plus source-pixel
 offsets, scale, rotation, and horizontal or vertical flips. `setFillImage` replaces the complete
 image-fill value; use `updateFillImage` when changing only selected fields, such as replacing the
 source while preserving its transform.
@@ -118,6 +118,40 @@ engine.block.setShapeGeometry(graphicId, {
   innerDiameter: 0.4,
 });
 ```
+
+### Gradients, rich text, and groups
+
+Graphics support linear or radial fill gradients and linear stroke gradients. Text runs add fill
+and stroke gradients, highlights, curves, auto width, and laid-out caret or selection geometry.
+Text blocks can also own a `text-union` or `frame` background. Range methods use half-open UTF-16
+offsets: `[start, end)`.
+
+```ts
+engine.block.changeFillKind(graphicId, "gradient");
+engine.block.setFillGradient(graphicId, {
+  type: "linear",
+  angle: 45,
+  stops: [
+    { offset: 0, color: "#2563eb" },
+    { offset: 1, color: "#14b8a6" },
+  ],
+});
+engine.block.setTextGradient(textId, 0, 5, {
+  type: "radial",
+  stops: [
+    { offset: 0, color: "#ffffff" },
+    { offset: 1, color: "#ec4899" },
+  ],
+});
+
+const groupId = engine.block.group([graphicId, textId]);
+engine.block.addToGroup(groupId, badgeId);
+engine.block.refitGroupBounds(groupId);
+```
+
+Grouping sibling blocks under one parent and later membership changes preserve world-space
+appearance and are undoable. Initial grouping across different parent hierarchies is unsupported.
+Use `enterGroup`, `exitGroup`, and `onGroupContextChanged` for nested editing context.
 
 ### Text background geometry
 
@@ -166,6 +200,19 @@ engine.block.setFloat(image, POSITION_X, 120);
 
 > `getSnapshot` returns a `ReadonlyBlockData` (a `DeepReadonly<BlockData>`). It is a clone, so
 > assigning to its fields has no effect on engine state — always route mutations through commands.
+
+## Export a block
+
+With a renderer attached, export a graphic, text, image, or group into a fixed output frame:
+
+```ts
+const blob = await engine.exportBlock(groupId, {
+  width: 1200,
+  height: 630,
+  padding: 24,
+  pixelRatio: 2,
+});
+```
 
 ## Exports
 

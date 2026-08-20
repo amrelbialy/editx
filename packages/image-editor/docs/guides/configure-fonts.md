@@ -1,9 +1,8 @@
 # Configure Text
 
-Control the fonts and default styling of the **Text** tool with `config.text`.
-The font list drives every font-family picker; the `default*` values seed each new
-text block; `presets` defines the style grid; and `min/maxFontSize` bound the size
-input.
+Control the fonts, defaults, and rich preset catalog of the **Text** tool with
+`config.text`. Presets can insert one styled text block or a complete, editable
+composition of text and shape blocks, organized in a searchable gallery.
 
 ```tsx
 import { ImageEditor } from "@editx/image-editor";
@@ -23,10 +22,15 @@ import { ImageEditor } from "@editx/image-editor";
       defaultLetterSpacing: 0,
       minFontSize: 8,
       maxFontSize: 400,
-      presets: [
-        { id: "title", label: "Title", text: "Title", fontSizeScale: 3.75, fontWeight: "bold" },
-        { id: "body", label: "Body", text: "Body text", fontSizeScale: 1 },
-      ],
+      additionalPresetGroups: [{
+        id: "brand",
+        label: "Brand",
+        presets: [{
+          id: "brand-title",
+          label: "Brand title",
+          blocks: [{ text: "Brand title", fontSizeScale: 3, fontWeight: "bold" }],
+        }],
+      }],
     },
     // Shared swatch palette for every colour picker (text, shapes, background):
     colors: ["#ffffff", "#111827", "#4f46e5", "#e11d48", "#16a34a", "#f59e0b"],
@@ -54,6 +58,15 @@ import { ImageEditor } from "@editx/image-editor";
 shown in every colour picker — text fill, shape fill, and background. Users can
 still enter any custom hex; the palette is just the quick-pick row.
 
+## Customize the gallery
+
+Use `presetGroups` when your catalog should completely replace the built-ins.
+Use `additionalPresetGroups` to keep the built-ins and append your own groups.
+An additional group whose `id` matches a built-in group, such as `styles`,
+appends its presets to that row. Empty and duplicate ids are ignored; the first
+group or preset id wins. The gallery searches translated group labels and preset
+labels.
+
 ## Rich text presets
 
 Each modern preset contains one or more required `blocks`. They remain the
@@ -70,7 +83,6 @@ text: {
     presets: [{
       id: "highlight",
       label: "Highlight",
-      preview: { kind: "text", sample: "Brand" },
       blocks: [{
         text: "Brand",
         fontSizeScale: 2,
@@ -114,7 +126,6 @@ dividers, and badges remain editable graphics rather than text backgrounds.
       },
     ],
   },
-  preview: { kind: "text", sample: "New collection" },
 }
 ```
 
@@ -122,9 +133,10 @@ dividers, and badges remain editable graphics rather than text backgrounds.
 and headlines; use `"fixed"` for wrapping or multiline copy. Existing presets
 without `composition` keep their legacy behavior: a single non-curved block is
 auto width, legacy multi-block presets are fixed width, and curved text does not
-implicitly enable auto width. `preview` remains required for compatibility;
-composition presets derive their layered thumbnail from `composition` and
-`blocks` so the thumbnail and inserted result share one source of truth.
+implicitly enable auto width. Thumbnails are derived from `blocks` and
+`composition`, so the gallery and inserted result share one source of truth.
+The deprecated optional `preview` field is accepted for compatibility but is not
+needed for new presets.
 
 `runOverrides` use half-open UTF-16 offsets: `[start, end)`. Ranges must contain
 at least one code unit, stay within `text`, use integer boundaries, and must not

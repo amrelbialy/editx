@@ -8,6 +8,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **image-editor:** add categorized text and shape preset galleries with built-in search and replaceable or extensible custom catalogs
 * **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
 * **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls
 * **image-editor:** add solid and linear gradient modes to graphic and text stroke controls

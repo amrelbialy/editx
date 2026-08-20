@@ -11,6 +11,66 @@ engine.editor.getEditMode(); // "Transform" | "Crop" | ...
 engine.editor.getEditModeConfig();
 ```
 
+## Crop sessions
+
+Crop mode supports two targets:
+
+- `source-crop` edits an image or page source crop.
+- `image-fill` edits the frame and transform of a graphic's enabled image fill.
+
+```ts
+const target = engine.editor.getCropEditTarget(blockId);
+// "source-crop" | "image-fill" | null
+
+engine.editor.setEditMode("Crop", { blockId });
+```
+
+An eligible graphic image fill is selected automatically; other crop-capable
+blocks retain source-crop behavior.
+
+### Image-fill preview
+
+Image-fill changes are preview state until committed, so live slider and drag
+updates do not create history entries.
+
+```ts
+const crop = engine.editor.getImageFillCrop();
+
+engine.editor.updateImageFillCrop({
+	mode: "crop",
+	offsetX: 24,
+	offsetY: -12,
+	scale: 1.5,
+	rotation: 90,
+	flipHorizontal: true,
+});
+
+engine.editor.applyCropDimensions(420, 240);
+const size = engine.editor.getCropVisualDimensions();
+engine.editor.resetImageFillCrop();
+```
+
+`updateImageFillCrop` and `resetImageFillCrop` return the normalized live state
+or `null` when no image-fill session is active.
+
+### Commit, cancel, and events
+
+```ts
+const unsubscribe = engine.editor.onImageFillCropChanged(({ blockId, crop }) => {
+	console.log(blockId, crop);
+});
+
+engine.editor.commitCrop();
+// Image-fill crop: writes frame + fill transform as one undo entry, returns null.
+// Source crop: keeps its existing CropRect return behavior.
+
+engine.editor.cancelCrop();
+// Discards preview state without changing document history.
+```
+
+Leaving Crop mode also discards an uncommitted image-fill preview. Read
+`getImageFillCrop()` before committing when the final preview state is needed.
+
 ## Viewport & Zoom
 
 ```ts

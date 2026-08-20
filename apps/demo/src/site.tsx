@@ -7,10 +7,14 @@ import { Seo } from "./components/seo";
 
 import EngineBlockApi from "./docs/engine/block-api.mdx";
 import EngineBlocks from "./docs/engine/blocks.mdx";
+import EngineCommands from "./docs/engine/commands.mdx";
 import EngineEditorApi from "./docs/engine/editor-api.mdx";
 import EngineApi from "./docs/engine/engine-api.mdx";
+import EngineGraphicsApi from "./docs/engine/graphics-api.mdx";
+import EngineGroupsApi from "./docs/engine/groups-api.mdx";
 import EngineOverview from "./docs/engine/overview.mdx";
 import EngineSceneApi from "./docs/engine/scene-api.mdx";
+import EngineTextApi from "./docs/engine/text-api.mdx";
 import IeApi from "./docs/image-editor/api.mdx";
 import IeConfiguration from "./docs/image-editor/configuration.mdx";
 import IeGettingStarted from "./docs/image-editor/getting-started.mdx";
@@ -66,8 +70,12 @@ const DOC_ROUTES: { path: string; component: ComponentType }[] = [
   { path: "/docs/image-editor/guides/web-component", component: IeGuideWebComponent },
   { path: "/docs/engine/overview", component: EngineOverview },
   { path: "/docs/engine/blocks", component: EngineBlocks },
+  { path: "/docs/engine/commands", component: EngineCommands },
   { path: "/docs/engine/engine-api", component: EngineApi },
   { path: "/docs/engine/block-api", component: EngineBlockApi },
+  { path: "/docs/engine/graphics-api", component: EngineGraphicsApi },
+  { path: "/docs/engine/text-api", component: EngineTextApi },
+  { path: "/docs/engine/groups-api", component: EngineGroupsApi },
   { path: "/docs/engine/editor-api", component: EngineEditorApi },
   { path: "/docs/engine/scene-api", component: EngineSceneApi },
 ];

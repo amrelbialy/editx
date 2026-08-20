@@ -1,0 +1,87 @@
+# Groups API
+
+Groups combine blocks into one transformable hierarchy while preserving each
+child's editable content. Group mutations are command-backed and undoable.
+
+## Create and dissolve groups
+
+```ts
+const groupId = engine.block.group([shapeId, textId]);
+const releasedIds = engine.block.ungroup(groupId);
+```
+
+`group` calculates the union of member bounds, inserts the group under the first
+valid member's parent, and converts children to group-local transforms.
+`ungroup` restores absolute transforms and z-order. Calling `group([])` throws
+because no group can be created.
+
+Pass sibling blocks that share one parent to `group`. Initial grouping does not
+compose transforms from different parent hierarchies and can move such members.
+
+## Change membership
+
+```ts
+engine.block.addToGroup(groupId, badgeId);
+engine.block.removeFromGroup(groupId, textId);
+engine.block.refitGroupBounds(groupId);
+```
+
+Adding and removing children preserves their world-space appearance by converting
+between page and group coordinates. `refitGroupBounds` fits a group to its current
+children without moving them visually and updates nested ancestor bounds.
+Invalid group or child targets are ignored.
+
+## Navigate nested groups
+
+Group context is interaction state, not document state. Entering or exiting a
+group is not added to undo history.
+
+```ts
+engine.block.enterGroup(groupId);
+engine.block.enterGroup(nestedGroupId);
+
+const stack = engine.block.getGroupContext();
+// [groupId, nestedGroupId] — outermost first
+
+engine.block.exitGroup();
+
+const unsubscribe = engine.block.onGroupContextChanged((nextStack) => {
+  console.log("Active group path", nextStack);
+});
+```
+
+`getGroupContext` returns a copy. Entering the group already at the top of the
+stack and exiting at the scene root are no-ops.
+
+## Selection and z-order
+
+```ts
+engine.block.select(groupId);
+engine.block.bringToFront(textId);
+engine.block.sendBackward(shapeId);
+```
+
+Z-order methods synchronize child ordering inside groups as well as pages.
+Selection changes do not emit group-context changes.
+
+## History behavior
+
+Grouping, ungrouping, changing membership, and refitting bounds each create an
+undoable command. Use a batch when several operations should undo together:
+
+```ts
+engine.beginBatch();
+engine.block.addToGroup(groupId, badgeId);
+engine.block.refitGroupBounds(groupId);
+engine.endBatch();
+```
+
+Deep duplication of a group hierarchy is not currently part of the documented
+`duplicate` contract. Duplicate individual blocks when a copied hierarchy is
+required.
+
+## Next steps
+
+- [Blocks](/docs/engine/blocks) — hierarchy and block types.
+- [Block API](/docs/engine/block-api) — lifecycle, selection, and layout.
+- [Engine API](/docs/engine/engine-api) — batching and history.

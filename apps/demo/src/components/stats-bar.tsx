@@ -7,7 +7,7 @@ const STATS = [
     value: "6",
     sub: "crop · adjust · filter · text · shapes · image",
   },
-  { icon: Sparkles, label: "Filter presets", value: "30+", sub: "WebGL-accelerated" },
+  { icon: Sparkles, label: "Filter presets", value: "40+", sub: "WebGL-accelerated" },
   { icon: Github, label: "Open source", value: "MIT", sub: "free forever · no lock-in" },
 ];
 

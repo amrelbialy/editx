@@ -28,6 +28,18 @@ engine.block.getParent(id);     // number | null
 engine.block.getChildren(id);   // number[]
 ```
 
+### Groups
+
+```ts
+const groupId = engine.block.group([shapeId, textId]);
+engine.block.addToGroup(groupId, badgeId);
+engine.block.removeFromGroup(groupId, textId);
+engine.block.refitGroupBounds(groupId);
+const released = engine.block.ungroup(groupId);
+```
+
+See [Groups API](/docs/engine/groups-api) for nested context and coordinate behavior.
+
 ## Selection
 
 ```ts
@@ -37,20 +49,28 @@ engine.block.isSelected(id);
 engine.block.findAllSelected(); // number[]
 engine.block.deselectAll();
 
-const unsub = engine.block.onSelectionChanged((ids) => { /* ... */ });
-const unsub = engine.block.onBlockDoubleClick((blockId) => { /* ... */ });
+const unsubscribeSelection = engine.block.onSelectionChanged((ids) => { /* ... */ });
+const unsubscribeDoubleClick = engine.block.onBlockDoubleClick((blockId) => { /* ... */ });
 ```
 
 ## Query
 
 ```ts
-engine.block.findAll();             // all top-level blocks
+engine.block.findAll();             // all page, graphic, text, image, and scene blocks
 engine.block.findByType("graphic"); // by BlockType
 engine.block.findByKind("circle");  // by kind string
 engine.block.findAllProperties(id); // all property keys
 engine.block.getName(id);
 engine.block.setName(id, "My Shape");
+
+const snapshot = engine.block.getSnapshot(id); // ReadonlyBlockData | null
 ```
+
+`findAll()` includes nested matching blocks but not groups or internal sub-blocks.
+Use `findByType("group")` when groups are needed.
+
+Snapshots are deep-cloned and deeply readonly. Mutating a returned object never
+changes engine state. `setName` is command-backed and undoable.
 
 ## Properties
 
@@ -111,12 +131,15 @@ engine.block.setFillEnabled(id, true);
 engine.block.isFillEnabled(id);
 engine.block.setFillSolidColor(id, { r: 1, g: 0, b: 0, a: 1 });
 engine.block.getFillSolidColor(id);
-
-// Sub-block level
-const fillId = engine.block.createFill("solid-color");
-engine.block.setFill(id, fillId);
-engine.block.getFill(id); // number | null
+engine.block.changeFillKind(id, "gradient");
+engine.block.setFillGradient(id, gradient);
+engine.block.changeFillKind(id, "image");
+engine.block.setFillImage(id, imageFill);
+engine.block.updateFillImage(id, { rotation: 90 });
 ```
+
+Fill kinds are `color`, `gradient`, and `image`. See
+[Graphics API](/docs/engine/graphics-api) for gradient and image-fill contracts.
 
 ## Stroke
 
@@ -128,6 +151,9 @@ engine.block.setStrokeColor(id, { r: 0, g: 0, b: 0, a: 1 });
 engine.block.getStrokeColor(id);
 engine.block.setStrokeWidth(id, 2);
 engine.block.getStrokeWidth(id);
+engine.block.setStrokeGradient(id, linearGradient);
+engine.block.getStrokeGradient(id);
+engine.block.setStrokeGradient(id, null); // keep solid fallback
 ```
 
 ## Shadow
@@ -150,10 +176,13 @@ engine.block.setShape(graphicId, shapeId);
 engine.block.getShape(graphicId);
 engine.block.supportsShape(graphicId);
 engine.block.hasShape(graphicId);
+engine.block.setShapeGeometry(graphicId, { type: "star", points: 8, innerDiameter: 0.4 });
 
 // Convenience: create a graphic with shape + fill in one call
-engine.block.addShape(pageId, "ellipse", "solid-color", x, y, w, h);
+engine.block.addShape(pageId, "ellipse", "color", x, y, w, h);
 ```
+
+See [Graphics API](/docs/engine/graphics-api) for SVG paths and validation.
 
 ## Effects
 
@@ -174,26 +203,19 @@ engine.block.getAdjustmentValues(effectId); // all params
 ## Text
 
 ```ts
-// Add text block
 const textId = engine.block.addText(pageId, x, y, w, h, "Hello");
-
-// Content
 engine.block.getTextContent(textId);
 engine.block.getTextRuns(textId);
-
-// Editing session (Lexical-powered)
-const session = engine.block.beginTextEditing(textId);
-engine.block.endTextEditing(textId);
-
-// Inline style mutations
-engine.block.setTextColor(textId, 0, 5, "#ff0000");
-engine.block.setTextFontSize(textId, 0, 5, 24);
-engine.block.setTextFontFamily(textId, 0, 5, "Inter");
-engine.block.toggleBoldText(textId, 0, 5);
-engine.block.toggleItalicText(textId, 0, 5);
+engine.block.setTextStyle(textId, 0, 5, { fontSize: 24, fill: "#ff0000" });
 engine.block.setTextAlign(textId, "center");
-engine.block.setTextLineHeight(textId, 1.5);
+engine.block.setTextGradient(textId, 0, 5, gradient);
+engine.block.setTextCurve(textId, 180, "up");
+engine.block.setTextAutoWidth(textId, true);
+engine.block.setTextBackground(textId, { enabled: true, geometry: "frame" });
 ```
+
+See [Text API](/docs/engine/text-api) for range updates, highlights, backgrounds,
+caret geometry, curves, and null-clear semantics.
 
 ## Image
 

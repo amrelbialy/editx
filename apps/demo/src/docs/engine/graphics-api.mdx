@@ -1,0 +1,166 @@
+# Graphics API
+
+Graphic blocks combine a shape, fill, optional stroke, effects, and a transform.
+Outside silent mode, successful mutations below create undo history and preserve
+the graphic's layout and hierarchy unless noted otherwise.
+
+## Create graphics
+
+```ts
+const rectId = engine.block.addShape(
+  pageId,
+  "rect",
+  "color",
+  120,
+  100,
+  420,
+  240,
+);
+
+const pathId = engine.block.addShape(
+  pageId,
+  "path",
+  "gradient",
+  600,
+  100,
+  240,
+  240,
+  {
+    pathData: "M50 5 95 95 5 95Z",
+    viewBox: { width: 100, height: 100 },
+  },
+);
+```
+
+Shape types are `rect`, `ellipse`, `polygon`, `star`, `line`, and `path`.
+Fill kinds are `color`, `gradient`, and `image`.
+
+## Replace shape geometry
+
+`setShapeGeometry` replaces a graphic's shape sub-block while preserving its
+position, size, fill, stroke, effects, selection, and group membership. The
+replacement is one undo entry.
+
+```ts
+import type { ShapeGeometry } from "@editx/engine";
+
+const geometry: ShapeGeometry = {
+  type: "star",
+  points: 8,
+  innerDiameter: 0.4,
+};
+
+engine.block.setShapeGeometry(rectId, geometry);
+engine.block.setShapeGeometry(rectId, {
+  type: "path",
+  name: "Triangle",
+  pathData: "M50 5 95 95 5 95Z",
+  viewBox: { width: 100, height: 100 },
+});
+```
+
+Geometry descriptors are validated before mutation. Polygon sides and star
+points must be valid integers; radii and line pointer dimensions cannot be
+negative; path view-box dimensions must be positive. Invalid descriptors throw
+without changing history. Missing or non-graphic targets are ignored.
+
+## Fill kinds
+
+Changing fill kind creates a fresh fill sub-block and replaces the previous one
+as a single undoable operation.
+
+```ts
+engine.block.changeFillKind(rectId, "color");
+engine.block.setFillSolidColor(rectId, { r: 0.15, g: 0.39, b: 0.92, a: 1 });
+
+engine.block.changeFillKind(rectId, "gradient");
+engine.block.setFillGradient(rectId, {
+  type: "linear",
+  angle: 45,
+  stops: [
+    { offset: 0, color: "#2563eb" },
+    { offset: 1, color: "#14b8a6" },
+  ],
+});
+
+const gradient = engine.block.getFillGradient(rectId);
+```
+
+Fill gradients support `linear` and `radial`. Getters return `null` when the
+graphic uses another fill kind.
+
+## Image fills
+
+`setFillImage` replaces the complete image-fill value. `updateFillImage`
+changes selected fields and preserves the rest.
+
+```ts
+engine.block.changeFillKind(rectId, "image");
+engine.block.setFillImage(rectId, {
+  src: "/photo.jpg",
+  mode: "crop",
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
+  rotation: 0,
+  flipHorizontal: false,
+  flipVertical: false,
+});
+
+engine.block.updateFillImage(rectId, {
+  src: "/replacement.jpg",
+  rotation: 90,
+});
+
+const imageFill = engine.block.getFillImage(rectId);
+```
+
+Modes are `crop`, `cover`, `fit`, and `tile`. Cover and fit use automatic
+alignment and reset offsets and scale. Crop scale is clamped to `1..4`; tile
+scale is clamped to `0.1..4`. Rotation is normalized to `0..359` degrees.
+Mode changes reset fields that no longer apply.
+
+## Stroke gradients
+
+Graphic strokes support a solid fallback color and an optional linear gradient.
+Clearing the gradient restores the solid color without discarding it.
+
+```ts
+engine.block.setStrokeEnabled(rectId, true);
+engine.block.setStrokeColor(rectId, { r: 1, g: 1, b: 1, a: 1 });
+engine.block.setStrokeWidth(rectId, 8);
+engine.block.setStrokeGradient(rectId, {
+  type: "linear",
+  angle: 90,
+  stops: [
+    { offset: 0, color: "#f97316" },
+    { offset: 1, color: "#ec4899" },
+  ],
+});
+
+const strokeGradient = engine.block.getStrokeGradient(rectId);
+engine.block.setStrokeGradient(rectId, null);
+```
+
+## Property keys
+
+Root exports include the typed keys for lower-level integrations:
+
+- Shape paths: `SHAPE_PATH_DATA`, `SHAPE_PATH_VIEWBOX_WIDTH`,
+  `SHAPE_PATH_VIEWBOX_HEIGHT`, `SHAPE_PATH_PRESERVE_ASPECT`.
+- Gradient fills: `FILL_GRADIENT_TYPE`, `FILL_GRADIENT_ANGLE`,
+  `FILL_GRADIENT_STOPS`.
+- Image fills: `FILL_IMAGE_SRC`, `FILL_IMAGE_MODE`, `FILL_IMAGE_ALIGNMENT`,
+  offsets, scale, rotation, and flip keys.
+- Stroke gradients: `STROKE_GRADIENT_ENABLED`, `STROKE_GRADIENT_ANGLE`,
+  `STROKE_GRADIENT_STOPS`.
+
+Prefer the semantic methods above for normal mutations. Shape replacement validates
+complete descriptors, image fills normalize mode-specific state, and compound
+methods group related property writes into one undo step.
+
+## Next steps
+
+- [Block API](/docs/engine/block-api) — lifecycle, properties, and layout.
+- [Editor API](/docs/engine/editor-api) — edit image fills with crop sessions.
+- [Text API](/docs/engine/text-api) — gradients, curves, backgrounds, and ranges.

@@ -56,25 +56,37 @@ const json = engine.scene.saveToString();
 await engine.scene.loadFromString(json);
 ```
 
+`saveToString()` emits scene format version `2`. Version 2 persists groups, SVG
+paths, gradient and image fills, text curves, rich run styles, and text background
+geometry. `loadFromString()` accepts versions `1` and `2`; version 1 documents
+use feature defaults for fields that did not exist yet. Other versions throw an
+`Unsupported scene version` error.
+
+Loading rebuilds the block hierarchy and renderer state, then clears history so
+the restored document starts with a clean undo stack.
+
 ## Event API
 
 Subscribe to block lifecycle events:
 
 ```ts
 // Subscribe to specific blocks
-const unsub = engine.event.subscribe([blockId], (events) => {
+const unsubscribeBlock = engine.event.subscribe([blockId], (events) => {
   for (const e of events) {
     console.log(e.type, e.block); // "created" | "updated" | "destroyed"
   }
 });
 
 // Subscribe to ALL block events
-const unsub = engine.event.subscribe([], (events) => {
+const unsubscribeAll = engine.event.subscribe([], (events) => {
   // ...
 });
 
 // Unsubscribe
-unsub();
+unsubscribeBlock();
+unsubscribeAll();
 ```
 
-Events are deduplicated and delivered at the end of each engine update cycle.
+With a renderer attached, events are deduplicated and delivered at the end of
+each engine update cycle. A rendererless engine currently queues lifecycle events
+without automatically flushing them.

@@ -13,7 +13,8 @@ The `EditxEngine` class is the main entry point for the engine.
 
 ## History
 
-All mutations are automatically tracked for undo/redo.
+Command-backed document edits are tracked for undo/redo outside silent mode.
+Scene creation and loading establish a new baseline and clear history.
 
 ```ts
 engine.undo();
@@ -57,13 +58,16 @@ engine.getActivePage(); // number | null
 
 ```ts
 // Generic event bus
-engine.on("history:undo", () => { /* ... */ });
-engine.off("history:undo", handler);
+const handleUndo = () => { /* ... */ };
+engine.on("history:undo", handleUndo);
+engine.off("history:undo", handleUndo);
 
 // Typed subscriptions (return unsubscribe function)
-const unsub = engine.onHistoryChanged(() => { /* ... */ });
-const unsub = engine.onZoomChanged((zoom) => { /* ... */ });
-const unsub = engine.onEditModeChanged(({ mode, previousMode }) => { /* ... */ });
+const unsubscribeHistory = engine.onHistoryChanged(() => { /* ... */ });
+const unsubscribeZoom = engine.onZoomChanged((zoom) => { /* ... */ });
+const unsubscribePan = engine.onPanChanged(({ x, y }) => { /* ... */ });
+const unsubscribeMode = engine.onEditModeChanged(({ mode, previousMode }) => { /* ... */ });
+const unsubscribeTransform = engine.onBlockTransform(({ block, phase }) => { /* ... */ });
 ```
 
 ## Export
@@ -74,6 +78,31 @@ const blob = await engine.exportScene({
   quality: 0.92,   // 0—1, for jpeg/webp
   pixelRatio: 2,   // DPR multiplier
 });
+```
+
+Export an individual graphic, text, image, or group into a fixed output frame:
+
+```ts
+const blob = await engine.exportBlock(blockId, {
+  width: 1200,
+  height: 630,
+  padding: 24,
+  pixelRatio: 2,
+});
+```
+
+Width and height must be positive integers. Padding must be nonnegative and leave
+a positive inner frame; pixel ratio must be positive. Missing blocks, unsupported
+block types, and engines without a renderer reject the promise.
+
+## Color utilities
+
+```ts
+import { colorToHex, hexToColor } from "@editx/engine";
+
+hexToColor("#2563eb");   // alpha = 1
+hexToColor("#2563eb80"); // parses 8-bit alpha
+colorToHex({ r: 0.15, g: 0.39, b: 0.92, a: 0.5 }); // "rgba(38,99,235,0.5)"
 ```
 
 ## Lifecycle

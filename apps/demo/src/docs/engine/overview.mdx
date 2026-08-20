@@ -7,9 +7,10 @@ The block-based core engine powering Editx.
 `@editx/engine` is the headless core that powers the Editx Image Editor. It provides:
 
 - **Block system** — everything is a block (pages, graphics, text, images)
-- **Command pattern** — all mutations are undoable/redoable
+- **Command pattern** — command-backed document edits are undoable/redoable
 - **Konva renderer** — GPU-accelerated canvas rendering
 - **EventAPI** — observable state changes
+- **Creative primitives** — groups, SVG paths, gradients, rich text, and image fills
 
 The engine has **zero React dependency** and can be used standalone.
 
@@ -24,16 +25,22 @@ pnpm add @editx/engine konva
 ```
 Scene
 ├── Page (block)
-│   ├── Graphic (block) — with Shape + Fill sub-blocks
+│   ├── Graphic (block) — Shape + Fill + Effects sub-blocks
 │   ├── Text (block)
-│   └── Image (block)
-└── Stack (optional grouping)
+│   ├── Image (block)
+│   └── Group (block)
+│       ├── Graphic (block)
+│       └── Text (block)
 ```
 
 ## Next Steps
 
 - [Blocks](/docs/engine/blocks) — the block type system
+- [Commands](/docs/engine/commands) — undo, redo, batching, and mutation boundaries
 - [Engine API](/docs/engine/engine-api) — history, batching, events, export
 - [Block API](/docs/engine/block-api) — create, query, and mutate blocks
+- [Graphics API](/docs/engine/graphics-api) — shapes, paths, fills, and strokes
+- [Text API](/docs/engine/text-api) — rich text, gradients, curves, and backgrounds
+- [Groups API](/docs/engine/groups-api) — hierarchy, membership, and group context
 - [Editor API](/docs/engine/editor-api) — viewport, zoom, edit modes
 - [Scene & Events](/docs/engine/scene-api) — scene management and event subscriptions
