@@ -87,7 +87,7 @@ export class EditorAPI {
     if (mode === "Crop") {
       const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
       if (targetId === null) return;
-      if (this.getCropEditTarget(targetId) === "image-fill") {
+      if (this.getCropEditTarget(targetId) === "shape-image") {
         this.#imageFillCrop.setup(targetId);
       } else {
         this.#crop.setupCropOverlay(targetId);
@@ -230,8 +230,8 @@ export class EditorAPI {
   }
 
   getCropEditTarget(blockId: number): CropEditTarget | null {
-    if (this.#imageFillCrop.isEligible(blockId)) return "image-fill";
-    return this.#ctx.block?.supportsCrop(blockId) ? "source-crop" : null;
+    if (this.#imageFillCrop.isEligible(blockId)) return "shape-image";
+    return this.#ctx.block?.supportsCrop(blockId) ? "source" : null;
   }
 
   getImageFillCrop(): ImageFillCrop | null {

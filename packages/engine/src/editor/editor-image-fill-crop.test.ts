@@ -43,7 +43,7 @@ describe("graphic image-fill crop", () => {
   ] as const)("enters an enabled %s image fill with its persisted mode", (mode) => {
     const blockId = createGraphic(mode);
 
-    expect(engine.editor.getCropEditTarget(blockId)).toBe("image-fill");
+    expect(engine.editor.getCropEditTarget(blockId)).toBe("shape-image");
     engine.editor.setEditMode("Crop", { blockId });
 
     expect(renderer.showImageFillCropPreview).toHaveBeenCalledWith(blockId, {
@@ -71,7 +71,7 @@ describe("graphic image-fill crop", () => {
 
     expect(engine.editor.getCropEditTarget(empty)).toBeNull();
     expect(engine.editor.getCropEditTarget(disabled)).toBeNull();
-    expect(engine.editor.getCropEditTarget(image)).toBe("source-crop");
+    expect(engine.editor.getCropEditTarget(image)).toBe("source");
   });
 
   it("keeps frame and content preview changes out of persisted state", () => {

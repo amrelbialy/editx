@@ -39,7 +39,7 @@ export function useImageFillCrop(options: UseImageFillCropOptions) {
   const enter = useCallback(
     (blockId: number) => {
       const current = engineRef.current;
-      if (!current || current.editor.getCropEditTarget(blockId) !== "image-fill") return;
+      if (!current || current.editor.getCropEditTarget(blockId) !== "shape-image") return;
       setPropertySidePanel(null);
       enterCropMode(blockId);
       targetBlockIdRef.current = blockId;

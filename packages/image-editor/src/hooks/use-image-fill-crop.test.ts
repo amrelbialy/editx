@@ -23,7 +23,7 @@ const CROP: ImageFillCrop = {
 function makeEngine() {
   let onEditModeChanged: ((info: { mode: string; previousMode: string }) => void) | null = null;
   const editor = {
-    getCropEditTarget: vi.fn(() => "image-fill"),
+    getCropEditTarget: vi.fn(() => "shape-image"),
     getImageFillCrop: vi.fn(() => CROP),
     onImageFillCropChanged: vi.fn(() => () => {}),
     commitCrop: vi.fn(),

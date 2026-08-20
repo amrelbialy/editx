@@ -35,7 +35,7 @@ export interface BlockExportOptions {
  */
 export type EditMode = "Transform" | "Crop" | "Text" | "Playback" | "Trim" | (string & {});
 
-export type CropEditTarget = "source-crop" | "image-fill";
+export type CropEditTarget = "source" | "shape-image";
 
 export interface ImageFillCrop {
   x: number;

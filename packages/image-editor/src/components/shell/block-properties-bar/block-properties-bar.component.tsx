@@ -103,7 +103,7 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
         onTogglePanel={togglePanel}
         onOpacityChange={handleOpacityChange}
         onCropImageFill={
-          onCropImageFill && engine.editor.getCropEditTarget(blockId) === "image-fill"
+          onCropImageFill && engine.editor.getCropEditTarget(blockId) === "shape-image"
             ? () => onCropImageFill?.(blockId)
             : undefined
         }

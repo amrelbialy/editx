@@ -15,12 +15,12 @@ engine.editor.getEditModeConfig();
 
 Crop mode supports two targets:
 
-- `source-crop` edits an image or page source crop.
-- `image-fill` edits the frame and transform of a graphic's enabled image fill.
+- `source` edits an image or page source crop.
+- `shape-image` edits the frame and transform of a graphic's enabled image fill.
 
 ```ts
 const target = engine.editor.getCropEditTarget(blockId);
-// "source-crop" | "image-fill" | null
+// "source" | "shape-image" | null
 
 engine.editor.setEditMode("Crop", { blockId });
 ```
