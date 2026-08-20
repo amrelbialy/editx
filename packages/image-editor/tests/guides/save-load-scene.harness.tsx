@@ -24,7 +24,12 @@ export const SaveLoadSceneHarness = () => {
 
     sceneRef.current = json;
     handle.engine.block.setPageImageSrc(pageId, "");
-    setSaveResult(json.includes('"version":1') ? "saved" : "invalid");
+    const scene = JSON.parse(json) as { version?: number; blocks?: unknown[] };
+    setSaveResult(
+      (scene.version === 1 || scene.version === 2) && Array.isArray(scene.blocks)
+        ? "saved"
+        : "invalid",
+    );
   };
 
   const onLoad = async () => {

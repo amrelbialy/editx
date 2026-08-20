@@ -43,7 +43,11 @@ test.describe("Tool Selection", () => {
     await toolbar.getByText("Shapes").click();
 
     // Should show shape types like Rectangle
-    await expect(component.getByText("Rectangle")).toBeVisible({ timeout: 5_000 });
+    await expect(
+      component
+        .getByLabel("Filled", { exact: true })
+        .getByRole("button", { name: "Rectangle", exact: true }),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("activates Text tool and shows text presets", async ({ mount }) => {
@@ -57,7 +61,9 @@ test.describe("Tool Selection", () => {
     await toolbar.getByText("Text").click();
 
     // Should show text preset options like "Heading"
-    await expect(component.getByTestId("grid-heading")).toBeVisible({ timeout: 5_000 });
+    await expect(
+      component.getByRole("button", { name: "Heading", exact: true }),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("switches between tools preserving state", async ({ mount }) => {
@@ -74,7 +80,11 @@ test.describe("Tool Selection", () => {
 
     // Switch to Shapes
     await toolbar.getByText("Shapes").click();
-    await expect(component.getByText("Rectangle")).toBeVisible({ timeout: 5_000 });
+    await expect(
+      component
+        .getByLabel("Filled", { exact: true })
+        .getByRole("button", { name: "Rectangle", exact: true }),
+    ).toBeVisible({ timeout: 5_000 });
     // Adjust panel should be gone
     await expect(component.getByText("Brightness")).not.toBeVisible();
   });

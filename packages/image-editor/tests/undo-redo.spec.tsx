@@ -6,8 +6,11 @@ const TEST_IMAGE = "/fixtures/test-image-100x100.png";
 // biome-ignore lint/suspicious/noExplicitAny: Playwright CT mount return type
 async function addShape(component: any) {
   await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-  await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
-  await component.getByTestId("grid-rect").click();
+  const rectangle = component
+    .getByLabel("Filled", { exact: true })
+    .getByRole("button", { name: "Rectangle", exact: true });
+  await expect(rectangle).toBeVisible({ timeout: 5_000 });
+  await rectangle.click();
 }
 
 test.describe("Undo/Redo", () => {

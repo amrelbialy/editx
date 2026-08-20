@@ -7,6 +7,12 @@ async function waitForEditor(component: any) {
   await component.getByRole("toolbar", { name: "Editor tools" }).waitFor({ timeout: 15_000 });
 }
 
+function filledShape(component: any, name: string) {
+  return component
+    .getByLabel("Filled", { exact: true })
+    .getByRole("button", { name, exact: true });
+}
+
 test.describe("Journey: Add Shape → Select → Delete", () => {
   test("adding a rectangle shape via the shapes panel", async ({ mount }) => {
     const component = await mount(
@@ -16,13 +22,14 @@ test.describe("Journey: Add Shape → Select → Delete", () => {
 
     // Open Shapes tool
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
+    const rectangle = filledShape(component, "Rectangle");
+    await expect(rectangle).toBeVisible({ timeout: 5_000 });
 
     // Click Rectangle to add it to canvas
-    await component.getByTestId("grid-rect").click();
+    await rectangle.click();
 
     // Shape should be added — the tool panel stays open
-    await expect(component.getByTestId("grid-rect")).toBeVisible();
+    await expect(rectangle).toBeVisible();
   });
 
   test("adding an ellipse and star shape successively", async ({ mount }) => {
@@ -32,16 +39,19 @@ test.describe("Journey: Add Shape → Select → Delete", () => {
     await waitForEditor(component);
 
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
+  await expect(filledShape(component, "Rectangle")).toBeVisible({ timeout: 5_000 });
 
-    // Add ellipse
-    await component.getByTestId("grid-ellipse").click();
+  // Add circle (ellipse geometry)
+  await filledShape(component, "Circle").click();
 
     // Add star
-    await component.getByTestId("grid-star").click();
+  const search = component.getByRole("searchbox", { name: "Search presets" });
+  await search.fill("Star");
+  await filledShape(component, "Star").click();
+  await search.fill("");
 
     // Panel still functional
-    await expect(component.getByTestId("grid-rect")).toBeVisible();
+  await expect(filledShape(component, "Rectangle")).toBeVisible();
   });
 
   test("deleting a shape with the Delete key", async ({ mount, page }) => {
@@ -52,8 +62,9 @@ test.describe("Journey: Add Shape → Select → Delete", () => {
 
     // Add a rectangle
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
-    await component.getByTestId("grid-rect").click();
+    const rectangle = filledShape(component, "Rectangle");
+    await expect(rectangle).toBeVisible({ timeout: 5_000 });
+    await rectangle.click();
 
     // Focus editor and press Delete
     await component.getByRole("application").first().focus();

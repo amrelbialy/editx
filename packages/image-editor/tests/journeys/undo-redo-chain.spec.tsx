@@ -83,13 +83,17 @@ test.describe("Journey: Undo/Redo chain integrity", () => {
 
     // --- Edit 2: Add shape ---
     await toolbar.getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
-    await component.getByTestId("grid-rect").click();
+    const rectangle = component
+      .getByLabel("Filled", { exact: true })
+      .getByRole("button", { name: "Rectangle", exact: true });
+    await expect(rectangle).toBeVisible({ timeout: 5_000 });
+    await rectangle.click();
 
     // --- Edit 3: Add text ---
     await toolbar.getByText("Text").click();
-    await expect(component.getByTestId("grid-heading")).toBeVisible({ timeout: 5_000 });
-    await component.getByTestId("grid-heading").click();
+    const heading = component.getByRole("button", { name: "Heading", exact: true });
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+    await heading.click();
 
     // Every edit is on the stack now.
     await expect(undoBtn).toBeEnabled();
@@ -131,8 +135,11 @@ test.describe("Journey: Undo/Redo chain integrity", () => {
 
     // Make an edit -> undo becomes available, redo stays unavailable.
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
-    await component.getByTestId("grid-rect").click();
+    const rectangle = component
+      .getByLabel("Filled", { exact: true })
+      .getByRole("button", { name: "Rectangle", exact: true });
+    await expect(rectangle).toBeVisible({ timeout: 5_000 });
+    await rectangle.click();
     await expect(undoBtn).toBeEnabled();
 
     // Undo -> the edit is popped, redo becomes available.
@@ -150,8 +157,11 @@ test.describe("Journey: Undo/Redo chain integrity", () => {
 
     // Make an edit, undo it, then redo it.
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 5_000 });
-    await component.getByTestId("grid-rect").click();
+    const rectangle = component
+      .getByLabel("Filled", { exact: true })
+      .getByRole("button", { name: "Rectangle", exact: true });
+    await expect(rectangle).toBeVisible({ timeout: 5_000 });
+    await rectangle.click();
 
     await undoBtn.click();
     await expect(redoBtn).toBeEnabled();
