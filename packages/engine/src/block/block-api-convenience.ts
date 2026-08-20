@@ -2,6 +2,7 @@ import type { EngineCore } from "../engine-core";
 import type { EffectType, FillType, ShapeType } from "./block.types";
 import type { BlockAPI } from "./block-api";
 import * as H from "./block-api-helpers";
+import type { BlockStore } from "./block-store";
 import { IMAGE_ORIGINAL_HEIGHT, IMAGE_ORIGINAL_WIDTH, IMAGE_SRC } from "./property-keys";
 
 /** Add an image block as a child of `parentId`. */
@@ -29,36 +30,40 @@ export function addImageBlock(
   return imageId;
 }
 
-/** Deep-duplicate a block (including sub-blocks) and offset by 20px. */
-export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: number): number {
-  const parentId = api.getParent(blockId);
-  if (parentId === null) throw new Error(`Block ${blockId} has no parent`);
-  const store = engine._getBlockStore();
-  const sourceBlock = store.get(blockId);
-  if (!sourceBlock) throw new Error(`Block ${blockId} not found`);
+function copyProperties(
+  api: BlockAPI,
+  store: BlockStore,
+  sourceId: number,
+  targetId: number,
+): void {
+  for (const key of store.findAllProperties(sourceId)) {
+    const value = api.getProperty(sourceId, key);
+    if (value !== undefined) api.setProperty(targetId, key, structuredClone(value));
+  }
+}
 
-  engine.beginBatch();
+function cloneBlockTree(
+  api: BlockAPI,
+  store: BlockStore,
+  sourceId: number,
+  positionOffset: number,
+): number {
+  const sourceBlock = store.get(sourceId);
+  if (!sourceBlock) throw new Error(`Block ${sourceId} not found`);
+
   const newId = api.create(sourceBlock.type);
   api.setKind(newId, sourceBlock.kind);
+  api.setName(newId, sourceBlock.name);
+  copyProperties(api, store, sourceId, newId);
 
-  const allKeys = store.findAllProperties(blockId);
-  for (const key of allKeys) {
-    const val = api.getProperty(blockId, key);
-    if (val !== undefined) api.setProperty(newId, key, structuredClone(val));
-  }
-
-  const pos = api.getPosition(blockId);
-  api.setPosition(newId, pos.x + 20, pos.y + 20);
+  const position = api.getPosition(sourceId);
+  api.setPosition(newId, position.x + positionOffset, position.y + positionOffset);
 
   if (sourceBlock.shapeId != null) {
     const srcShape = store.get(sourceBlock.shapeId);
     if (srcShape) {
       const newShapeId = api.createShape(srcShape.kind as ShapeType);
-      const shapeKeys = store.findAllProperties(sourceBlock.shapeId);
-      for (const key of shapeKeys) {
-        const val = api.getProperty(sourceBlock.shapeId, key);
-        if (val !== undefined) api.setProperty(newShapeId, key, structuredClone(val));
-      }
+      copyProperties(api, store, sourceBlock.shapeId, newShapeId);
       api.setShape(newId, newShapeId);
     }
   }
@@ -67,11 +72,7 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
     const srcFill = store.get(sourceBlock.fillId);
     if (srcFill) {
       const newFillId = api.createFill(srcFill.kind as FillType);
-      const fillKeys = store.findAllProperties(sourceBlock.fillId);
-      for (const key of fillKeys) {
-        const val = api.getProperty(sourceBlock.fillId, key);
-        if (val !== undefined) api.setProperty(newFillId, key, structuredClone(val));
-      }
+      copyProperties(api, store, sourceBlock.fillId, newFillId);
       api.setFill(newId, newFillId);
     }
   }
@@ -80,15 +81,26 @@ export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: numbe
     const srcEffect = store.get(effectId);
     if (srcEffect) {
       const newEffectId = api.createEffect(srcEffect.kind as EffectType);
-      const effectKeys = store.findAllProperties(effectId);
-      for (const key of effectKeys) {
-        const val = api.getProperty(effectId, key);
-        if (val !== undefined) api.setProperty(newEffectId, key, structuredClone(val));
-      }
+      copyProperties(api, store, effectId, newEffectId);
       api.appendEffect(newId, newEffectId);
     }
   }
 
+  for (const childId of sourceBlock.children) {
+    api.appendChild(newId, cloneBlockTree(api, store, childId, 0));
+  }
+
+  return newId;
+}
+
+/** Deep-duplicate a block (including sub-blocks) and offset by 20px. */
+export function duplicateBlock(api: BlockAPI, engine: EngineCore, blockId: number): number {
+  const parentId = api.getParent(blockId);
+  if (parentId === null) throw new Error(`Block ${blockId} has no parent`);
+  const store = engine._getBlockStore();
+
+  engine.beginBatch();
+  const newId = cloneBlockTree(api, store, blockId, 20);
   api.appendChild(parentId, newId);
   api.select(newId);
   engine.endBatch();
