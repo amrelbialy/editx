@@ -120,6 +120,24 @@ describe("BlockGroupAPI (group / ungroup / add / remove)", () => {
     }
   });
 
+  it("syncs restored members before removing a group during undo", () => {
+    const { a, b } = setup();
+    engine.clearHistory();
+    engine.block.group([a, b]);
+    vi.mocked(renderer.syncBlock).mockClear();
+    vi.mocked(renderer.removeBlock).mockClear();
+
+    engine.undo();
+
+    const sync = vi.mocked(renderer.syncBlock).mock;
+    const removeOrder = vi.mocked(renderer.removeBlock).mock.invocationCallOrder[0];
+    for (const memberId of [a, b]) {
+      const callIndex = sync.calls.findIndex(([id]) => id === memberId);
+      expect(callIndex).toBeGreaterThanOrEqual(0);
+      expect(sync.invocationCallOrder[callIndex]).toBeLessThan(removeOrder);
+    }
+  });
+
   it("ungroup restores absolute position when the group was moved", () => {
     const { a, b } = setup();
     const gid = engine.block.group([a, b]);

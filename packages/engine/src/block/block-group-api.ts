@@ -48,7 +48,7 @@ export class BlockGroupAPI {
   /** Reparent a block into a group, converting its coords to group-local. */
   addToGroup(groupId: number, blockId: number): void {
     const store = this.#engine._getBlockStore();
-    if (store.getType(groupId) !== "group") return;
+    if (store.getType(groupId) !== "group" || !store.canAppendChild(groupId, blockId)) return;
     const blockAbs = absoluteTransformOf(store, blockId);
     const groupAbs = absoluteTransformOf(store, groupId);
     const local = absoluteToLocal(blockAbs, groupAbs);

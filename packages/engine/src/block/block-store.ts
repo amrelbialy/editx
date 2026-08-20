@@ -154,6 +154,10 @@ export class BlockStore {
     this.#hierarchy.appendChild(parentId, childId);
   }
 
+  canAppendChild(parentId: number, childId: number): boolean {
+    return this.#hierarchy.canAppendChild(parentId, childId);
+  }
+
   removeChild(parentId: number, childId: number): void {
     this.#hierarchy.removeChild(parentId, childId);
   }

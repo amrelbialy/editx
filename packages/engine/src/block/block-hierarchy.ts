@@ -14,7 +14,7 @@ export class BlockHierarchy {
   appendChild(parentId: number, childId: number): void {
     const parent = this.#blocks.get(parentId);
     const child = this.#blocks.get(childId);
-    if (!parent || !child) return;
+    if (!parent || !child || !this.canAppendChild(parentId, childId)) return;
 
     // Remove from old parent if any
     if (child.parentId !== null && child.parentId !== parentId) {
@@ -28,6 +28,19 @@ export class BlockHierarchy {
     if (!parent.children.includes(childId)) {
       parent.children.push(childId);
     }
+  }
+
+  canAppendChild(parentId: number, childId: number): boolean {
+    if (!this.#blocks.has(parentId) || !this.#blocks.has(childId)) return false;
+
+    const visited = new Set<number>();
+    let ancestorId: number | null = parentId;
+    while (ancestorId !== null) {
+      if (ancestorId === childId || visited.has(ancestorId)) return false;
+      visited.add(ancestorId);
+      ancestorId = this.#blocks.get(ancestorId)?.parentId ?? null;
+    }
+    return true;
   }
 
   removeChild(parentId: number, childId: number): void {

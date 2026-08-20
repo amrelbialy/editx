@@ -1,6 +1,10 @@
 import type { BlockData } from "../../block/block.types";
 import type { BlockStore } from "../../block/block-store";
-import { absoluteToLocal, type SizedTransform, unionBBox } from "../../block/group-transform";
+import {
+  absoluteToLocal,
+  rotatedUnionBBox,
+  type SizedTransform,
+} from "../../block/group-transform";
 import {
   POSITION_X,
   POSITION_Y,
@@ -42,8 +46,8 @@ export class GroupBlocksCommand extends PatchCommand {
 
   do(): Patch[] {
     const store = this.#store;
-    const members = this.#memberIds.filter((id) => store.exists(id));
-    if (members.length === 0) return [];
+    const members = [...new Set(this.#memberIds.filter((id) => store.exists(id)))];
+    if (members.length === 0 || hasHierarchyConflict(store, members)) return [];
 
     const groupParentId = store.getParent(members[0]);
 
@@ -60,7 +64,7 @@ export class GroupBlocksCommand extends PatchCommand {
     const memberBefore = new Map<number, BlockData | null>();
     for (const m of members) memberBefore.set(m, store.snapshot(m));
 
-    const bbox = unionBBox(members.map((m) => this.#readSized(m)));
+    const bbox = rotatedUnionBBox(members.map((m) => this.#readSized(m)));
 
     const groupId = store.create("group");
     this.#createdId = groupId;
@@ -113,4 +117,18 @@ export class GroupBlocksCommand extends PatchCommand {
       height: this.#store.getFloat(id, SIZE_HEIGHT),
     };
   }
+}
+
+function hasHierarchyConflict(store: BlockStore, memberIds: number[]): boolean {
+  const members = new Set(memberIds);
+  for (const memberId of memberIds) {
+    const visited = new Set<number>();
+    let parentId = store.getParent(memberId);
+    while (parentId !== null) {
+      if (members.has(parentId) || visited.has(parentId)) return true;
+      visited.add(parentId);
+      parentId = store.getParent(parentId);
+    }
+  }
+  return false;
 }

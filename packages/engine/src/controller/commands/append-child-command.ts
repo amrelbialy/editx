@@ -15,6 +15,8 @@ export class AppendChildCommand extends PatchCommand {
   }
 
   do(): Patch[] {
+    if (!this.#store.canAppendChild(this.#parentId, this.#childId)) return [];
+
     // When the child already belongs to a different parent, appendChild() also
     // mutates that old parent's children array. Snapshot it so the reparent is
     // fully reversible (otherwise undo never returns the child to its origin).

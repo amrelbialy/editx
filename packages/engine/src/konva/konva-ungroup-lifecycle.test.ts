@@ -78,7 +78,7 @@ describe("Konva ungroup lifecycle", () => {
     vi.clearAllMocks();
   });
 
-  async function setup() {
+  async function setup(options: { keepGroupHistory?: boolean } = {}) {
     const store = new BlockStore();
     const pageId = store.create("page");
     const page = store.get(pageId) as BlockData;
@@ -94,7 +94,7 @@ describe("Konva ungroup lifecycle", () => {
     engine.block.setSize(firstId, 20, 10);
     engine.block.setSize(secondId, 30, 15);
     const groupId = engine.block.group([firstId, secondId]);
-    engine.clearHistory();
+    if (!options.keepGroupHistory) engine.clearHistory();
     return { engine, store, pageId, firstId, secondId, groupId };
   }
 
@@ -149,6 +149,38 @@ describe("Konva ungroup lifecycle", () => {
       expect(hoverRect.visible()).toBe(false);
     }
     expect(hitIds).toEqual([firstId, firstId, firstId]);
+  });
+
+  it("restores overlapping members to the interactive layer after undoing group and resize", async () => {
+    const { engine, pageId, firstId, secondId } = await setup({ keepGroupHistory: true });
+    engine.undo();
+    engine.clearHistory();
+    const firstNode = nodeMap.get(firstId) as Konva.Node;
+    const secondNode = nodeMap.get(secondId) as Konva.Node;
+
+    engine.block.setSize(secondId, 60, 30);
+    engine.block.select(firstId);
+    engine.block.setSelected(secondId, true);
+    const groupId = engine.block.group([firstId, secondId]);
+    engine.block.select(groupId);
+
+    engine.undo();
+    engine.undo();
+
+    expect(engine.block.getChildren(pageId)).toEqual([firstId, secondId]);
+    expect(engine.block.findAllSelected()).toEqual([]);
+    expect(nodeMap.has(groupId)).toBe(false);
+    expect(nodeMap.get(firstId)).toBe(firstNode);
+    expect(nodeMap.get(secondId)).toBe(secondNode);
+    expect(firstNode.getParent()).toBe(contentLayer);
+    expect(secondNode.getParent()).toBe(contentLayer);
+    expect(firstNode.draggable()).toBe(true);
+    expect(secondNode.draggable()).toBe(true);
+    expect((firstNode as Konva.Shape).colorKey).toBeTruthy();
+    expect((secondNode as Konva.Shape).colorKey).toBeTruthy();
+
+    secondNode.fire("click");
+    expect(hitIds).toEqual([secondId]);
   });
 
   it("ordinary group deletion cascades through descendant blocks and renderer nodes", async () => {
