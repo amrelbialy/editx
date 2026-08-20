@@ -31,7 +31,7 @@ export function getPresetThumbnailFingerprint(
     : {
         defaultColor: config.shapes?.defaultColor ?? "#3b82f6",
         defaultOpacity: config.shapes?.defaultOpacity ?? 1,
-        defaultSize: config.shapes?.defaultSize ?? 0.25,
+        defaultSize: config.shapes?.defaultSize ?? 0.5,
       };
   const serialized = stableSerialize({
     version: PRESET_THUMBNAIL_RENDER_VERSION,

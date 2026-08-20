@@ -146,7 +146,7 @@ export const DEFAULT_PLAYGROUND_CONFIG: PlaygroundConfig = {
   shapesDefaultStrokeWidth: 0,
   shapesDefaultOpacity: 1,
   shapesDefaultCornerRadius: 0,
-  shapesDefaultSize: 0.25,
+  shapesDefaultSize: 0.5,
 
   imageMaxFileSize: 5 * 1024 * 1024,
   imageMaxDimension: 2048,

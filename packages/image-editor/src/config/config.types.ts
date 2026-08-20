@@ -176,7 +176,7 @@ export interface ShapesToolConfig {
   defaultOpacity?: number;
   /** Corner radius (canvas px) applied to new rectangles (default `0`). */
   defaultCornerRadius?: number;
-  /** Starting size as a fraction of the smaller canvas edge, 0–1 (default `0.25`). */
+  /** Starting size as a fraction of the smaller canvas edge, 0–1 (default `0.5`). */
   defaultSize?: number;
 }
 

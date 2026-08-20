@@ -22,7 +22,7 @@ export function insertShapePreset(
   }
 
   const { engine, pageId, pageW, pageH, config } = context;
-  const sizeFraction = preset.sizeFraction ?? config.defaultSize ?? 0.25;
+  const sizeFraction = preset.sizeFraction ?? config.defaultSize ?? 0.5;
   const size = Math.min(pageW, pageH) * sizeFraction;
   const width = preset.shape.kind === "line" ? pageW * 0.5 : size;
   const height = size;

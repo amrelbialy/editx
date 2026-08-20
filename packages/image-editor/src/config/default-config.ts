@@ -166,7 +166,7 @@ export const defaultConfig: Required<
     defaultStrokeWidth: 0,
     defaultOpacity: 1,
     defaultCornerRadius: 0,
-    defaultSize: 0.25,
+    defaultSize: 0.5,
   },
 
   image: {
