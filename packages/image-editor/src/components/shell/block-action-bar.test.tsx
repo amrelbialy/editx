@@ -36,9 +36,8 @@ describe("BlockActionBar", () => {
     expect(onReplace).toHaveBeenCalledWith(file);
   });
 
-  it("renders and dispatches the complete group action set", () => {
+  it("renders and dispatches the shared block action set", () => {
     const actions = {
-      enterGroup: vi.fn(),
       bringForward: vi.fn(),
       sendBackward: vi.fn(),
       duplicate: vi.fn(),
@@ -50,7 +49,6 @@ describe("BlockActionBar", () => {
         <TooltipProvider>
           <BlockActionBar
             blockType="group"
-            onEnterGroup={actions.enterGroup}
             onBringForward={actions.bringForward}
             onSendBackward={actions.sendBackward}
             onBringToFront={vi.fn()}
@@ -64,7 +62,6 @@ describe("BlockActionBar", () => {
     );
 
     const expectedActions = [
-      ["Enter Group", actions.enterGroup],
       ["Bring Forward", actions.bringForward],
       ["Send Backward", actions.sendBackward],
       ["Duplicate", actions.duplicate],

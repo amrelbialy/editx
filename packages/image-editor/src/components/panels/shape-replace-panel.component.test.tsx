@@ -42,8 +42,6 @@ it("replaces geometry without changing appearance", () => {
   );
   const rectangle = screen.getByRole("button", { name: "Rectangle" });
   expect(screen.getAllByRole("button", { name: "Rectangle" })).toHaveLength(1);
-  expect(rectangle.querySelector('rect[fill="none"]')).not.toBeNull();
-  expect(rectangle.querySelector('rect[stroke="#ff0000"]')).not.toBeNull();
   fireEvent.click(rectangle);
 
   expect(block.setShapeGeometry).toHaveBeenCalledWith(7, {

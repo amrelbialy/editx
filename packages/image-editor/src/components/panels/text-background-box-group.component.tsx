@@ -198,7 +198,6 @@ export const TextBackgroundBoxGroup: React.FC<TextBackgroundBoxGroupProps> = (pr
                   {t("textBackground.contentPadding")}
                 </span>
                 <IconButton
-                  size="icon-xs"
                   label={t("textBackground.contentPaddingTooltip")}
                   tooltipSide="top"
                   icon={<Info />}
