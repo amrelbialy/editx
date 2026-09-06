@@ -2,16 +2,16 @@ import { GuideScenario } from "../../../components/guide-scenario";
 
 # Configure Text
 
-Control the fonts and default styling of the **Text** tool with `config.text`.
-The font list drives every font-family picker; the `default*` values seed each new
-text block; `presets` defines the style grid; and `min/maxFontSize` bound the size
-input.
+Control the fonts, defaults, and rich preset catalog of the **Text** tool with
+`config.text`. Presets can insert one styled text block or a complete, editable
+composition of text and shape blocks, organized in a searchable gallery.
 
 ## When to use this
 
 - You want on-brand typography instead of the generic system fonts.
 - You're loading custom web fonts and want them selectable in the editor.
-- You need consistent defaults (family, size, colour, weight, alignment…) for every new text block.
+- You need consistent defaults (family, size, colour, weight, alignment...) for every new text block.
+- You want branded styles or multi-layer layouts available in one click.
 
 ## Configure the text tool
 
@@ -31,10 +31,15 @@ input.
       defaultLetterSpacing: 0,
       minFontSize: 8,
       maxFontSize: 400,
-      presets: [
-        { id: "title", label: "Title", text: "Title", fontSizeScale: 3.75, fontWeight: "bold" },
-        { id: "body", label: "Body", text: "Body text", fontSizeScale: 1 },
-      ],
+      additionalPresetGroups: [{
+        id: "brand",
+        label: "Brand",
+        presets: [{
+          id: "brand-title",
+          label: "Brand title",
+          blocks: [{ text: "Brand title", fontSizeScale: 3, fontWeight: "bold" }],
+        }],
+      }],
     },
     // Shared swatch palette for every colour picker (text, shapes, background):
     colors: ["#ffffff", "#111827", "#4f46e5", "#e11d48", "#16a34a", "#f59e0b"],
@@ -54,8 +59,79 @@ input.
 | `defaultLineHeight` | Line height for new text. |
 | `defaultLetterSpacing` | Letter spacing (px) for new text. |
 | `minFontSize` / `maxFontSize` | Bounds for the font-size input (defaults `1` / `500`). |
-| `presets` | Text style grid — each `{ id, label, text?, fontSizeScale?, fontWeight? }`. |
+| `presetGroups` | Categorized rich presets; replaces the built-in catalog. |
+| `additionalPresetGroups` | Categories appended to built-ins; matching group ids merge presets. |
+| `presets` | Deprecated flat style list retained for compatibility. |
 | `colors` | **Top-level** (sibling of `text`) — swatch palette for every colour picker. |
+
+## Customize the gallery
+
+Use `presetGroups` to replace the complete built-in catalog. Use
+`additionalPresetGroups` to retain the built-ins and append branded categories.
+When an additional group uses a built-in id such as `styles`, its presets are
+appended to that existing row. The gallery searches translated category labels
+and preset labels.
+
+## Rich text presets
+
+Each modern preset contains one or more `blocks`. A block can define gradients,
+stroke, shadows, highlights, background boxes, curved text, and UTF-16
+`runOverrides`. Omit geometry for a centered, auto-sized style preset.
+
+```tsx
+text: {
+  presetGroups: [{
+    id: "brand",
+    label: "Brand",
+    presets: [{
+      id: "highlight",
+      label: "Highlight",
+      blocks: [{
+        text: "Brand",
+        fontSizeScale: 2,
+        transform: "uppercase",
+        backgroundColor: "#fde68a",
+        runOverrides: [
+          { start: 1, end: 3, style: { backgroundColor: "#86efac" } },
+        ],
+      }],
+    }],
+  }],
+}
+```
+
+### Layered text compositions
+
+Add `composition.elements` to arrange editable text and shape layers with
+normalized page coordinates. Elements are ordered back to front. Referenced
+text blocks must omit their own geometry.
+
+```tsx
+{
+  id: "announcement",
+  label: "Announcement",
+  blocks: [{ text: "New collection", fontSizeScale: 2, fontWeight: "bold", fill: "#ffffff" }],
+  composition: {
+    elements: [
+      {
+        kind: "shape",
+        layout: { x: 0.15, y: 0.42, width: 0.7, height: 0.16 },
+        shape: { kind: "rect", cornerRadius: 12 },
+        fill: { kind: "color", color: "#dc2626" },
+      },
+      {
+        kind: "text",
+        block: 0,
+        layout: { x: 0.22, y: 0.46, width: 0.56, height: 0.08 },
+        widthMode: "auto",
+      },
+    ],
+  },
+}
+```
+
+Thumbnails are derived from the preset's blocks and composition. The deprecated
+optional `preview` field remains accepted but is not needed for new presets.
 
 ## How `defaultFontSize` is applied
 
@@ -75,7 +151,7 @@ names you list actually render.
 
 ## Try it
 
-Open the **Text** tool — the style grid shows your custom `presets` (just
+Open the **Text** tool — the gallery shows your custom `presetGroups` (just
 **Display** and **Caption**). Add one, and the new block picks up every default
 below: the **Playfair Display** family, red fill, bold weight, italic style,
 and centre alignment. Open the font picker in the selection bar and it lists only
@@ -96,10 +172,14 @@ and it shows just your custom `colors` swatches:
       defaultLetterSpacing: 1,
       minFontSize: 8,
       maxFontSize: 400,
-      presets: [
-        { id: "display", label: "Display", text: "Display", fontSizeScale: 3, fontWeight: "bold" },
-        { id: "caption", label: "Caption", text: "Caption", fontSizeScale: 0.75 },
-      ],
+      presetGroups: [{
+        id: "brand",
+        label: "Brand",
+        presets: [
+          { id: "display", label: "Display", blocks: [{ text: "Display", fontSizeScale: 3, fontWeight: "bold" }] },
+          { id: "caption", label: "Caption", blocks: [{ text: "Caption", fontSizeScale: 0.75 }] },
+        ],
+      }],
     },
     colors: ["#ff0000", "#111827", "#ffffff", "#4f46e5", "#16a34a", "#f59e0b"],
   }}

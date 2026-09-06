@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "../../../utils/cn";
+import { toOpaqueHexColor } from "../color-value";
 import { focusRing } from "../styles";
 import type { ColorSwatchProps } from "./color-swatch.types";
 
@@ -21,7 +22,7 @@ export const ColorSwatch = React.forwardRef<HTMLInputElement, ColorSwatchProps>(
     <input
       ref={ref}
       type="color"
-      value={value}
+      value={toOpaqueHexColor(value)}
       className={cn(
         "cursor-pointer rounded-md border border-border bg-transparent p-0",
         "[&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-none",

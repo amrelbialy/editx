@@ -199,6 +199,22 @@ describe("text-run-utils", () => {
       expect(result[2].text).toBe("rld");
       expect(result[2].style.fill).toBe("#000");
     });
+
+    it("ignores undefined values so partial updates keep sibling fields", () => {
+      const runs: TextRun[] = [
+        { text: "Neon", style: { textShadowColor: "#ec4899", textShadowOffsetX: 3 } },
+      ];
+      // Changing only blur must not wipe the existing color/offset.
+      const result = setStyleOnRange(runs, 0, 4, {
+        textShadowColor: undefined,
+        textShadowBlur: 12,
+        textShadowOffsetX: undefined,
+        textShadowOffsetY: undefined,
+      });
+      expect(result[0].style.textShadowColor).toBe("#ec4899");
+      expect(result[0].style.textShadowOffsetX).toBe(3);
+      expect(result[0].style.textShadowBlur).toBe(12);
+    });
   });
 
   // ── removeRange ────────────────────────────────────

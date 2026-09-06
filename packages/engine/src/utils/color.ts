@@ -17,11 +17,12 @@ export function colorToHex(c: Color): string {
 }
 
 /**
- * Parse a "#rrggbb" hex string into a Color with alpha = 1.
+ * Parse a "#rrggbb" or "#rrggbbaa" hex string into a Color.
  */
 export function hexToColor(hex: string): Color {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return { r, g, b, a: 1 };
+  const a = hex.length === 9 ? parseInt(hex.slice(7, 9), 16) / 255 : 1;
+  return { r, g, b, a };
 }

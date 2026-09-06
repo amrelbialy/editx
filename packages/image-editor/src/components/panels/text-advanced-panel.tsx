@@ -8,13 +8,14 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useImageEditorStore } from "../../store/image-editor-store";
-import { ColorSwatch } from "../ui/color-swatch";
 import { IconButton } from "../ui/icon-button";
 import { Input } from "../ui/input";
 import { Section } from "../ui/section";
 import { SegmentedControl } from "../ui/segmented-control";
 import { Separator } from "../ui/separator";
 import { SliderField } from "../ui/slider-field";
+import { TextCurveSection } from "./text-curve-section.component";
+import { TextStrokeSection } from "./text-stroke-section.component";
 
 interface TextAdvancedPanelProps {
   engine: EditxEngine;
@@ -26,8 +27,6 @@ interface AdvancedState {
   lineHeight: number;
   letterSpacing: number;
   textTransform: string;
-  textStrokeColor: string;
-  textStrokeWidth: number;
 }
 
 function readAdvancedState(
@@ -56,8 +55,6 @@ function readAdvancedState(
     lineHeight: lh || 1.2,
     letterSpacing: targetStyle.letterSpacing ?? 0,
     textTransform: targetStyle.textTransform ?? "none",
-    textStrokeColor: targetStyle.textStrokeColor ?? "#ffffff",
-    textStrokeWidth: targetStyle.textStrokeWidth ?? 0,
   };
 }
 
@@ -128,30 +125,6 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
       refresh();
     },
     [engine, blockId, getStyleRange, refresh],
-  );
-
-  const handleStrokeColor = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { start, end } = getStyleRange();
-      engine.block.setTextStroke(blockId, start, end, {
-        color: e.target.value,
-        width: state.textStrokeWidth || 1,
-      });
-      refresh();
-    },
-    [engine, blockId, getStyleRange, state.textStrokeWidth, refresh],
-  );
-
-  const handleStrokeWidth = useCallback(
-    ([v]: number[]) => {
-      const { start, end } = getStyleRange();
-      engine.block.setTextStroke(blockId, start, end, {
-        color: state.textStrokeColor,
-        width: v,
-      });
-      refresh();
-    },
-    [engine, blockId, getStyleRange, state.textStrokeColor, refresh],
   );
 
   const CASE_OPTIONS = [
@@ -259,27 +232,16 @@ export const TextAdvancedPanel: React.FC<TextAdvancedPanelProps> = ({ engine, bl
 
       <Separator />
 
-      {/* Text Stroke */}
-      <Section label="Text Stroke">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-fluid text-muted-foreground w-12">Color</span>
-            <ColorSwatch value={state.textStrokeColor} onChange={handleStrokeColor} />
-            <span className="text-fluid font-mono text-muted-foreground">
-              {state.textStrokeColor}
-            </span>
-          </div>
-          <SliderField
-            label="Width"
-            value={state.textStrokeWidth}
-            min={0}
-            max={5}
-            step={0.5}
-            onChange={(v) => handleStrokeWidth([v])}
-            formatValue={(v) => v.toFixed(1)}
-          />
-        </div>
-      </Section>
+      <TextStrokeSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+      />
+
+      <Separator />
+
+      <TextCurveSection engine={engine} blockId={blockId} />
     </div>
   );
 };

@@ -10,6 +10,8 @@ import { FilterPanel } from "../panels/filter-panel";
 import { ImageFillPanel } from "../panels/image-fill-panel";
 import { PositionPropertyPanel } from "../panels/position-property-panel";
 import { ShadowPropertyPanel } from "../panels/shadow-property-panel";
+import { ShapeFillPanel } from "../panels/shape-fill-panel";
+import { ShapeReplacePanel } from "../panels/shape-replace-panel.component";
 import { StrokePropertyPanel } from "../panels/stroke-property-panel";
 import { TextAdvancedPanel } from "../panels/text-advanced-panel";
 
@@ -33,29 +35,66 @@ interface BlockInspectorProps {
     sendToBack: () => void;
     alignToPage: (direction: AlignDirection) => void;
   };
+  propertyEnabled?: boolean;
   onReplaceImage: (file: File) => void;
 }
 
 export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
-  const { panel, engine, blockId, blockType, blockEffects, blockActions, onReplaceImage } = props;
+  const {
+    panel,
+    engine,
+    blockId,
+    blockType,
+    blockEffects,
+    blockActions,
+    propertyEnabled,
+    onReplaceImage,
+  } = props;
 
   if (!panel) return null;
 
+  const supportsImageEffects =
+    blockType === "image" ||
+    ((panel === "adjust" || panel === "filter") &&
+      blockType === "graphic" &&
+      engine.block.getFillImage(blockId) !== null);
+
   switch (panel) {
+    case "shape":
+      if (blockType !== "graphic") return null;
+      return <ShapeReplacePanel engine={engine} blockId={blockId} />;
     case "color":
+      if (blockType !== "text") return null;
+      return <ColorPropertyPanel engine={engine} blockId={blockId} />;
+    case "background":
       return (
-        <ColorPropertyPanel
+        <BackgroundPropertyPanel
           engine={engine}
           blockId={blockId}
-          blockType={blockType as "text" | "graphic"}
+          blockType={blockType as "text" | "graphic" | "image"}
         />
       );
-    case "background":
-      return <BackgroundPropertyPanel engine={engine} blockId={blockId} />;
     case "shadow":
-      return <ShadowPropertyPanel engine={engine} blockId={blockId} />;
+      return (
+        <ShadowPropertyPanel
+          engine={engine}
+          blockId={blockId}
+          blockType={blockType as "text" | "graphic" | "image"}
+          enabled={propertyEnabled}
+        />
+      );
     case "stroke":
-      return <StrokePropertyPanel engine={engine} blockId={blockId} />;
+      return (
+        <StrokePropertyPanel
+          engine={engine}
+          blockId={blockId}
+          blockType={blockType as "text" | "graphic" | "image"}
+          enabled={propertyEnabled}
+        />
+      );
+    case "fill":
+      if (blockType !== "graphic") return null;
+      return <ShapeFillPanel engine={engine} blockId={blockId} enabled={propertyEnabled} />;
     case "position":
       return (
         <PositionPropertyPanel
@@ -72,7 +111,7 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
       if (blockType !== "text") return null;
       return <TextAdvancedPanel engine={engine} blockId={blockId} />;
     case "adjust":
-      if (blockType !== "image") return null;
+      if (!supportsImageEffects) return null;
       return (
         <AdjustPanel
           values={blockEffects.adjustValues}
@@ -82,7 +121,7 @@ export const BlockInspector: React.FC<BlockInspectorProps> = (props) => {
         />
       );
     case "filter":
-      if (blockType !== "image") return null;
+      if (!supportsImageEffects) return null;
       return (
         <FilterPanel
           activeFilter={blockEffects.activeFilter}

@@ -115,7 +115,9 @@ describe("BlockAPI", () => {
 
     it("getString returns default", () => {
       const id = block.create("text");
-      expect(block.getString(id, "text/content")).toBe("Text");
+      // TEXT_ALIGN is still seeded on text blocks; text/content moved into
+      // TEXT_RUNS (single source of truth) and is no longer a node-level string.
+      expect(block.getString(id, "text/align")).toBe("left");
     });
 
     it("getBool returns default", () => {

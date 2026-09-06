@@ -20,6 +20,8 @@ export function useCropTool({ engineRef, config }: UseCropToolOptions) {
   const [cropDimensions, setCropDimensions] = useState<{ width: number; height: number } | null>(
     null,
   );
+  const [activeCropBlockId, setActiveCropBlockId] = useState<number | null>(null);
+  const cropBlockId = activeCropBlockId ?? editableBlockId;
 
   const resolveRatio = useCallback(
     (presetId: CropPresetId): number | null => {
@@ -27,36 +29,43 @@ export function useCropTool({ engineRef, config }: UseCropToolOptions) {
       const ratio = preset?.ratio;
       if (ratio == null || ratio === "free") return null;
       if (ratio === "original") {
+        const imageFillCrop = engineRef.current?.editor.getImageFillCrop();
+        if (imageFillCrop) return imageFillCrop.sourceAspectRatio ?? null;
         const originalImage = useImageEditorStore.getState().originalImage;
         return originalImage ? toPrecisedFloat(originalImage.width / originalImage.height) : null;
       }
       return toPrecisedFloat(ratio);
     },
-    [config.crop?.aspectRatios],
+    [config.crop?.aspectRatios, engineRef],
   );
 
-  const enterCropMode = useCallback(() => {
-    const ce = engineRef.current;
-    if (!ce || editableBlockId === null) return;
-    // Close any block-level UI (text editing, selection-driven bars) so it
-    // doesn't linger on top of the crop overlay.
-    setEditingTextBlockId(null);
-    setTextSelectionRange(null);
-    ce.block.deselectAll();
-    ce.editor.setEditMode("Crop", { blockId: editableBlockId });
-    setCropPreset("free");
-    setActiveTool("crop");
-    // Read initial crop dimensions
-    const dims = ce.block.getCropVisualDimensions(editableBlockId);
-    if (dims) setCropDimensions(dims);
-  }, [
-    engineRef,
-    editableBlockId,
-    setCropPreset,
-    setActiveTool,
-    setEditingTextBlockId,
-    setTextSelectionRange,
-  ]);
+  const enterCropMode = useCallback(
+    (blockId?: number) => {
+      const ce = engineRef.current;
+      const targetId = blockId ?? editableBlockId;
+      if (!ce || targetId === null) return;
+      // Close any block-level UI (text editing, selection-driven bars) so it
+      // doesn't linger on top of the crop overlay.
+      setEditingTextBlockId(null);
+      setTextSelectionRange(null);
+      ce.block.deselectAll();
+      ce.editor.setEditMode("Crop", { blockId: targetId });
+      setActiveCropBlockId(targetId);
+      setCropPreset("free");
+      setActiveTool("crop");
+      // Read initial crop dimensions
+      const dims = ce.block.getCropVisualDimensions(targetId);
+      if (dims) setCropDimensions(dims);
+    },
+    [
+      engineRef,
+      editableBlockId,
+      setCropPreset,
+      setActiveTool,
+      setEditingTextBlockId,
+      setTextSelectionRange,
+    ],
+  );
 
   const exitCropMode = useCallback(() => {
     const ce = engineRef.current;
@@ -64,38 +73,40 @@ export function useCropTool({ engineRef, config }: UseCropToolOptions) {
     ce.editor.setEditMode("Transform");
     ce.editor.fitToScreen();
     setActiveTool("select");
+    setActiveCropBlockId(null);
     setCropDimensions(null);
   }, [engineRef, setActiveTool]);
 
   const handleCropPresetChange = useCallback(
     (presetId: CropPresetId) => {
       const ce = engineRef.current;
-      if (!ce || editableBlockId === null) return;
+      if (!ce || cropBlockId === null) return;
       const ratio = resolveRatio(presetId);
-      ce.block.applyCropRatio(editableBlockId, ratio);
+      ce.block.applyCropRatio(cropBlockId, ratio);
       // Sync dimensions after ratio change
-      const dims = ce.block.getCropVisualDimensions(editableBlockId);
+      const dims = ce.block.getCropVisualDimensions(cropBlockId);
       if (dims) setCropDimensions(dims);
     },
-    [engineRef, resolveRatio, editableBlockId],
+    [engineRef, resolveRatio, cropBlockId],
   );
 
   const handleCropApply = useCallback(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    ce.editor.setEditMode("Transform");
+    ce.editor.commitCrop();
     ce.editor.fitToScreen();
     setActiveTool("select");
+    setActiveCropBlockId(null);
     setCropDimensions(null);
   }, [engineRef, setActiveTool]);
 
   const handleCropCancel = useCallback(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    ce.editor.setEditMode("Transform");
-    ce.editor.undo();
+    ce.editor.cancelCrop();
     ce.editor.fitToScreen();
     setActiveTool("select");
+    setActiveCropBlockId(null);
     setCropDimensions(null);
   }, [engineRef, setActiveTool]);
 
@@ -105,13 +116,13 @@ export function useCropTool({ engineRef, config }: UseCropToolOptions) {
   const handleResizeDimensions = useCallback(
     (width: number, height: number) => {
       const ce = engineRef.current;
-      if (!ce || editableBlockId === null) return;
-      ce.block.applyCropDimensions(editableBlockId, width, height);
+      if (!ce || cropBlockId === null) return;
+      ce.block.applyCropDimensions(cropBlockId, width, height);
       // Read back the actual clamped dimensions
-      const dims = ce.block.getCropVisualDimensions(editableBlockId);
+      const dims = ce.block.getCropVisualDimensions(cropBlockId);
       if (dims) setCropDimensions(dims);
     },
-    [engineRef, editableBlockId],
+    [engineRef, cropBlockId],
   );
 
   // Poll crop overlay dimensions while in crop mode so inputs stay in sync
@@ -120,12 +131,19 @@ export function useCropTool({ engineRef, config }: UseCropToolOptions) {
     if (activeTool !== "crop") return;
     const interval = setInterval(() => {
       const ce = engineRef.current;
-      if (!ce || editableBlockId === null) return;
-      const dims = ce.block.getCropVisualDimensions(editableBlockId);
+      if (!ce || cropBlockId === null) return;
+      const dims = ce.block.getCropVisualDimensions(cropBlockId);
       if (dims) setCropDimensions(dims);
     }, 200);
     return () => clearInterval(interval);
-  }, [activeTool, engineRef, editableBlockId]);
+  }, [activeTool, engineRef, cropBlockId]);
+
+  useEffect(() => {
+    if (activeTool !== "crop" && activeCropBlockId !== null) {
+      setActiveCropBlockId(null);
+      setCropDimensions(null);
+    }
+  }, [activeTool, activeCropBlockId]);
 
   return {
     enterCropMode,

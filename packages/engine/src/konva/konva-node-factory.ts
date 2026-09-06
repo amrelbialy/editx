@@ -9,9 +9,13 @@ import {
   SIZE_WIDTH,
   VISIBLE,
 } from "../block/property-keys";
+import type { BlockTransform } from "../render-adapter";
 import { FormattedText } from "./formatted-text";
-import { updateImageNode, updateTextNode } from "./konva-image-text-updaters";
+import { createGroupNode, updateGroupNode } from "./konva-group-node";
+import { updateImageNode } from "./konva-image-updater";
+import { attachNodeHandlers, isCenterOriginNode } from "./konva-node-handlers";
 import { createPageNode, updatePageNode } from "./konva-page-node";
+import { createPathNode, updatePathNode } from "./konva-path-node";
 import {
   updateArrowNode,
   updateEllipseNode,
@@ -19,14 +23,12 @@ import {
   updateRectNode,
   updateStarNode,
 } from "./konva-shape-updaters";
+import { updateTextNode } from "./konva-text-updater";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export interface NodeCallbacks {
   onDragEnd: (id: number, x: number, y: number) => void;
-  onTransformEnd: (
-    id: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-  ) => void;
+  onTransformEnd: (id: number, transform: BlockTransform) => void;
   getActiveAnchor?: () => string;
 }
 
@@ -47,9 +49,12 @@ export class KonvaNodeFactory {
     block: BlockData,
     callbacks: NodeCallbacks,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): Konva.Node | null {
+  ): Konva.Shape | Konva.Group | null {
     if (block.type === "page") {
       return createPageNode(id);
+    }
+    if (block.type === "group") {
+      return createGroupNode(id, callbacks);
     }
 
     let shapeKind: string = block.kind || "rect";
@@ -101,70 +106,16 @@ export class KonvaNodeFactory {
         pointerLength: 10,
         pointerWidth: 10,
       });
+    } else if (shapeKind === "path") {
+      node = createPathNode(id);
     } else {
       node = new Konva.Rect({
         name: `block-${id}`,
         draggable: true,
       });
     }
-
     node.setAttr("blockId", id);
-
-    const isCenterOrigin = () =>
-      node instanceof Konva.RegularPolygon ||
-      node instanceof Konva.Star ||
-      node instanceof Konva.Ellipse;
-
-    node.on("dragend", () => {
-      const pos = node.position();
-      if (isCenterOrigin()) {
-        const w = node.getAttr("blockWidth") ?? 100;
-        const h = node.getAttr("blockHeight") ?? 100;
-        callbacks.onDragEnd(id, pos.x - w / 2, pos.y - h / 2);
-      } else {
-        callbacks.onDragEnd(id, pos.x, pos.y);
-      }
-    });
-
-    // For text nodes on pill (edge) anchors, reset scale and apply width/height
-    // live so the text reflows instead of visually stretching.
-    // Corner anchors still scale normally (font sizes are adjusted on transformend).
-    if (block.type === "text") {
-      const PILL_ANCHORS = new Set(["middle-left", "middle-right", "top-center", "bottom-center"]);
-      node.on("transform", () => {
-        const anchor = callbacks.getActiveAnchor?.() ?? "";
-        if (!PILL_ANCHORS.has(anchor)) return;
-        const scaleX = node.scaleX();
-        const scaleY = node.scaleY();
-        if (scaleX !== 1 || scaleY !== 1) {
-          node.width(node.width() * scaleX);
-          node.height(node.height() * scaleY);
-          node.scaleX(1);
-          node.scaleY(1);
-        }
-      });
-    }
-
-    node.on("transformend", () => {
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-      const baseW = node.getAttr("blockWidth") ?? node.width();
-      const baseH = node.getAttr("blockHeight") ?? node.height();
-      const newW = baseW * scaleX;
-      const newH = baseH * scaleY;
-      const center = isCenterOrigin();
-      const result = {
-        x: center ? node.x() - newW / 2 : node.x(),
-        y: center ? node.y() - newH / 2 : node.y(),
-        width: newW,
-        height: newH,
-        rotation: node.rotation(),
-      };
-      node.scaleX(1);
-      node.scaleY(1);
-      callbacks.onTransformEnd(id, result);
-    });
-
+    attachNodeHandlers(node, id, block, callbacks);
     return node;
   }
 
@@ -172,14 +123,16 @@ export class KonvaNodeFactory {
     node: Konva.Node,
     block: BlockData,
     resolveBlock?: (id: number) => BlockData | undefined,
-  ): { autoHeight?: number } | undefined {
+  ): { autoHeight?: number; autoWidth?: number } | undefined {
     const props = block.properties;
-
     if (block.type === "page") {
       updatePageNode(node as Konva.Group, block, this.#stage, this.#webgl, resolveBlock);
       return;
     }
-
+    if (block.type === "group") {
+      updateGroupNode(node as Konva.Group, block);
+      return;
+    }
     const x = (props[POSITION_X] as number) ?? 0;
     const y = (props[POSITION_Y] as number) ?? 0;
     const width = (props[SIZE_WIDTH] as number) ?? 100;
@@ -187,16 +140,11 @@ export class KonvaNodeFactory {
     const rotation = (props[ROTATION] as number) ?? 0;
     const opacity = (props[OPACITY] as number) ?? 1;
     const visible = (props[VISIBLE] as boolean) ?? true;
-
     // Center-origin shapes store top-left in engine; convert to center for Konva
-    const isCenterOrigin =
-      node instanceof Konva.RegularPolygon ||
-      node instanceof Konva.Star ||
-      node instanceof Konva.Ellipse;
+    const isCenterOrigin = isCenterOriginNode(node);
     const nx = isCenterOrigin ? x + width / 2 : x;
     const ny = isCenterOrigin ? y + height / 2 : y;
     node.setAttrs({ x: nx, y: ny, rotation, opacity, visible });
-
     if (block.type === "image") {
       updateImageNode(
         node as Konva.Image,
@@ -220,30 +168,34 @@ export class KonvaNodeFactory {
         block,
         resolveBlock,
       );
-      if (result.computedHeight != null) {
-        return { autoHeight: result.computedHeight };
-      }
-      return;
+      const out: { autoHeight?: number; autoWidth?: number } = {};
+      if (result.computedHeight != null) out.autoHeight = result.computedHeight;
+      if (result.computedWidth != null) out.autoWidth = result.computedWidth;
+      return out;
     }
 
     if (node instanceof Konva.Ellipse) {
-      updateEllipseNode(node, props, width, height, block, resolveBlock);
+      updateEllipseNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.RegularPolygon) {
-      updatePolygonNode(node, props, width, height, block, resolveBlock);
+      updatePolygonNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Star) {
-      updateStarNode(node, props, width, height, block, resolveBlock);
+      updateStarNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Arrow) {
-      updateArrowNode(node, props, width, height, block, resolveBlock);
+      updateArrowNode(node, props, width, height, block, resolveBlock, this.#webgl);
+      return;
+    }
+    if (node instanceof Konva.Path) {
+      updatePathNode(node, props, width, height, block, resolveBlock, this.#webgl);
       return;
     }
     if (node instanceof Konva.Rect) {
-      updateRectNode(node, props, width, height, block, resolveBlock);
+      updateRectNode(node, props, width, height, block, resolveBlock, this.#webgl);
     }
   }
 }

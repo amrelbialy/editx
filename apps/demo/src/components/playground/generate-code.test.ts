@@ -8,7 +8,7 @@ const base = (overrides: Partial<PlaygroundConfig> = {}): PlaygroundConfig => ({
   ...overrides,
 });
 
-describe("generatePlaygroundCode crop serialization", () => {
+describe("generatePlaygroundCode", () => {
   it("omits the crop block entirely when the config matches defaults", () => {
     const code = generatePlaygroundCode(base());
     expect(code).not.toContain("crop:");

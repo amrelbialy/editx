@@ -4,23 +4,50 @@ import {
   DestroyBlockCommand,
   RemoveChildCommand,
   SetKindCommand,
+  SetNameCommand,
 } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
+import type { TextBoxLayout } from "../konva/formatted-text-box";
+import {
+  caretRectForOffset,
+  selectionRectsForRange,
+  type TextCaretRect,
+  type TextSelectionRect,
+} from "../konva/formatted-text-caret";
+import { computeTextLines } from "../konva/formatted-text-layout";
+import type { TextLine } from "../konva/formatted-text-utils";
 import type {
   BlockType,
   Color,
   EffectType,
   FillType,
+  GradientFill,
+  GradientStop,
+  GradientType,
+  ImageFillOptions,
+  ImageFillUpdate,
+  PathViewBox,
   PropertyValue,
   ReadonlyBlockData,
+  ResolvedImageFill,
+  ResolvedTextBackground,
+  ShapeGeometry,
   ShapeType,
+  StrokeGradient,
+  TextBackgroundOptions,
+  TextBackgroundPadding,
+  TextCurve,
+  TextCurveDirection,
+  TextGradient,
   TextRun,
   TextRunStyle,
+  TextRunStyleUpdate,
 } from "./block.types";
 import { addImageBlock, duplicateBlock } from "./block-api-convenience";
 import { BlockCropAPI } from "./block-crop-api";
 import { BlockEffectAPI } from "./block-effect-api";
 import { BlockFillAPI } from "./block-fill-api";
+import { BlockGroupAPI } from "./block-group-api";
 import { BlockLayoutAPI } from "./block-layout-api";
 import { BlockPageAPI } from "./block-page-api";
 import { BlockPropertyAPI } from "./block-property-api";
@@ -29,6 +56,14 @@ import { BlockShadowAPI } from "./block-shadow-api";
 import { BlockShapeAPI } from "./block-shape-api";
 import { BlockStrokeAPI } from "./block-stroke-api";
 import { BlockTextAPI } from "./block-text-api";
+import {
+  TEXT_ALIGN,
+  TEXT_AUTO_WIDTH,
+  TEXT_LINE_HEIGHT,
+  TEXT_PADDING,
+  TEXT_VERTICAL_ALIGN,
+  TEXT_WRAP,
+} from "./property-keys";
 import type { TextEditorSession } from "./text-editor-session";
 
 // Re-export adjustment types/constants from effect sub-API
@@ -45,6 +80,7 @@ export class BlockAPI {
   #engine: EngineCore;
   #property: BlockPropertyAPI;
   #selection: BlockSelectionAPI;
+  #group: BlockGroupAPI;
   #layout: BlockLayoutAPI;
   #crop: BlockCropAPI;
   #page: BlockPageAPI;
@@ -59,6 +95,7 @@ export class BlockAPI {
     this.#engine = engine;
     this.#property = new BlockPropertyAPI(engine);
     this.#selection = new BlockSelectionAPI(engine);
+    this.#group = new BlockGroupAPI(engine);
     this.#layout = new BlockLayoutAPI(engine);
     this.#crop = new BlockCropAPI(engine);
     this.#page = new BlockPageAPI(engine);
@@ -128,6 +165,43 @@ export class BlockAPI {
   }
   setTransformerEnabled(enabled: boolean): void {
     this.#selection.setTransformerEnabled(enabled);
+  }
+
+  // ── Groups ────────────────────────────────────────
+
+  group(ids: number[]): number {
+    return this.#group.group(ids);
+  }
+  ungroup(groupId: number): number[] {
+    return this.#group.ungroup(groupId);
+  }
+  refitGroupBounds(groupId: number): void {
+    this.#group.refitGroupBounds(groupId);
+  }
+  addToGroup(groupId: number, blockId: number): void {
+    this.#group.addToGroup(groupId, blockId);
+  }
+  removeFromGroup(groupId: number, blockId: number): void {
+    this.#group.removeFromGroup(groupId, blockId);
+  }
+
+  // ── Group context (enter/exit navigation) ─────────
+
+  enterGroup(groupId: number): void {
+    this.#selection.enterGroup(groupId);
+  }
+  exitGroup(): void {
+    this.#selection.exitGroup();
+  }
+  getGroupContext(): number[] {
+    return this.#selection.getGroupContext();
+  }
+  onGroupContextChanged(cb: (stack: number[]) => void): () => void {
+    return this.#selection.onGroupContextChanged(cb);
+  }
+  /** @internal */
+  _clearGroupContext(): void {
+    this.#selection._clearGroupContext();
   }
 
   // ── Lifecycle ─────────────────────────────────────
@@ -246,7 +320,7 @@ export class BlockAPI {
     return this.#engine._getBlockStore().getName(id);
   }
   setName(id: number, name: string): void {
-    this.#engine._getBlockStore().setName(id, name);
+    this.#engine.exec(new SetNameCommand(this.#engine._getBlockStore(), id, name));
   }
 
   // ── Layout ────────────────────────────────────────
@@ -491,6 +565,9 @@ export class BlockAPI {
   hasShape(blockId: number): boolean {
     return this.#shape.hasShape(blockId);
   }
+  setShapeGeometry(blockId: number, geometry: ShapeGeometry): void {
+    this.#shape.setShapeGeometry(blockId, geometry);
+  }
   addShape(
     parentId: number,
     shapeKind: ShapeType,
@@ -499,7 +576,7 @@ export class BlockAPI {
     y: number,
     width: number,
     height: number,
-    opts?: { sides?: number },
+    opts?: { sides?: number; pathData?: string; viewBox?: PathViewBox },
   ): number {
     return this.#shape.addShape(parentId, shapeKind, fillKind, x, y, width, height, opts);
   }
@@ -533,6 +610,27 @@ export class BlockAPI {
   getFillSolidColor(blockId: number): Color | null {
     return this.#fill.getFillSolidColor(blockId);
   }
+  setFillGradient(
+    blockId: number,
+    g: { type: GradientType; stops: GradientStop[]; angle?: number },
+  ): void {
+    this.#fill.setFillGradient(blockId, g);
+  }
+  getFillGradient(blockId: number): GradientFill | null {
+    return this.#fill.getFillGradient(blockId);
+  }
+  setFillImage(blockId: number, img: ImageFillOptions): void {
+    this.#fill.setFillImage(blockId, img);
+  }
+  updateFillImage(blockId: number, update: ImageFillUpdate): void {
+    this.#fill.updateFillImage(blockId, update);
+  }
+  getFillImage(blockId: number): ResolvedImageFill | null {
+    return this.#fill.getFillImage(blockId);
+  }
+  changeFillKind(blockId: number, kind: FillType): void {
+    this.#fill.changeFillKind(blockId, kind);
+  }
 
   // ── Stroke ────────────────────────────────────────
 
@@ -556,6 +654,12 @@ export class BlockAPI {
   }
   getStrokeWidth(blockId: number): number {
     return this.#stroke.getStrokeWidth(blockId);
+  }
+  setStrokeGradient(blockId: number, gradient: StrokeGradient | null): void {
+    this.#stroke.setStrokeGradient(blockId, gradient);
+  }
+  getStrokeGradient(blockId: number): StrokeGradient | null {
+    return this.#stroke.getStrokeGradient(blockId);
   }
 
   // ── Shadow ────────────────────────────────────────
@@ -611,6 +715,33 @@ export class BlockAPI {
   getTextContent(blockId: number): string {
     return this.#text.getTextContent(blockId);
   }
+  getTextCaretRect(blockId: number, offset: number): TextCaretRect | null {
+    const { lines, layout } = this.#textLinesAndLayout(blockId);
+    return caretRectForOffset(lines, layout, offset);
+  }
+  getTextSelectionRects(blockId: number, from: number, to: number): TextSelectionRect[] {
+    const { lines, layout } = this.#textLinesAndLayout(blockId);
+    return selectionRectsForRange(lines, layout, from, to);
+  }
+  /** Lay out the block's current text (fresh from block data, matches the canvas). */
+  #textLinesAndLayout(blockId: number): { lines: TextLine[]; layout: TextBoxLayout } {
+    const runs = this.getTextRuns(blockId);
+    const size = this.getSize(blockId);
+    const autoWidth = this.getBool(blockId, TEXT_AUTO_WIDTH);
+    const background = this.getTextBackground(blockId);
+    const padding =
+      background.enabled && background.geometry === "frame"
+        ? background.padding
+        : this.getFloat(blockId, TEXT_PADDING) || 0;
+    const lineHeight = this.getFloat(blockId, TEXT_LINE_HEIGHT) || 1.2;
+    const align = this.getString(blockId, TEXT_ALIGN) || "left";
+    const verticalAlign = this.getString(blockId, TEXT_VERTICAL_ALIGN) || "top";
+    const wrap = autoWidth ? "none" : this.getString(blockId, TEXT_WRAP) || "word";
+    const width = size.width || 99999;
+    const plainText = runs.map((r) => r.text).join("");
+    const lines = computeTextLines(runs, { width, padding, wrap, lineHeight, plainText });
+    return { lines, layout: { width, height: size.height, padding, align, verticalAlign } };
+  }
   insertTextAt(blockId: number, position: number, text: string): void {
     this.#text.insertTextAt(blockId, position, text);
   }
@@ -620,12 +751,7 @@ export class BlockAPI {
   replaceText(blockId: number, start: number, end: number, newText: string): void {
     this.#text.replaceText(blockId, start, end, newText);
   }
-  setTextStyle(
-    blockId: number,
-    start: number,
-    end: number,
-    styleUpdate: Partial<TextRunStyle>,
-  ): void {
+  setTextStyle(blockId: number, start: number, end: number, styleUpdate: TextRunStyleUpdate): void {
     this.#text.setTextStyle(blockId, start, end, styleUpdate);
   }
   setTextColor(blockId: number, start: number, end: number, color: string): void {
@@ -655,6 +781,33 @@ export class BlockAPI {
   setTextVerticalAlign(blockId: number, align: string): void {
     this.#text.setTextVerticalAlign(blockId, align);
   }
+  setTextAutoWidth(blockId: number, enabled: boolean): void {
+    this.#text.setTextAutoWidth(blockId, enabled);
+  }
+  getTextAutoWidth(blockId: number): boolean {
+    return this.#text.getTextAutoWidth(blockId);
+  }
+  setTextCurve(blockId: number, radius: number, direction: TextCurveDirection): void {
+    this.#text.setTextCurve(blockId, radius, direction);
+  }
+  getTextCurve(blockId: number): TextCurve | null {
+    return this.#text.getTextCurve(blockId);
+  }
+  supportsTextBackground(blockId: number): boolean {
+    return this.#text.supportsTextBackground(blockId);
+  }
+  setTextBackground(blockId: number, opts: TextBackgroundOptions): void {
+    this.#text.setTextBackground(blockId, opts);
+  }
+  getTextBackground(blockId: number): ResolvedTextBackground {
+    return this.#text.getTextBackground(blockId);
+  }
+  setTextBackgroundEnabled(blockId: number, enabled: boolean): void {
+    this.#text.setTextBackgroundEnabled(blockId, enabled);
+  }
+  isTextBackgroundEnabled(blockId: number): boolean {
+    return this.#text.isTextBackgroundEnabled(blockId);
+  }
   setTextBackgroundColor(
     blockId: number,
     start: number,
@@ -662,6 +815,30 @@ export class BlockAPI {
     color: string | undefined,
   ): void {
     this.#text.setTextBackgroundColor(blockId, start, end, color);
+  }
+  setTextBackgroundOpacity(
+    blockId: number,
+    start: number,
+    end: number,
+    opacity: number | undefined,
+  ): void {
+    this.#text.setTextBackgroundOpacity(blockId, start, end, opacity);
+  }
+  setTextBackgroundCornerRadius(
+    blockId: number,
+    start: number,
+    end: number,
+    radius: number | undefined,
+  ): void {
+    this.#text.setTextBackgroundCornerRadius(blockId, start, end, radius);
+  }
+  setTextBackgroundPadding(
+    blockId: number,
+    start: number,
+    end: number,
+    padding: Partial<TextBackgroundPadding> | undefined,
+  ): void {
+    this.#text.setTextBackgroundPadding(blockId, start, end, padding);
   }
   setTextTransform(
     blockId: number,
@@ -683,9 +860,18 @@ export class BlockAPI {
     blockId: number,
     start: number,
     end: number,
-    stroke: { color?: string; width?: number },
+    stroke: { color?: string; width?: number; gradient?: StrokeGradient | null },
   ): void {
     this.#text.setTextStroke(blockId, start, end, stroke);
+  }
+  /** Fills [start, end) with a linear/radial gradient; `null` restores solid fill. */
+  setTextGradient(
+    blockId: number,
+    start: number,
+    end: number,
+    gradient: TextGradient | null,
+  ): void {
+    this.#text.setTextGradient(blockId, start, end, gradient);
   }
   addText(
     parentId: number,

@@ -23,7 +23,7 @@ apps/demo              → Vite demo site & documentation
 
 ## Development setup
 
-**Prerequisites:** Node.js `>=18` (CI runs on Node 22) and [pnpm](https://pnpm.io) `10.23.0` (see `packageManager` in the root `package.json`).
+**Prerequisites:** Node.js `22.17.0` (see `.nvmrc`) and [pnpm](https://pnpm.io) `10.23.0` (see `packageManager` in the root `package.json`).
 
 ```bash
 # 1. Fork & clone the repo, then install dependencies

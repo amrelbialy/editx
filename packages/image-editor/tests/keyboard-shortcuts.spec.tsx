@@ -5,6 +5,7 @@ const TEST_IMAGE = "/fixtures/test-image-100x100.png";
 
 test.describe("Keyboard Shortcuts", () => {
   async function focusEditor(component: any) {
+    await expect(component.getByText("Loading image...")).not.toBeVisible({ timeout: 15_000 });
     await component.getByRole("application").first().focus();
   }
 
@@ -53,7 +54,11 @@ test.describe("Keyboard Shortcuts", () => {
     await focusEditor(component);
 
     await page.keyboard.press("s");
-    await expect(component.getByText("Rectangle")).toBeVisible({ timeout: 5_000 });
+    await expect(
+      component
+        .getByLabel("Filled", { exact: true })
+        .getByRole("button", { name: "Rectangle", exact: true }),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("Escape key deactivates current tool", async ({ mount, page }) => {

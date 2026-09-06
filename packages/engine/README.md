@@ -74,6 +74,107 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Image fills and graphic crop
+
+Graphic image fills support `crop`, `cover`, `fit`, and `tile` modes plus source-pixel
+offsets, scale, rotation, and horizontal or vertical flips. `setFillImage` replaces the complete
+image-fill value; use `updateFillImage` when changing only selected fields, such as replacing the
+source while preserving its transform.
+
+```ts
+engine.block.changeFillKind(graphicId, "image");
+engine.block.setFillImage(graphicId, {
+  src: "/photo.jpg",
+  mode: "crop",
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
+  rotation: 0,
+  flipHorizontal: false,
+  flipVertical: false,
+});
+engine.block.updateFillImage(graphicId, { src: "/replacement.jpg" });
+```
+
+Start a renderer-backed crop session with `editor.setEditMode("Crop", { blockId: graphicId })`.
+Use `getImageFillCrop`, `updateImageFillCrop`, and `resetImageFillCrop` for live preview state.
+`commitCrop()` writes the graphic frame and image transform as one undo entry; `cancelCrop()`
+discards the preview without changing document history. Existing image and page crop targets keep
+their source-crop behavior. For graphic image-fill sessions, `commitCrop()` returns `null`; read
+`getImageFillCrop()` before committing when the final preview frame is needed by the caller.
+
+### Replacing shape geometry
+
+Use `engine.block.setShapeGeometry(graphicId, geometry)` to replace a graphic's shape without
+changing its layout, fill, stroke, effects, group membership, or selection. `ShapeGeometry` is a
+public discriminated union for `rect`, `ellipse`, `polygon`, `star`, `line`, and named SVG `path`
+descriptors. The replacement is one undo entry; omitted primitive options reset to fresh defaults.
+Invalid descriptors throw before history changes, while missing or non-shape targets are no-ops.
+
+```ts
+engine.block.setShapeGeometry(graphicId, {
+  type: "star",
+  points: 8,
+  innerDiameter: 0.4,
+});
+```
+
+### Gradients, rich text, and groups
+
+Graphics support linear or radial fill gradients and linear stroke gradients. Text runs add fill
+and stroke gradients, highlights, curves, auto width, and laid-out caret or selection geometry.
+Text blocks can also own a `text-union` or `frame` background. Range methods use half-open UTF-16
+offsets: `[start, end)`.
+
+```ts
+engine.block.changeFillKind(graphicId, "gradient");
+engine.block.setFillGradient(graphicId, {
+  type: "linear",
+  angle: 45,
+  stops: [
+    { offset: 0, color: "#2563eb" },
+    { offset: 1, color: "#14b8a6" },
+  ],
+});
+engine.block.setTextGradient(textId, 0, 5, {
+  type: "radial",
+  stops: [
+    { offset: 0, color: "#ffffff" },
+    { offset: 1, color: "#ec4899" },
+  ],
+});
+
+const groupId = engine.block.group([graphicId, textId]);
+engine.block.addToGroup(groupId, badgeId);
+engine.block.refitGroupBounds(groupId);
+```
+
+Grouping sibling blocks under one parent and later membership changes preserve world-space
+appearance and are undoable. Initial grouping across different parent hierarchies is unsupported.
+Use `enterGroup`, `exitGroup`, and `onGroupContextChanged` for nested editing context.
+
+### Text background geometry
+
+Block-level text backgrounds support two geometry modes through
+`engine.block.setTextBackground(id, options)`:
+
+```ts
+engine.block.setTextBackground(textId, {
+  enabled: true,
+  geometry: "frame",
+  padding: { top: 12, right: 16, bottom: 12, left: 16 },
+});
+
+const background = engine.block.getTextBackground(textId);
+// background.geometry is always resolved to "text-union" or "frame".
+```
+
+`TextBackgroundOptions.geometry` accepts `"text-union" | "frame"`. Missing or unknown stored
+values resolve to `"text-union"` for compatibility. Text-union padding remains signed and preserves
+legacy negative/outward behavior. Frame padding represents content insets and is normalized to
+nonnegative values by the block API. Geometry and padding updates share one undoable command batch.
+The frozen property key is `TEXT_BACKGROUND_GEOMETRY` (`"text/background/geometry"`).
+
 ## Reading vs. mutating block state
 
 Reading and writing block state go through two different, clearly separated paths:
@@ -99,6 +200,19 @@ engine.block.setFloat(image, POSITION_X, 120);
 
 > `getSnapshot` returns a `ReadonlyBlockData` (a `DeepReadonly<BlockData>`). It is a clone, so
 > assigning to its fields has no effect on engine state — always route mutations through commands.
+
+## Export a block
+
+With a renderer attached, export a graphic, text, image, or group into a fixed output frame:
+
+```ts
+const blob = await engine.exportBlock(groupId, {
+  width: 1200,
+  height: 630,
+  padding: 24,
+  pixelRatio: 2,
+});
+```
 
 ## Exports
 

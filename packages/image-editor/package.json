@@ -59,7 +59,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-preset-thumbnails.mjs",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "test": "vitest run",
@@ -67,7 +67,9 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test -c playwright-ct.config.js",
     "test:e2e:update": "playwright test -c playwright-ct.config.js --update-snapshots",
-    "test:e2e:ui": "playwright test -c playwright-ct.config.js --ui"
+    "test:e2e:ui": "playwright test -c playwright-ct.config.js --ui",
+    "generate:thumbnails": "node scripts/generate-preset-thumbnails.mjs",
+    "check:thumbnails": "node scripts/generate-preset-thumbnails.mjs --check"
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-rc.0",

@@ -1,12 +1,23 @@
 import type { TextRun } from "@editx/engine";
-import { createEditor, ParagraphNode, TextNode } from "lexical";
+import {
+  $createLineBreakNode,
+  $createParagraphNode,
+  $createRangeSelection,
+  $createTextNode,
+  $getRoot,
+  $setSelection,
+  createEditor,
+  LineBreakNode,
+  ParagraphNode,
+  TextNode,
+} from "lexical";
 import { beforeEach, describe, expect, it } from "vitest";
-import { editorStateToRuns, runsToEditorState } from "./lexical-bridge";
+import { editorStateToRuns, getSelectionOffsets, runsToEditorState } from "./lexical-bridge";
 
 function createTestEditor() {
   const editor = createEditor({
     namespace: "test",
-    nodes: [ParagraphNode, TextNode],
+    nodes: [ParagraphNode, TextNode, LineBreakNode],
     onError: (error) => {
       throw error;
     },
@@ -308,6 +319,34 @@ describe("lexical-bridge", () => {
       expect(result).toHaveLength(1);
       expect(result[0].style.backgroundColor).toBe("#00ff00");
       expect(result[0].style.textTransform).toBe("capitalize");
+    });
+  });
+
+  // ── Selection → offsets ───────────────────────────────────────────
+
+  describe("getSelectionOffsets", () => {
+    it("maps an element point after a trailing line break to the new empty line", async () => {
+      await new Promise<void>((resolve) => {
+        editor.update(
+          () => {
+            const root = $getRoot();
+            root.clear();
+            const p = $createParagraphNode();
+            p.append($createTextNode("Colorful"));
+            p.append($createLineBreakNode());
+            root.append(p);
+            // Caret after the line break is an element point on the paragraph.
+            const sel = $createRangeSelection();
+            sel.anchor.set(p.getKey(), 2, "element");
+            sel.focus.set(p.getKey(), 2, "element");
+            $setSelection(sel);
+          },
+          { onUpdate: resolve },
+        );
+      });
+
+      // "Colorful" (8) + line break (1) = 9, the empty line's start offset.
+      expect(getSelectionOffsets(editor.getEditorState())).toEqual({ from: 9, to: 9 });
     });
   });
 

@@ -9,6 +9,7 @@ export interface UseToolManagerOptions {
     enterCropMode: () => void;
     handleCropApply: () => void;
     handleCropCancel: () => void;
+    handleCropReset: () => void;
   };
   rotateFlip: {
     handleRotateReset: () => void;
@@ -28,7 +29,6 @@ export interface UseToolManagerOptions {
 }
 
 export function useToolManager({
-  engineRef,
   crop,
   rotateFlip,
   adjustments,
@@ -52,11 +52,7 @@ export function useToolManager({
         crop.enterCropMode();
       } else {
         if (activeTool === "crop") {
-          const ce = engineRef.current;
-          if (ce) {
-            ce.editor.setEditMode("Transform");
-            ce.editor.fitToScreen();
-          }
+          crop.handleCropApply();
         }
         setActiveTool(tool);
 
@@ -72,23 +68,19 @@ export function useToolManager({
       }
       events?.onToolChange?.(tool === "select" ? null : tool);
     },
-    [activeTool, engineRef, crop, setActiveTool, rotateFlip, adjustments, filter, events],
+    [activeTool, crop, setActiveTool, rotateFlip, adjustments, filter, events],
   );
 
   const handleSidebarToolSelect = useCallback(
     (toolId: ImageEditorToolId) => {
       if (activeToolId === toolId) {
-        const ce = engineRef.current;
-        if (activeTool === "crop" && ce) {
-          ce.editor.setEditMode("Transform");
-          ce.editor.fitToScreen();
-        }
+        if (activeTool === "crop") crop.handleCropApply();
         setActiveTool("select");
         return;
       }
       handleToolChange(toolId as ImageEditorTool);
     },
-    [activeToolId, activeTool, engineRef, handleToolChange, setActiveTool],
+    [activeToolId, activeTool, crop, handleToolChange, setActiveTool],
   );
 
   const handleDone = useCallback(() => {
@@ -100,7 +92,7 @@ export function useToolManager({
   }, [activeTool, crop, setActiveTool]);
 
   const handleContextualReset = useCallback(() => {
-    if (activeTool === "crop") crop.handleCropCancel();
+    if (activeTool === "crop") crop.handleCropReset();
     else if (activeTool === "rotate") rotateFlip.handleRotateReset();
     else if (activeTool === "adjust") adjustments.handleAdjustReset();
     else if (activeTool === "filter") filter.handleFilterSelect("");

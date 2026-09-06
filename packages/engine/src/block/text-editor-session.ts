@@ -7,7 +7,7 @@ import {
   type LexicalEditor,
   TextNode,
 } from "lexical";
-import type { TextRun, TextRunStyle } from "./block.types";
+import type { TextRun, TextRunStyleUpdate } from "./block.types";
 import {
   $restoreSelectionFromOffsets,
   editorStateToRuns,
@@ -78,9 +78,9 @@ export class TextEditorSession {
   /**
    * Apply a partial TextRunStyle update to characters in [start, end).
    * Splits format-flag properties (bold/italic/underline/strikethrough) from CSS properties.
-   * Synchronously pushes the result to onChange.
+   * A `null` value clears the property. Synchronously pushes the result to onChange.
    */
-  setTextStyle(start: number, end: number, update: Partial<TextRunStyle>): void {
+  setTextStyle(start: number, end: number, update: TextRunStyleUpdate): void {
     this.#isProgrammatic = true;
     try {
       this.editor.update(

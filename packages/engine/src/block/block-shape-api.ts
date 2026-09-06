@@ -3,14 +3,32 @@ import {
   CreateBlockCommand,
   CreateFillCommand,
   CreateShapeCommand,
+  DestroyBlockCommand,
   SetFillCommand,
   SetKindCommand,
+  SetNameCommand,
   SetShapeCommand,
 } from "../controller/commands";
 import type { EngineCore } from "../engine-core";
-import type { FillType, ShapeType } from "./block.types";
+import type { FillType, PathViewBox, ShapeGeometry, ShapeType } from "./block.types";
 import * as H from "./block-api-helpers";
-import { SHAPE_POLYGON_SIDES, STROKE_COLOR, STROKE_ENABLED, STROKE_WIDTH } from "./property-keys";
+import {
+  SHAPE_LINE_POINTER_LENGTH,
+  SHAPE_LINE_POINTER_WIDTH,
+  SHAPE_PATH_DATA,
+  SHAPE_PATH_VIEWBOX_HEIGHT,
+  SHAPE_PATH_VIEWBOX_WIDTH,
+  SHAPE_POLYGON_SIDES,
+  SHAPE_RECT_CORNER_RADIUS,
+  SHAPE_STAR_INNER_DIAMETER,
+  SHAPE_STAR_POINTS,
+  STROKE_COLOR,
+  STROKE_ENABLED,
+  STROKE_WIDTH,
+} from "./property-keys";
+import type { NormalizedShapeGeometry } from "./shape-geometry-validation";
+import { normalizeShapeGeometry } from "./shape-geometry-validation";
+import { validateSvgPathData } from "./svg-path-validation";
 
 /** Shape sub-block CRUD and shape placement convenience. */
 export class BlockShapeAPI {
@@ -44,6 +62,50 @@ export class BlockShapeAPI {
     return this.getShape(blockId) != null;
   }
 
+  setShapeGeometry(blockId: number, geometry: ShapeGeometry): void {
+    const normalized = normalizeShapeGeometry(geometry);
+    const store = this.#engine._getBlockStore();
+    if (!store.get(blockId) || !store.supportsShape(blockId)) return;
+
+    const oldShapeId = store.getShape(blockId);
+    this.#engine.beginBatch();
+    const createCommand = new CreateShapeCommand(store, normalized.type);
+    this.#engine.exec(createCommand);
+    const shapeId = createCommand.getCreatedId()!;
+    this.#writeGeometry(shapeId, normalized);
+    this.#engine.exec(new SetShapeCommand(store, blockId, shapeId));
+    this.#engine.exec(new SetKindCommand(store, blockId, normalized.type));
+    if (oldShapeId != null) this.#engine.exec(new DestroyBlockCommand(store, oldShapeId));
+    this.#engine.endBatch();
+  }
+
+  #writeGeometry(shapeId: number, geometry: NormalizedShapeGeometry): void {
+    switch (geometry.type) {
+      case "rect":
+        H.setFloat(this.#engine, shapeId, SHAPE_RECT_CORNER_RADIUS, geometry.cornerRadius);
+        break;
+      case "polygon":
+        H.setFloat(this.#engine, shapeId, SHAPE_POLYGON_SIDES, geometry.sides);
+        break;
+      case "star":
+        H.setFloat(this.#engine, shapeId, SHAPE_STAR_POINTS, geometry.points);
+        H.setFloat(this.#engine, shapeId, SHAPE_STAR_INNER_DIAMETER, geometry.innerDiameter);
+        break;
+      case "line":
+        H.setFloat(this.#engine, shapeId, SHAPE_LINE_POINTER_LENGTH, geometry.pointerLength);
+        H.setFloat(this.#engine, shapeId, SHAPE_LINE_POINTER_WIDTH, geometry.pointerWidth);
+        break;
+      case "path":
+        this.#engine.exec(
+          new SetNameCommand(this.#engine._getBlockStore(), shapeId, geometry.name),
+        );
+        H.setString(this.#engine, shapeId, SHAPE_PATH_DATA, geometry.pathData);
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_WIDTH, geometry.viewBox.width);
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_HEIGHT, geometry.viewBox.height);
+        break;
+    }
+  }
+
   /**
    * Creates a graphic block with shape + fill sub-blocks, places it at (x, y)
    * with the given size, and appends it to the parent. Single undo step.
@@ -56,9 +118,14 @@ export class BlockShapeAPI {
     y: number,
     width: number,
     height: number,
-    opts?: { sides?: number },
+    opts?: { sides?: number; pathData?: string; viewBox?: PathViewBox },
   ): number {
     const store = this.#engine._getBlockStore();
+
+    // Validate the `d` string up front (single write boundary, fail-fast) so a
+    // rejection throws before any batch/command is opened — no partial undo.
+    const pathData = shapeKind === "path" ? validateSvgPathData(opts?.pathData ?? "") : undefined;
+
     this.#engine.beginBatch();
 
     const createCmd = new CreateBlockCommand(store, "graphic");
@@ -78,6 +145,14 @@ export class BlockShapeAPI {
 
     if (opts?.sides != null && shapeKind === "polygon") {
       H.setFloat(this.#engine, shapeId, SHAPE_POLYGON_SIDES, opts.sides);
+    }
+
+    if (shapeKind === "path") {
+      H.setString(this.#engine, shapeId, SHAPE_PATH_DATA, pathData ?? "");
+      if (opts?.viewBox) {
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_WIDTH, opts.viewBox.width);
+        H.setFloat(this.#engine, shapeId, SHAPE_PATH_VIEWBOX_HEIGHT, opts.viewBox.height);
+      }
     }
 
     const fillCmd = new CreateFillCommand(store, fillKind);

@@ -1,5 +1,6 @@
 import Konva from "konva";
 import type { KonvaCamera } from "./konva-camera";
+import { resolveHit } from "./konva-context-resolver";
 
 /**
  * Manages a dashed rectangle on the UI layer that highlights
@@ -7,6 +8,7 @@ import type { KonvaCamera } from "./konva-camera";
  */
 export class KonvaHoverOutline {
   #rect: Konva.Rect;
+  #contentLayer: Konva.Layer;
   #uiLayer: Konva.Layer;
   #transformer: Konva.Transformer;
   #camera: KonvaCamera;
@@ -14,12 +16,15 @@ export class KonvaHoverOutline {
 
   constructor(
     uiLayer: Konva.Layer,
-    _contentLayer: Konva.Layer,
+    contentLayer: Konva.Layer,
     transformer: Konva.Transformer,
     camera: KonvaCamera,
+    private readonly getGroupContext: () => number[],
     accentColor: string,
+    private readonly isEnabled: () => boolean = () => true,
   ) {
     this.#uiLayer = uiLayer;
+    this.#contentLayer = contentLayer;
     this.#transformer = transformer;
     this.#camera = camera;
 
@@ -34,28 +39,31 @@ export class KonvaHoverOutline {
   }
 
   /** Bind hover events on a block node. Skips page nodes. */
-  bind(blockId: number, node: Konva.Node): void {
+  bind(node: Konva.Node): void {
     if (node.getAttr("isPage")) return;
 
-    node.on("mouseenter", () => {
-      const selected = this.#transformer.nodes();
-      if (selected.includes(node)) return;
-      this.#hoveredBlockId = blockId;
-      this.#show(node);
+    node.on("mouseenter", (event) => {
+      if (!this.isEnabled()) {
+        this.#hideAndDraw();
+        return;
+      }
+      const resolved = resolveHit(event.target as Konva.Node, this.getGroupContext());
+      if (!resolved || resolved.node.getAttr("isPage")) return;
+      if (this.#transformer.nodes().includes(resolved.node)) {
+        this.#hideAndDraw();
+        return;
+      }
+      this.#hoveredBlockId = resolved.blockId;
+      this.#show(resolved.node);
     });
 
-    node.on("mouseleave", () => {
-      if (this.#hoveredBlockId === blockId) {
-        this.#hoveredBlockId = null;
-        this.#rect.visible(false);
-        this.#uiLayer.batchDraw();
-      }
+    node.on("mouseleave", (event) => {
+      const resolved = resolveHit(event.target as Konva.Node, this.getGroupContext());
+      if (resolved?.blockId === this.#hoveredBlockId) this.#hideAndDraw();
     });
 
     node.on("dragstart", () => {
-      this.#hoveredBlockId = null;
-      this.#rect.visible(false);
-      this.#uiLayer.batchDraw();
+      this.#hideAndDraw();
     });
   }
 
@@ -70,28 +78,22 @@ export class KonvaHoverOutline {
   }
 
   #show(node: Konva.Node): void {
-    const w = node.width();
-    const h = node.height();
-    // Center-origin shapes (polygon, star, ellipse) position at center;
-    // offset to top-left for the hover rect.
-    const isCenterOrigin =
-      node instanceof Konva.RegularPolygon ||
-      node instanceof Konva.Star ||
-      node instanceof Konva.Ellipse;
-    const x = isCenterOrigin ? node.x() - w / 2 : node.x();
-    const y = isCenterOrigin ? node.y() - h / 2 : node.y();
+    const bounds = node.getClientRect({ relativeTo: this.#contentLayer });
 
     this.#rect.setAttrs({
-      x,
-      y,
-      width: w,
-      height: h,
-      rotation: node.rotation(),
+      ...bounds,
+      rotation: 0,
       visible: true,
       strokeWidth: 2 / this.#camera.getZoom(),
     });
     this.#rect.moveToTop();
     this.#transformer.moveToTop();
+    this.#uiLayer.batchDraw();
+  }
+
+  #hideAndDraw(): void {
+    this.#hoveredBlockId = null;
+    this.#rect.visible(false);
     this.#uiLayer.batchDraw();
   }
 }

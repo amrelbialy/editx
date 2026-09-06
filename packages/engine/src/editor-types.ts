@@ -1,3 +1,5 @@
+import type { ImageFillAlignment, ImageFillMode } from "./block/block.types";
+
 // ── Export ──
 
 export interface ExportOptions {
@@ -6,6 +8,17 @@ export interface ExportOptions {
   /** Quality 0–1 for jpeg/webp. Ignored for png. Default: 0.92. */
   quality?: number;
   /** Device pixel ratio multiplier for high-res export. Default: 1. */
+  pixelRatio?: number;
+}
+
+export interface BlockExportOptions {
+  /** Logical output width in CSS pixels. */
+  width: number;
+  /** Logical output height in CSS pixels. */
+  height: number;
+  /** Transparent inset in logical pixels. Default: 0. */
+  padding?: number;
+  /** Raster-density multiplier. Default: 1. */
   pixelRatio?: number;
 }
 
@@ -21,6 +34,31 @@ export interface ExportOptions {
  * Custom string values are also accepted by `setEditMode()`.
  */
 export type EditMode = "Transform" | "Crop" | "Text" | "Playback" | "Trim" | (string & {});
+
+export type CropEditTarget = "source" | "shape-image";
+
+export interface ImageFillCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sourceAspectRatio?: number;
+  mode: ImageFillMode;
+  alignment: ImageFillAlignment;
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+}
+
+export type ImageFillCropUpdate = Partial<Omit<ImageFillCrop, "sourceAspectRatio">>;
+
+export interface ImageFillCropChange {
+  blockId: number;
+  crop: ImageFillCrop;
+}
 
 /**
  * Cursor types the renderer may display based on edit mode and hover target.

@@ -22,6 +22,7 @@ import type {
 import { defaultConfig } from "./config/default-config";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
+import { useGroupActions } from "./hooks/use-group-actions";
 import { useHistory } from "./hooks/use-history";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
@@ -171,7 +172,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
 
   const { canUndo, canRedo, handleUndo, handleRedo } = useHistory(engine, engineRef);
 
+  const { handleGroup, handleUngroup, exitGroupIfActive } = useGroupActions(engineRef);
+
   const handleEscape = useCallback(() => {
+    // Group context takes priority (text-editor Escape is handled separately by
+    // the overlay while contentEditable is focused, so it runs before this).
+    if (exitGroupIfActive()) return;
     if (tools.activeTool !== "select") {
       if (tools.activeTool === "crop") {
         tools.crop.handleCropCancel();
@@ -179,7 +185,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
         tools.setActiveTool("select");
       }
     }
-  }, [tools]);
+  }, [tools, exitGroupIfActive]);
 
   // --- useEffect ---
   useShortcuts({
@@ -198,6 +204,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     onSendToBack: tools.blockActions.sendToBack,
     onEscape: handleEscape,
     onDelete: tools.deleteBlock,
+    onGroup: handleGroup,
+    onUngroup: handleUngroup,
   });
 
   useEffect(() => {
@@ -208,11 +216,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   }, [tools.activeTool, userConfig?.customTools]);
 
   // Track unsaved changes via engine block events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: engine triggers re-subscribe when instance is created
   useEffect(() => {
     const ce = engineRef.current;
     if (!ce) return;
     return ce.event.subscribe([], () => markDirty());
-    // biome-ignore lint/correctness/useExhaustiveDependencies: engine triggers re-subscribe when instance is created
   }, [engine, engineRef, markDirty]);
 
   // Surface the imperative editor handle once the engine is ready.
@@ -238,22 +246,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   }, [isLoading, error, engine, userConfig?.defaultTool, tools.handleSidebarToolSelect]);
 
   // Sync theme accent color to engine transformer
+  // biome-ignore lint/correctness/useExhaustiveDependencies: userConfig triggers re-read of computed theme vars
   useEffect(() => {
     if (!engine || !containerRef.current) return;
     const el = containerRef.current.closest(".ie-theme") as HTMLElement | null;
     if (!el) return;
     const primary = getComputedStyle(el).getPropertyValue("--primary").trim();
     if (primary && engine.setAccentColor) engine.setAccentColor(primary);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: userConfig triggers re-read of computed theme vars
   }, [engine, containerRef, userConfig]);
 
   // --- Derived state ---
   const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
-
-  const hasSelectedBlock =
-    tools.selectedBlockType === "text" ||
-    tools.selectedBlockType === "graphic" ||
-    tools.selectedBlockType === "image";
 
   return (
     <Providers config={userConfig}>
@@ -303,6 +306,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               filter={tools.filter}
               addShape={tools.addShape}
               addText={tools.addText}
+              addTextPreset={tools.addTextPreset}
+              addShapePreset={tools.addShapePreset}
               addImage={tools.addImage}
               replaceImage={tools.replaceImage}
               blockEffects={tools.blockEffects}
@@ -317,7 +322,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               activeTool={tools.activeTool}
               selectedShapeId={selectedShapeId}
               selectedBlockType={tools.selectedBlockType}
-              hasSelectedBlock={hasSelectedBlock}
+              hasSelectedBlock={tools.hasSelectedBlock}
               blockActions={tools.blockActions}
               rotateFlip={tools.rotateFlip}
               replaceImage={tools.replaceImage}
@@ -325,6 +330,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
               slots={slots}
               onContextualReset={tools.handleContextualReset}
               onDone={tools.handleDone}
+              onCropImageFill={tools.imageFillCrop.enter}
+              onCropCancel={tools.crop.handleCropCancel}
+              imageFillCrop={tools.imageFillCrop}
             />
           </div>
         </div>

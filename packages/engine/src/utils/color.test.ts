@@ -61,6 +61,24 @@ describe("hexToColor", () => {
     expect(c.a).toBe(1);
   });
 
+  it("parses transparent 8-digit hex", () => {
+    expect(hexToColor("#12345600")).toEqual({
+      r: 0x12 / 255,
+      g: 0x34 / 255,
+      b: 0x56 / 255,
+      a: 0,
+    });
+  });
+
+  it("parses half-alpha 8-digit hex", () => {
+    expect(hexToColor("#12345680")).toEqual({
+      r: 0x12 / 255,
+      g: 0x34 / 255,
+      b: 0x56 / 255,
+      a: 0x80 / 255,
+    });
+  });
+
   it("round-trips with colorToHex for full-alpha colors", () => {
     const original = { r: 0.2, g: 0.4, b: 0.6, a: 1 };
     const hex = colorToHex(original);

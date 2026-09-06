@@ -4,6 +4,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* **image-editor:** add categorized text and shape preset galleries with built-in search and replaceable or extensible custom catalogs
+* **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
+* **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls
+* **image-editor:** add solid and linear gradient modes to graphic and text stroke controls
+* **image-editor:** add image-filled graphic crop with the existing Crop panel and transformer,
+	plus fit, scale, rotate, flip, reset, apply, and cancel controls in the contextual toolbar
+* **image-editor:** add image-fill Styles and Replace actions while preserving the current fill
+	transform during source replacement
+
+### Changed
+
+* **image-editor:** expose Crop, Cover, Fit, and Tile image-fill modes with mode-specific alignment,
+	offset, and scale controls.
+
+### Bug Fixes
+
+* **image-editor:** derive shape preset thumbnails and insertion geometry from authored shape, fill, and stroke semantics
+
 ## [0.1.0-alpha.15](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.14...@editx/image-editor@0.1.0-alpha.15) (2026-08-05)
 
 ### Bug Fixes

@@ -45,8 +45,8 @@ pnpm add @editx/image-editor
 | 🔄 | **Rotate & Flip** | 90° steps, free-angle straightening, horizontal/vertical flip |
 | 🎚️ | **Adjustments** | Brightness, contrast, saturation, temperature, exposure, shadows, highlights, sharpness, clarity, and more (12 controls) |
 | ✨ | **Filters** | 40+ built-in presets with adjustable intensity, WebGL-accelerated |
-| 🔤 | **Text** | Rich-text annotations via Lexical — fonts, colors, weight, alignment, formatting |
-| 🔷 | **Shapes** | Rectangles, ellipses, lines, arrows, polygons, and stars — filled or outlined |
+| 🔤 | **Text** | Rich text presets with curved styles, gradients, highlights, and editable layered compositions, organized in a searchable gallery |
+| 🔷 | **Shapes** | Filled, outlined, gradient, image-filled, and abstract shape presets with searchable categories and custom catalog support |
 | 🖼️ | **Image Overlays** | Add and position images on top of the canvas |
 | 💾 | **Export** | PNG, JPEG, or WebP with quality control |
 | ↩️ | **Undo / Redo** | Full command-based history with keyboard shortcuts |
@@ -152,7 +152,7 @@ const config = {
 // Web Component:  document.querySelector("editx-image-editor").config = config;
 ```
 
-Go further without forking: register **custom tools**, inject content into **UI slots** (`topbarRight`, `sidebarBottom`, `contextualBarExtra`), and hook into **editor events** (`onToolChange`, `onBeforeSave`).
+Go further without forking: add or replace categorized **text and shape preset catalogs** with built-in search, register **custom tools**, inject content into **UI slots** (`topbarRight`, `sidebarBottom`, `contextualBarExtra`), and hook into **editor events** (`onToolChange`, `onBeforeSave`).
 
 ## Documentation
 

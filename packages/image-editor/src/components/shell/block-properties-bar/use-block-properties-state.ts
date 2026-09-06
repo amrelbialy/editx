@@ -1,5 +1,6 @@
 import type { EditxEngine } from "@editx/engine";
 import { useCallback, useEffect, useState } from "react";
+import { useBlockImageFill } from "../../../hooks/use-block-image-fill";
 import { useImageEditorStore } from "../../../store/image-editor-store";
 import { readBlockColor, readTextState } from "./state-readers";
 
@@ -8,6 +9,7 @@ export interface UseBlockPropertiesStateOptions {
   blockId: number;
   isText: boolean;
   isImage: boolean;
+  isGraphic: boolean;
 }
 
 /**
@@ -16,10 +18,11 @@ export interface UseBlockPropertiesStateOptions {
  * Also exposes the selection-aware style range used by mutation handlers.
  */
 export function useBlockPropertiesState(options: UseBlockPropertiesStateOptions) {
-  const { engine, blockId, isText, isImage } = options;
+  const { engine, blockId, isText, isImage, isGraphic } = options;
 
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
   const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
+  const hasImageFill = useBlockImageFill(engine, blockId, isGraphic ? "graphic" : null);
 
   const [textState, setTextState] = useState(() =>
     isText ? readTextState(engine, blockId, textSelectionRange?.from) : null,
@@ -73,6 +76,7 @@ export function useBlockPropertiesState(options: UseBlockPropertiesStateOptions)
     textState,
     fillColor,
     opacity,
+    hasImageFill,
     refresh,
     hasCharSelection,
     getStyleRange,

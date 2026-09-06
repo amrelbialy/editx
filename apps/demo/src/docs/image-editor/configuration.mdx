@@ -52,9 +52,43 @@ Pass a `config` prop to customize behavior. Every field is optional.
 | Crop | `"crop"` | Crop, rotate, flip, resize with presets |
 | Adjust | `"adjust"` | Brightness, contrast, saturation, etc. |
 | Filter | `"filter"` | Instagram-style photo filters |
-| Text | `"text"` | Rich text annotations with fonts |
-| Shapes | `"shapes"` | Rectangles, circles, lines, arrows |
+| Text | `"text"` | Rich styles and editable layered compositions in a searchable gallery |
+| Shapes | `"shapes"` | Filled, outlined, gradient, image, and abstract graphics in searchable categories |
 | Image | `"image"` | Image overlay annotations |
+
+## Text presets
+
+`config.text` controls typography defaults and the Text gallery. See
+[Configure Text](/docs/image-editor/guides/configure-fonts) for authored block,
+run-style, and composition examples.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `fonts` | `string[]` | built-ins | Font families shown in text controls. |
+| `defaultFontFamily` | `string` | first font | Family for new text. |
+| `defaultFontSize` | `number` | `24` | Reference size at a 1080px canvas. |
+| `defaultColor` | `string` | `"#ffffff"` | Fill for new text when the preset omits one. |
+| `presetGroups` | `PresetGroup<TextPreset>[]` | built-ins | Replace the complete built-in gallery. |
+| `additionalPresetGroups` | `PresetGroup<TextPreset>[]` | — | Append groups; matching group ids merge presets. |
+| `presets` | `TextStylePreset[]` | — | Deprecated flat compatibility list. |
+
+## Shape presets
+
+`config.shapes` controls the Shapes gallery and insertion defaults. See
+[Configure Shapes](/docs/image-editor/guides/configure-shapes) for gradients,
+image fills, strokes, and custom paths.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `presetGroups` | `PresetGroup<ShapePreset>[]` | built-ins | Replace the complete built-in gallery. |
+| `additionalPresetGroups` | `PresetGroup<ShapePreset>[]` | — | Append groups; matching group ids merge presets. |
+| `presets` | `string[]` | — | Deprecated shape-kind compatibility list. |
+| `defaultColor` | `string` | `"#3b82f6"` | Fallback color for new shapes. |
+| `defaultOpacity` | `number` | `1` | Starting opacity from `0` to `1`. |
+| `defaultSize` | `number` | `0.5` | Canvas-relative size when a preset omits `sizeFraction`. |
+
+Preset authoring types, including `PresetGroup`, `TextPreset`, `ShapePreset`,
+and composition types, are exported from `@editx/image-editor`.
 
 ## Export
 

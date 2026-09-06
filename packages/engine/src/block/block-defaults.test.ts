@@ -30,6 +30,7 @@ import {
   SIZE_WIDTH,
   STROKE_WIDTH,
   TEXT_CONTENT,
+  TEXT_RUNS,
   VISIBLE,
 } from "./property-keys";
 
@@ -90,13 +91,22 @@ describe("getBlockDefaults", () => {
   });
 
   describe("text defaults", () => {
-    it("has transform, appearance, and text properties", () => {
+    it("seeds only TEXT_RUNS as the single source of truth (no legacy keys)", () => {
       const d = getBlockDefaults("text");
-      expect(d[TEXT_CONTENT]).toBe("Text");
-      expect(d[FONT_SIZE]).toBe(24);
-      expect(d[FONT_FAMILY]).toBe("Arial");
+      // Legacy per-node keys are no longer seeded; TEXT_RUNS is authoritative.
+      expect(d[TEXT_CONTENT]).toBeUndefined();
+      expect(d[FONT_SIZE]).toBeUndefined();
+      expect(d[FONT_FAMILY]).toBeUndefined();
       expect(d[POSITION_X]).toBe(0);
       expect(d[OPACITY]).toBe(1);
+
+      const runs = d[TEXT_RUNS] as Array<{ text: string; style: Record<string, unknown> }>;
+      expect(Array.isArray(runs)).toBe(true);
+      expect(runs).toHaveLength(1);
+      expect(runs[0].text).toBe("Text");
+      expect(runs[0].style.fontSize).toBe(24);
+      expect(runs[0].style.fontFamily).toBe("Arial");
+      expect(runs[0].style.fill).toBe("#000000");
     });
   });
 

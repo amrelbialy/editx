@@ -1,25 +1,15 @@
 import type Konva from "konva";
-import type { BlockData, Color } from "../block/block.types";
+import type { BlockData } from "../block/block.types";
 import {
-  FILL_COLOR,
-  FILL_ENABLED,
-  FILL_SOLID_COLOR,
-  SHADOW_BLUR,
-  SHADOW_COLOR,
-  SHADOW_ENABLED,
-  SHADOW_OFFSET_X,
-  SHADOW_OFFSET_Y,
   SHAPE_LINE_POINTER_LENGTH,
   SHAPE_LINE_POINTER_WIDTH,
   SHAPE_POLYGON_SIDES,
   SHAPE_RECT_CORNER_RADIUS,
   SHAPE_STAR_INNER_DIAMETER,
   SHAPE_STAR_POINTS,
-  STROKE_COLOR,
-  STROKE_ENABLED,
-  STROKE_WIDTH,
 } from "../block/property-keys";
-import { colorToHex } from "../utils/color";
+import { applyShapeFillStroke } from "./konva-fill";
+import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 // ── Stretched polygon/star vertex helpers ──────────────────────────
 
@@ -82,65 +72,14 @@ function dynamicCenterSelfRect(node: Konva.Shape) {
   };
 }
 
-/** Resolve fill and stroke from sub-blocks (or fall back to block properties). */
-export function applyShapeFillStroke(
-  node: Konva.Shape,
-  props: Record<string, unknown>,
-  block?: BlockData,
-  resolveBlock?: (id: number) => BlockData | undefined,
-): void {
-  let fillColor: Color | undefined;
-  let fillEnabled = true;
-  let strokeColor: Color | undefined;
-  let strokeEnabled = false;
-  let strokeW = 0;
+/** Bounding box for a top-left-anchored node (rect, arrow). */
+function topLeftBox(width: number, height: number) {
+  return { x: 0, y: 0, width, height };
+}
 
-  if (block?.fillId != null && resolveBlock) {
-    const fillBlock = resolveBlock(block.fillId);
-    if (fillBlock) {
-      const c = fillBlock.properties[FILL_SOLID_COLOR];
-      if (c && typeof c === "object") fillColor = c as Color;
-    }
-  }
-
-  fillEnabled = (props[FILL_ENABLED] as boolean) ?? true;
-  strokeEnabled = (props[STROKE_ENABLED] as boolean) ?? false;
-
-  const sc = props[STROKE_COLOR];
-  if (sc && typeof sc === "object") strokeColor = sc as Color;
-  strokeW = (props[STROKE_WIDTH] as number) ?? 0;
-
-  if (!fillColor) {
-    const fc = props[FILL_COLOR];
-    if (fc && typeof fc === "object") fillColor = fc as Color;
-  }
-
-  if (fillEnabled && fillColor) {
-    node.fill(colorToHex(fillColor));
-  } else {
-    node.fill("");
-  }
-
-  if (strokeEnabled && strokeColor && strokeW > 0) {
-    node.stroke(colorToHex(strokeColor));
-    node.strokeWidth(strokeW);
-  } else {
-    node.stroke("");
-    node.strokeWidth(0);
-  }
-
-  const shadowEnabled = (props[SHADOW_ENABLED] as boolean) ?? false;
-  if (shadowEnabled) {
-    const sc = props[SHADOW_COLOR];
-    node.shadowColor(sc && typeof sc === "object" ? colorToHex(sc as Color) : "rgba(0,0,0,0.5)");
-    node.shadowOffsetX((props[SHADOW_OFFSET_X] as number) ?? 4);
-    node.shadowOffsetY((props[SHADOW_OFFSET_Y] as number) ?? 4);
-    node.shadowBlur((props[SHADOW_BLUR] as number) ?? 8);
-    node.shadowEnabled(true);
-    node.shadowForStrokeEnabled(false);
-  } else {
-    node.shadowEnabled(false);
-  }
+/** Bounding box for an origin-centered node (ellipse, polygon, star). */
+function centeredBox(width: number, height: number) {
+  return { x: -width / 2, y: -height / 2, width, height };
 }
 
 export function updateEllipseNode(
@@ -150,12 +89,13 @@ export function updateEllipseNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.radiusX(width / 2);
   node.radiusY(height / 2);
   node.setAttr("blockWidth", width);
   node.setAttr("blockHeight", height);
-  applyShapeFillStroke(node, props, block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateRectNode(
@@ -165,6 +105,7 @@ export function updateRectNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.width(width);
   node.height(height);
@@ -178,7 +119,7 @@ export function updateRectNode(
   }
   node.cornerRadius(cornerRadius);
 
-  applyShapeFillStroke(node, props, block, resolveBlock);
+  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updatePolygonNode(
@@ -188,6 +129,7 @@ export function updatePolygonNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   let sides = 5;
   if (block?.shapeId != null && resolveBlock) {
@@ -212,7 +154,7 @@ export function updatePolygonNode(
   node.sceneFunc(createPolySceneFunc(points));
   node.hitFunc(createPolyHitFunc(points));
 
-  applyShapeFillStroke(node, props, block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateStarNode(
@@ -222,6 +164,7 @@ export function updateStarNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   let numPoints = 5;
   let innerDiameter = 0.5;
@@ -248,7 +191,7 @@ export function updateStarNode(
   node.sceneFunc(createPolySceneFunc(points));
   node.hitFunc(createPolyHitFunc(points));
 
-  applyShapeFillStroke(node, props, block, resolveBlock);
+  applyShapeFillStroke(node, props, centeredBox(width, height), block, resolveBlock, webgl);
 }
 
 export function updateArrowNode(
@@ -258,6 +201,7 @@ export function updateArrowNode(
   height: number,
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
+  webgl: WebGLFilterRenderer | null = null,
 ): void {
   node.points([0, height / 2, width, height / 2]);
   node.setAttr("blockWidth", width);
@@ -279,5 +223,5 @@ export function updateArrowNode(
   node.pointerWidth(pointerWidth);
   node.hitStrokeWidth(12);
 
-  applyShapeFillStroke(node, props, block, resolveBlock);
+  applyShapeFillStroke(node, props, topLeftBox(width, height), block, resolveBlock, webgl);
 }

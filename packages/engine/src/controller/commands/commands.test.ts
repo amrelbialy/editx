@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { BlockStore } from "../../block/block-store";
+import { HistoryManager } from "../../history-manager";
 import { AppendChildCommand } from "./append-child-command";
 import { CreateBlockCommand } from "./create-block-command";
 import { DestroyBlockCommand } from "./destroy-block-command";
 import { RemoveChildCommand } from "./remove-child-command";
 import { SetKindCommand } from "./set-kind-command";
 import { SetPropertyCommand } from "./set-property-command";
+import { UngroupBlocksCommand } from "./ungroup-blocks-command";
 
 describe("Commands", () => {
   let store: BlockStore;
@@ -154,6 +156,34 @@ describe("Commands", () => {
       // After should not
       expect(patches[0].after!.children).not.toContain(child);
       expect(patches[1].after!.parentId).toBeNull();
+    });
+  });
+
+  describe("UngroupBlocksCommand", () => {
+    it("orders parent and members before adjacent group release and destroy patches", () => {
+      const page = store.create("page");
+      const group = store.create("group");
+      const first = store.create("graphic");
+      const second = store.create("graphic");
+      store.appendChild(page, group);
+      store.appendChild(group, first);
+      store.appendChild(group, second);
+
+      const patches = new UngroupBlocksCommand(store, group).do();
+
+      expect(patches.map(({ id }) => id)).toEqual([page, first, second, group, group]);
+      const [release, destroy] = patches.slice(-2);
+      expect(release).toMatchObject({ id: group, before: { children: [first, second] } });
+      expect(release.after?.children).toEqual([]);
+      expect(destroy).toMatchObject({ id: group, before: { children: [] }, after: null });
+
+      const history = new HistoryManager();
+      history.push(patches);
+      const undo = history.undo();
+      expect(undo?.slice(0, 2)).toEqual([
+        { id: group, before: null, after: destroy.before },
+        { id: group, before: release.after, after: release.before },
+      ]);
     });
   });
 });

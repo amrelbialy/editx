@@ -1,0 +1,213 @@
+import type { TextPreset } from "../config.types";
+import { combo } from "./text-presets-combo-factory";
+import { onPhotoShadow } from "./text-presets-combo-shadow";
+
+/** Editorial "Text Combinations": headline-driven stacks for photos/covers. */
+export const editorialCombos: TextPreset[] = [
+  combo({
+    id: "heading-subtitle",
+    label: "Thank You",
+    sample: "THANK YOU\nFOR YOUR PURCHASE",
+    width: 0.72,
+    centerY: 0.48,
+    rotation: -3,
+    lines: [
+      {
+        text: "Thank You",
+        scale: 2.25,
+        fontFamily: "Georgia",
+        fontStyle: "italic",
+        fontWeight: "bold",
+        fill: "#fff7ed",
+        ...onPhotoShadow,
+      },
+      {
+        text: "for your purchase",
+        scale: 1.25,
+        fontFamily: "Georgia",
+        fontStyle: "italic",
+        fontWeight: "bold",
+        fill: "#ffffff",
+        gap: 0.22,
+        backgroundBox: {
+          color: "#a78baf",
+          padding: { top: 9, right: 48, bottom: 9, left: 48 },
+          cornerRadius: 999,
+        },
+      },
+    ],
+  }),
+  combo({
+    id: "title-tag",
+    label: "Stacked Labels",
+    sample: "KEEP\nIT\nREAL",
+    width: 0.58,
+    centerY: 0.48,
+    lines: [
+      {
+        text: "Keep",
+        scale: 3.4,
+        fontWeight: "bold",
+        fill: "#050505",
+        letterSpacing: 2,
+        textTransform: "uppercase",
+        backgroundBox: {
+          color: "#ffffff",
+          padding: { top: 18, right: 28, bottom: 18, left: 28 },
+          cornerRadius: 18,
+        },
+      },
+      {
+        text: "It",
+        scale: 2.8,
+        fontWeight: "bold",
+        fill: "#050505",
+        letterSpacing: 2,
+        textTransform: "uppercase",
+        gap: 0.22,
+        backgroundBox: {
+          color: "#ffffff",
+          padding: { top: 18, right: 28, bottom: 18, left: 28 },
+          cornerRadius: 18,
+        },
+      },
+      {
+        text: "Real",
+        scale: 3.4,
+        fontWeight: "bold",
+        fill: "#050505",
+        letterSpacing: 2,
+        textTransform: "uppercase",
+        gap: 0.22,
+        backgroundBox: {
+          color: "#ffffff",
+          padding: { top: 18, right: 28, bottom: 18, left: 28 },
+          cornerRadius: 18,
+        },
+      },
+    ],
+  }),
+  combo({
+    id: "cinematic",
+    label: "Cinematic",
+    sample: "FREE CINEMATIC\nCOLORS",
+    width: 0.78,
+    shapes: [
+      {
+        kind: "shape",
+        layout: { x: 0.39, y: 0.562, width: 0.22, height: 0.004 },
+        shape: { kind: "rect" },
+        fill: { kind: "color", color: "#111827" },
+      },
+    ],
+    lines: [
+      {
+        text: "Free cinematic",
+        scale: 0.9,
+        fill: "#111827",
+        letterSpacing: 5,
+        textTransform: "uppercase",
+      },
+      {
+        text: "Colors",
+        scale: 4,
+        fontFamily: "Georgia",
+        fontWeight: "bold",
+        fill: "#111827",
+        letterSpacing: 2,
+        textTransform: "uppercase",
+        gap: 0.25,
+      },
+      {
+        text: "Commercial use",
+        scale: 0.9,
+        fill: "#111827",
+        letterSpacing: 5,
+        textTransform: "uppercase",
+        gap: 0.6,
+      },
+    ],
+  }),
+  combo({
+    id: "quote",
+    label: "Speech",
+    sample: "“GREAT IDEAS\nSTART HERE.”",
+    align: "left",
+    width: 0.5,
+    centerY: 0.48,
+    shapes: [
+      {
+        kind: "shape",
+        layout: { x: 0.19, y: 0.35, width: 0.62, height: 0.3 },
+        shape: {
+          kind: "path",
+          pathData: "M10 8H230V86H145L115 104V86H10Z",
+          viewBox: { width: 240, height: 108 },
+        },
+        fill: { kind: "color", color: "#f8fafc" },
+        stroke: { color: "#0f172a", width: 3 },
+      },
+    ],
+    lines: [
+      {
+        text: "“Great ideas\nstart here.”",
+        scale: 2.5,
+        fontFamily: "Georgia",
+        fontWeight: "bold",
+        fill: "#0f172a",
+        lineHeight: 1.2,
+      },
+      {
+        text: "Say it boldly",
+        scale: 1.1,
+        fontWeight: "bold",
+        fill: "#e11d48",
+        letterSpacing: 3,
+        textTransform: "uppercase",
+        gap: 0.3,
+      },
+    ],
+  }),
+  combo({
+    id: "name-role",
+    label: "Studio Signature",
+    sample: "ATELIER NO. 7\nINDEPENDENT STUDIO",
+    width: 0.5,
+    centerY: 0.5,
+    shapes: [
+      {
+        kind: "shape",
+        layout: { x: 0.235, y: 0.405, width: 0.56, height: 0.24, rotation: -3 },
+        shape: { kind: "rect", cornerRadius: 149 },
+        fill: { kind: "color", color: "#431407" },
+        opacity: 0.45,
+      },
+      {
+        kind: "shape",
+        layout: { x: 0.21, y: 0.375, width: 0.56, height: 0.24, rotation: -3 },
+        shape: { kind: "rect", cornerRadius: 140 },
+        fill: { kind: "color", color: "#fffbeb" },
+        stroke: { color: "#b45309", width: 10 },
+      },
+    ],
+    lines: [
+      {
+        text: "Atelier No. 7",
+        scale: 3.2,
+        fontFamily: "Georgia",
+        fontStyle: "italic",
+        fontWeight: "bold",
+        fill: "#78350f",
+      },
+      {
+        text: "Independent studio",
+        scale: 0.8,
+        fontWeight: "bold",
+        fill: "#b45309",
+        letterSpacing: 2.5,
+        textTransform: "uppercase",
+        gap: 0.3,
+      },
+    ],
+  }),
+];

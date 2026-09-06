@@ -5,6 +5,7 @@ import {
   RotateCcw as ResetIcon,
   RotateCcw,
   RotateCw,
+  X,
 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "../../i18n/i18n-context";
@@ -16,6 +17,7 @@ interface ToolPropertiesBarProps {
   activeTool: string;
   onReset?: () => void;
   onDone?: () => void;
+  onCancel?: () => void;
   // Rotate/flip actions (shared by crop + rotate)
   onRotateClockwise?: () => void;
   onRotateCounterClockwise?: () => void;
@@ -31,6 +33,7 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
   activeTool,
   onReset,
   onDone,
+  onCancel,
   onRotateClockwise,
   onRotateCounterClockwise,
   onFlipHorizontal,
@@ -85,6 +88,13 @@ export const ToolPropertiesBar: React.FC<ToolPropertiesBarProps> = ({
 
       {/* Reset + Done (always present) */}
       <div className="flex items-center gap-1">
+        {onCancel && (
+          <IconButton
+            onClick={onCancel}
+            label={t("dialog.cancel")}
+            icon={<X className="h-4 w-4" />}
+          />
+        )}
         {onReset && (
           <IconButton
             onClick={onReset}

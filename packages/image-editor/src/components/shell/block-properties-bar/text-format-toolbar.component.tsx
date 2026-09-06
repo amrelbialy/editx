@@ -79,6 +79,13 @@ export const TextFormatToolbar: React.FC<TextFormatToolbarProps> = (props) => {
 
   const { t } = useTranslation();
 
+  // The active run's font may not be one of the configured picker options
+  // (e.g. a preset using Georgia while `text.fonts` lists other families). Add
+  // it so the Select reflects the real value instead of showing a blank.
+  const fontOptions = fontFamilies.includes(textState.fontFamily)
+    ? fontFamilies
+    : [textState.fontFamily, ...fontFamilies];
+
   const AlignIcon =
     textState.textAlign === "center"
       ? AlignCenter
@@ -94,7 +101,7 @@ export const TextFormatToolbar: React.FC<TextFormatToolbarProps> = (props) => {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {fontFamilies.map((f) => (
+          {fontOptions.map((f) => (
             <SelectItem key={f} value={f}>
               <span style={{ fontFamily: f }}>{f}</span>
             </SelectItem>

@@ -4,7 +4,9 @@ import type { ImageEditorToolId } from "../config/config.types";
 export type ImageEditorTool = ImageEditorToolId | "select" | "rotate" | "resize" | "pen";
 
 export type PropertySidePanel =
+  | "shape"
   | "color"
+  | "fill"
   | "background"
   | "shadow"
   | "position"

@@ -45,16 +45,20 @@ export function flushDirtyBlocks(
   const dirtyIds = [...dirty];
   dirty.clear();
 
+  const syncIds = dirtyIds.filter((id) => blockStore.exists(id));
+  const removedIds = dirtyIds.filter((id) => !blockStore.exists(id));
+
   const t0 = typeof window !== "undefined" && (window as any).__EX_PERF ? performance.now() : 0;
-  for (const id of dirtyIds) {
-    const block = blockStore.get(id);
-    if (block) renderer.syncBlock(id, block);
-    else renderer.removeBlock(id);
+  for (const id of syncIds) {
+    renderer.syncBlock(id, blockStore.get(id) as BlockData);
+  }
+  for (const id of removedIds) {
+    renderer.removeBlock(id);
   }
 
   for (const id of dirtyIds) {
     const block = blockStore.get(id);
-    if (block?.type === "page" && block.children.length > 0) {
+    if ((block?.type === "page" || block?.type === "group") && block.children.length > 0) {
       renderer.syncChildOrder?.(block.children);
     }
   }

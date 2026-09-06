@@ -1,16 +1,23 @@
-import { X } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n/i18n-context";
 import { cn } from "../../utils/cn";
-import { Button } from "../ui/button";
+import { IconButton } from "../ui/icon-button";
 import { ScrollArea } from "../ui/scroll-area";
+
+interface ToolPanelVisibility {
+  enabled: boolean;
+  label: string;
+  onToggle: () => void;
+}
 
 interface ToolPanelProps {
   open: boolean;
   title?: string;
   onClose: () => void;
   children: React.ReactNode;
+  visibility?: ToolPanelVisibility;
   /**
    * Docked (non-modal) mode for tools that need direct canvas interaction while
    * the panel is open (e.g. crop). On narrow screens the panel sits in-flow as a
@@ -21,7 +28,7 @@ interface ToolPanelProps {
 }
 
 export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
-  const { open, title, onClose, children, docked = false } = props;
+  const { open, title, onClose, children, visibility, docked = false } = props;
   const panelRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<Element | null>(null);
   const { t } = useTranslation();
@@ -99,15 +106,32 @@ export const ToolPanel: React.FC<ToolPanelProps> = (props) => {
               <div className="w-8 h-1 rounded-full bg-muted-foreground/30 @xl/editor:hidden" />
               <span className="text-fluid font-medium">{title}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 @5xl/editor:h-7 @5xl/editor:w-7"
-              onClick={onClose}
-              aria-label={t("panel.close")}
-            >
-              <X className="h-3.5 w-3.5 @5xl/editor:h-4 @5xl/editor:w-4" />
-            </Button>
+            <div className="flex items-center gap-1.5">
+              {visibility && (
+                <IconButton
+                  label={visibility.label}
+                  icon={
+                    visibility.enabled ? (
+                      <Eye className="h-3.5 w-3.5 @5xl/editor:h-4 @5xl/editor:w-4" />
+                    ) : (
+                      <EyeOff className="h-3.5 w-3.5 @5xl/editor:h-4 @5xl/editor:w-4" />
+                    )
+                  }
+                  aria-pressed={visibility.enabled}
+                  className={cn(
+                    "h-6 w-6 @5xl/editor:h-7 @5xl/editor:w-7",
+                    visibility.enabled ? "text-primary" : "text-muted-foreground",
+                  )}
+                  onClick={visibility.onToggle}
+                />
+              )}
+              <IconButton
+                label={t("panel.close")}
+                icon={<X className="h-3.5 w-3.5 @5xl/editor:h-4 @5xl/editor:w-4" />}
+                className="h-6 w-6 @5xl/editor:h-7 @5xl/editor:w-7"
+                onClick={onClose}
+              />
+            </div>
           </div>
         )}
 

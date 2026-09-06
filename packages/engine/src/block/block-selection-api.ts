@@ -8,6 +8,8 @@ export class BlockSelectionAPI {
   #transformerEnabled = true;
   #selectionListeners = new Set<(ids: number[]) => void>();
   #dblClickListeners = new Set<(blockId: number, screenPos?: { x: number; y: number }) => void>();
+  #groupContext: number[] = [];
+  #groupContextListeners = new Set<(stack: number[]) => void>();
 
   constructor(engine: EngineCore) {
     this.#engine = engine;
@@ -76,6 +78,48 @@ export class BlockSelectionAPI {
   setTransformerEnabled(enabled: boolean): void {
     this.#transformerEnabled = enabled;
     this.#syncTransformer();
+  }
+
+  // ── Group context (enter/exit navigation — NOT undoable) ───────────
+
+  /** Descend into a group; pushes it onto the context stack and notifies. */
+  enterGroup(groupId: number): void {
+    if (this.#groupContext[this.#groupContext.length - 1] === groupId) return;
+    this.#groupContext.push(groupId);
+    this.#notifyGroupContext();
+  }
+
+  /** Ascend one level; no-op at the top level. */
+  exitGroup(): void {
+    if (this.#groupContext.length === 0) return;
+    this.#groupContext.pop();
+    this.#notifyGroupContext();
+  }
+
+  /** Current context stack, OUTERMOST-first. `[]` means top level. */
+  getGroupContext(): number[] {
+    return [...this.#groupContext];
+  }
+
+  /** Subscribe to context changes (enter/exit/clear only). Returns unsubscribe. */
+  onGroupContextChanged(cb: (stack: number[]) => void): () => void {
+    this.#groupContextListeners.add(cb);
+    return () => {
+      this.#groupContextListeners.delete(cb);
+    };
+  }
+
+  /** @internal — clear the whole stack (empty-canvas / cross-context selection). */
+  _clearGroupContext(): void {
+    if (this.#groupContext.length === 0) return;
+    this.#groupContext = [];
+    this.#notifyGroupContext();
+  }
+
+  #notifyGroupContext(): void {
+    const stack = [...this.#groupContext];
+    this.#engine.emit("groupContext:changed", stack);
+    for (const cb of this.#groupContextListeners) cb(stack);
   }
 
   #syncTransformer(): void {

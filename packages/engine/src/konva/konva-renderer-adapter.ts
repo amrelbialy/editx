@@ -1,16 +1,23 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
-import type { ExportOptions } from "../editor-types";
-import type { BlockClickEvent, RendererAdapter } from "../render-adapter";
+import type { BlockExportOptions, ExportOptions, ImageFillCrop } from "../editor-types";
+import type { BlockClickEvent, BlockTransform, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { clearImageCache } from "../utils/image-loader";
+import { getNodeScreenTransform } from "./konva-block-screen-transform";
 import type { KonvaCamera } from "./konva-camera";
 import { clearCropOverlayFlags, expandPageNodeForCrop } from "./konva-crop-helpers";
 import type { KonvaCropOverlay } from "./konva-crop-overlay";
 import { exportScene } from "./konva-export";
+import { exportBlockNode } from "./konva-export-block";
+import { applyGroupContext, createGroupOutline } from "./konva-group-affordance";
+import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { KonvaHoverOutline } from "./konva-hover-outline";
+import { KonvaImageFillCrop } from "./konva-image-fill-crop";
+import { applyImageFillCropPreviewFrame } from "./konva-image-fill-crop-preview";
 import type { KonvaNodeFactory } from "./konva-node-factory";
+import { replaceIncompatibleNode } from "./konva-node-replacement";
 import { createKonvaScene } from "./konva-scene-setup";
 import { observeViewportResize } from "./konva-viewport-resize";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
@@ -32,21 +39,24 @@ export class KonvaRendererAdapter implements RendererAdapter {
   #webgl: WebGLFilterRenderer | null = null;
   #updateAccentColor?: (color: string) => void;
   #hoverOutline!: KonvaHoverOutline;
+  #imageFillCrop!: KonvaImageFillCrop;
+  #groupContext: number[] = [];
+  #groupOutline!: Konva.Rect;
 
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (
-    blockId: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-    anchorName?: string,
-  ) => void;
+  onBlockTransformEnd?: (blockId: number, transform: BlockTransform, anchorName?: string) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onCropChange?: (rect: CropRect) => void;
+  onImageFillCropPreviewChange?: (crop: ImageFillCrop) => void;
+  onImageFillCropDismiss?: () => void;
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (pan: { x: number; y: number }) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
   onAutoSize?: (blockId: number, computedHeight: number) => void;
+  onAutoWidth?: (blockId: number, computedWidth: number) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
 
   async init(root: HTMLElement): Promise<void> {
@@ -71,12 +81,25 @@ export class KonvaRendererAdapter implements RendererAdapter {
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
 
     const scene = createKonvaScene(this.#rootEl, pageW, pageH, this.#nodeMap, {
-      onBlockClick: (blockId, event) => this.onBlockClick?.(blockId, event),
-      onBlockDblClick: (blockId, screenPos) => this.onBlockDblClick?.(blockId, screenPos),
-      onStageClick: (worldPos) => this.onStageClick?.(worldPos),
+      onBlockClick: (blockId, event) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockClick?.(blockId, event);
+      },
+      onBlockDblClick: (blockId, screenPos) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockDblClick?.(blockId, screenPos);
+      },
+      onEnterGroup: (groupId, childId) => {
+        if (!this.#imageFillCrop?.isActive()) this.onEnterGroup?.(groupId, childId);
+      },
+      onStageClick: (worldPos) => {
+        if (!this.#imageFillCrop?.isActive()) this.onStageClick?.(worldPos);
+      },
       onZoomChange: (zoom) => this.onZoomChange?.(zoom),
-      onBlockTransform: (blockId, phase) => this.onBlockTransform?.(blockId, phase),
+      onBlockTransform: (blockId, phase) => {
+        if (!this.#imageFillCrop?.isActive()) this.onBlockTransform?.(blockId, phase);
+      },
       onCropChange: (rect) => this.onCropChange?.(rect),
+      getGroupContext: () => this.#groupContext,
+      isInteractionEnabled: () => !this.#imageFillCrop?.isActive(),
     });
 
     this.#stage = scene.stage;
@@ -85,9 +108,12 @@ export class KonvaRendererAdapter implements RendererAdapter {
     this.#transformer = scene.transformer;
     this.#selectionRect = scene.selectionRect;
     this.#camera = scene.camera;
-    this.#camera.setPanChangeListener((pan) => this.onPanChange?.(pan));
-    this.#nodeFactory = scene.nodeFactory;
     this.#cropOverlay = scene.cropOverlay;
+    this.#camera.setPanChangeListener((pan) => {
+      this.#cropOverlay.refreshBlock();
+      this.onPanChange?.(pan);
+    });
+    this.#nodeFactory = scene.nodeFactory;
     this.#webgl = scene.webgl;
     this.#updateAccentColor = scene.updateAccentColor;
     this.#lastPageSize = { width: pageW, height: pageH };
@@ -97,8 +123,29 @@ export class KonvaRendererAdapter implements RendererAdapter {
       this.#contentLayer,
       this.#transformer,
       this.#camera,
+      () => this.#groupContext,
       "#4971FF",
+      () => !this.#imageFillCrop?.isActive(),
     );
+    this.#imageFillCrop = new KonvaImageFillCrop(
+      this.#stage,
+      this.#nodeMap,
+      this.#cropOverlay,
+      (crop) => this.onImageFillCropPreviewChange?.(crop),
+      (blockId, frame, preview) =>
+        applyImageFillCropPreviewFrame(
+          this.#nodeFactory,
+          this.resolveBlock,
+          blockId,
+          frame,
+          preview,
+        ),
+      () => this.onImageFillCropDismiss?.(),
+    );
+
+    this.#groupContext = [];
+    this.#groupOutline = createGroupOutline();
+    this.#uiLayer.add(this.#groupOutline);
 
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = observeViewportResize({
@@ -107,6 +154,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
       camera: this.#camera,
       getPageSize: () => this.#lastPageSize,
       getCropFitRect: () => this.#getCropFitRect(),
+      onResize: () => this.#cropOverlay.refreshBlock(),
     });
   }
 
@@ -117,7 +165,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
    * same framing the crop entry established.
    */
   #getCropFitRect(): CropRect | null {
-    if (!this.#cropOverlay?.isVisible()) return null;
+    if (!this.#cropOverlay?.isVisible() || this.#cropOverlay.isBlockMode()) return null;
     return this.#cropOverlay.getCropRect() ?? this.#cropOverlay.getImageRect();
   }
 
@@ -132,32 +180,57 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!this.#nodeFactory) return;
 
     let node = this.#nodeMap.get(id);
+    const callbacks = {
+      onDragEnd: (blockId: number, x: number, y: number) => this.onBlockDragEnd?.(blockId, x, y),
+      onTransformEnd: (blockId: number, transform: BlockTransform) => {
+        if (this.#imageFillCrop?.captureTransform(blockId, transform)) return;
+        const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
+        this.onBlockTransformEnd?.(blockId, transform, anchor);
+      },
+      getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
+    };
 
     if (!node) {
-      const created = this.#nodeFactory.createNode(
-        id,
-        block,
-        {
-          onDragEnd: (blockId, x, y) => this.onBlockDragEnd?.(blockId, x, y),
-          onTransformEnd: (blockId, transform) => {
-            const anchor = this.#transformer?.getActiveAnchor?.() ?? "";
-            this.onBlockTransformEnd?.(blockId, transform, anchor);
-          },
-          getActiveAnchor: () => this.#transformer?.getActiveAnchor?.() ?? "",
-        },
-        this.resolveBlock,
-      );
+      const created = this.#nodeFactory.createNode(id, block, callbacks, this.resolveBlock);
       if (!created) return;
       node = created;
       this.#nodeMap.set(id, node);
       this.#contentLayer.add(node as Konva.Group | Konva.Shape);
-      this.#hoverOutline.bind(id, node);
+      this.#hoverOutline.bind(node);
+    } else {
+      node = replaceIncompatibleNode({
+        id,
+        block,
+        node,
+        nodeMap: this.#nodeMap,
+        factory: this.#nodeFactory,
+        callbacks,
+        transformer: this.#transformer,
+        contentLayer: this.#contentLayer,
+        bindHover: (replacement) => this.#hoverOutline.bind(replacement),
+        resolveBlock: this.resolveBlock,
+      });
     }
 
     const result = this.#nodeFactory.updateNode(node, block, this.resolveBlock);
+    this.#imageFillCrop?.reapply(id);
+
+    // Keep the Konva tree mirroring the block tree: nest grouped children inside
+    // their group node so their stored coords stay parent-relative (no abs↔local
+    // math), and re-home a block whenever its group membership changes.
+    if (block.type === "group") {
+      nestGroupChildren(node as Konva.Group, block.children, this.#nodeMap);
+    } else if (block.type !== "page") {
+      const container = containerForBlock(block, this.#nodeMap, this.#contentLayer);
+      if (node.getParent() !== container) node.moveTo(container);
+    }
+
     this.#transformer.moveToTop();
     if (result && result.autoHeight != null) {
       this.onAutoSize?.(id, result.autoHeight);
+    }
+    if (result && result.autoWidth != null) {
+      this.onAutoWidth?.(id, result.autoWidth);
     }
     if (block.type === "page") {
       const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
@@ -167,6 +240,24 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
+  setGroupContext(stack: number[]): void {
+    this.#groupContext = [...stack];
+    this.#applyGroupContext();
+    this.#uiLayer.batchDraw();
+    this.#contentLayer.batchDraw();
+  }
+
+  /** Apply draggable scoping and the dashed active-group outline. */
+  #applyGroupContext(): void {
+    if (!this.#groupOutline) return;
+    applyGroupContext({
+      stack: this.#groupContext,
+      nodeMap: this.#nodeMap,
+      contentLayer: this.#contentLayer,
+      outline: this.#groupOutline,
+    });
+  }
+
   syncChildOrder(childIds: number[]): void {
     for (const childId of childIds) {
       const childNode = this.#nodeMap.get(childId);
@@ -174,7 +265,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
         childNode.moveToTop();
       }
     }
-    this.#transformer.moveToTop();
+    this.#transformer?.moveToTop();
   }
 
   removeBlock(id: number): void {
@@ -189,20 +280,31 @@ export class KonvaRendererAdapter implements RendererAdapter {
     }
   }
 
-  showTransformer(blockIds: number[], _blockType?: string): void {
+  showTransformer(blockIds: number[], blockType?: string): void {
+    if (this.#imageFillCrop?.isActive()) {
+      this.hideTransformer();
+      return;
+    }
     const nodes = blockIds.map((id) => this.#nodeMap.get(id)).filter((n): n is Konva.Node => !!n);
+    const isGroup = blockType === "group";
     this.#hoverOutline.hide();
     this.#transformer.nodes(nodes);
-    this.#transformer.enabledAnchors([
-      "top-left",
-      "top-right",
-      "bottom-left",
-      "bottom-right",
-      "middle-left",
-      "middle-right",
-      "top-center",
-      "bottom-center",
-    ]);
+    this.#transformer.enabledAnchors(
+      isGroup
+        ? ["top-left", "top-right", "bottom-left", "bottom-right"]
+        : [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+            "middle-left",
+            "middle-right",
+            "top-center",
+            "bottom-center",
+          ],
+    );
+    this.#transformer.keepRatio(true);
+    this.#transformer.flipEnabled(!isGroup);
     (this.#transformer as any)._bindHoverEvents?.();
     this.#uiLayer.batchDraw();
   }
@@ -225,6 +327,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
     if (!node) return null;
     const rect = node.getClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }
+
+  getBlockScreenTransform(
+    blockId: number,
+  ): { a: number; b: number; c: number; d: number; e: number; f: number } | null {
+    const node = this.#nodeMap.get(blockId);
+    return node ? getNodeScreenTransform(node) : null;
   }
 
   setZoom(zoom: number, animate = false): void {
@@ -326,8 +435,30 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return this.#cropOverlay.isVisible() ? this.#cropOverlay.getImageRect() : null;
   }
 
+  showImageFillCropPreview(blockId: number, crop: ImageFillCrop): ImageFillCrop | null {
+    this.hideTransformer();
+    this.#hoverOutline.hide();
+    this.#selectionRect.visible(false);
+    const shown = this.#imageFillCrop.show(blockId, crop);
+    this.#uiLayer.batchDraw();
+    return shown;
+  }
+
+  setImageFillCropPreview(crop: ImageFillCrop, ratio?: number | null): ImageFillCrop | null {
+    return this.#imageFillCrop.set(crop, ratio);
+  }
+
+  hideImageFillCropPreview(): void {
+    this.#imageFillCrop.hide();
+    this.#uiLayer.batchDraw();
+  }
+
   renderFrame(): void {
     // Scoped, batched redraws — avoid synchronous full-stage draws.
+    this.#applyGroupContext();
+    if (this.#transformer?.nodes().length > 0) {
+      this.#transformer.forceUpdate();
+    }
     this.#contentLayer?.batchDraw();
     this.#uiLayer?.batchDraw();
   }
@@ -345,8 +476,16 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return exportScene(this.#stage, this.#contentLayer, this.#uiLayer, this.#lastPageSize, options);
   }
 
+  async exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob> {
+    if (!this.#stage) throw new Error("Cannot export: scene not initialised");
+    const node = this.#nodeMap.get(blockId);
+    if (!node) throw new Error(`Cannot export: block ${blockId} has no rendered node`);
+    return exportBlockNode(node, this.#contentLayer, options);
+  }
+
   dispose(): void {
     this.#resizeObserver?.disconnect();
+    this.#imageFillCrop?.hide();
     this.#cropOverlay?.destroy();
     this.#webgl?.dispose();
     this.#webgl = null;

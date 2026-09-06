@@ -15,6 +15,50 @@ async function waitForEditor(component: any) {
 }
 
 test.describe("Guide: configure-shapes", () => {
+  test("additional preset groups are searchable and insert shapes", async ({ mount }) => {
+    const component = await mount(
+      <ImageEditor
+        src={TEST_IMAGE}
+        width="900px"
+        height="600px"
+        config={{
+          shapes: {
+            additionalPresetGroups: [
+              {
+                id: "brand",
+                label: "Brand",
+                presets: [
+                  {
+                    id: "brand-badge",
+                    label: "Brand Badge",
+                    shape: { kind: "rect", cornerRadius: 20 },
+                    fill: { kind: "color", color: "#2563eb" },
+                    stroke: { color: "#ffffff", width: 4 },
+                  },
+                ],
+              },
+            ],
+          },
+        }}
+      />,
+    );
+    await waitForEditor(component);
+
+    await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
+    await component.getByRole("searchbox", { name: "Search presets" }).fill("Brand Badge");
+
+    const preset = component.getByRole("button", { name: "Brand Badge", exact: true });
+    await expect(preset).toBeVisible({ timeout: 10_000 });
+    await expect(
+      component.getByRole("button", { name: "Rectangle", exact: true }),
+    ).toHaveCount(0);
+    await preset.click();
+
+    await expect(component.getByRole("button", { name: "Fill", exact: true })).toBeVisible({
+      timeout: 5_000,
+    });
+  });
+
   test("config.shapes.presets renders only the whitelisted shapes", async ({ mount }) => {
     const component = await mount(
       <ImageEditor
@@ -30,13 +74,15 @@ test.describe("Guide: configure-shapes", () => {
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Shapes").click();
 
     // Whitelisted shapes appear.
-    await expect(component.getByTestId("grid-rect")).toBeVisible({ timeout: 10_000 });
-    await expect(component.getByTestId("grid-ellipse")).toBeVisible();
-    await expect(component.getByTestId("grid-star")).toBeVisible();
+    await expect(component.getByRole("button", { name: "rect", exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(component.getByRole("button", { name: "ellipse", exact: true })).toBeVisible();
+    await expect(component.getByRole("button", { name: "star", exact: true })).toBeVisible();
 
     // Non-whitelisted shapes are hidden.
-    await expect(component.getByTestId("grid-triangle")).toHaveCount(0);
-    await expect(component.getByTestId("grid-pentagon")).toHaveCount(0);
-    await expect(component.getByTestId("grid-hexagon")).toHaveCount(0);
+    await expect(component.getByRole("button", { name: "triangle", exact: true })).toHaveCount(0);
+    await expect(component.getByRole("button", { name: "pentagon", exact: true })).toHaveCount(0);
+    await expect(component.getByRole("button", { name: "hexagon", exact: true })).toHaveCount(0);
   });
 });

@@ -1,5 +1,4 @@
 import type { EditxEngine } from "@editx/engine";
-import { SHAPE_RECT_CORNER_RADIUS } from "@editx/engine";
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -17,7 +16,6 @@ import { useCallback, useEffect, useState } from "react";
 import { cn } from "../../utils/cn";
 import { Input } from "../ui/input";
 import { Section } from "../ui/section";
-import { SliderField } from "../ui/slider-field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface PositionPropertyPanelProps {
@@ -35,25 +33,13 @@ interface PosState {
   y: number;
   width: number;
   height: number;
-  cornerRadius: number;
-  shapeKind: string;
 }
 
 function readPos(engine: EditxEngine, blockId: number): PosState {
   const pos = engine.block.getPosition(blockId);
   const size = engine.block.getSize(blockId);
 
-  let cornerRadius = 0;
-  let shapeKind = engine.block.getKind(blockId);
-  const shapeId = engine.block.getShape(blockId);
-  if (shapeId != null) {
-    shapeKind = engine.block.getKind(shapeId) || shapeKind;
-    if (shapeKind === "rect") {
-      cornerRadius = engine.block.getFloat(shapeId, SHAPE_RECT_CORNER_RADIUS) ?? 0;
-    }
-  }
-
-  return { x: pos.x, y: pos.y, width: size.width, height: size.height, cornerRadius, shapeKind };
+  return { x: pos.x, y: pos.y, width: size.width, height: size.height };
 }
 
 export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
@@ -122,17 +108,6 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
     [engine, blockId, state.width, update],
   );
 
-  const handleCornerRadius = useCallback(
-    ([v]: number[]) => {
-      const shapeId = engine.block.getShape(blockId);
-      if (shapeId != null) {
-        engine.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, v);
-        update();
-      }
-    },
-    [engine, blockId, update],
-  );
-
   return (
     <div className="flex flex-col gap-4">
       {/* Position */}
@@ -150,18 +125,6 @@ export const PositionPropertyPanel: React.FC<PositionPropertyPanelProps> = ({
           <Input type="number" label="H" value={state.height} onChange={handleHeight} />
         </div>
       </Section>
-
-      {/* Corner Radius (rect only) */}
-      {state.shapeKind === "rect" && (
-        <SliderField
-          label="Border Radius"
-          value={state.cornerRadius}
-          min={0}
-          max={Math.min(state.width, state.height) / 2}
-          step={1}
-          onChange={(v) => handleCornerRadius([v])}
-        />
-      )}
 
       {/* Move (z-order) */}
       {(onBringForward || onSendBackward || onBringToFront || onSendToBack) && (

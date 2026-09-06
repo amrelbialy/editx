@@ -1,5 +1,5 @@
 import type { BlockData } from "./block/block.types";
-import type { CursorType, ExportOptions } from "./editor-types";
+import type { BlockExportOptions, CursorType, ExportOptions, ImageFillCrop } from "./editor-types";
 import type { CropRect } from "./utils/crop-math";
 
 /**
@@ -10,6 +10,19 @@ import type { CropRect } from "./utils/crop-math";
 export interface BlockClickEvent {
   shiftKey: boolean;
   additive?: boolean;
+  /** True when the resolved block lies within the active group context. */
+  insideContext?: boolean;
+}
+
+export interface BlockTransform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  /** Temporary renderer scale, supplied when group geometry must be baked into descendants. */
+  scaleX?: number;
+  scaleY?: number;
 }
 
 export interface RendererAdapter {
@@ -32,6 +45,12 @@ export interface RendererAdapter {
   /** Reorder child Konva nodes to match the given child ID order (bottom→top). */
   syncChildOrder?(childIds: number[]): void;
 
+  /**
+   * Apply the active group-context stack (outermost-first). Drives the
+   * draggable-scoping, dimming, and dashed-outline affordance in the renderer.
+   */
+  setGroupContext?(stack: number[]): void;
+
   //
   // Transformer
   //
@@ -43,6 +62,10 @@ export interface RendererAdapter {
   getBlockScreenRect(
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null;
+  /** @internal Full local-to-screen affine transform for DOM editing overlays. */
+  getBlockScreenTransform?(
+    blockId: number,
+  ): { a: number; b: number; c: number; d: number; e: number; f: number } | null;
 
   //
   // Camera / viewport
@@ -80,6 +103,8 @@ export interface RendererAdapter {
   //
   /** Render the current page to an offscreen canvas and return the result as a Blob. */
   exportScene(options: ExportOptions): Promise<Blob>;
+  /** Render one block subtree into a transparent, centered PNG. */
+  exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob>;
 
   //
   // Cleanup
@@ -124,18 +149,28 @@ export interface RendererAdapter {
   getCropImageRect(): CropRect | null;
 
   //
+  // Graphic image-fill crop preview
+  //
+  showImageFillCropPreview?(blockId: number, crop: ImageFillCrop): ImageFillCrop | null;
+  setImageFillCropPreview?(crop: ImageFillCrop, ratio?: number | null): ImageFillCrop | null;
+  hideImageFillCropPreview?(): void;
+
+  //
   // Interaction callbacks (renderer → engine)
   //
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
+  /** Called on a double-click that should descend into a group (child under cursor, if any). */
+  onEnterGroup?: (groupId: number, childId: number | null) => void;
   onBlockDragEnd?: (blockId: number, x: number, y: number) => void;
-  onBlockTransformEnd?: (
-    blockId: number,
-    transform: { x: number; y: number; width: number; height: number; rotation: number },
-  ) => void;
+  onBlockTransformEnd?: (blockId: number, transform: BlockTransform) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   /** Called when the user drags/resizes the crop overlay. */
   onCropChange?: (rect: CropRect) => void;
+  /** Called for renderer-only graphic image-fill crop previews. */
+  onImageFillCropPreviewChange?: (crop: ImageFillCrop) => void;
+  /** Called when the dimmed area outside a graphic image-fill crop is clicked. */
+  onImageFillCropDismiss?: () => void;
   /**
    * Called on every frame while a block is being dragged or resized on-canvas
    * (live, before the gesture is committed). Lets consumers track a block's

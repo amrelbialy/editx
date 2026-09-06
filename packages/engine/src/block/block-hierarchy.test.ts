@@ -84,6 +84,36 @@ describe("BlockHierarchy", () => {
       expect(newParent.children).toEqual([3]);
       expect(child.parentId).toBe(2);
     });
+
+    it("rejects self-parenting", () => {
+      const block = makeBlock(1);
+      blocks.set(1, block);
+
+      hierarchy.appendChild(1, 1);
+
+      expect(block.parentId).toBeNull();
+      expect(block.children).toEqual([]);
+    });
+
+    it("rejects moving an ancestor into its descendant", () => {
+      const ancestor = makeBlock(1);
+      const child = makeBlock(2);
+      const descendant = makeBlock(3);
+      blocks.set(1, ancestor);
+      blocks.set(2, child);
+      blocks.set(3, descendant);
+      hierarchy.appendChild(1, 2);
+      hierarchy.appendChild(2, 3);
+
+      hierarchy.appendChild(3, 1);
+
+      expect(ancestor.parentId).toBeNull();
+      expect(ancestor.children).toEqual([2]);
+      expect(child.parentId).toBe(1);
+      expect(child.children).toEqual([3]);
+      expect(descendant.parentId).toBe(2);
+      expect(descendant.children).toEqual([]);
+    });
   });
 
   describe("removeChild", () => {

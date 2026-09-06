@@ -1,7 +1,3 @@
----
-title: Engine Design & Architecture
----
-
 # Engine Design — editx
 
 This is an **internal architecture guide** for contributors to `packages/engine`. It describes
@@ -9,8 +5,7 @@ how the engine is structured, how responsibilities are divided, and how a change
 mutation to a rendered frame. It is intentionally distinct from the package
 [`README.md`](./README.md), which covers installation and the public consumer API.
 
-Everything below reflects the implementation that exists today. Interfaces are summarised, not
-copied verbatim — read the linked source for the authoritative signatures.
+Everything reflects today's implementation; read the linked source for authoritative signatures.
 
 ## Design goals
 
@@ -77,10 +72,34 @@ Key source files:
 Block state lives in `BlockStore` as a map of `BlockData` — plain, serialisable records with an
 `id`, `type` (`scene | page | graphic | text | image | group | effect | shape | fill`), `kind`,
 children, and a typed `properties` bag. `PropertyValue` is a closed union
-(`number | string | boolean | Color | TextRun[]`). Property access uses exported string
+(`number | string | boolean | Color | TextRun[] | GradientStop[]`). Property access uses exported string
 constants (e.g. `POSITION_X`, `SIZE_WIDTH`, `TEXT_RUNS`) rather than ad-hoc keys, keeping reads
 and writes discoverable and consistent. `BlockAPI` is a thin facade delegating to focused
-sub-APIs (property, selection, layout, crop, page, shape, fill, stroke, shadow, effect, text).
+sub-APIs (property, selection, layout, crop, page, group, shape, fill, stroke, shadow, effect, text).
+
+Shape geometry replacement uses the exported `ShapeGeometry` discriminated union and
+`BlockAPI.setShapeGeometry`. The API validates and normalizes the complete descriptor before any
+mutation, creates and attaches a fresh shape sub-block, updates the graphic kind, and destroys the
+old sub-block in one command batch. This preserves graphic-owned styling, layout, effects,
+selection, and grouping while giving undo/redo ownership of both shape lifetimes. Omitted primitive
+fields use fresh shape defaults; invalid descriptors throw before history, and unsupported targets
+are no-ops.
+
+Image-filled graphics use the same command-backed fill API. `setFillImage` replaces the resolved
+fill value, while `updateFillImage` patches only supplied source or transform fields. Graphic crop
+is an editor session: the renderer previews parent-local frame geometry and image pattern
+transforms without document writes, then `commitCrop` batches frame and fill commands into one
+history entry. `cancelCrop` tears down the preview without an undo or document mutation. Source
+image and page crop continue through the existing crop-overlay path. Graphic crop commits return
+`null`; consumers can read the final session value before committing when they need its frame.
+
+Graphic and text fill gradients store typed `GradientStop[]`; stroke gradients are linear. Text
+run updates use half-open UTF-16 ranges and support gradients, highlights, curves, and auto width.
+Block-level text backgrounds batch their enabled, geometry, padding, color, and stroke properties.
+
+Groups store child-local transforms. Initial grouping expects siblings under one parent; grouping,
+membership, and bounds-refit commands preserve appearance within that supported hierarchy and
+update nested bounds. Group context navigation does not create history.
 
 ### Commands — the only mutation path
 
@@ -225,13 +244,7 @@ guide plus the [`README.md`](./README.md) if the public surface changed.
 
 ## Authoritative sources
 
-- Runtime coordinator: [`src/editx-engine.ts`](./src/editx-engine.ts) /
-  [`src/engine-core.ts`](./src/engine-core.ts)
-- Block model & API: [`src/block/`](./src/block/)
-- Commands: [`src/controller/commands/`](./src/controller/commands/)
-- History: [`src/history-manager.ts`](./src/history-manager.ts)
-- Events: [`src/event-api.ts`](./src/event-api.ts)
-- Renderer boundary: [`src/render-adapter.ts`](./src/render-adapter.ts)
-- Editor helpers: [`src/editor/`](./src/editor/)
-- Konva renderer & camera: [`src/konva/`](./src/konva/)
-- Consumer API & install: [`README.md`](./README.md)
+- Runtime and boundaries: [`src/editx-engine.ts`](./src/editx-engine.ts), [`src/engine-core.ts`](./src/engine-core.ts), [`src/render-adapter.ts`](./src/render-adapter.ts)
+- State and mutations: [`src/block/`](./src/block/), [`src/controller/commands/`](./src/controller/commands/), [`src/history-manager.ts`](./src/history-manager.ts), [`src/event-api.ts`](./src/event-api.ts)
+- Interaction and rendering: [`src/editor/`](./src/editor/), [`src/konva/`](./src/konva/)
+- Consumer API and install: [`README.md`](./README.md)

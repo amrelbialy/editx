@@ -9,6 +9,8 @@ is anchored to [`CLAUDE.md`](../../CLAUDE.md).
 ## Design philosophy
 
 - **Small, non-overlapping charters.** A tight set that gets used beats many that don't.
+- **One implementation owner by default.** Specialists gate only decisions or risks they uniquely
+  own; routine tests and validation stay with the implementer.
 - **Least-privilege tools.** Reviewers are read-only; only implementers write and run commands.
 - **One source of truth.** All agents defer to `CLAUDE.md`.
 - **Not LangGraph.** These are dev-assist specialists the user selects with built-in repo
@@ -22,14 +24,16 @@ is anchored to [`CLAUDE.md`](../../CLAUDE.md).
 ---
 name: <kebab-name>            # optional; defaults to filename
 description: <when to use>    # required — helps Copilot suggest the right agent
-model: claude-opus-4.8        # required for editx agents
+model: claude-opus-4.8        # optional; omit to inherit the active picker model
 tools: [read, edit, search, execute, github]   # subset per role (least privilege)
 ---
 <system prompt body>
 ```
 
-All editx agents use `claude-opus-4.8`. Tool categories: `read`, `edit`, `search`,
-`execute`, `github`.
+Decision-heavy agents (`engineering-lead`, `architect`, `sdk-api-designer`, and
+`rendering-engineer`) pin `claude-opus-4.8`. Routine implementation, QA, review, and
+documentation agents inherit the active picker model so teams can choose a lower-latency option.
+Tool categories: `read`, `edit`, `search`, `execute`, `github`.
 
 ## Roster
 
@@ -37,14 +41,14 @@ All editx agents use `claude-opus-4.8`. Tool categories: `read`, `edit`, `search
 
 | Agent | File | Tools | Use when |
 |-------|------|-------|----------|
-| Engineering Lead | `engineering-lead.agent.md` | read, search, github | Any multi-step / cross-cutting request — plan and recommend routing first |
+| Engineering Lead | `engineering-lead.agent.md` | read, search, github | Unclear ownership, cross-package work, public API changes, or high-risk requests |
 | Architect | `architect.agent.md` | read, search, edit | Module boundaries, placement, new subsystem design, cross-package refactors |
 | SDK / API Designer | `sdk-api-designer.agent.md` | read, search, edit | Engine public API: new commands, EventAPI, exported types |
 | Rendering Engineer | `rendering-engineer.agent.md` | read, edit, search, execute | Konva/canvas, hit-testing, transforms, on-canvas performance |
 | Developer | `developer.agent.md` | read, edit, search, execute | Implement features / fix bugs across packages |
 | Documentation Writer | `documentation-writer.agent.md` | read, edit, search, execute | Public API references, guides, examples, and README content |
-| Code Reviewer | `code-reviewer.agent.md` | read, search | Review a diff before it lands (read-only) |
-| QA | `qa.agent.md` | read, edit, search, execute | Design & run Vitest / Playwright tests |
+| Code Reviewer | `code-reviewer.agent.md` | read, search | Review high-risk or final PR diffs (read-only) |
+| QA | `qa.agent.md` | read, edit, search, execute | Independent complex/regression/interaction test coverage |
 
 ### Tier 2 — planned (add once Tier 1 is proven)
 
@@ -61,25 +65,35 @@ All editx agents use `claude-opus-4.8`. Tool categories: `read`, `edit`, `search
 > lightweight prompts (or Engineering Lead responsibilities) until there's a concrete, repeated
 > need for a dedicated agent.
 
-## Recommended manual sequence
+## Risk-based routing
 
-Agents do not invoke one another automatically. Use the Engineering Lead's plan to select
-the next specialist:
+Agents do not invoke one another automatically. Prefer the shortest route that resolves the
+actual decisions and risk:
 
+```text
+FAST:      developer -> targeted test -> pnpm check:ci (once, final)
+BOUNDARY:  architect -> developer
+PUBLIC API: sdk-api-designer -> developer -> documentation-writer
+RENDERING: rendering-engineer
+HIGH RISK: implementation owner -> qa and/or code-reviewer
 ```
-engineering-lead ─┬─► architect ─────► sdk-api-designer
-                  │                         │
-                  ├─► rendering-engineer ◄──┘
-                  ├─► developer ──► qa ──► code-reviewer
-                  ├─► documentation-writer
-                  └─► (tier 2) performance / security
-```
+
+Skip `engineering-lead` for concrete package-local work. Use it when ownership is unclear, work
+crosses packages, public API design is involved, or risk needs an explicit verification plan. Its
+plan classifies work as `FAST`, `GATED`, or `HIGH_RISK` and labels specialist steps `required` or
+`advisory`.
+
+The implementation owner writes focused tests and iterates without repository-wide linting. The
+last role that modifies files runs `pnpm check:ci` once after all edits and focused tests. QA and
+review consume that result unless they modify files. Add `qa` only when independent test strategy
+or high-risk coverage adds information, and add `code-reviewer` for high-risk or final PR review
+rather than every local iteration.
 
 ## Adding a new agent
 
 1. `cp .github/agent-templates/_template.md .github/agents/<role>.agent.md`
-2. Keep `model: claude-opus-4.8`, fill in `description` (this helps Copilot suggest
-   the agent), and grant the **minimum** `tools`.
+2. Pin `model: claude-opus-4.8` only for decision-heavy specialists. Otherwise inherit the
+  active picker model. Fill in `description` and grant the **minimum** `tools`.
 3. Write the system prompt: Scope → Rules → Procedure → Output format → Constraints.
 4. Reference `CLAUDE.md` rules rather than restating them in full.
 5. Keep it focused — if two agents would overlap, merge them or sharpen their descriptions.

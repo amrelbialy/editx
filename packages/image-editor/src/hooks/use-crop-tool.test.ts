@@ -17,7 +17,10 @@ function makeEngine(dims: { width: number; height: number } | null = { width: 10
   };
   const editor = {
     setEditMode: vi.fn(),
+    commitCrop: vi.fn(),
+    cancelCrop: vi.fn(),
     fitToScreen: vi.fn(),
+    getImageFillCrop: vi.fn(() => null),
     undo: vi.fn(),
   };
   const engine = { block, editor } as unknown as EditxEngine;
@@ -127,6 +130,19 @@ describe("useCropTool", () => {
     expect(result.current.cropDimensions).toEqual({ width: 50, height: 50 });
   });
 
+  it("keeps CropPanel actions on an explicitly targeted graphic", () => {
+    const h = makeEngine({ width: 200, height: 100 });
+    const { result } = renderHook(() => useCropTool({ engineRef: ref(h.engine), config }));
+
+    act(() => result.current.enterCropMode(7));
+    act(() => result.current.handleCropPresetChange("square"));
+    act(() => result.current.handleResizeDimensions(160, 90));
+
+    expect(h.block.applyCropRatio).toHaveBeenCalledWith(7, 1);
+    expect(h.block.applyCropDimensions).toHaveBeenCalledWith(7, 160, 90);
+    expect(h.block.getCropVisualDimensions).toHaveBeenLastCalledWith(7);
+  });
+
   it("handleCropPresetChange applies a null ratio for the free preset", () => {
     const h = makeEngine();
     const { result } = renderHook(() => useCropTool({ engineRef: ref(h.engine), config }));
@@ -138,18 +154,20 @@ describe("useCropTool", () => {
     expect(h.block.applyCropRatio).toHaveBeenCalledWith(1, null);
   });
 
-  it("handleCropPresetChange derives the ratio from the original image for 'original'", () => {
+  it("uses the fill source ratio for an image-filled graphic's 'original' preset", () => {
     useImageEditorStore.setState({
       originalImage: { src: "x", width: 200, height: 100, name: "x" },
     });
     const h = makeEngine();
+    h.editor.getImageFillCrop.mockReturnValue({ sourceAspectRatio: 1.5 } as never);
     const { result } = renderHook(() => useCropTool({ engineRef: ref(h.engine), config }));
 
+    act(() => result.current.enterCropMode(7));
     act(() => {
       result.current.handleCropPresetChange("original");
     });
 
-    expect(h.block.applyCropRatio).toHaveBeenCalledWith(1, 2);
+    expect(h.block.applyCropRatio).toHaveBeenCalledWith(7, 1.5);
   });
 
   it("handleCropApply commits the crop and returns to select", () => {
@@ -160,13 +178,13 @@ describe("useCropTool", () => {
       result.current.handleCropApply();
     });
 
-    expect(h.editor.setEditMode).toHaveBeenCalledWith("Transform");
+    expect(h.editor.commitCrop).toHaveBeenCalledOnce();
     expect(h.editor.undo).not.toHaveBeenCalled();
     expect(useImageEditorStore.getState().activeTool).toBe("select");
     expect(result.current.cropDimensions).toBeNull();
   });
 
-  it("handleCropCancel undoes the pending crop before returning to select", () => {
+  it("handleCropCancel discards the pending crop without undoing history", () => {
     const h = makeEngine();
     const { result } = renderHook(() => useCropTool({ engineRef: ref(h.engine), config }));
 
@@ -174,8 +192,8 @@ describe("useCropTool", () => {
       result.current.handleCropCancel();
     });
 
-    expect(h.editor.setEditMode).toHaveBeenCalledWith("Transform");
-    expect(h.editor.undo).toHaveBeenCalledTimes(1);
+    expect(h.editor.cancelCrop).toHaveBeenCalledOnce();
+    expect(h.editor.undo).not.toHaveBeenCalled();
     expect(useImageEditorStore.getState().activeTool).toBe("select");
   });
 

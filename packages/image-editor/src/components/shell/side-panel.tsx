@@ -17,6 +17,7 @@ import { TextPanel } from "../panels/text-panel";
 import { BlockInspector } from "./block-inspector";
 import { getPropertyPanelTitleKey, getToolPanelTitle, getToolPanelTitleKey } from "./panel-titles";
 import { ToolPanel } from "./tool-panel";
+import { usePropertyPanelVisibility } from "./use-property-panel-visibility";
 
 interface SidePanelProps {
   engine: EditxEngine | null;
@@ -49,6 +50,8 @@ interface SidePanelProps {
   };
   addShape: (shape: ShapeType, sides?: number) => void;
   addText: (preset?: TextPreset) => void;
+  addTextPreset: (id: string) => void;
+  addShapePreset: (id: string) => void;
   addImage: (file: File) => Promise<void>;
   replaceImage: (file: File, blockId: number) => Promise<void>;
   blockEffects: {
@@ -76,6 +79,8 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     filter,
     addShape,
     addText,
+    addTextPreset,
+    addShapePreset,
     addImage,
     replaceImage,
     blockEffects,
@@ -88,6 +93,12 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const { t } = useTranslation();
+  const visibility = usePropertyPanelVisibility({
+    engine,
+    panel: propertySidePanel,
+    blockId: selectedShapeId,
+    blockType: selectedBlockType,
+  });
 
   const hasSelectedBlock =
     selectedBlockType === "text" ||
@@ -112,6 +123,15 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     if (key) return t(key);
     return getToolPanelTitle(activeTool, customTools);
   }, [propertySidePanel, activeTool, customTools, t]);
+
+  const visibilityLabel = useMemo(() => {
+    if (!visibility || !propertySidePanel) return undefined;
+    const action = visibility.enabled ? "hide" : "show";
+    if (propertySidePanel === "fill") return t(`panel.${action}Fill`);
+    if (propertySidePanel === "stroke") return t(`panel.${action}Stroke`);
+    if (propertySidePanel === "shadow") return t(`panel.${action}Shadow`);
+    return undefined;
+  }, [propertySidePanel, visibility, t]);
 
   const handleClose = useCallback(() => {
     if (propertySidePanel) {
@@ -175,9 +195,9 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
           <FilterPanel activeFilter={filter.activeFilter} onSelect={filter.handleFilterSelect} />
         );
       case "shapes":
-        return <ShapesPanel onAddShape={addShape} />;
+        return <ShapesPanel onAddShape={addShape} onAddShapePreset={addShapePreset} />;
       case "text":
-        return <TextPanel onAddText={addText} />;
+        return <TextPanel onAddText={addText} onAddTextPreset={addTextPreset} />;
       case "image":
         return <ImagePanel onAddImage={addImage} />;
       default:
@@ -192,6 +212,8 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
     filter,
     addShape,
     addText,
+    addTextPreset,
+    addShapePreset,
     addImage,
     CustomPanel,
     isImageBlockSelected,
@@ -199,7 +221,15 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
   ]);
 
   return (
-    <ToolPanel open={open} title={title} onClose={handleClose} docked={activeTool === "crop"}>
+    <ToolPanel
+      open={open}
+      title={title}
+      onClose={handleClose}
+      docked={activeTool === "crop"}
+      visibility={
+        visibility && visibilityLabel ? { ...visibility, label: visibilityLabel } : undefined
+      }
+    >
       {propertySidePanel && engine && selectedShapeId !== null ? (
         <BlockInspector
           panel={propertySidePanel}
@@ -208,6 +238,7 @@ export const SidePanel: React.FC<SidePanelProps> = (props) => {
           blockType={selectedBlockType}
           blockEffects={blockEffects}
           blockActions={blockActions}
+          propertyEnabled={visibility?.enabled}
           onReplaceImage={(file: File) => replaceImage(file, selectedShapeId)}
         />
       ) : (

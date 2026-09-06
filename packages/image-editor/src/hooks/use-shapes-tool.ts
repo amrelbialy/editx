@@ -1,8 +1,12 @@
-import type { EditxEngine, ShapeType } from "@editx/engine";
-import { hexToColor, SHAPE_RECT_CORNER_RADIUS } from "@editx/engine";
+import type { EditxEngine, ShapeGeometry, ShapeType } from "@editx/engine";
+import { hexToColor } from "@editx/engine";
 import { useCallback } from "react";
 import type { ImageEditorConfig } from "../config/config.types";
+import { DEFAULT_SHAPE_PRESET_GROUPS, LEGACY_FILLED_ARROW_PRESET } from "../config/presets";
+import { findPresetById, resolveShapePresetGroups } from "../config/resolve-presets";
+import { normalizeShapePresetGeometry } from "../config/shape-geometry-options";
 import { useImageEditorStore } from "../store/image-editor-store";
+import { insertShapePreset } from "./insert-shape-preset";
 
 export interface UseShapesToolOptions {
   engineRef: React.RefObject<EditxEngine | null>;
@@ -24,7 +28,18 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
       const strokeWidth = shapes?.defaultStrokeWidth ?? 0;
       const opacity = shapes?.defaultOpacity ?? 1;
       const cornerRadius = shapes?.defaultCornerRadius ?? 0;
-      const sizeFraction = shapes?.defaultSize ?? 0.25;
+      const sizeFraction = shapes?.defaultSize ?? 0.5;
+
+      let geometry: ShapeGeometry;
+      try {
+        geometry = normalizeShapePresetGeometry({
+          kind: shapeType,
+          sides,
+          cornerRadius: shapeType === "rect" ? cornerRadius : undefined,
+        });
+      } catch {
+        return;
+      }
 
       const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
       const size = Math.min(pageW, pageH) * sizeFraction;
@@ -52,10 +67,7 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
         ce.block.setOpacity(graphicId, opacity);
       }
 
-      if (shapeType === "rect" && cornerRadius > 0) {
-        const shapeId = ce.block.getShape(graphicId);
-        if (shapeId != null) ce.block.setFloat(shapeId, SHAPE_RECT_CORNER_RADIUS, cornerRadius);
-      }
+      ce.block.setShapeGeometry(graphicId, geometry);
 
       if (fillMode === "outlined") {
         ce.block.setFillEnabled(graphicId, false);
@@ -74,5 +86,37 @@ export function useShapesTool({ engineRef, config }: UseShapesToolOptions) {
     [engineRef, editableBlockId, config.shapes],
   );
 
-  return { handleAddShape };
+  const handleAddShapePreset = useCallback(
+    (id: string) => {
+      const ce = engineRef.current;
+      if (!ce || editableBlockId === null) return;
+
+      const shapes = config.shapes ?? {};
+      const groups = resolveShapePresetGroups({
+        builtIn: DEFAULT_SHAPE_PRESET_GROUPS,
+        presetGroups: shapes.presetGroups,
+        additionalPresetGroups: shapes.additionalPresetGroups,
+        legacyPresets: shapes.presets,
+        defaultColor: shapes.defaultColor,
+      });
+      const preset =
+        findPresetById(groups, id) ??
+        (id === LEGACY_FILLED_ARROW_PRESET.id ? LEGACY_FILLED_ARROW_PRESET : undefined);
+      // Back-compat: unknown ids fall through to the legacy shape-kind flow.
+      if (!preset) {
+        handleAddShape(id as ShapeType);
+        return;
+      }
+
+      const { width: pageW, height: pageH } = ce.block.getPageDimensions(editableBlockId);
+      const graphicId = insertShapePreset(
+        { engine: ce, pageId: editableBlockId, pageW, pageH, config: shapes },
+        preset,
+      );
+      if (graphicId !== undefined) ce.block.select(graphicId);
+    },
+    [engineRef, editableBlockId, config.shapes, handleAddShape],
+  );
+
+  return { handleAddShape, handleAddShapePreset };
 }

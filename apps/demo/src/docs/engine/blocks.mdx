@@ -13,7 +13,7 @@ Every element in the scene is a **block**. Each block has a type, optional kind,
 | `graphic` | Shape with fill (rect, ellipse, line, etc.) |
 | `text` | Rich text annotation |
 | `image` | Image layer |
-| `stack` | Grouping container |
+| `group` | Nested grouping container |
 | `effect` | Effect sub-block (adjustments, filter) |
 | `shape` | Shape sub-block (rect, ellipse, polygon, etc.) |
 | `fill` | Fill sub-block (solid color, image fill) |
@@ -22,9 +22,13 @@ Every element in the scene is a **block**. Each block has a type, optional kind,
 
 Graphic blocks own sub-blocks for their visual properties:
 
-- **Shape** — defines geometry (`rect`, `ellipse`, `line`, `arrow`, `polygon`, `star`)
-- **Fill** — defines appearance (`solid-color`, `image`)
+- **Shape** — defines geometry (`rect`, `ellipse`, `polygon`, `star`, `line`, `path`)
+- **Fill** — defines appearance (`color`, `gradient`, `image`)
 - **Effects** — stackable effects (`adjustments`, `filter`)
+
+Groups own child blocks rather than visual sub-blocks. Group membership preserves
+each child's editable shape, fill, text, and transform. See the
+[Groups API](/docs/engine/groups-api).
 
 ## Properties
 
@@ -37,4 +41,22 @@ engine.block.getBool(blockId, "appearance/visible");
 engine.block.getColor(blockId, "fill/color");
 ```
 
-Full property reference coming soon.
+`PropertyValue` supports numbers, strings, booleans, colors, text runs, and
+gradient-stop arrays. Prefer semantic APIs for compound values because they keep
+related property writes atomic. Shape and image-fill methods additionally validate
+or normalize their descriptors:
+
+```ts
+engine.block.setShapeGeometry(graphicId, { type: "polygon", sides: 6 });
+engine.block.setFillGradient(graphicId, {
+	type: "radial",
+	angle: 0,
+	stops: [
+		{ offset: 0, color: "#ffffff" },
+		{ offset: 1, color: "#2563eb" },
+	],
+});
+```
+
+See [Graphics API](/docs/engine/graphics-api) for graphics properties and
+[Text API](/docs/engine/text-api) for run and background properties.

@@ -134,7 +134,7 @@ export const DEFAULT_PLAYGROUND_CONFIG: PlaygroundConfig = {
   textDefaultColor: "#ffffff",
   textDefaultFontStyle: "normal",
   textDefaultTextAlign: "left",
-  textDefaultLineHeight: 1.2,
+  textDefaultLineHeight: 1.1,
   textDefaultLetterSpacing: 0,
   textMinFontSize: 1,
   textMaxFontSize: 500,
@@ -146,7 +146,7 @@ export const DEFAULT_PLAYGROUND_CONFIG: PlaygroundConfig = {
   shapesDefaultStrokeWidth: 0,
   shapesDefaultOpacity: 1,
   shapesDefaultCornerRadius: 0,
-  shapesDefaultSize: 0.25,
+  shapesDefaultSize: 0.5,
 
   imageMaxFileSize: 5 * 1024 * 1024,
   imageMaxDimension: 2048,

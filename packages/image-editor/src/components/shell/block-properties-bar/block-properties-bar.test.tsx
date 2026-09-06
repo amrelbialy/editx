@@ -14,34 +14,59 @@ import { BlockPropertiesBar } from "./block-properties-bar.component";
  * All document mutations are exposed as spies so tests assert they route
  * through the engine (mirrors production undoability).
  */
-function makeEngine() {
+function makeEngine(shapeKind = "rect") {
   const block = {
     getTextRuns: vi.fn().mockReturnValue([{ text: "Hello", style: {} }]),
     getString: vi.fn().mockReturnValue("left"),
     getOpacity: vi.fn().mockReturnValue(1),
     getTextContent: vi.fn().mockReturnValue("Hello"),
     getFill: vi.fn().mockReturnValue(null),
+    getFillImage: vi.fn().mockReturnValue(null),
     getColor: vi.fn().mockReturnValue(null),
     isFillEnabled: vi.fn().mockReturnValue(true),
     setFillEnabled: vi.fn(),
     setOpacity: vi.fn(),
     onStateChanged: vi.fn().mockReturnValue(() => {}),
+    findAllSelected: vi.fn().mockReturnValue([1]),
+    onSelectionChanged: vi.fn().mockReturnValue(() => {}),
+    getType: vi.fn().mockReturnValue("graphic"),
+    getShape: vi.fn().mockReturnValue(9),
+    getKind: vi.fn((id: number) => (id === 9 ? shapeKind : "graphic")),
+    getFloat: vi.fn().mockReturnValue(0),
+    setShapeGeometry: vi.fn(),
+    group: vi.fn().mockReturnValue(20),
+    ungroup: vi.fn().mockReturnValue([8, 9]),
+    enterGroup: vi.fn(),
+    deselectAll: vi.fn(),
+    select: vi.fn(),
+    setSelected: vi.fn(),
     toggleBoldText: vi.fn(),
     toggleItalicText: vi.fn(),
     setTextAlign: vi.fn(),
   };
-  const engine = { block };
+  const engine = {
+    block,
+    onHistoryChanged: vi.fn().mockReturnValue(() => {}),
+    beginBatch: vi.fn(),
+    endBatch: vi.fn(),
+    renderDirty: vi.fn(),
+  };
   return engine as unknown as EditxEngine & { block: typeof block };
 }
 
-type BlockType = "text" | "graphic" | "image";
+type BlockType = "text" | "graphic" | "image" | "group";
 
 function renderBar(blockType: BlockType, engine: EditxEngine = makeEngine()) {
   return render(
     <I18nProvider>
       <ImageEditorProvider>
         <TooltipProvider>
-          <BlockPropertiesBar engine={engine} blockId={7} blockType={blockType} />
+          <BlockPropertiesBar
+            engine={engine}
+            blockId={7}
+            blockType={blockType}
+            onReplaceImage={vi.fn()}
+          />
         </TooltipProvider>
       </ImageEditorProvider>
     </I18nProvider>,
@@ -61,21 +86,45 @@ describe("BlockPropertiesBar", () => {
 
   it("renders shared controls for a graphic block", () => {
     renderBar("graphic");
-    // Shared controls present for every block type.
     expect(screen.getByRole("button", { name: "Shadow" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opacity" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Position" })).toBeDefined();
-    // Graphic-specific: color + stroke panels.
-    expect(screen.getByRole("button", { name: "Color" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Shapes" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Corner Radius" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Fill" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
     expect(screen.getByRole("button", { name: "Stroke" })).toBeDefined();
+  });
+
+  it("shows only geometry properties supported by the selected shape", () => {
+    const { unmount } = renderBar("graphic", makeEngine("polygon"));
+    expect(screen.getByRole("button", { name: "Sides" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Corner Radius" })).toBeNull();
+    unmount();
+
+    renderBar("graphic", makeEngine("ellipse"));
+    expect(screen.queryByRole("button", { name: "Corner Radius" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sides" })).toBeNull();
+  });
+
+  it("opens geometry properties as a dropdown without changing the side panel", () => {
+    renderBar("graphic");
+
+    fireEvent.click(screen.getByRole("button", { name: "Shapes" }));
+    expect(useImageEditorStore.getState().propertySidePanel).toBe("shape");
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Corner Radius" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByRole("slider")).toBeDefined();
+    expect(useImageEditorStore.getState().propertySidePanel).toBe("shape");
   });
 
   it("renders image-specific controls for an image block", () => {
     renderBar("image");
     expect(screen.getByRole("button", { name: "Image" })).toBeDefined();
-    // Style dropdown (Adjustments / Filters) exists for images only.
     expect(screen.getByRole("button", { name: "Style" })).toBeDefined();
-    // No text-only color swatch for images.
     expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
   });
 
@@ -84,6 +133,36 @@ describe("BlockPropertiesBar", () => {
     expect(screen.getByRole("button", { name: "Bold" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Italic" })).toBeDefined();
     expect(screen.getByRole("button", { name: "More text options" })).toBeDefined();
+  });
+
+  it("renders only dedicated controls for a selected group", () => {
+    const engine = makeEngine();
+    engine.block.getType.mockReturnValue("group");
+    renderBar("group", engine);
+
+    expect(screen.getByRole("button", { name: "Enter Group" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ungroup" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Shadow" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Color" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter Group" }));
+    expect(engine.block.enterGroup).toHaveBeenCalledWith(7);
+    expect(engine.block.deselectAll).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+    expect(engine.block.ungroup).toHaveBeenCalledWith(7);
+    expect(engine.block.deselectAll).toHaveBeenCalledTimes(2);
+    expect(engine.block.select).not.toHaveBeenCalled();
+    expect(engine.block.setSelected).not.toHaveBeenCalled();
+  });
+
+  it("groups a multi-selection and selects the returned group", () => {
+    const engine = makeEngine();
+    engine.block.findAllSelected.mockReturnValue([7, 8]);
+    renderBar("graphic", engine);
+
+    fireEvent.click(screen.getByRole("button", { name: "Group" }));
+    expect(engine.block.group).toHaveBeenCalledWith([7, 8]);
+    expect(engine.block.select).toHaveBeenCalledWith(20);
   });
 
   it("keeps the data-text-toolbar marker on the root container", () => {
@@ -120,7 +199,12 @@ describe("BlockPropertiesBar", () => {
         <I18nProvider>
           <ImageEditorProvider>
             <TooltipProvider>
-              <BlockPropertiesBar engine={engine} blockId={7} blockType="graphic" />
+              <BlockPropertiesBar
+                engine={engine}
+                blockId={7}
+                blockType="graphic"
+                onReplaceImage={vi.fn()}
+              />
             </TooltipProvider>
           </ImageEditorProvider>
         </I18nProvider>
@@ -129,8 +213,7 @@ describe("BlockPropertiesBar", () => {
 
     render(<Harness />);
     const before = screen.getByRole("button", { name: "Shadow" });
-    // Trigger an unrelated parent state change.
-    fireEvent.click(before); // open panel (real state that should persist)
+    fireEvent.click(before);
     bump();
     bump();
     const after = screen.getByRole("button", { name: "Shadow" });
@@ -157,13 +240,10 @@ describe("BlockPropertiesBar", () => {
     expect(engine.block.toggleItalicText).toHaveBeenCalledWith(7, 0, "Hello".length);
   });
 
-  it("routes the no-fill toggle through the engine for graphic blocks", () => {
-    const engine = makeEngine();
-    renderBar("graphic", engine);
+  it("keeps fill enablement inside the Fill panel", () => {
+    renderBar("graphic");
 
-    // Icon-only toggle labelled via aria-label ("Disable fill" when enabled).
-    const noFill = screen.getByRole("button", { name: "Disable fill" });
-    fireEvent.click(noFill);
-    expect(engine.block.setFillEnabled).toHaveBeenCalledWith(7, false);
+    expect(screen.queryByRole("button", { name: "Disable fill" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Fill" })).toBeDefined();
   });
 });

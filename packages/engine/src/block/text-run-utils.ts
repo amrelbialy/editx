@@ -1,4 +1,38 @@
-import type { TextRun, TextRunStyle } from "./block.types";
+import type {
+  TextBackgroundPadding,
+  TextGradient,
+  TextRun,
+  TextRunStyle,
+  TextRunStyleUpdate,
+} from "./block.types";
+
+/**
+ * Structural equality for two optional text gradients. Used by both the block
+ * run-merge logic (here) and the Konva layout run-splitter so runs with
+ * different gradients never merge.
+ */
+export function gradientsEqual(a?: TextGradient, b?: TextGradient): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.type !== b.type || (a.angle ?? 0) !== (b.angle ?? 0)) return false;
+  if (a.stops.length !== b.stops.length) return false;
+  for (let i = 0; i < a.stops.length; i++) {
+    if (a.stops[i].offset !== b.stops[i].offset || a.stops[i].color !== b.stops[i].color) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** Structural equality for two optional per-side padding overrides. */
+export function backgroundPaddingsEqual(
+  a?: Partial<TextBackgroundPadding>,
+  b?: Partial<TextBackgroundPadding>,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
+}
 
 /**
  * Pure utility functions for manipulating TextRun arrays.
@@ -50,13 +84,18 @@ export function stylesEqual(a: TextRunStyle, b: TextRunStyle): boolean {
     (a.letterSpacing ?? undefined) === (b.letterSpacing ?? undefined) &&
     (a.textDecoration ?? undefined) === (b.textDecoration ?? undefined) &&
     (a.backgroundColor ?? undefined) === (b.backgroundColor ?? undefined) &&
+    (a.backgroundOpacity ?? undefined) === (b.backgroundOpacity ?? undefined) &&
+    (a.backgroundCornerRadius ?? undefined) === (b.backgroundCornerRadius ?? undefined) &&
+    backgroundPaddingsEqual(a.backgroundPadding, b.backgroundPadding) &&
     (a.textTransform ?? undefined) === (b.textTransform ?? undefined) &&
     (a.textShadowColor ?? undefined) === (b.textShadowColor ?? undefined) &&
     (a.textShadowBlur ?? undefined) === (b.textShadowBlur ?? undefined) &&
     (a.textShadowOffsetX ?? undefined) === (b.textShadowOffsetX ?? undefined) &&
     (a.textShadowOffsetY ?? undefined) === (b.textShadowOffsetY ?? undefined) &&
     (a.textStrokeColor ?? undefined) === (b.textStrokeColor ?? undefined) &&
-    (a.textStrokeWidth ?? undefined) === (b.textStrokeWidth ?? undefined)
+    (a.textStrokeWidth ?? undefined) === (b.textStrokeWidth ?? undefined) &&
+    gradientsEqual(a.fillGradient, b.fillGradient) &&
+    gradientsEqual(a.textStrokeGradient, b.textStrokeGradient)
   );
 }
 
@@ -107,7 +146,7 @@ export function setStyleOnRange(
   runs: TextRun[],
   start: number,
   end: number,
-  styleUpdate: Partial<TextRunStyle>,
+  styleUpdate: TextRunStyleUpdate,
 ): TextRun[] {
   if (start >= end) return runs.map((r) => ({ text: r.text, style: { ...r.style } }));
 
@@ -118,9 +157,20 @@ export function setStyleOnRange(
     const runStart = offset;
     const runEnd = offset + run.text.length;
 
-    // If this run overlaps [start, end), apply the style
+    // If this run overlaps [start, end), apply the style. Skip `undefined`
+    // values so a partial update (e.g. shadow blur only) never clobbers
+    // sibling fields — mirrors the Lexical `textRunStyleToCssPatch` guards.
+    // `null` is the explicit clear (e.g. gradient → solid fill).
     if (runStart >= start && runEnd <= end) {
-      Object.assign(run.style, styleUpdate);
+      for (const key in styleUpdate) {
+        const value = styleUpdate[key as keyof TextRunStyle];
+        if (value === undefined) continue;
+        if (value === null) {
+          delete (run.style as Record<string, unknown>)[key];
+        } else {
+          (run.style as Record<string, unknown>)[key] = value;
+        }
+      }
     }
 
     offset = runEnd;

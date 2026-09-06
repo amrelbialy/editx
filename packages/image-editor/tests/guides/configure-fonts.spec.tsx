@@ -16,6 +16,44 @@ async function waitForEditor(component: any) {
 }
 
 test.describe("Guide: configure-fonts", () => {
+  test("additional preset groups are searchable and insert text", async ({ mount }) => {
+    const component = await mount(
+      <ImageEditor
+        src={TEST_IMAGE}
+        width="900px"
+        height="600px"
+        config={{
+          text: {
+            additionalPresetGroups: [
+              {
+                id: "brand",
+                label: "Brand",
+                presets: [
+                  {
+                    id: "brand-callout",
+                    label: "Brand Callout",
+                    blocks: [{ text: "Brand Callout", fontSizeScale: 2, fontWeight: "bold" }],
+                  },
+                ],
+              },
+            ],
+          },
+        }}
+      />,
+    );
+    await waitForEditor(component);
+
+    await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Text").click();
+    await component.getByRole("searchbox", { name: "Search presets" }).fill("Brand Callout");
+
+    const preset = component.getByRole("button", { name: "Brand Callout", exact: true });
+    await expect(preset).toBeVisible({ timeout: 10_000 });
+    await expect(component.getByRole("button", { name: "Body Text", exact: true })).toHaveCount(0);
+    await preset.click();
+
+    await expect(component.getByRole("combobox").first()).toBeVisible({ timeout: 5_000 });
+  });
+
   test("config.text.fonts drives the font picker", async ({ mount, page }) => {
     const component = await mount(
       <ImageEditor
@@ -29,7 +67,8 @@ test.describe("Guide: configure-fonts", () => {
 
     // Open the Text tool and add a body text block (auto-selects it).
     await component.getByRole("toolbar", { name: "Editor tools" }).getByText("Text").click();
-    await component.getByTestId("grid-body").click();
+    await component.getByRole("button", { name: "More (1)", exact: true }).click();
+    await component.getByRole("button", { name: "Body Text", exact: true }).click();
 
     // Open the selection bar's font picker.
     const fontPicker = component.getByRole("combobox").first();

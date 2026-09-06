@@ -13,7 +13,7 @@ import { CopyButton } from "../components/copy-button";
 import { CtaBanner } from "../components/cta-banner";
 import { FeatureCard } from "../components/feature-card";
 import { Footer } from "../components/footer";
-import { InlineDemo } from "../components/inline-demo";
+import { PresetGalleryShowcase } from "../components/preset-gallery-showcase";
 import { QuickStart } from "../components/quick-start";
 import { StatsBar } from "../components/stats-bar";
 import { WhyEditx } from "../components/why-editx";
@@ -47,21 +47,21 @@ const FEATURES: Feature[] = [
   {
     icon: Sparkles,
     title: "Filters",
-    desc: "30+ filter presets with adjustable intensity, WebGL-accelerated.",
+    desc: "40+ filter presets with adjustable intensity, WebGL-accelerated.",
     from: "#ec4899",
     to: "#f43f5e",
   },
   {
     icon: Type,
     title: "Text",
-    desc: "Rich text annotations with fonts, colors, and formatting via Lexical.",
+    desc: "Rich styles, curved text, gradients, highlights, and editable layered compositions.",
     from: "#3b82f6",
     to: "#6366f1",
   },
   {
     icon: Shapes,
     title: "Shapes",
-    desc: "Rectangles, ellipses, lines, arrows, polygons, stars — filled or outlined.",
+    desc: "Filled, outlined, gradient, image-filled, and abstract graphics with custom catalogs.",
     from: "#10b981",
     to: "#14b8a6",
   },
@@ -221,14 +221,16 @@ function DemoSection() {
     <section className="py-14 px-6 max-w-5xl mx-auto">
       <div className="text-center mb-8">
         <span className="text-xs font-semibold tracking-widest text-violet-600 uppercase">
-          Live demo
+          Preset galleries
         </span>
         <h2 className="text-3xl font-semibold mt-2 mb-2 text-zinc-900 dark:text-zinc-100">
-          Try it right here
+          Polished text and graphics in one click
         </h2>
-        <p className="text-zinc-500">Edit a real photo with the full editor. No setup required.</p>
+        <p className="text-zinc-500">
+          Search curated presets, insert editable compositions, or supply your own brand catalog.
+        </p>
       </div>
-      <InlineDemo />
+      <PresetGalleryShowcase />
     </section>
   );
 }

@@ -1,109 +1,64 @@
 import type { EditxEngine } from "@editx/engine";
-import { colorToHex, hexToColor } from "@editx/engine";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useConfig } from "../../config/config-context";
-import { useCoalescedHistory } from "../../hooks/use-coalesced-history";
-import { enableStrokeWithDefaults } from "../../utils/enable-stroke";
-import { ColorSwatch } from "../ui/color-swatch";
-import { SliderField } from "../ui/slider-field";
-import { SwitchField } from "../ui/switch-field";
+import { useImageEditorStore } from "../../store/image-editor-store";
+import { GraphicStrokeControls } from "./graphic-stroke-controls.component";
+import { TextStrokeSection } from "./text-stroke-section.component";
 
 interface StrokePropertyPanelProps {
   engine: EditxEngine;
   blockId: number;
+  blockType: "text" | "graphic" | "image";
+  enabled?: boolean;
 }
 
-interface StrokeState {
-  enabled: boolean;
-  color: string;
-  width: number;
-}
+export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = (props) => {
+  const { engine, blockId, blockType, enabled } = props;
+  const config = useConfig();
+  const shapes = config.shapes;
 
-function readStroke(engine: EditxEngine, blockId: number): StrokeState {
-  return {
-    enabled: engine.block.isStrokeEnabled(blockId),
-    color: colorToHex(engine.block.getStrokeColor(blockId)).substring(0, 7),
-    width: engine.block.getStrokeWidth(blockId),
-  };
-}
+  const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
+  const editingTextBlockId = useImageEditorStore((s) => s.editingTextBlockId);
 
-export const StrokePropertyPanel: React.FC<StrokePropertyPanelProps> = ({ engine, blockId }) => {
-  const shapes = useConfig().shapes;
+  const isText = blockType === "text";
 
-  const [state, setState] = useState(() => readStroke(engine, blockId));
+  const hasCharSelection =
+    editingTextBlockId === blockId &&
+    textSelectionRange !== null &&
+    textSelectionRange.from !== textSelectionRange.to;
 
-  useEffect(() => {
-    setState(readStroke(engine, blockId));
-  }, [engine, blockId]);
-
-  // Re-sync when undo/redo changes engine state
-  useEffect(() => {
-    return engine.onHistoryChanged(() => setState(readStroke(engine, blockId)));
-  }, [engine, blockId]);
-
-  const update = useCallback(() => setState(readStroke(engine, blockId)), [engine, blockId]);
-
-  const { commit, flush } = useCoalescedHistory(engine);
-
-  const handleToggle = useCallback(() => {
-    if (state.enabled) {
-      engine.block.setStrokeEnabled(blockId, false);
-    } else {
-      enableStrokeWithDefaults(engine, blockId, {
-        color: shapes?.defaultStrokeColor,
-        width: shapes?.defaultStrokeWidth,
-      });
+  const getStyleRange = useCallback((): { start: number; end: number } => {
+    if (hasCharSelection && textSelectionRange) {
+      return { start: textSelectionRange.from, end: textSelectionRange.to };
     }
-    update();
-  }, [
-    engine,
-    blockId,
-    state.enabled,
-    update,
-    shapes?.defaultStrokeColor,
-    shapes?.defaultStrokeWidth,
-  ]);
+    return { start: 0, end: engine.block.getTextContent(blockId).length };
+  }, [engine, blockId, hasCharSelection, textSelectionRange]);
 
-  const handleColor = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      commit(() => engine.block.setStrokeColor(blockId, hexToColor(value)));
-      update();
-    },
-    [engine, blockId, update, commit],
-  );
-
-  const handleWidth = useCallback(
-    ([v]: number[]) => {
-      commit(() => engine.block.setStrokeWidth(blockId, v));
-      update();
-    },
-    [engine, blockId, update, commit],
-  );
+  // Text blocks store stroke in the run style (single source of truth); the
+  // existing per-run section handles read/write selection-aware. Graphic/image
+  // keep the block-level Konva stroke below.
+  if (isText) {
+    return (
+      <TextStrokeSection
+        engine={engine}
+        blockId={blockId}
+        getStyleRange={getStyleRange}
+        selectionStart={textSelectionRange?.from}
+        swatches={config.colors}
+      />
+    );
+  }
 
   return (
-    <SwitchField label="Enable Stroke" checked={state.enabled} onChange={handleToggle}>
-      {/* Color */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-fluid text-muted-foreground">Color</span>
-        <div className="flex items-center gap-2">
-          <ColorSwatch value={state.color} onChange={handleColor} />
-          <span className="text-fluid font-mono text-muted-foreground">{state.color}</span>
-        </div>
-      </div>
-
-      {/* Width */}
-      <SliderField
-        label="Width"
-        value={state.width}
-        min={0}
-        max={20}
-        step={0.5}
-        onChange={(v) => handleWidth([v])}
-        onCommit={flush}
-        formatValue={(v) => v.toFixed(1)}
-      />
-    </SwitchField>
+    <GraphicStrokeControls
+      engine={engine}
+      blockId={blockId}
+      blockType={blockType}
+      enabled={enabled}
+      swatches={config.colors}
+      defaultColor={shapes?.defaultStrokeColor}
+      defaultWidth={shapes?.defaultStrokeWidth}
+    />
   );
 };

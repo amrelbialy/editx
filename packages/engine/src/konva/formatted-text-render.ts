@@ -1,91 +1,26 @@
+import { fillRoundRect } from "./canvas-round-rect";
+import {
+  type BoxPadding,
+  computeTextUnionRect,
+  hasVisibleGlyphs,
+  lineStartX,
+  textStartY,
+} from "./formatted-text-box";
+import { drawTextBackgroundBox, type TextBackgroundBoxStyle } from "./formatted-text-box-render";
+import type { CurvedTextLayout } from "./formatted-text-curve";
+import { drawDecoration, drawPartText } from "./formatted-text-draw-run";
 import type { TextLine } from "./formatted-text-utils";
 import { applyTextTransform, formatFont } from "./formatted-text-utils";
 
 export interface TextRenderConfig {
   width: number;
   height: number;
-  padding: number;
+  padding: number | BoxPadding;
   align: string;
   verticalAlign: string;
   backgroundFill?: string;
-}
-
-function drawText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  letterSpacing: number,
-  stroke: boolean,
-): void {
-  const draw = stroke ? ctx.strokeText.bind(ctx) : ctx.fillText.bind(ctx);
-  if (letterSpacing !== 0 && text.length > 0) {
-    let charX = x;
-    for (let i = 0; i < text.length; i++) {
-      draw(text[i], charX, y);
-      charX += ctx.measureText(text[i]).width + letterSpacing;
-    }
-  } else {
-    draw(text, x, y);
-  }
-}
-
-function drawPartText(
-  ctx: CanvasRenderingContext2D,
-  displayText: string,
-  part: {
-    style: {
-      letterSpacing: number;
-      textStrokeColor: string;
-      textStrokeWidth: number;
-      fill: string;
-    };
-    width: number;
-  },
-  xOffset: number,
-  yOffset: number,
-  hasShadow: boolean,
-): void {
-  const hasStroke = !!part.style.textStrokeColor && part.style.textStrokeWidth > 0;
-  if (hasStroke) {
-    ctx.strokeStyle = part.style.textStrokeColor;
-    ctx.lineWidth = part.style.textStrokeWidth;
-    ctx.lineJoin = "round";
-    drawText(ctx, displayText, xOffset, yOffset, part.style.letterSpacing, true);
-  }
-
-  ctx.fillStyle = part.style.fill;
-  drawText(ctx, displayText, xOffset, yOffset, part.style.letterSpacing, false);
-
-  if (hasShadow) {
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-  }
-}
-
-function drawDecoration(
-  ctx: CanvasRenderingContext2D,
-  part: { style: { textDecoration: string; fontSize: number; fill: string }; width: number },
-  xOffset: number,
-  yOffset: number,
-): void {
-  const decoLineWidth = Math.max(1, part.style.fontSize / 15);
-  ctx.strokeStyle = part.style.fill;
-  ctx.lineWidth = decoLineWidth;
-  ctx.beginPath();
-  if (part.style.textDecoration.includes("underline")) {
-    const underY = yOffset + part.style.fontSize;
-    ctx.moveTo(xOffset, underY);
-    ctx.lineTo(xOffset + part.width, underY);
-  }
-  if (part.style.textDecoration.includes("line-through")) {
-    const strikeY = yOffset + part.style.fontSize / 2;
-    ctx.moveTo(xOffset, strikeY);
-    ctx.lineTo(xOffset + part.width, strikeY);
-  }
-  ctx.stroke();
+  /** Resolved text background box, or null/undefined when disabled. */
+  backgroundBox?: TextBackgroundBoxStyle | null;
 }
 
 export function renderFormattedText(
@@ -93,32 +28,43 @@ export function renderFormattedText(
   textLines: TextLine[],
   config: TextRenderConfig,
 ): void {
-  if (textLines.length === 0) return;
-
-  const pad = config.padding;
-  const totalWidth = config.width - pad * 2;
-  const totalHeight = config.height - pad * 2;
+  if (textLines.length === 0) {
+    if (config.backgroundBox?.geometry === "frame") {
+      drawTextBackgroundBox(
+        ctx,
+        { x: 0, y: 0, width: config.width, height: config.height },
+        config.backgroundBox,
+      );
+    }
+    return;
+  }
 
   if (config.backgroundFill) {
     ctx.fillStyle = config.backgroundFill;
     ctx.fillRect(0, 0, config.width, config.height);
   }
 
-  const textHeight = textLines.reduce((sum, l) => sum + l.height, 0);
-
-  let yOffset = pad;
-  if (config.verticalAlign === "middle" && totalHeight > 0) {
-    yOffset = pad + (totalHeight - textHeight) / 2;
-  } else if (config.verticalAlign === "bottom" && totalHeight > 0) {
-    yOffset = pad + totalHeight - textHeight;
+  // Inside the empty-text guard by design: unlike the legacy full-frame
+  // `fill/enabled` above, the box paints nothing when there is no text — and
+  // "no text" means no glyphs, not no lines (an emptied block still lays out
+  // one zero-width line).
+  if (
+    config.backgroundBox &&
+    (config.backgroundBox.geometry === "frame" || hasVisibleGlyphs(textLines))
+  ) {
+    const rect =
+      config.backgroundBox.geometry === "frame"
+        ? { x: 0, y: 0, width: config.width, height: config.height }
+        : computeTextUnionRect(textLines, config, config.backgroundBox.padding);
+    drawTextBackgroundBox(ctx, rect, config.backgroundBox);
   }
+
+  let yOffset = textStartY(textLines, config);
 
   ctx.textBaseline = "top";
 
   for (const line of textLines) {
-    let xOffset = pad;
-    if (config.align === "center") xOffset = pad + (totalWidth - line.width) / 2;
-    else if (config.align === "right") xOffset = pad + totalWidth - line.width;
+    let xOffset = lineStartX(line, config);
 
     const maxFontSize = Math.max(...line.parts.map((p) => p.style.fontSize));
 
@@ -128,8 +74,28 @@ export function renderFormattedText(
       const partYOffset = yOffset + (maxFontSize - part.style.fontSize) * 0.8;
 
       if (part.style.backgroundColor && displayText.length > 0) {
+        // Highlight "pill": a rounded box that hugs the run's em box, drawn from
+        // the glyph top (partYOffset) down over the full font size. Anchoring it
+        // to the em box — not `fontSize + 2·padY` shifted up by padY — means it
+        // fills the tightened line box with no empty strip beneath, while the
+        // font's intrinsic ascent/descent whitespace reads as balanced vertical
+        // padding. Explicit padding may paint beyond the text block bounds.
+        const fs = part.style.fontSize;
+        const padding = part.style.backgroundPadding;
+        const padLeft = padding?.left ?? 0;
+        const padRight = padding?.right ?? 0;
+        const padTop = padding?.top ?? 0;
+        const padBottom = padding?.bottom ?? 0;
+        const radius = part.style.backgroundCornerRadius ?? 0;
+        const boxX = xOffset - padLeft;
+        const boxY = partYOffset - padTop;
+        const boxW = part.width + padLeft + padRight;
+        const boxH = fs + padTop + padBottom;
+        const prevAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = prevAlpha * part.style.backgroundOpacity;
         ctx.fillStyle = part.style.backgroundColor;
-        ctx.fillRect(xOffset, partYOffset, part.width, line.height);
+        fillRoundRect(ctx, boxX, boxY, boxW, boxH, radius);
+        ctx.globalAlpha = prevAlpha;
       }
 
       const hasShadow =
@@ -154,4 +120,46 @@ export function renderFormattedText(
     }
     yOffset += line.height;
   }
+}
+
+/**
+ * Render text along an arc. Only invoked when radius > 0 — the flat path above
+ * is untouched. Each glyph is drawn centered on its anchor via save / translate
+ * / rotate / (stroke+fill) / restore, reusing the flat per-run style application
+ * in {@link drawPartText} so stroke, shadow, fill, and letter-spacing all apply.
+ */
+export function renderCurvedText(ctx: CanvasRenderingContext2D, layout: CurvedTextLayout): void {
+  if (layout.glyphs.length === 0) return;
+
+  const prevAlign = ctx.textAlign;
+  const prevBaseline = ctx.textBaseline;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for (const g of layout.glyphs) {
+    ctx.save();
+    ctx.translate(g.x, g.y);
+    ctx.rotate(g.rotation);
+    ctx.font = formatFont(g.style);
+
+    const hasShadow =
+      !!g.style.textShadowColor &&
+      (g.style.textShadowBlur > 0 ||
+        g.style.textShadowOffsetX !== 0 ||
+        g.style.textShadowOffsetY !== 0);
+    if (hasShadow) {
+      ctx.shadowColor = g.style.textShadowColor;
+      ctx.shadowBlur = g.style.textShadowBlur;
+      ctx.shadowOffsetX = g.style.textShadowOffsetX;
+      ctx.shadowOffsetY = g.style.textShadowOffsetY;
+    }
+
+    // Curved text can't build a per-glyph arc gradient; force the solid-fill
+    // fallback (allowGradient=false) so curved + gradient renders flat colour.
+    drawPartText(ctx, g.char, { style: g.style, width: g.width }, 0, 0, hasShadow, false);
+    ctx.restore();
+  }
+
+  ctx.textAlign = prevAlign;
+  ctx.textBaseline = prevBaseline;
 }

@@ -1,6 +1,8 @@
 import type React from "react";
 import { useCallback } from "react";
 import { ColorPalette } from "../color-palette";
+import { ColorSwatch } from "../color-swatch";
+import { toOpaqueHexColor } from "../color-value";
 import { Slider } from "../slider";
 import { type ColorPickerProps, DEFAULT_COLORS } from "./color-picker.types";
 
@@ -13,13 +15,28 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
     swatches = DEFAULT_COLORS,
     showHexInput = true,
   } = props;
+  const opaqueColor = toOpaqueHexColor(color);
 
   const handleHexInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value.replace(/[^0-9a-fA-F]/g, "").substring(0, 6);
       if (val.length === 6) {
-        onChange(`#${val}`);
+        onChange(toOpaqueHexColor(`#${val}`));
       }
+    },
+    [onChange],
+  );
+
+  const handleNativeInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(toOpaqueHexColor(e.target.value));
+    },
+    [onChange],
+  );
+
+  const handleSwatchSelect = useCallback(
+    (value: string) => {
+      onChange(toOpaqueHexColor(value));
     },
     [onChange],
   );
@@ -27,11 +44,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
   return (
     <div className="flex flex-col gap-4">
       {/* Native color picker */}
-      <input
-        type="color"
-        value={color}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-40 rounded-lg border border-border bg-transparent cursor-pointer"
+      <ColorSwatch
+        value={opaqueColor}
+        onChange={handleNativeInput}
+        className="h-40 w-full rounded-lg"
       />
 
       {/* Opacity slider */}
@@ -60,7 +76,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
           <div className="flex items-center gap-1 flex-1">
             <input
               type="text"
-              value={color.replace("#", "").toUpperCase()}
+              value={opaqueColor.slice(1).toUpperCase()}
               onChange={handleHexInput}
               maxLength={6}
               className="flex-1 h-7 rounded-md border border-border bg-background px-2 text-fluid font-mono"
@@ -74,7 +90,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
       {swatches.length > 0 && (
         <div className="flex flex-col gap-2">
           <span className="text-fluid font-medium text-muted-foreground">Default Colors</span>
-          <ColorPalette colors={swatches} value={color} onSelect={onChange} />
+          <ColorPalette colors={swatches} value={opaqueColor} onSelect={handleSwatchSelect} />
         </div>
       )}
     </div>

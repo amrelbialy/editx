@@ -6,7 +6,9 @@ import { DEFAULT_FONT_FAMILIES } from "../../../config/default-config";
 import type { PropertySidePanel } from "../../../store/image-editor-store";
 import { useImageEditorStore } from "../../../store/image-editor-store";
 import { cn } from "../../../utils/cn";
+import { textGradientToCss } from "../../../utils/text-gradient-css";
 import { BlockPropertyButtons } from "./block-property-buttons.component";
+import { GroupControls } from "./group-controls.component";
 import { TextFormatToolbar } from "./text-format-toolbar.component";
 import { useBlockPropertiesState } from "./use-block-properties-state";
 import { useBlockTextFormat } from "./use-block-text-format";
@@ -14,17 +16,19 @@ import { useBlockTextFormat } from "./use-block-text-format";
 interface BlockPropertiesBarProps {
   engine: EditxEngine;
   blockId: number;
-  blockType: "text" | "graphic" | "image";
+  blockType: "text" | "graphic" | "image" | "group";
+  onCropImageFill?: (blockId: number) => void;
 }
 
 export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => {
-  const { engine, blockId, blockType } = props;
+  const { engine, blockId, blockType, onCropImageFill } = props;
 
   const propertySidePanel = useImageEditorStore((s) => s.propertySidePanel);
   const setPropertySidePanel = useImageEditorStore((s) => s.setPropertySidePanel);
 
   const isText = blockType === "text";
   const isImage = blockType === "image";
+  const isGraphic = blockType === "graphic";
   const config = useConfig();
   const fontFamilies = config.text?.fonts ?? DEFAULT_FONT_FAMILIES;
 
@@ -32,11 +36,12 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     textState,
     fillColor,
     opacity,
+    hasImageFill,
     refresh,
     getStyleRange,
     handleOpacityChange,
     textSelectionRange,
-  } = useBlockPropertiesState({ engine, blockId, isText, isImage });
+  } = useBlockPropertiesState({ engine, blockId, isText, isImage, isGraphic });
 
   const textFormat = useBlockTextFormat({
     engine,
@@ -53,18 +58,21 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
     [propertySidePanel, setPropertySidePanel],
   );
 
-  const colorSwatch = isText ? (textState?.fill ?? "#000000") : fillColor;
+  const textSwatch = textState?.fillGradient
+    ? textGradientToCss(textState.fillGradient)
+    : (textState?.fill ?? "#000000");
+  const colorSwatch = isText ? textSwatch : fillColor;
+
+  if (blockType === "group") {
+    return (
+      <div className={toolbarClassName} data-group-toolbar>
+        <GroupControls engine={engine} blockId={blockId} />
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1 h-10 px-3 [&>*]:shrink-0",
-        "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
-        "animate-in fade-in-0 slide-in-from-top-1 duration-150",
-        "overflow-x-auto scrollbar-none",
-      )}
-      data-text-toolbar
-    >
+    <div className={toolbarClassName} data-text-toolbar>
       {isText && textState && (
         <TextFormatToolbar
           textState={textState}
@@ -88,13 +96,27 @@ export const BlockPropertiesBar: React.FC<BlockPropertiesBarProps> = (props) => 
         blockId={blockId}
         isText={isText}
         isImage={isImage}
+        hasImageFill={hasImageFill}
         colorSwatch={colorSwatch}
         opacity={opacity}
         propertySidePanel={propertySidePanel}
         onTogglePanel={togglePanel}
         onOpacityChange={handleOpacityChange}
-        refresh={refresh}
+        onCropImageFill={
+          onCropImageFill && engine.editor.getCropEditTarget(blockId) === "shape-image"
+            ? () => onCropImageFill?.(blockId)
+            : undefined
+        }
       />
+
+      <GroupControls engine={engine} blockId={blockId} />
     </div>
   );
 };
+
+const toolbarClassName = cn(
+  "flex items-center gap-1 h-10 px-3 [&>*]:shrink-0",
+  "bg-card/95 backdrop-blur-sm border border-border rounded-2xl shadow-lg",
+  "animate-in fade-in-0 slide-in-from-top-1 duration-150",
+  "overflow-x-auto scrollbar-none",
+);

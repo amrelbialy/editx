@@ -2,6 +2,7 @@ import type { ImageEditorConfig, ThemeColorKey, ThemeConfig } from "@editx/image
 import { demoPresets } from "../../theme/presets";
 import { BUILT_IN_RESIZE_GROUPS } from "./crop-presets";
 import { LOCALE_TRANSLATIONS } from "./locale-translations";
+import { SHAPE_PRESET_IDS } from "./playground.constants";
 import type { PlaygroundConfig } from "./playground.types";
 
 function buildTheme(config: PlaygroundConfig): ThemeConfig {
@@ -49,7 +50,10 @@ export function buildEditorConfig(config: PlaygroundConfig): ImageEditorConfig {
       maxFontSize: config.textMaxFontSize,
     },
     shapes: {
-      presets: config.shapesPresets,
+      ...(config.shapesPresets.length === SHAPE_PRESET_IDS.length &&
+      config.shapesPresets.every((preset, index) => preset === SHAPE_PRESET_IDS[index])
+        ? {}
+        : { presets: config.shapesPresets }),
       defaultFillMode: config.shapesDefaultFillMode,
       defaultColor: config.shapesDefaultColor,
       defaultStrokeColor: config.shapesDefaultStrokeColor,

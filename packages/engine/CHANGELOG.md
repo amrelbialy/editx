@@ -4,6 +4,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Added
+
+* **engine:** add undoable sibling grouping with transform preservation, nested bounds refitting,
+	membership commands, and editor group-context navigation.
+* **engine:** export the `ShapeGeometry` descriptor union and add undoable
+	`engine.block.setShapeGeometry` replacement for rectangle, ellipse, polygon, star, line, and path
+	geometry.
+* **engine:** add linear and radial graphic fills plus linear gradient strokes, with exported
+	gradient types and property keys.
+* **engine:** add rich text fill/stroke gradients, run highlights, curves, auto width, caret and
+	selection geometry, and block-level `text-union` or `frame` backgrounds.
+* **engine:** add image-filled graphic crop sessions with frame previews, image offsets, scale,
+	rotation, flips, explicit commit/cancel, and one-entry undo/redo.
+* **engine:** add `updateFillImage` for partial image-fill updates and persist image rotation and
+	horizontal or vertical flips.
+* **engine:** add `exportBlock` for fixed-frame graphic, text, image, and group exports.
+* **engine:** add deep immutable block snapshots through `engine.block.getSnapshot`.
+* **engine:** add typed pan and live block-transform callbacks.
+* **engine:** emit scene serialization version 2 while retaining version 1 loading compatibility.
+
+### Changed
+
+* **engine:** `hexToColor` now accepts `#RRGGBBAA` input while `colorToHex` output is unchanged.
+* **engine:** normalize image-fill alignment, pan, and scale by mode and keep Crop content stable
+	while resizing its frame.
+* **engine:** make block naming undoable and synchronize z-order changes inside pages and groups.
+
 ## [0.1.0-alpha.11](https://github.com/amrelbialy/editx/compare/@editx/engine@0.1.0-alpha.10...@editx/engine@0.1.0-alpha.11) (2026-08-05)
 
 **Note:** Version bump only for package @editx/engine
@@ -31,7 +60,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Removed
 
 * **engine:** removed the public `BlockStore` runtime export. There is no supported way to mutate the store directly.
-* **engine:** removed the `EngineCore` type from public type exports.
 * **engine:** removed the public `EditxEngine.getBlockStore()` method (now internal `_getBlockStore()`, marked `@internal`).
 
 ### Added
@@ -42,7 +70,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Migration
 
 * Read block state via the typed getters (`engine.block.getString` / `getFloat` / …) or `engine.block.getSnapshot(id)` instead of reaching into the store.
-* Type against `EditxEngine` instead of the removed `EngineCore` interface.
+* Type consumer integrations against `EditxEngine`; `EngineCore` is an internal dependency contract.
 * All mutation must go through commands — `engine.exec(...)` or `engine.block.set*` — which are undoable and emit lifecycle events. Do not hold or mutate a direct store reference.
 
 ### Bug Fixes

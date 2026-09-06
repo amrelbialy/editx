@@ -15,7 +15,14 @@ import {
   type LexicalEditor,
   type ParagraphNode,
 } from "lexical";
-import type { TextRun, TextRunStyle } from "./block.types";
+import type {
+  StrokeGradient,
+  TextBackgroundPadding,
+  TextGradient,
+  TextRun,
+  TextRunStyle,
+  TextRunStyleUpdate,
+} from "./block.types";
 import { mergeAdjacentRuns } from "./text-run-utils";
 
 // ── TextRun[] → Lexical EditorState ─────────────────────────────────
@@ -222,7 +229,19 @@ function getGlobalOffset(
   for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
     if (pIdx > 0) globalOffset += 1;
 
-    const children = paragraphs[pIdx].getChildren();
+    const paragraph = paragraphs[pIdx];
+    const children = paragraph.getChildren();
+
+    // Element point ON the paragraph (e.g. caret after a trailing line break):
+    // offset is a child index, so sum the sizes of the children before it.
+    if (paragraph.getKey() === nodeKey) {
+      let off = globalOffset;
+      for (let i = 0; i < localOffset && i < children.length; i++) {
+        off += children[i].getTextContentSize();
+      }
+      return off;
+    }
+
     for (const child of children) {
       if (child.getKey() === nodeKey) {
         return globalOffset + localOffset;
@@ -259,6 +278,27 @@ export function runStyleToCssString(style: TextRunStyle): string {
     parts.push(`--text-stroke-color: ${style.textStrokeColor}`);
   }
   if (style.textStrokeWidth != null) parts.push(`--text-stroke-width: ${style.textStrokeWidth}`);
+  if (style.textStrokeGradient != null) {
+    parts.push(
+      `--text-stroke-gradient: ${encodeURIComponent(JSON.stringify(style.textStrokeGradient))}`,
+    );
+  }
+  if (style.backgroundOpacity != null)
+    parts.push(`--text-background-opacity: ${style.backgroundOpacity}`);
+  if (style.backgroundCornerRadius != null)
+    parts.push(`--text-background-corner-radius: ${style.backgroundCornerRadius}`);
+  if (style.backgroundPadding != null) {
+    // Same URI-encoded JSON approach as fillGradient — keeps per-side padding lossless.
+    parts.push(
+      `--text-background-padding: ${encodeURIComponent(JSON.stringify(style.backgroundPadding))}`,
+    );
+  }
+  if (style.fillGradient != null) {
+    // JSON is URI-encoded so the CSS var value stays free of ';', ':', '{', '}'
+    // and quotes — keeps the flat contenteditable overlay's inline style valid
+    // AND round-trips the gradient losslessly so editing never drops it.
+    parts.push(`--text-fill-gradient: ${encodeURIComponent(JSON.stringify(style.fillGradient))}`);
+  }
   return parts.join("; ");
 }
 
@@ -309,8 +349,23 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
       case "--text-stroke-color":
         style.textStrokeColor = val;
         break;
+      case "--text-background-opacity":
+        if (Number.isFinite(Number(val))) style.backgroundOpacity = Number(val);
+        break;
+      case "--text-background-corner-radius":
+        if (Number.isFinite(Number(val))) style.backgroundCornerRadius = Number(val);
+        break;
+      case "--text-background-padding":
+        style.backgroundPadding = parsePaddingValue(val);
+        break;
       case "--text-stroke-width":
         style.textStrokeWidth = parseFloat(val);
+        break;
+      case "--text-stroke-gradient":
+        style.textStrokeGradient = parseStrokeGradientValue(val);
+        break;
+      case "--text-fill-gradient":
+        style.fillGradient = parseGradientValue(val);
         break;
     }
   }
@@ -321,10 +376,9 @@ export function cssStringToRunStyle(cssStr: string): TextRunStyle {
 /**
  * Convert a partial TextRunStyle update to a CSS patch object for $patchStyleText.
  * Only includes CSS-stored properties (not format-flag ones like fontWeight/fontStyle/textDecoration).
+ * A `null` value maps to a `null` patch entry, which removes the declaration.
  */
-export function textRunStyleToCssPatch(
-  update: Partial<TextRunStyle>,
-): Record<string, string | null> {
+export function textRunStyleToCssPatch(update: TextRunStyleUpdate): Record<string, string | null> {
   const patch: Record<string, string | null> = {};
   if (update.fill !== undefined) patch.color = update.fill;
   if (update.fontSize !== undefined)
@@ -350,5 +404,63 @@ export function textRunStyleToCssPatch(
   if (update.textStrokeWidth !== undefined)
     patch["--text-stroke-width"] =
       update.textStrokeWidth != null ? `${update.textStrokeWidth}` : null;
+  if (update.textStrokeGradient !== undefined)
+    patch["--text-stroke-gradient"] =
+      update.textStrokeGradient != null
+        ? encodeURIComponent(JSON.stringify(update.textStrokeGradient))
+        : null;
+  if (update.backgroundOpacity !== undefined)
+    patch["--text-background-opacity"] =
+      update.backgroundOpacity != null ? `${update.backgroundOpacity}` : null;
+  if (update.backgroundCornerRadius !== undefined)
+    patch["--text-background-corner-radius"] =
+      update.backgroundCornerRadius != null ? `${update.backgroundCornerRadius}` : null;
+  if (update.backgroundPadding !== undefined)
+    patch["--text-background-padding"] =
+      update.backgroundPadding != null
+        ? encodeURIComponent(JSON.stringify(update.backgroundPadding))
+        : null;
+  if (update.fillGradient !== undefined)
+    patch["--text-fill-gradient"] =
+      update.fillGradient != null ? encodeURIComponent(JSON.stringify(update.fillGradient)) : null;
   return patch;
+}
+
+/** Decode a URI-encoded JSON gradient from a CSS var; undefined when invalid. */
+function parseGradientValue(val: string): TextGradient | undefined {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(val));
+    if (parsed && Array.isArray(parsed.stops) && typeof parsed.type === "string") {
+      return parsed as TextGradient;
+    }
+  } catch {
+    // Malformed value — treat as no gradient rather than throwing during parse.
+  }
+  return undefined;
+}
+
+function parseStrokeGradientValue(val: string): StrokeGradient | undefined {
+  const gradient = parseGradientValue(val);
+  if (gradient?.type !== "linear") return undefined;
+  return { type: "linear", angle: gradient.angle ?? 0, stops: gradient.stops };
+}
+
+/** Decode a URI-encoded JSON per-side padding override from a CSS var; undefined when invalid. */
+function parsePaddingValue(val: string): Partial<TextBackgroundPadding> | undefined {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(val));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const padding: Partial<TextBackgroundPadding> = {};
+      for (const side of ["top", "right", "bottom", "left"] as const) {
+        if (parsed[side] !== undefined) {
+          if (typeof parsed[side] !== "number" || !Number.isFinite(parsed[side])) return undefined;
+          padding[side] = parsed[side];
+        }
+      }
+      return padding;
+    }
+  } catch {
+    // Malformed value — treat as no override rather than throwing during parse.
+  }
+  return undefined;
 }

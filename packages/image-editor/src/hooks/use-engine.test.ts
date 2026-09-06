@@ -1,3 +1,4 @@
+import { createEngine } from "@editx/engine/konva";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useImageEditorStore } from "../store/image-editor-store";
@@ -8,6 +9,13 @@ import { useEngine } from "./use-engine";
 // pure-handler tests), so stub the factory at the module boundary.
 vi.mock("@editx/engine/konva", () => ({
   createEngine: vi.fn(),
+}));
+
+vi.mock("../utils/load-image", () => ({
+  evictImage: vi.fn(),
+  loadImage: vi.fn().mockResolvedValue({ naturalWidth: 100, naturalHeight: 80 }),
+  revokeObjectUrl: vi.fn(),
+  sourceToUrl: vi.fn((source: string) => source),
 }));
 
 function dragEvent(overrides: { files?: File[]; uriList?: string }): React.DragEvent {
@@ -67,6 +75,49 @@ describe("useEngine", () => {
     });
 
     expect(result.current.selectedShapeId).toBe(42);
+  });
+
+  it("tracks group and multi-selection anchors from engine selection changes", async () => {
+    let notifySelectionChanged: ((ids: number[]) => void) | undefined;
+    const engine = {
+      beginSilent: vi.fn(),
+      endSilent: vi.fn(),
+      dispose: vi.fn(),
+      block: {
+        onSelectionChanged: vi.fn((callback: (ids: number[]) => void) => {
+          notifySelectionChanged = callback;
+          return vi.fn();
+        }),
+        setPageImageOriginalDimensions: vi.fn(),
+        setPageImageSrc: vi.fn(),
+      },
+      editor: {
+        getZoom: vi.fn().mockReturnValue(1),
+        getPan: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        panTo: vi.fn(),
+        setZoom: vi.fn(),
+      },
+      scene: {
+        create: vi.fn().mockResolvedValue(undefined),
+        getCurrentPage: vi.fn().mockReturnValue(1),
+      },
+    };
+    vi.mocked(createEngine).mockResolvedValue(engine as never);
+    const { result } = renderHook(() => useEngine({ src: "https://example.com/a.png" }));
+    result.current.containerRef.current = document.createElement("div");
+
+    await act(async () => {
+      await result.current.initEditor("https://example.com/a.png");
+    });
+
+    act(() => notifySelectionChanged?.([7]));
+    expect(result.current.selectedShapeId).toBe(7);
+
+    act(() => notifySelectionChanged?.([7, 9]));
+    expect(result.current.selectedShapeId).toBe(7);
+
+    act(() => notifySelectionChanged?.([]));
+    expect(result.current.selectedShapeId).toBeNull();
   });
 
   it("handleDragOver suppresses the browser's default drop handling", () => {

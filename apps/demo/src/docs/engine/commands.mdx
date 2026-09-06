@@ -4,7 +4,7 @@ The command pattern for undo/redo in Editx Engine.
 
 ## Command Pattern
 
-All document mutations go through the **command system**. This ensures every change is:
+Editable document mutations use the **command system**. Outside silent mode, these changes are:
 
 - **Undoable** — `Ctrl+Z` reverts the last change
 - **Redoable** — `Ctrl+Shift+Z` re-applies it
@@ -13,8 +13,8 @@ All document mutations go through the **command system**. This ensures every cha
 ## Usage
 
 ```ts
-// Commands are executed through the engine
-engine.exec(someCommand);
+// Semantic facade methods execute the appropriate internal command.
+engine.block.setPosition(blockId, 120, 80);
 
 // Undo / Redo
 engine.undo();
@@ -23,6 +23,9 @@ engine.canUndo(); // boolean
 engine.canRedo(); // boolean
 ```
 
+Scene creation and loading establish a new document baseline and clear history.
+Viewport, selection, and group-context changes are interaction state, not document mutations.
+
 ## Built-in Commands
 
 The engine ships commands for all standard operations:
@@ -30,19 +33,28 @@ The engine ships commands for all standard operations:
 - Block CRUD (create, destroy)
 - Property changes (position, size, rotation, opacity, color)
 - Hierarchy mutations (append, remove, reorder children)
+- Grouping, ungrouping, membership, and bounds refitting
 - Effect management (add, remove, reorder effects)
-- Crop & transform operations
+- Shape, fill, text-style, crop, and transform operations
+- Undoable metadata such as `engine.block.setName()`
 
-## Custom Commands
+## Public command boundary
 
-Extend the editor by creating your own commands. Each command implements `do()` and returns patches:
+Use the semantic `engine.block`, `engine.editor`, and `engine.scene` methods for
+normal mutations. They validate compound state and choose the correct command or
+batch:
 
 ```ts
-class MyCommand implements Command {
-  do(): Patch[] { /* return patches */ }
-}
+engine.block.setShapeGeometry(id, geometry); // one undo entry
+engine.block.setTextBackground(id, options); // related fields batched
+engine.editor.commitCrop();                  // preview becomes one undo entry
 ```
 
-Undo is handled automatically by patch reversal — no separate `undo()` method needed.
+The package does not currently export `Command` or `Patch` authoring types from
+its supported entry points. Do not import internal command classes or mutate the
+block store directly.
 
-Detailed command authoring guide coming soon.
+Use `beginBatch()` / `endBatch()` when several public mutations should undo as
+one operation. Live viewport changes, group-context navigation, and image-fill
+crop previews are interaction state and do not create document history until a
+document mutation is committed.

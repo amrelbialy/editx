@@ -235,7 +235,7 @@ export class Engine {
     // Sync child z-order AFTER all blocks are synced (so all Konva nodes exist)
     for (const id of dirtyIds) {
       const block = this.#blockStore.get(id);
-      if (block?.type === "page" && block.children.length > 0) {
+      if ((block?.type === "page" || block?.type === "group") && block.children.length > 0) {
         this.#renderer.syncChildOrder?.(block.children);
       }
     }

@@ -28,9 +28,18 @@ import {
   EFFECT_FILTER_NAME,
   FILL_COLOR,
   FILL_ENABLED,
+  FILL_GRADIENT_ANGLE,
+  FILL_GRADIENT_STOPS,
+  FILL_GRADIENT_TYPE,
+  FILL_IMAGE_FLIP_HORIZONTAL,
+  FILL_IMAGE_FLIP_VERTICAL,
+  FILL_IMAGE_MODE,
+  FILL_IMAGE_OFFSET_X,
+  FILL_IMAGE_OFFSET_Y,
+  FILL_IMAGE_ROTATION,
+  FILL_IMAGE_SCALE,
+  FILL_IMAGE_SRC,
   FILL_SOLID_COLOR,
-  FONT_FAMILY,
-  FONT_SIZE,
   IMAGE_ORIGINAL_HEIGHT,
   IMAGE_ORIGINAL_WIDTH,
   IMAGE_ROTATION,
@@ -60,6 +69,10 @@ import {
   SHADOW_OFFSET_Y,
   SHAPE_LINE_POINTER_LENGTH,
   SHAPE_LINE_POINTER_WIDTH,
+  SHAPE_PATH_DATA,
+  SHAPE_PATH_PRESERVE_ASPECT,
+  SHAPE_PATH_VIEWBOX_HEIGHT,
+  SHAPE_PATH_VIEWBOX_WIDTH,
   SHAPE_POLYGON_SIDES,
   SHAPE_RECT_CORNER_RADIUS,
   SHAPE_STAR_INNER_DIAMETER,
@@ -71,7 +84,9 @@ import {
   STROKE_WIDTH,
   TEXT_ALIGN,
   TEXT_AUTO_HEIGHT,
-  TEXT_CONTENT,
+  TEXT_AUTO_WIDTH,
+  TEXT_CURVE_DIRECTION,
+  TEXT_CURVE_RADIUS,
   TEXT_LINE_HEIGHT,
   TEXT_PADDING,
   TEXT_RUNS,
@@ -170,9 +185,9 @@ const defaults: Record<BlockType, Record<string, PropertyValue>> = {
   text: {
     ...SHARED_TRANSFORM,
     ...SHARED_APPEARANCE,
-    [TEXT_CONTENT]: "Text",
-    [FONT_SIZE]: 24,
-    [FONT_FAMILY]: "Arial",
+    // FILL_COLOR retained for the empty-runs legacy-scene fallback in
+    // updateTextNode; TEXT_CONTENT/FONT_SIZE/FONT_FAMILY are no longer seeded —
+    // TEXT_RUNS is the single source of truth for fresh text blocks.
     [FILL_COLOR]: { r: 0, g: 0, b: 0, a: 1 },
     [TEXT_RUNS]: [
       {
@@ -193,6 +208,10 @@ const defaults: Record<BlockType, Record<string, PropertyValue>> = {
     [TEXT_PADDING]: 4,
     [TEXT_WRAP]: "word",
     [TEXT_AUTO_HEIGHT]: true,
+    [TEXT_AUTO_WIDTH]: false,
+    // Curve: 0/absent = flat (hot path unchanged); "up" is the default bow.
+    [TEXT_CURVE_RADIUS]: 0,
+    [TEXT_CURVE_DIRECTION]: "up",
   },
   image: {
     ...SHARED_TRANSFORM,
@@ -268,6 +287,12 @@ const shapeKindDefaults: Record<string, Record<string, PropertyValue>> = {
     [SHAPE_LINE_POINTER_LENGTH]: 15,
     [SHAPE_LINE_POINTER_WIDTH]: 15,
   },
+  path: {
+    [SHAPE_PATH_DATA]: "",
+    [SHAPE_PATH_VIEWBOX_WIDTH]: 100,
+    [SHAPE_PATH_VIEWBOX_HEIGHT]: 100,
+    [SHAPE_PATH_PRESERVE_ASPECT]: true,
+  },
 };
 
 export function getShapeDefaults(kind: string): Record<string, PropertyValue> {
@@ -284,6 +309,24 @@ export function getShapeDefaults(kind: string): Record<string, PropertyValue> {
 const fillKindDefaults: Record<string, Record<string, PropertyValue>> = {
   color: {
     [FILL_SOLID_COLOR]: { r: 0.29, g: 0.56, b: 0.89, a: 1 },
+  },
+  gradient: {
+    [FILL_GRADIENT_TYPE]: "linear",
+    [FILL_GRADIENT_ANGLE]: 0,
+    [FILL_GRADIENT_STOPS]: [
+      { offset: 0, color: "#000000" },
+      { offset: 1, color: "#ffffff" },
+    ],
+  },
+  image: {
+    [FILL_IMAGE_SRC]: "",
+    [FILL_IMAGE_MODE]: "crop",
+    [FILL_IMAGE_OFFSET_X]: 0,
+    [FILL_IMAGE_OFFSET_Y]: 0,
+    [FILL_IMAGE_SCALE]: 1,
+    [FILL_IMAGE_ROTATION]: 0,
+    [FILL_IMAGE_FLIP_HORIZONTAL]: false,
+    [FILL_IMAGE_FLIP_VERTICAL]: false,
   },
 };
 
