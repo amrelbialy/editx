@@ -4,6 +4,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.0-alpha.16](https://github.com/amrelbialy/editx/compare/@editx/image-editor@0.1.0-alpha.15...@editx/image-editor@0.1.0-alpha.16) (2026-09-06)
+
+### Features
+
+* add support for static images presets and remove css preview implementation ([f9cd9af](https://github.com/amrelbialy/editx/commit/f9cd9af96af9fbd63eb2c0e63482ff6c9c7b7c1d))
+* add text highlight and background controls ([c15b396](https://github.com/amrelbialy/editx/commit/c15b396fcd0050f86f954c87ec4fcbd3ab614152))
+* **crop:** add crop for image shapes and add more options ([a9c0266](https://github.com/amrelbialy/editx/commit/a9c026602d96d631f8c0b3e59dce3dfbd4b0ba14))
+* **engine,image-editor:** preset gallery, block groups, shapes and text background box ([9fade88](https://github.com/amrelbialy/editx/commit/9fade8802e8e378b854ae351c4536dd3dcd84828))
+* expand stroke and shadow color controls ([f19403d](https://github.com/amrelbialy/editx/commit/f19403db85b3286dda90f993132f3096854c3f9c))
+* **image-editor:** add rich text style presets ([eff99a9](https://github.com/amrelbialy/editx/commit/eff99a91a23565d3e53f6ebd5a301f0a37ec48a8))
+* **image-editor:** add text composition presets ([b3b9193](https://github.com/amrelbialy/editx/commit/b3b9193a76f8fca7d49baff0dbfb47f62466338b))
+* **Shapes:** add dimensions to image fill ([d5eb280](https://github.com/amrelbialy/editx/commit/d5eb280e8928bb6ee94e48ea95d01eb34deec66d))
+* **shapes:** expand shapes catalogue ([7b6d8e6](https://github.com/amrelbialy/editx/commit/7b6d8e6c1e25dffd2680da415e42b8488de952b5))
+* **shapes:** improve shape handling ([f3b7d92](https://github.com/amrelbialy/editx/commit/f3b7d92a39db450324f30257d0414519f8a5cadc))
+
+### Bug Fixes
+
+* build and lint CI ([a5206af](https://github.com/amrelbialy/editx/commit/a5206af8eeb8eb60ad4a373cdd90f07204878d42))
+* info icon size in background panel ([4c331ee](https://github.com/amrelbialy/editx/commit/4c331eeb434f798174f4a3b64768947db029f461))
+* journey tests CI ([fa44968](https://github.com/amrelbialy/editx/commit/fa4496882103199da84baea204f79de1ba4640ad))
+* **shapes:** image fill crop flow ([c9a6601](https://github.com/amrelbialy/editx/commit/c9a660198707a87f9edc9309c1e72a9289136389))
+* text caret with line height by using custom caret ([7a8a4ab](https://github.com/amrelbialy/editx/commit/7a8a4ab724619b60702ee9c19e53c5ff67b0c345))
+
 ## Unreleased
 
 ### Features
