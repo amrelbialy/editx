@@ -24,15 +24,14 @@ is anchored to [`CLAUDE.md`](../../CLAUDE.md).
 ---
 name: <kebab-name>            # optional; defaults to filename
 description: <when to use>    # required — helps Copilot suggest the right agent
-model: claude-opus-4.8        # optional; omit to inherit the active picker model
+model: gpt-5.6-sol           # default for all editx agents
 tools: [read, edit, search, execute, github]   # subset per role (least privilege)
 ---
 <system prompt body>
 ```
 
-Decision-heavy agents (`engineering-lead`, `architect`, `sdk-api-designer`, and
-`rendering-engineer`) pin `claude-opus-4.8`. Routine implementation, QA, review, and
-documentation agents inherit the active picker model so teams can choose a lower-latency option.
+All eight active agents explicitly use `gpt-5.6-sol`, independent of the active picker model.
+The reusable template uses the same default for new agents.
 Tool categories: `read`, `edit`, `search`, `execute`, `github`.
 
 ## Roster
@@ -92,8 +91,8 @@ rather than every local iteration.
 ## Adding a new agent
 
 1. `cp .github/agent-templates/_template.md .github/agents/<role>.agent.md`
-2. Pin `model: claude-opus-4.8` only for decision-heavy specialists. Otherwise inherit the
-  active picker model. Fill in `description` and grant the **minimum** `tools`.
+2. Keep `model: gpt-5.6-sol` as the default. Fill in `description` and grant the
+  **minimum** `tools`.
 3. Write the system prompt: Scope → Rules → Procedure → Output format → Constraints.
 4. Reference `CLAUDE.md` rules rather than restating them in full.
 5. Keep it focused — if two agents would overlap, merge them or sharpen their descriptions.

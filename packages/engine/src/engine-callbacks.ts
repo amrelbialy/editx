@@ -27,16 +27,20 @@ export interface ViewportState {
 
 /**
  * Owns the typed public callback registrations exposed by `EditxEngine`
- * (history / zoom / pan / edit-mode / live block-transform). Keeps the engine
+ * (navigation / history / zoom / pan / edit-mode / live block-transform). Keeps the engine
  * core lean while giving each event a precise, self-documenting signature.
  */
 export class EngineCallbacks {
+  #activePage = new Set<(event: ActivePageChangedEvent) => void>();
   #history = new Set<() => void>();
   #zoom = new Set<(zoom: number) => void>();
   #pan = new Set<(pan: { x: number; y: number }) => void>();
   #editMode = new Set<(info: EditModeChange) => void>();
   #blockTransform = new Set<(event: BlockTransformEvent) => void>();
 
+  onActivePageChanged(cb: (event: ActivePageChangedEvent) => void): () => void {
+    return this.#add(this.#activePage, cb);
+  }
   onHistoryChanged(cb: () => void): () => void {
     return this.#add(this.#history, cb);
   }
@@ -53,6 +57,9 @@ export class EngineCallbacks {
     return this.#add(this.#blockTransform, cb);
   }
 
+  fireActivePage(event: ActivePageChangedEvent): void {
+    for (const cb of this.#activePage) cb(event);
+  }
   fireHistory(): void {
     for (const cb of this.#history) cb();
   }
@@ -67,6 +74,18 @@ export class EngineCallbacks {
   }
   fireBlockTransform(event: BlockTransformEvent): void {
     for (const cb of this.#blockTransform) cb(event);
+  }
+
+  fireEvent(event: string, payload: unknown): void {
+    if (event === "zoom:changed" && typeof payload === "number") {
+      this.fireZoom(payload);
+    } else if (event === "pan:changed" && isPoint(payload)) {
+      this.firePan(payload);
+    } else if (event === "editMode:changed" && isEditModeChange(payload)) {
+      this.fireEditMode(payload);
+    } else if (event === "block:transform" && isBlockTransform(payload)) {
+      this.fireBlockTransform(payload);
+    }
   }
 
   #add<T>(set: Set<T>, cb: T): () => void {
@@ -91,3 +110,5 @@ export function isEditModeChange(v: unknown): v is EditModeChange {
 export function isBlockTransform(v: unknown): v is BlockTransformEvent {
   return typeof v === "object" && v !== null && "block" in v && "phase" in v;
 }
+
+import type { ActivePageChangedEvent } from "./active-page";

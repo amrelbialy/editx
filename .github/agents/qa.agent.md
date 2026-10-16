@@ -1,6 +1,7 @@
 ---
 name: qa
 description: Independent quality specialist for editx. Use for complex test strategy, regression reproduction, high-risk interactions, and Playwright coverage. Routine focused tests and validation stay with the implementation owner.
+model: gpt-5.6-sol
 tools: [read, edit, search, execute]
 ---
 

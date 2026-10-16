@@ -1,7 +1,7 @@
 ---
 name: sdk-api-designer
 description: Public API designer for packages/engine (the @editx SDK surface). Use when adding or changing engine commands, the EventAPI, or any exported type consumers depend on. Focuses on ergonomics, stability, undoability, and backward compatibility of the public surface.
-model: claude-opus-4.8
+model: gpt-5.6-sol
 tools: [read, search, edit]
 ---
 

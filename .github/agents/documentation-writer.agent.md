@@ -1,6 +1,7 @@
 ---
 name: documentation-writer
 description: Documentation specialist for editx. Use to create and update public API references, guides, examples, and README content after features or SDK surfaces change.
+model: gpt-5.6-sol
 tools: [read, edit, search, execute]
 ---
 

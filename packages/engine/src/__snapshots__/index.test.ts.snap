@@ -5,6 +5,7 @@ exports[`@editx/engine public API > exports a stable set of runtime members 1`] 
   "$restoreSelectionFromOffsets",
   "ADJUSTMENT_CONFIG",
   "ADJUSTMENT_PARAMS",
+  "ActivePageError",
   "BlockAPI",
   "CROP_ASPECT_RATIO_LOCKED",
   "CROP_ENABLED",

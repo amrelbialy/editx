@@ -1,6 +1,7 @@
 ---
 name: <role-name>
 description: Describe exactly when Copilot should suggest this editx specialist.
+model: gpt-5.6-sol
 tools: [read, search]
 ---
 
@@ -34,5 +35,5 @@ Tool categories: read, edit, search, execute, github. Grant the minimum needed:
 - implementers:       [read, edit, search, execute]
 - GitHub work:        add `github`
 
-Omit `model` to inherit the active picker model. Pin a model only when the role needs it.
+Use `model: gpt-5.6-sol` as the default for new editx agents.
 -->

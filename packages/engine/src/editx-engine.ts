@@ -1,17 +1,12 @@
+import { type ActivePageChangedEvent, ActivePageState } from "./active-page";
 import { BlockAPI } from "./block/block-api";
 import { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import { EditorAPI } from "./editor/editor-api";
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
+import { exportBlock, exportScene } from "./editx-engine-export";
 import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./editx-engine-flush";
-import {
-  type BlockTransformEvent,
-  type EditModeChange,
-  EngineCallbacks,
-  isBlockTransform,
-  isEditModeChange,
-  isPoint,
-} from "./engine-callbacks";
+import { type BlockTransformEvent, type EditModeChange, EngineCallbacks } from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
@@ -31,8 +26,7 @@ export class EditxEngine implements EngineCore {
   #history = new HistoryManager();
   #renderer: RendererAdapter | null;
   #dirty = new Set<number>();
-  #activeSceneId: number | null = null;
-  #activePageId: number | null = null;
+  #navigation: ActivePageState;
   #batchDepth = 0;
   #batchPatches: Patch[] = [];
   #silentDepth = 0;
@@ -45,6 +39,9 @@ export class EditxEngine implements EngineCore {
     this.#blockStore = opts?.blockStore ?? new BlockStore();
     this.#renderer = opts?.renderer ?? null;
     this.event = new EventAPI();
+    this.#navigation = new ActivePageState(this.#blockStore, (event) =>
+      this.#callbacks.fireActivePage(event),
+    );
 
     this.block = new BlockAPI(this);
     this.editor = new EditorAPI(this);
@@ -68,16 +65,20 @@ export class EditxEngine implements EngineCore {
   }
 
   setActiveScene(id: number) {
-    this.#activeSceneId = id;
+    this.#navigation.setScene(id);
   }
   getActiveScene(): number | null {
-    return this.#activeSceneId;
+    return this.#navigation.sceneId;
   }
   setActivePage(id: number) {
-    this.#activePageId = id;
+    this.#navigation.setPage(id);
   }
   getActivePage(): number | null {
-    return this.#activePageId;
+    return this.#navigation.pageId;
+  }
+  /** @internal */
+  _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void {
+    this.#navigation.replace(sceneId, pageId);
   }
 
   /**
@@ -109,6 +110,7 @@ export class EditxEngine implements EngineCore {
         this.#enqueueBlockEvents(this.#batchPatches);
       }
       this.#batchPatches = [];
+      this.#navigation.reconcile();
       this.#flush();
     }
   }
@@ -116,7 +118,7 @@ export class EditxEngine implements EngineCore {
   exec(command: Command) {
     const patches = command.do();
     if (patches && patches.length > 0) {
-      this.#markDirty(patches);
+      for (const patch of patches) this.#dirty.add(patch.id);
       if (this.#batchDepth > 0) {
         this.#batchPatches.push(...patches);
       } else {
@@ -127,11 +129,10 @@ export class EditxEngine implements EngineCore {
         this.#enqueueBlockEvents(patches);
       }
     }
-    if (this.#batchDepth === 0) this.#flush();
-  }
-
-  #markDirty(patches: Patch[]) {
-    for (const p of patches) this.#dirty.add(p.id);
+    if (this.#batchDepth === 0) {
+      this.#navigation.reconcile();
+      this.#flush();
+    }
   }
 
   #enqueueBlockEvents(patches: Patch[]) {
@@ -183,6 +184,7 @@ export class EditxEngine implements EngineCore {
 
   #applyPatches(patches: Patch[]) {
     applyHistoryPatches(patches, this.#blockStore, this.#dirty, this.event);
+    this.#navigation.reconcile();
   }
 
   #flush() {
@@ -198,21 +200,17 @@ export class EditxEngine implements EngineCore {
   }
   emit(event: string, ...args: unknown[]) {
     this.#events.emit(event, ...args);
-    if (event === "zoom:changed" && typeof args[0] === "number") {
-      this.#callbacks.fireZoom(args[0]);
-    } else if (event === "pan:changed" && isPoint(args[0])) {
-      this.#callbacks.firePan(args[0]);
-    } else if (event === "editMode:changed" && isEditModeChange(args[0])) {
-      this.#callbacks.fireEditMode(args[0]);
-    } else if (event === "block:transform" && isBlockTransform(args[0])) {
-      this.#callbacks.fireBlockTransform(args[0]);
-    } else if (event === "block:dblclick" && typeof args[0] === "number") {
+    this.#callbacks.fireEvent(event, args[0]);
+    if (event === "block:dblclick" && typeof args[0] === "number") {
       this.block._notifyBlockDoubleClick(args[0], args[1] as { x: number; y: number } | undefined);
     }
   }
 
   // ── Typed event subscriptions ──────────────────────────
 
+  onActivePageChanged(cb: (event: ActivePageChangedEvent) => void) {
+    return this.#callbacks.onActivePageChanged(cb);
+  }
   onHistoryChanged(cb: () => void) {
     return this.#callbacks.onHistoryChanged(cb);
   }
@@ -237,48 +235,10 @@ export class EditxEngine implements EngineCore {
   }
 
   async exportScene(options?: ExportOptions): Promise<Blob> {
-    if (!this.#renderer) throw new Error("Cannot export: no renderer attached");
-    return this.#renderer.exportScene({
-      format: options?.format ?? "png",
-      quality: options?.quality ?? 0.92,
-      pixelRatio: options?.pixelRatio ?? 1,
-    });
+    return exportScene(this, options);
   }
 
   async exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob> {
-    if (!this.#renderer) throw new Error("Cannot export: no renderer attached");
-    const block = this.#blockStore.get(blockId);
-    if (!block) throw new Error(`Cannot export: block ${blockId} does not exist`);
-    if (!["graphic", "text", "image", "group"].includes(block.type)) {
-      throw new Error(`Cannot export unsupported block type: ${block.type}`);
-    }
-    validateBlockExportOptions(options);
-    this.#flush();
-    return this.#renderer.exportBlock(blockId, {
-      ...options,
-      padding: options.padding ?? 0,
-      pixelRatio: options.pixelRatio ?? 1,
-    });
-  }
-}
-
-function validateBlockExportOptions(options: BlockExportOptions): void {
-  if (!Number.isInteger(options.width) || options.width <= 0) {
-    throw new RangeError("Block export width must be a positive integer");
-  }
-  if (!Number.isInteger(options.height) || options.height <= 0) {
-    throw new RangeError("Block export height must be a positive integer");
-  }
-  const padding = options.padding ?? 0;
-  if (
-    !Number.isFinite(padding) ||
-    padding < 0 ||
-    padding * 2 >= Math.min(options.width, options.height)
-  ) {
-    throw new RangeError("Block export padding must leave a positive inner rectangle");
-  }
-  const pixelRatio = options.pixelRatio ?? 1;
-  if (!Number.isFinite(pixelRatio) || pixelRatio <= 0) {
-    throw new RangeError("Block export pixelRatio must be positive");
+    return exportBlock(this, blockId, options);
   }
 }

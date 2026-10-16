@@ -1,7 +1,7 @@
 ---
 name: rendering-engineer
 description: Konva/canvas rendering specialist for packages/engine. Use for the render pipeline, stage/layers, hit-testing, transforms, coordinate systems, snapping, and on-canvas performance (batched draws, caching, redraw scope). Deep expertise in the block-based engine's visual output.
-model: claude-opus-4.8
+model: gpt-5.6-sol
 tools: [read, edit, search, execute]
 ---
 

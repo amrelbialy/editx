@@ -25,6 +25,8 @@ export interface EngineCore {
   getActiveScene(): number | null;
   setActivePage(id: number): void;
   getActivePage(): number | null;
+  /** @internal — atomically replace navigation after scene creation or loading. */
+  _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void;
   undo(): void;
   redo(): void;
   canUndo(): boolean;
@@ -33,9 +35,12 @@ export interface EngineCore {
   on(event: string, cb: (...args: unknown[]) => void): void;
   off(event: string, cb: (...args: unknown[]) => void): void;
   emit(event: string, ...args: unknown[]): void;
+  onActivePageChanged(cb: (event: ActivePageChangedEvent) => void): () => void;
   onHistoryChanged(cb: () => void): () => void;
   onZoomChanged(cb: (zoom: number) => void): () => void;
   onPanChanged(cb: (pan: { x: number; y: number }) => void): () => void;
   onEditModeChanged(cb: (info: EditModeChange) => void): () => void;
   onBlockTransform(cb: (event: BlockTransformEvent) => void): () => void;
 }
+
+import type { ActivePageChangedEvent } from "./active-page";

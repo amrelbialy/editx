@@ -1,7 +1,7 @@
 ---
 name: engineering-lead
 description: Planning lead for unclear, cross-package, public API, or high-risk editx work. Classifies work as FAST, GATED, or HIGH_RISK and marks specialist steps required or advisory. Skip for concrete package-local changes.
-model: claude-opus-4.8
+model: gpt-5.6-sol
 tools: [read, search, github]
 ---
 

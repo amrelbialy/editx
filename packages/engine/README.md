@@ -74,6 +74,17 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Page navigation
+
+`engine.scene.setActivePage(pageId)` validates that the target is a direct page of the active
+scene. Invalid targets throw `ActivePageError` without changing navigation or history.
+Subscribe with `engine.onActivePageChanged(callback)` or
+`engine.scene.onActivePageChanged(callback)`; both return an unsubscribe function and deliver
+`{ pageId, previousPageId }`. IDs are nullable when entering or leaving an empty scene.
+Selecting the current page does not notify. Navigation preserves undo/redo; removing the active
+page selects the first remaining page, while `scene.removePage` rejects removing the final page.
+See the [Scene API reference](https://editx-sdk.vercel.app/docs/engine/scene-api) for details.
+
 ### Image fills and graphic crop
 
 Graphic image fills support `crop`, `cover`, `fit`, and `tile` modes plus source-pixel

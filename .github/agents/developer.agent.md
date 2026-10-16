@@ -1,6 +1,7 @@
 ---
 name: developer
 description: Default implementation owner for editx features, fixes, and refactors. Handles code, focused tests, and routine validation end to end; escalates only unresolved architecture, public API, rendering, or high-risk test decisions.
+model: gpt-5.6-sol
 tools: [read, edit, search, execute]
 ---
 

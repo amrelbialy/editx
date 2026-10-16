@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
 description: Read-only reviewer for high-risk editx changes and final PR diffs. Checks correctness, boundaries, and hard rules before code lands without repeating routine local validation or Biome formatting checks.
+model: gpt-5.6-sol
 tools: [read, search]
 ---
 

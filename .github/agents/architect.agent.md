@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Software architect for the editx monorepo. Use for module-boundary and placement decisions (engine vs image-editor vs ui), designing new subsystems, refactors that cross files/packages, and keeping the dependency direction clean. Produces designs and small scaffolding, not large feature implementations.
-model: claude-opus-4.8
+model: gpt-5.6-sol
 tools: [read, search, edit]
 ---
 

@@ -19,12 +19,53 @@ engine.scene.getPages();       // number[]
 engine.scene.setActivePage(pageId);
 ```
 
+Page activation is synchronous and does not create, clear, or merge undo/redo entries.
+The target must exist, have type `"page"`, and be a direct child of the active scene.
+Invalid targets throw `ActivePageError` with `pageId` and one of these `code` values:
+
+| Code | Meaning |
+|------|---------|
+| `PAGE_NOT_FOUND` | The block ID does not exist. |
+| `BLOCK_NOT_PAGE` | The block exists but is not a page. |
+| `PAGE_NOT_IN_ACTIVE_SCENE` | The page is detached, nested, belongs to another scene, or no scene is active. |
+
+Invalid activation leaves navigation and history unchanged. Re-selecting the current page is a
+no-op. The engine-level `engine.setActivePage(pageId)` follows the same contract.
+
+### Active-page subscription
+
+```ts
+import type { ActivePageChangedEvent } from "@editx/engine";
+
+const unsubscribePage = engine.scene.onActivePageChanged(
+  ({ pageId, previousPageId }: ActivePageChangedEvent) => {
+    // Update host navigation; either ID can be null for an empty scene.
+  },
+);
+
+// engine.onActivePageChanged(callback) is an equivalent subscription.
+unsubscribePage();
+```
+
+Notifications are synchronous, once per effective page-ID change, and work without a renderer.
+Creating or loading a scene publishes only its final navigation transition; notifications do not
+mean rendering has finished. Await `create()` or `loadFromString()` for scene setup completion.
+Subscriptions are separate from block lifecycle events and are not sent through `event.subscribe`.
+
 ## Page Management
 
 ```ts
 const pageId = engine.scene.addPage({ width: 1080, height: 1080 });
 engine.scene.removePage(pageId); // throws if last page
 ```
+
+Adding a page activates it. Removing the active page selects the first remaining page in scene
+child order and emits one active-page notification. Removing another page leaves navigation
+unchanged and emits none. Unknown or foreign page IDs are rejected before removal.
+
+Direct block commands and undo/redo reconcile stale navigation to the first remaining page, or
+`null` if none remain. Exact restoration of prior navigation and atomic add/remove history are
+not yet supported; page navigation itself is never recorded in history.
 
 ## Page Dimensions
 
@@ -64,6 +105,11 @@ use feature defaults for fields that did not exist yet. Other versions throw an
 
 Loading rebuilds the block hierarchy and renderer state, then clears history so
 the restored document starts with a clean undo stack.
+
+Active scene/page references are validated before replacing live blocks. Invalid references
+reject loading without changing the current document or history. A scene with a `null` active
+page selects its first direct page, if any; loading an empty document clears stale navigation.
+This is navigation validation, not full document-schema validation.
 
 ## Event API
 
