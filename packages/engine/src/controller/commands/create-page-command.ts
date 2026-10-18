@@ -2,6 +2,7 @@ import type { BlockStore } from "../../block/block-store";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../../block/property-keys";
 import type { Patch } from "../../history-manager";
 import { withPageNavigation } from "../../page-history";
+import { validatePageDimensions } from "../../page-properties";
 import { PatchCommand } from "./patch-command";
 
 export class CreatePageCommand extends PatchCommand {
@@ -21,14 +22,7 @@ export class CreatePageCommand extends PatchCommand {
     if (this.store.getType(this.sceneId) !== "scene") {
       throw new Error(`Scene ${this.sceneId} does not exist or is not a scene`);
     }
-    if (
-      !Number.isFinite(this.width) ||
-      this.width <= 0 ||
-      !Number.isFinite(this.height) ||
-      this.height <= 0
-    ) {
-      throw new RangeError("Page dimensions must be finite positive numbers");
-    }
+    validatePageDimensions(this.width, this.height);
 
     const sceneBefore = this.store.snapshot(this.sceneId);
     const pageId = this.store.create("page");

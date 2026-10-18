@@ -56,6 +56,15 @@ const PAGE_METADATA = new Map<string, PageMetadata>([
     },
   ],
   [
+    "/playground/pages",
+    {
+      title: "Editx Multi-page SDK Playground",
+      description:
+        "Exercise page creation, duplication, ordering, properties, history, and native snapshots on a live canvas.",
+      index: false,
+    },
+  ],
+  [
     "/demo",
     {
       title: "Editx Image Editor Demo",

@@ -245,3 +245,12 @@ engine.block.setPageImageSrc(pageId, "/photo.jpg");
 engine.block.setPageMarginsEnabled(pageId, true);
 engine.block.setPageMargins(pageId, 20, 20, 20, 20);
 ```
+
+`setPageDimensions` requires a direct page of the active scene and finite positive width
+and height. It changes page bounds only, without scaling descendants, activating the page,
+or changing the camera or scene defaults. Both dimensions are validated and committed
+together as one undo step. An unchanged size is a strict no-op and preserves redo.
+
+For atomic updates to a page's name, dimensions, background color, and optional string
+metadata, use `engine.scene.setPageProperties(pageId, update)`. See the
+[Scene API](/docs/engine/scene-api) for validation, metadata replacement, and serialization semantics.

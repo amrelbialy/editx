@@ -41,6 +41,7 @@ import { DocsIndex } from "./pages/docs-index";
 import { DocsPage } from "./pages/docs-page";
 import { LandingPage } from "./pages/landing";
 import { NotFoundPage } from "./pages/not-found";
+import { PagePlayground } from "./pages/page-playground";
 
 const DOC_ROUTES: { path: string; component: ComponentType }[] = [
   { path: "/docs/image-editor/getting-started", component: IeGettingStarted },
@@ -98,6 +99,7 @@ export function Site() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/playground" element={<EditorPlayground />} />
+        <Route path="/playground/pages" element={<PagePlayground />} />
         <Route path="/demo" element={<App />} />
         <Route path="/docs" element={<DocsIndex />} />
         {DOC_ROUTES.map(({ path, component }) => (

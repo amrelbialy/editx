@@ -15,6 +15,12 @@ import { MovePageCommand } from "./controller/commands/move-page-command";
 import { RemovePageCommand } from "./controller/commands/remove-page-command";
 import type { EngineCore } from "./engine-core";
 import { getScenePages, type PageOrderChangedEvent } from "./page-order";
+import {
+  type PageProperties,
+  type PagePropertiesUpdate,
+  validatePageDimensions,
+} from "./page-properties";
+import { getPageProperties, setPageProperties } from "./page-properties-api";
 import { loadSceneFromString, saveSceneToString } from "./scene-serialization";
 
 export class SceneAPI {
@@ -29,6 +35,7 @@ export class SceneAPI {
   async create(opts: { width?: number; height?: number } = {}) {
     const width = opts.width ?? 1080;
     const height = opts.height ?? 1080;
+    validatePageDimensions(width, height);
 
     // Create scene block
     const sceneId = this.#block.create("scene");
@@ -116,6 +123,18 @@ export class SceneAPI {
     return this.#engine.onPageOrderChanged(callback);
   }
 
+  getPageProperties(pageId: number): PageProperties {
+    return getPageProperties(this.#engine, pageId);
+  }
+
+  setPageProperties(pageId: number, update: PagePropertiesUpdate): void {
+    setPageProperties(this.#engine, pageId, update);
+  }
+
+  resizePage(pageId: number, width: number, height: number): void {
+    setPageProperties(this.#engine, pageId, { width, height });
+  }
+
   setActivePage(pageId: number): void {
     this.#engine.setActivePage(pageId);
   }
@@ -146,6 +165,7 @@ export class SceneAPI {
   setDefaultPageDimensions(width: number, height: number): void {
     const sceneId = this.#engine.getActiveScene();
     if (sceneId === null) throw new Error("No active scene");
+    validatePageDimensions(width, height);
     this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_WIDTH, width);
     this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_HEIGHT, height);
   }

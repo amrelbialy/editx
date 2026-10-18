@@ -189,6 +189,7 @@ export type { FilterPresetInfo } from "./konva/filters/presets";
 export { FILTER_PRESETS, getFilterPreset } from "./konva/filters/presets";
 export type { TextCaretRect, TextSelectionRect } from "./konva/formatted-text-caret";
 export type { PageOrderChangedEvent } from "./page-order";
+export type { PageMetadata, PageProperties, PagePropertiesUpdate } from "./page-properties";
 export type { CropPreset, CropRect } from "./utils";
 export {
   applyCropRatio,

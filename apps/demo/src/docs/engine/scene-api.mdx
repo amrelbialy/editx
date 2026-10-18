@@ -141,12 +141,82 @@ remain observable without becoming undoable. Pending events are derived from cur
 delivery, so reentrant mutations do not publish stale queued orders. Notifications work without
 a renderer. As with active-page events, await `create()` or `loadFromString()` for scene setup completion.
 
-## Page Dimensions
+## Page Properties
+
+```ts
+import type { PageMetadata, PageProperties, PagePropertiesUpdate } from "@editx/engine";
+
+const pageId = engine.scene.getCurrentPage()!;
+const update: PagePropertiesUpdate = {
+  name: "Front cover",
+  width: 1200,
+  height: 1600,
+  backgroundColor: { r: 1, g: 0.98, b: 0.94, a: 1 },
+  metadata: { thumbnailAlt: "Front cover preview", uiGroup: "Covers" },
+};
+engine.scene.setPageProperties(pageId, update);
+const page: PageProperties = engine.scene.getPageProperties(pageId);
+engine.scene.resizePage(pageId, 1080, 1350);
+```
+
+These APIs require a direct page of the active scene, matching both its parent reference and
+scene child-list membership. They can edit a background page without activating it. Missing,
+foreign, detached, nested, and non-page targets throw before mutation.
+
+An update can change any combination of name, dimensions, background color, and metadata.
+Width and height must be supplied together and must be finite positive numbers; fractional
+sizes are preserved. Names are preserved exactly, including whitespace and empty strings.
+Background colors use normalized RGBA channels, each finite and in `[0, 1]`; invalid values
+are rejected, not clamped. Getters return defensive color and metadata snapshots.
+
+`PageMetadata` is a read-only map of string keys to string values for optional UI hints,
+such as thumbnail alternative text or grouping labels. It is not thumbnail image data,
+an asset catalog, export settings, or document/template metadata. Omit `metadata` to retain
+it, pass an object to replace the complete map, or pass `null` to remove it. An empty map
+`{}` is distinct from absent metadata, which getters return as `null`.
+
+Each effective update is one atomic command, one undo step, and one page `updated`
+lifecycle event. Existing outer batches coalesce updates; silent scopes stay outside history.
+Use `engine.event.subscribe([pageId], callback)` for property changes; they do not emit
+active-page or page-order notifications. Validation happens before any mutation.
+Same-value updates, including metadata with the same key/value pairs in a different key order,
+are strict no-ops: no lost redo, history entry, notification, or render.
+
+Resizing changes **page bounds only**. Descendant positions, sizes, formatting, and crops are
+unchanged, even when they fall outside the smaller bounds. Page navigation, block selection,
+camera, scene layout, other pages, and new-page defaults are unchanged. Undo/redo restores
+all updated properties together without overriding later valid navigation. Names, mixed
+dimensions, background colors, and metadata survive native save/load and page duplication.
+
+The existing `engine.block.getName/setName`, `getPageDimensions/setPageDimensions`, and
+`getPageFillColor/setPageFillColor` remain available. `block.setPageDimensions` now uses the
+same atomic bounds-only resize command and requires a direct page of the active scene;
+invalid targets or dimensions throw rather than partially updating state.
+
+### Try the page APIs
+
+The [multi-page SDK playground](/playground/pages) seeds three pages with different dimensions,
+colors, and grouped artwork. It provides page controls, atomic property edits, undo/redo,
+native snapshot save/load, downloadable JSON, and live SDK state/events.
+
+This is an opt-in diagnostic lab, not the finished multi-page editor UI. Pages currently
+share the same canvas origin. Backgrounds follow document order, but artwork from different
+pages overlaps. Activating a page changes SDK navigation but does not isolate its canvas view.
+"Bring active to front" performs an explicit, undoable reorder, not a preview filter, and
+does not change authored visibility. The built-in zoom badge can lag programmatic fits;
+the live SDK state reports the actual zoom. Page-targeted export and the production page
+strip are separate roadmap steps.
+
+## Default Page Dimensions
 
 ```ts
 engine.scene.setDefaultPageDimensions(1920, 1080);
 engine.scene.getDefaultPageDimensions(); // { width, height }
 ```
+
+Defaults must be finite positive dimensions. They apply only to subsequently added pages,
+not existing pages. Changing layout, aspect-ratio lock, zoom, or the current page does not
+rewrite authored page dimensions.
 
 ## Aspect Ratio Lock
 

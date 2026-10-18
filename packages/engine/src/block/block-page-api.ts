@@ -1,4 +1,5 @@
 import type { EngineCore } from "../engine-core";
+import { setPageProperties } from "../page-properties-api";
 import { normalizeRotation } from "../utils/rotation-math";
 import type { Color } from "./block.types";
 import * as H from "./block-api-helpers";
@@ -30,10 +31,7 @@ export class BlockPageAPI {
   // ── Page dimensions ───────────────────────────────
 
   setPageDimensions(id: number, width: number, height: number): void {
-    this.#engine.beginBatch();
-    H.setFloat(this.#engine, id, PAGE_WIDTH, width);
-    H.setFloat(this.#engine, id, PAGE_HEIGHT, height);
-    this.#engine.endBatch();
+    setPageProperties(this.#engine, id, { width, height });
   }
 
   getPageDimensions(id: number): { width: number; height: number } {

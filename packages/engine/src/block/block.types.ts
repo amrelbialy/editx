@@ -212,7 +212,14 @@ export type TextRunStyleUpdate = {
   [K in keyof TextRunStyle]?: TextRunStyle[K] | null;
 };
 
-export type PropertyValue = number | string | boolean | Color | TextRun[] | GradientStop[];
+export type PropertyValue =
+  | number
+  | string
+  | boolean
+  | Color
+  | TextRun[]
+  | GradientStop[]
+  | Readonly<Record<string, string>>;
 
 export interface BlockData {
   id: number;

@@ -1,0 +1,174 @@
+import { Button, downloadBlob, type EditorHandle, ThemeProvider } from "@editx/image-editor";
+import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { PagePlaygroundCanvas } from "../components/page-playground/page-playground-canvas";
+import { PagePlaygroundControls } from "../components/page-playground/page-playground-controls";
+import { PagePlaygroundDiagnostics } from "../components/page-playground/page-playground-diagnostics";
+import { seedPagePlayground } from "../components/page-playground/page-playground-scene";
+import { usePageObservations } from "../components/page-playground/use-page-observations";
+import { useDarkMode } from "../hooks/use-dark-mode";
+
+export function PagePlayground() {
+  const [dark] = useDarkMode();
+  const { engine, setEngine, snapshot, events, record, refresh } = usePageObservations();
+
+  const [version, setVersion] = useState(0);
+  const [saved, setSaved] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const theme = useMemo(() => ({ preset: dark ? ("dark" as const) : ("light" as const) }), [dark]);
+  const run = useCallback(
+    async (label: string, action: () => unknown) => {
+      setBusy(true);
+      setError(null);
+      try {
+        await action();
+        record("action", label);
+      } catch (cause) {
+        const message = `${label}: ${cause instanceof Error ? cause.message : String(cause)}`;
+        setError(message);
+        record("error", message);
+      } finally {
+        refresh();
+        setBusy(false);
+      }
+    },
+    [record, refresh],
+  );
+  const ready = useCallback(
+    (handle: EditorHandle) => {
+      try {
+        seedPagePlayground(handle.engine);
+        setEngine(handle.engine);
+      } catch (cause) {
+        setError(
+          `Playground initialization: ${cause instanceof Error ? cause.message : String(cause)}`,
+        );
+      }
+    },
+    [setEngine],
+  );
+  const reset = useCallback(() => {
+    setEngine(null);
+    setSaved(null);
+    setError(null);
+    setVersion((value) => value + 1);
+  }, [setEngine]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <main className="@container/editor mx-auto flex max-w-[1600px] flex-col gap-3 p-3 text-foreground">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold">Multi-page SDK playground</h1>
+            <p className="text-sm text-muted-foreground">
+              A1-A5 diagnostic lab / no external images or fonts.
+            </p>
+          </div>
+          <Link to="/playground" className="text-sm text-primary underline">
+            Single-image playground
+          </Link>
+        </header>
+        <p
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+          role="note"
+        >
+          Known limitations: pages share the canvas origin. Backgrounds follow document order, but
+          artwork from different pages overlaps. Changing the active page does not isolate it yet.
+          "Bring active to front" is an undoable reorder, not a preview filter. The built-in zoom
+          badge can lag SDK-driven fits; use the SDK state readout below. Page-strip integration and
+          page-targeted export are still pending.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !snapshot?.canUndo}
+            onClick={() => engine && void run("Undo", () => engine.undo())}
+          >
+            Undo change
+          </Button>
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !snapshot?.canRedo}
+            onClick={() => engine && void run("Redo", () => engine.redo())}
+          >
+            Redo change
+          </Button>
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !engine}
+            onClick={() => engine && void run("Fit active page", () => engine.editor.fitToScreen())}
+          >
+            Fit active page
+          </Button>
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !engine}
+            onClick={() =>
+              engine && void run("Save snapshot", () => setSaved(engine.scene.saveToString()))
+            }
+          >
+            Save snapshot
+          </Button>
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !engine || !saved}
+            onClick={() =>
+              engine &&
+              saved &&
+              void run("Load saved snapshot", async () => {
+                await engine.scene.loadFromString(saved);
+                engine.editor.fitToScreen();
+              })
+            }
+          >
+            Load saved snapshot
+          </Button>
+          <Button
+            className="px-2"
+            variant="outline"
+            disabled={busy || !engine}
+            onClick={() =>
+              engine &&
+              void run("Download JSON", () =>
+                downloadBlob(
+                  new Blob([engine.scene.saveToString()], { type: "application/json" }),
+                  "page-playground.editx",
+                ),
+              )
+            }
+          >
+            Download JSON
+          </Button>
+          <Button className="px-2" variant="outline" disabled={busy} onClick={reset}>
+            Reset sample
+          </Button>
+        </div>
+        {error && (
+          <p role="alert" className="rounded-lg border border-destructive p-3 text-sm">
+            {error}
+          </p>
+        )}
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {snapshot
+            ? `${snapshot.pages.length} pages / Active ID: ${snapshot.activePageId} / Top page ID: ${snapshot.topPageId} / Selected: ${snapshot.selection.join(", ") || "none"}`
+            : "Initializing SDK..."}
+          {saved && " / Snapshot saved in memory"}
+        </p>
+        <div className="grid min-w-0 gap-3 @3xl/editor:grid-cols-[minmax(0,1fr)_22rem]">
+          <PagePlaygroundCanvas key={version} theme={theme} onReady={ready} />
+          {engine && snapshot && (
+            <PagePlaygroundControls engine={engine} snapshot={snapshot} busy={busy} run={run} />
+          )}
+        </div>
+        <PagePlaygroundDiagnostics snapshot={snapshot} events={events} />
+      </main>
+    </ThemeProvider>
+  );
+}

@@ -1,6 +1,7 @@
 import { downloadBlob } from "@editx/image-editor";
 import { ChevronDown, ChevronUp, Code2, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { useDarkMode } from "../hooks/use-dark-mode";
 import { buildEditorConfig } from "./playground/build-editor-config";
 import { DEFAULT_PLAYGROUND_CONFIG, SAMPLE_LANDSCAPE } from "./playground/playground.constants";
@@ -70,6 +71,12 @@ export function EditorPlayground() {
               <Settings2 className="size-3.5 text-zinc-400 dark:text-zinc-500" />
               Configuration
             </div>
+            <Link
+              to="/playground/pages"
+              className="text-xs text-violet-600 underline dark:text-violet-400"
+            >
+              Multi-page lab
+            </Link>
             <button
               type="button"
               onClick={handleReset}

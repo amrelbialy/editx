@@ -7,6 +7,7 @@ import { Site } from "./site";
 export const prerenderRoutes = [
   "/",
   "/playground",
+  "/playground/pages",
   "/demo",
   "/docs",
   ...DOCS_ORDER.map((link) => link.href),

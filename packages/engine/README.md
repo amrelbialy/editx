@@ -103,6 +103,23 @@ and content edits do not notify. Outer batches publish only their final net chan
 silent mutations, and undo/redo preserves subsequent valid navigation.
 See the [Scene API reference](https://editx-sdk.vercel.app/docs/engine/scene-api) for details.
 
+### Page properties
+
+Use `scene.getPageProperties(pageId)` for a defensive snapshot of the page's name, width,
+height, normalized RGBA `backgroundColor`, and optional string-only `metadata` map.
+`scene.setPageProperties(pageId, update)` applies any combination atomically in one undo
+step; width and height must be provided together. `scene.resizePage(pageId, width, height)`
+and the existing `block.setPageDimensions` use the same command. Dimensions must be finite
+and positive, and every background channel must be finite and in `[0, 1]`.
+
+All three scene APIs and `block.setPageDimensions` require a direct page of the active
+scene. Resizing changes bounds only: descendants, navigation, selection, camera, other
+pages, scene layout, and defaults for future pages are unchanged. Invalid updates fail
+before mutation; effective no-ops preserve redo and produce no events or rendering.
+Metadata objects replace the complete map; omission retains it, `null` clears it, and `{}`
+is a distinct empty map. Metadata is for UI hints, not thumbnail image data or template
+metadata. All page properties survive duplication, undo/redo, and native serialization.
+
 ### Image fills and graphic crop
 
 Graphic image fills support `crop`, `cover`, `fit`, and `tile` modes plus source-pixel

@@ -15,6 +15,7 @@ const NPM_URL = "https://www.npmjs.com/package/@editx/image-editor";
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   if (href === "/docs") return pathname.startsWith("/docs");
+  if (href === "/playground") return pathname.startsWith("/playground");
   return pathname === href;
 }
 

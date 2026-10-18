@@ -73,6 +73,7 @@ export const CROP_ASPECT_RATIO_LOCKED = "crop/aspectRatioLocked" as const;
 // ── Page ─────────────────────────────────────────────
 export const PAGE_WIDTH = "page/width" as const;
 export const PAGE_HEIGHT = "page/height" as const;
+export const PAGE_METADATA = "page/metadata" as const;
 export const PAGE_MARGIN_ENABLED = "page/marginEnabled" as const;
 export const PAGE_MARGIN_TOP = "page/margin/top" as const;
 export const PAGE_MARGIN_BOTTOM = "page/margin/bottom" as const;

@@ -1,11 +1,4 @@
-import type {
-  BlockData,
-  Color,
-  GradientStop,
-  PropertyValue,
-  TextRun,
-  TextRunStyle,
-} from "./block.types";
+import type { BlockData, GradientStop, PropertyValue, TextRun, TextRunStyle } from "./block.types";
 
 /**
  * Creates deep-copy snapshots of blocks for undo/redo.
@@ -40,7 +33,7 @@ export class BlockSnapshot {
   }
 }
 
-/** Deep-copy a properties bag (handles nested Color, TextRun[], and GradientStop[]). */
+/** Deep-copy colors, flat string maps, and nested text/gradient arrays. */
 function deepCopyProperties(props: Record<string, PropertyValue>): Record<string, PropertyValue> {
   const copy: Record<string, PropertyValue> = {};
   for (const key in props) {
@@ -54,8 +47,8 @@ function deepCopyProperties(props: Record<string, PropertyValue>): Record<string
       copy[key] = isGradient
         ? (v as GradientStop[]).map((s) => ({ offset: s.offset, color: s.color }))
         : (v as TextRun[]).map((r) => ({ text: r.text, style: cloneRunStyle(r.style) }));
-    } else if (v && typeof v === "object" && "r" in v) {
-      copy[key] = { ...(v as Color) };
+    } else if (v && typeof v === "object") {
+      copy[key] = { ...v };
     } else {
       copy[key] = v;
     }
