@@ -10,8 +10,11 @@ import {
   SCENE_PAGE_DIMS_WIDTH,
 } from "./block/property-keys";
 import { CreatePageCommand } from "./controller/commands/create-page-command";
+import { DuplicatePageCommand } from "./controller/commands/duplicate-page-command";
+import { MovePageCommand } from "./controller/commands/move-page-command";
 import { RemovePageCommand } from "./controller/commands/remove-page-command";
 import type { EngineCore } from "./engine-core";
+import { getScenePages, type PageOrderChangedEvent } from "./page-order";
 import { loadSceneFromString, saveSceneToString } from "./scene-serialization";
 
 export class SceneAPI {
@@ -65,9 +68,7 @@ export class SceneAPI {
   }
 
   getPages(): number[] {
-    const sceneId = this.#engine.getActiveScene();
-    if (sceneId === null) return [];
-    return this.#block.getChildren(sceneId).filter((id) => this.#block.getType(id) === "page");
+    return getScenePages(this.#engine._getBlockStore(), this.#engine.getActiveScene());
   }
 
   addPage(opts: { width?: number; height?: number } = {}): number {
@@ -87,6 +88,32 @@ export class SceneAPI {
     );
     this.#engine.exec(command);
     return command.getCreatedId()!;
+  }
+
+  /** Duplicate a direct page after its source and activate the copy as one undo step. */
+  duplicatePage(pageId: number): number {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error("No active scene");
+    const command = new DuplicatePageCommand(
+      this.#engine._getBlockStore(),
+      sceneId,
+      pageId,
+      this.#engine.getActivePage(),
+    );
+    this.#engine.exec(command);
+    return command.getCreatedId()!;
+  }
+
+  /** Move a page to a clamped, zero-based page index without changing navigation. */
+  movePage(pageId: number, index: number): void {
+    const sceneId = this.#engine.getActiveScene();
+    if (sceneId === null) throw new Error("No active scene");
+    const command = new MovePageCommand(this.#engine._getBlockStore(), sceneId, pageId, index);
+    if (command.hasChanges) this.#engine.exec(command);
+  }
+
+  onPageOrderChanged(callback: (event: PageOrderChangedEvent) => void): () => void {
+    return this.#engine.onPageOrderChanged(callback);
   }
 
   setActivePage(pageId: number): void {

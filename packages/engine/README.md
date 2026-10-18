@@ -83,9 +83,24 @@ Subscribe with `engine.onActivePageChanged(callback)` or
 `{ pageId, previousPageId }`. IDs are nullable when entering or leaving an empty scene.
 Selecting the current page does not notify. Navigation preserves undo/redo; removing the active
 page selects the first remaining page, while `scene.removePage` rejects removing the final page.
-Adding or removing a page is one undo entry, restoring page content, order, and any changed
+Adding, duplicating, or removing a page is one undo entry, restoring page content, order, and any changed
 navigation on undo/redo. Non-active removal preserves later navigation. Page dimensions must be
 finite positive numbers; invalid creation fails before mutation.
+`engine.scene.duplicatePage(pageId)` returns the new ID, inserts the copy immediately after its
+source, and activates it. It preserves names, dimensions, positions, styles, crops, and the complete
+child/shape/fill/effect graph with fresh block IDs and remapped internal links. Mutable state is
+independent while external resource strings are retained. There is no position offset, name suffix,
+or automatic selection change. Undo removes the complete copy and restores prior navigation;
+redo restores the same IDs and reactivates the duplicate. Invalid targets or broken subtree
+references fail before copy allocation or history changes.
+`engine.scene.movePage(pageId, index)` reorders direct pages in one undo step while preserving
+content, navigation, selection, camera, and non-page scene-child slots. The final zero-based page
+index is clamped to the first/last page; non-finite or fractional indices throw. Unchanged moves
+preserve redo and emit nothing. Subscribe with `engine.onPageOrderChanged(callback)` or its
+`engine.scene` equivalent for frozen `{ sceneId, pageIds, previousPageIds }` snapshots whenever
+the active scene's page list or scene identity changes. There is no initial event; pure activation
+and content edits do not notify. Outer batches publish only their final net change, including
+silent mutations, and undo/redo preserves subsequent valid navigation.
 See the [Scene API reference](https://editx-sdk.vercel.app/docs/engine/scene-api) for details.
 
 ### Image fills and graphic crop

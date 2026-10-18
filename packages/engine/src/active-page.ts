@@ -1,6 +1,7 @@
 import type { BlockStore } from "./block/block-store";
 import type { Patch } from "./history-manager";
 import { getPageNavigation, type PageNavigationState } from "./page-history";
+import { type PageOrderChangedEvent, PageOrderState } from "./page-order";
 
 export interface ActivePageChangedEvent {
   pageId: number | null;
@@ -75,12 +76,21 @@ export class ActivePageState {
   sceneId: number | null = null;
   pageId: number | null = null;
   #publishedPageId: number | null = null;
+  #pageOrder: PageOrderState;
 
   constructor(
     private readonly store: NavigationStore,
     private readonly onChanged: (event: ActivePageChangedEvent) => void,
     private readonly deferNotification: (callback: () => void) => void,
-  ) {}
+    onPageOrderChanged: (event: PageOrderChangedEvent) => void,
+  ) {
+    this.#pageOrder = new PageOrderState(
+      store,
+      () => this.sceneId,
+      onPageOrderChanged,
+      deferNotification,
+    );
+  }
 
   setScene(sceneId: number): void {
     const pageId =
@@ -98,7 +108,8 @@ export class ActivePageState {
   replace(sceneId: number | null, pageId: number | null): void {
     validateNavigation(this.store, sceneId, pageId);
     this.sceneId = sceneId;
-    this.#changePage(pageId);
+    this.#changePage(pageId, false);
+    this.publish();
   }
 
   reconcile(notify = true): ActivePageChangedEvent | null {
@@ -137,6 +148,7 @@ export class ActivePageState {
 
   publish(): void {
     this.deferNotification(this.#notify);
+    this.#pageOrder.publish();
   }
 
   #changePage(pageId: number | null, notify = true): ActivePageChangedEvent | null {

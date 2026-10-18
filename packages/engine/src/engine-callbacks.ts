@@ -32,6 +32,7 @@ export interface ViewportState {
  */
 export class EngineCallbacks {
   #activePage = new Set<(event: ActivePageChangedEvent) => void>();
+  #pageOrder = new Set<(event: PageOrderChangedEvent) => void>();
   #history = new Set<() => void>();
   #zoom = new Set<(zoom: number) => void>();
   #pan = new Set<(pan: { x: number; y: number }) => void>();
@@ -40,6 +41,9 @@ export class EngineCallbacks {
 
   onActivePageChanged(cb: (event: ActivePageChangedEvent) => void): () => void {
     return this.#add(this.#activePage, cb);
+  }
+  onPageOrderChanged(cb: (event: PageOrderChangedEvent) => void): () => void {
+    return this.#add(this.#pageOrder, cb);
   }
   onHistoryChanged(cb: () => void): () => void {
     return this.#add(this.#history, cb);
@@ -59,6 +63,9 @@ export class EngineCallbacks {
 
   fireActivePage(event: ActivePageChangedEvent): void {
     for (const cb of this.#activePage) cb(event);
+  }
+  firePageOrder(event: PageOrderChangedEvent): void {
+    for (const cb of this.#pageOrder) cb(event);
   }
   fireHistory(): void {
     for (const cb of this.#history) cb();
@@ -112,3 +119,4 @@ export function isBlockTransform(v: unknown): v is BlockTransformEvent {
 }
 
 import type { ActivePageChangedEvent } from "./active-page";
+import type { PageOrderChangedEvent } from "./page-order";

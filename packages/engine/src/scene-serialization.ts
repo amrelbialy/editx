@@ -60,6 +60,7 @@ export async function loadSceneFromString(engine: EngineCore, json: string): Pro
         const block = store.get(id);
         if (block) renderer?.syncBlock(id, block);
       }
+      renderer?.syncChildOrder?.(scene.children);
     }
   }
   engine.clearHistory();

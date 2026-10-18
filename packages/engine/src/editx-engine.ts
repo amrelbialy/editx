@@ -10,6 +10,7 @@ import type { EngineCore } from "./engine-core";
 import { EngineTransactions } from "./engine-transactions";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
+import type { PageOrderChangedEvent } from "./page-order";
 import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 import { clearImageCache } from "./utils/image-loader";
@@ -38,6 +39,7 @@ export class EditxEngine implements EngineCore {
       this.#blockStore,
       (event) => this.#callbacks.fireActivePage(event),
       (callback) => this._deferNotification(callback),
+      (event) => this.#callbacks.firePageOrder(event),
     );
     this.#transactions = new EngineTransactions(this, this.#navigation, this.#callbacks);
 
@@ -149,6 +151,9 @@ export class EditxEngine implements EngineCore {
 
   onActivePageChanged(cb: (event: ActivePageChangedEvent) => void) {
     return this.#callbacks.onActivePageChanged(cb);
+  }
+  onPageOrderChanged(cb: (event: PageOrderChangedEvent) => void) {
+    return this.#callbacks.onPageOrderChanged(cb);
   }
   onHistoryChanged(cb: () => void) {
     return this.#callbacks.onHistoryChanged(cb);

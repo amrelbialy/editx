@@ -3,6 +3,7 @@ import type { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import type { BlockTransformEvent, EditModeChange } from "./engine-callbacks";
 import type { EventAPI } from "./event-api";
+import type { PageOrderChangedEvent } from "./page-order";
 import type { RendererAdapter } from "./render-adapter";
 
 /**
@@ -39,6 +40,7 @@ export interface EngineCore {
   off(event: string, cb: (...args: unknown[]) => void): void;
   emit(event: string, ...args: unknown[]): void;
   onActivePageChanged(cb: (event: ActivePageChangedEvent) => void): () => void;
+  onPageOrderChanged(cb: (event: PageOrderChangedEvent) => void): () => void;
   onHistoryChanged(cb: () => void): () => void;
   onZoomChanged(cb: (zoom: number) => void): () => void;
   onPanChanged(cb: (pan: { x: number; y: number }) => void): () => void;

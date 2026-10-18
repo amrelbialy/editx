@@ -58,6 +58,8 @@ Subscriptions are separate from block lifecycle events and are not sent through 
 
 ```ts
 const pageId = engine.scene.addPage({ width: 1080, height: 1080 });
+const duplicateId = engine.scene.duplicatePage(pageId);
+engine.scene.movePage(duplicateId, 0);
 engine.scene.removePage(pageId); // throws if last page
 ```
 
@@ -65,25 +67,79 @@ Adding a page activates it. Removing the active page selects the first remaining
 child order and emits one active-page notification. Removing another page leaves navigation
 unchanged and emits none. Unknown or foreign page IDs are rejected before removal.
 
+`duplicatePage(pageId)` returns a fresh page ID, inserts the copy immediately after its source,
+and activates it. The source must be a direct page of the active scene, matching both its parent
+reference and the scene child list. Its name, kind, dimensions, background, positions, grouped
+content, text formatting, crops, shapes, fills, and effects are preserved without a position offset
+or name suffix. Every copied block and sub-block gets a fresh ID; internal links are remapped,
+mutable state is independent, and external resource strings are retained. Duplication does not
+automatically change block selection or group context.
+
 Creation, dimensions, attachment, and activation form one undo entry. Removal, subtree destruction,
-and fallback activation also form one entry. Undo/redo restores the same page IDs, complete content
-(including nested groups, fills, shapes, and effects), dimensions, and page order. Both APIs
+and fallback activation also form one entry. Duplication and its activation are likewise one entry.
+Undo/redo restores the same page IDs, complete content
+(including nested groups, fills, shapes, and effects), dimensions, and page order. These APIs
 participate in an existing outer command batch without adding separate history entries.
 Silent-scoped commands remain outside history even when their silent scope ends before the
 outer batch does. Rendering and lifecycle delivery settle before host selection, page, and
 history callbacks; reentrant changes do not publish stale pending page transitions.
 
-Creation and active-page removal record their navigation transition. Undo restores the previous
-active page; redo restores the created page or removal fallback, even if the host navigated
+Creation, duplication, and active-page removal record their navigation transition. Undo restores the previous
+active page; redo restores the created/duplicated page or removal fallback, even if the host navigated
 elsewhere in between. Removing a non-active page does not record navigation, so undo/redo preserves
 later page switches. Plain page navigation never creates an undo entry.
 
 Page width and height must be finite positive numbers. Invalid dimensions, missing scenes, unknown
 page IDs, and attempts to remove the final page throw before changing document state or history.
+Invalid duplication targets or missing/cyclic subtree references also throw before allocating
+copy IDs or changing the document, selection, history, or pending redo.
 
 Direct block commands still reconcile stale navigation to the first remaining page, or `null` if
 none remain. When a batch also destroys a recorded navigation target, replay falls back to the
 first remaining page in the recorded scene rather than activating an invalid page.
+
+### Reordering pages
+
+`movePage(pageId, index)` moves a direct page of the active scene to its final zero-based
+position among pages. Finite integer indices are clamped to the first/last page; fractional,
+`NaN`, and infinite indices throw `RangeError`. Unknown, nested, detached, foreign, or non-page
+targets throw before changing state or history. Both the parent reference and scene child-list
+membership must match.
+
+Reordering changes only the scene child order. Non-page scene children retain their exact slots;
+page content, active page, block selection, and camera stay unchanged. One undo step restores
+the old order, and redo restores the new order without overwriting subsequent valid page navigation.
+Moving to the current effective index is a strict no-op: no history entry, lost redo, event, or render.
+
+### Page-order subscription
+
+```ts
+import type { PageOrderChangedEvent } from "@editx/engine";
+
+const unsubscribeOrder = engine.scene.onPageOrderChanged(
+  ({ sceneId, pageIds, previousPageIds }: PageOrderChangedEvent) => {
+    // Update the page strip from the new ordered page IDs.
+  },
+);
+
+// engine.onPageOrderChanged(callback) is equivalent.
+unsubscribeOrder();
+```
+
+The event reports any effective change to the active scene's page sequence or scene identity,
+including add, remove, duplicate, reorder, undo/redo, creation, loading, and switching scenes.
+It does not fire initially, for page activation alone, or for content-only edits. Read `getPages()`
+to seed a page strip before subscribing.
+
+`sceneId` is the current scene, or `null` after clearing navigation. `previousPageIds` is the
+previously published active-scene sequence and may belong to another scene after a switch.
+The payload and both arrays are frozen, read-only snapshots, not live store arrays.
+
+Command notifications follow rendering/lifecycle delivery and settled history. An outer batch
+publishes only its final net change; restoring the prior sequence emits nothing. Silent commands
+remain observable without becoming undoable. Pending events are derived from current state at
+delivery, so reentrant mutations do not publish stale queued orders. Notifications work without
+a renderer. As with active-page events, await `create()` or `loadFromString()` for scene setup completion.
 
 ## Page Dimensions
 
