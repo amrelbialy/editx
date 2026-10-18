@@ -9,6 +9,8 @@ import {
   SCENE_PAGE_DIMS_HEIGHT,
   SCENE_PAGE_DIMS_WIDTH,
 } from "./block/property-keys";
+import { CreatePageCommand } from "./controller/commands/create-page-command";
+import { RemovePageCommand } from "./controller/commands/remove-page-command";
 import type { EngineCore } from "./engine-core";
 import { loadSceneFromString, saveSceneToString } from "./scene-serialization";
 
@@ -76,14 +78,15 @@ export class SceneAPI {
     const width = opts.width ?? defaults.width;
     const height = opts.height ?? defaults.height;
 
-    const pageId = this.#block.create("page");
-    this.#block.setFloat(pageId, PAGE_WIDTH, width);
-    this.#block.setFloat(pageId, PAGE_HEIGHT, height);
-    this.#block.appendChild(sceneId, pageId);
-
-    this.#engine.setActivePage(pageId);
-
-    return pageId;
+    const command = new CreatePageCommand(
+      this.#engine._getBlockStore(),
+      sceneId,
+      this.#engine.getActivePage(),
+      width,
+      height,
+    );
+    this.#engine.exec(command);
+    return command.getCreatedId()!;
   }
 
   setActivePage(pageId: number): void {
@@ -97,12 +100,14 @@ export class SceneAPI {
   removePage(pageId: number): void {
     const sceneId = this.#engine.getActiveScene();
     if (sceneId === null) throw new Error("No active scene");
-    const pages = this.getPages();
-    if (!pages.includes(pageId)) throw new Error(`Page ${pageId} not found in scene`);
-    if (pages.length <= 1) throw new Error("Cannot remove the last page");
-
-    this.#block.removeChild(sceneId, pageId);
-    this.#block.destroy(pageId);
+    this.#engine.exec(
+      new RemovePageCommand(
+        this.#engine._getBlockStore(),
+        sceneId,
+        pageId,
+        this.#engine.getActivePage(),
+      ),
+    );
   }
 
   // ── Scene-level page dimensions ──────────────────────

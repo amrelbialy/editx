@@ -83,6 +83,9 @@ Subscribe with `engine.onActivePageChanged(callback)` or
 `{ pageId, previousPageId }`. IDs are nullable when entering or leaving an empty scene.
 Selecting the current page does not notify. Navigation preserves undo/redo; removing the active
 page selects the first remaining page, while `scene.removePage` rejects removing the final page.
+Adding or removing a page is one undo entry, restoring page content, order, and any changed
+navigation on undo/redo. Non-active removal preserves later navigation. Page dimensions must be
+finite positive numbers; invalid creation fails before mutation.
 See the [Scene API reference](https://editx-sdk.vercel.app/docs/engine/scene-api) for details.
 
 ### Image fills and graphic crop

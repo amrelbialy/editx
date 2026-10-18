@@ -5,12 +5,11 @@ import type { Command } from "./controller/commands";
 import { EditorAPI } from "./editor/editor-api";
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
 import { exportBlock, exportScene } from "./editx-engine-export";
-import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./editx-engine-flush";
 import { type BlockTransformEvent, type EditModeChange, EngineCallbacks } from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
+import { EngineTransactions } from "./engine-transactions";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
-import { HistoryManager, type Patch } from "./history-manager";
 import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 import { clearImageCache } from "./utils/image-loader";
@@ -23,13 +22,9 @@ export class EditxEngine implements EngineCore {
 
   #blockStore: BlockStore;
   #events = new EventBus();
-  #history = new HistoryManager();
   #renderer: RendererAdapter | null;
-  #dirty = new Set<number>();
   #navigation: ActivePageState;
-  #batchDepth = 0;
-  #batchPatches: Patch[] = [];
-  #silentDepth = 0;
+  #transactions: EngineTransactions;
   #disposed = false;
 
   // Typed public callback registrations (history / zoom / pan / edit-mode / live transform)
@@ -39,9 +34,12 @@ export class EditxEngine implements EngineCore {
     this.#blockStore = opts?.blockStore ?? new BlockStore();
     this.#renderer = opts?.renderer ?? null;
     this.event = new EventAPI();
-    this.#navigation = new ActivePageState(this.#blockStore, (event) =>
-      this.#callbacks.fireActivePage(event),
+    this.#navigation = new ActivePageState(
+      this.#blockStore,
+      (event) => this.#callbacks.fireActivePage(event),
+      (callback) => this._deferNotification(callback),
     );
+    this.#transactions = new EngineTransactions(this, this.#navigation, this.#callbacks);
 
     this.block = new BlockAPI(this);
     this.editor = new EditorAPI(this);
@@ -80,6 +78,10 @@ export class EditxEngine implements EngineCore {
   _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void {
     this.#navigation.replace(sceneId, pageId);
   }
+  /** @internal */
+  _deferNotification(callback: () => void): void {
+    this.#transactions.deferNotification(callback);
+  }
 
   /**
    * Suppresses history recording for mutations executed while active. Depth-counted so
@@ -87,109 +89,46 @@ export class EditxEngine implements EngineCore {
    * compose correctly instead of the inner scope prematurely re-enabling history.
    */
   beginSilent() {
-    this.#silentDepth++;
+    this.#transactions.beginSilent();
   }
   endSilent() {
-    if (this.#silentDepth > 0) this.#silentDepth--;
+    this.#transactions.endSilent();
   }
 
   beginBatch() {
-    if (this.#batchDepth === 0) this.#batchPatches = [];
-    this.#batchDepth++;
+    this.#transactions.beginBatch();
   }
 
   endBatch() {
-    if (this.#batchDepth <= 0) return;
-    this.#batchDepth--;
-    if (this.#batchDepth === 0) {
-      if (this.#batchPatches.length > 0) {
-        if (this.#silentDepth === 0) {
-          this.#history.push(this.#batchPatches);
-          this.#callbacks.fireHistory();
-        }
-        this.#enqueueBlockEvents(this.#batchPatches);
-      }
-      this.#batchPatches = [];
-      this.#navigation.reconcile();
-      this.#flush();
-    }
+    this.#transactions.endBatch();
   }
 
   exec(command: Command) {
-    const patches = command.do();
-    if (patches && patches.length > 0) {
-      for (const patch of patches) this.#dirty.add(patch.id);
-      if (this.#batchDepth > 0) {
-        this.#batchPatches.push(...patches);
-      } else {
-        if (this.#silentDepth === 0) {
-          this.#history.push(patches);
-          this.#callbacks.fireHistory();
-        }
-        this.#enqueueBlockEvents(patches);
-      }
-    }
-    if (this.#batchDepth === 0) {
-      this.#navigation.reconcile();
-      this.#flush();
-    }
-  }
-
-  #enqueueBlockEvents(patches: Patch[]) {
-    enqueueBlockEvents(patches, this.event);
+    this.#transactions.exec(command);
   }
 
   undo() {
-    const patches = this.#history.undo();
-    if (!patches) return;
-    this.#applyPatches(patches);
-    this.#cleanupSelections(patches);
-    this.#events.emit("history:undo");
-    this.#callbacks.fireHistory();
-    this.#flush();
+    this.#transactions.undo();
   }
 
   redo() {
-    const patches = this.#history.redo();
-    if (!patches) return;
-    this.#applyPatches(patches);
-    this.#cleanupSelections(patches);
-    this.#events.emit("history:redo");
-    this.#callbacks.fireHistory();
-    this.#flush();
-  }
-
-  #cleanupSelections(patches: Patch[]) {
-    const destroyed = patches.filter((p) => p.after === null).map((p) => p.id);
-    if (destroyed.length > 0) this.block._removeFromSelection(destroyed);
+    this.#transactions.redo();
   }
 
   canUndo() {
-    return this.#history.canUndo();
+    return this.#transactions.canUndo();
   }
   canRedo() {
-    return this.#history.canRedo();
+    return this.#transactions.canRedo();
   }
 
   clearHistory() {
-    this.#history.clear();
-    this.#events.emit("history:clear");
-    this.#callbacks.fireHistory();
+    this.#transactions.clearHistory();
   }
 
   /** Render all dirty blocks now. */
   renderDirty() {
-    this.#flush();
-  }
-
-  #applyPatches(patches: Patch[]) {
-    applyHistoryPatches(patches, this.#blockStore, this.#dirty, this.event);
-    this.#navigation.reconcile();
-  }
-
-  #flush() {
-    if (!this.#renderer) return;
-    flushDirtyBlocks(this.#dirty, this.#blockStore, this.#renderer, this.event);
+    this.#transactions.renderDirty();
   }
 
   on(event: string, cb: (...args: unknown[]) => void) {

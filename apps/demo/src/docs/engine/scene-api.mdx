@@ -47,7 +47,9 @@ const unsubscribePage = engine.scene.onActivePageChanged(
 unsubscribePage();
 ```
 
-Notifications are synchronous, once per effective page-ID change, and work without a renderer.
+Outside a command batch, notifications are synchronous, once per effective page-ID change, and
+work without a renderer. Inside a batch, page and selection notifications wait until the outer
+batch ends and history is settled; only the final net page change is published.
 Creating or loading a scene publishes only its final navigation transition; notifications do not
 mean rendering has finished. Await `create()` or `loadFromString()` for scene setup completion.
 Subscriptions are separate from block lifecycle events and are not sent through `event.subscribe`.
@@ -63,9 +65,25 @@ Adding a page activates it. Removing the active page selects the first remaining
 child order and emits one active-page notification. Removing another page leaves navigation
 unchanged and emits none. Unknown or foreign page IDs are rejected before removal.
 
-Direct block commands and undo/redo reconcile stale navigation to the first remaining page, or
-`null` if none remain. Exact restoration of prior navigation and atomic add/remove history are
-not yet supported; page navigation itself is never recorded in history.
+Creation, dimensions, attachment, and activation form one undo entry. Removal, subtree destruction,
+and fallback activation also form one entry. Undo/redo restores the same page IDs, complete content
+(including nested groups, fills, shapes, and effects), dimensions, and page order. Both APIs
+participate in an existing outer command batch without adding separate history entries.
+Silent-scoped commands remain outside history even when their silent scope ends before the
+outer batch does. Rendering and lifecycle delivery settle before host selection, page, and
+history callbacks; reentrant changes do not publish stale pending page transitions.
+
+Creation and active-page removal record their navigation transition. Undo restores the previous
+active page; redo restores the created page or removal fallback, even if the host navigated
+elsewhere in between. Removing a non-active page does not record navigation, so undo/redo preserves
+later page switches. Plain page navigation never creates an undo entry.
+
+Page width and height must be finite positive numbers. Invalid dimensions, missing scenes, unknown
+page IDs, and attempts to remove the final page throw before changing document state or history.
+
+Direct block commands still reconcile stale navigation to the first remaining page, or `null` if
+none remain. When a batch also destroys a recorded navigation target, replay falls back to the
+first remaining page in the recorded scene rather than activating an invalid page.
 
 ## Page Dimensions
 

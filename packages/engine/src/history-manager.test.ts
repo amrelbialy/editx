@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { HistoryManager, type Patch } from "./history-manager";
+import { getPageNavigation, withPageNavigation } from "./page-history";
 
 function makePatch(id: number, before: any = null, after: any = null): Patch {
   return { id, before, after };
@@ -43,6 +44,20 @@ describe("HistoryManager", () => {
   });
 
   describe("undo", () => {
+    it("reverses internal page navigation without mutating the stored redo entry", () => {
+      const before = { sceneId: 1, pageId: 2 };
+      const after = { sceneId: 1, pageId: 3 };
+      const patch = withPageNavigation(makePatch(1), before, after);
+      history.push([patch]);
+
+      const undone = history.undo()!;
+      expect(getPageNavigation(undone[0])).toEqual({ before: after, after: before });
+      expect(Object.keys(undone[0]).sort()).toEqual(["after", "before", "id"]);
+      const redone = history.redo()!;
+      expect(getPageNavigation(redone[0])).toEqual({ before, after });
+      expect(redone[0]).toBe(patch);
+    });
+
     it("returns patches with before/after swapped", () => {
       const before = { id: 1, type: "graphic" };
       const after = { id: 1, type: "text" };

@@ -1,4 +1,5 @@
 import type { BlockData } from "./block/block.types";
+import { invertHistoryPatch } from "./page-history";
 
 export interface Patch {
   id: number;
@@ -25,13 +26,7 @@ export class HistoryManager {
     this.#index--;
 
     // Return patches *in reverse order*, so undo applies them correctly
-    return patches
-      .map((p) => ({
-        id: p.id,
-        before: p.after,
-        after: p.before,
-      }))
-      .reverse();
+    return patches.map(invertHistoryPatch).reverse();
   }
 
   redo(): Patch[] | null {

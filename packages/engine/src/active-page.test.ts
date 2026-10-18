@@ -40,7 +40,7 @@ describe("active page validity after document commands", () => {
     });
   });
 
-  it("keeps navigation valid when undo detaches a newly added active page", () => {
+  it("restores navigation when undo/redo removes and recreates an added page", () => {
     const added = engine.scene.addPage();
     const callback = vi.fn();
     engine.onActivePageChanged(callback);
@@ -49,6 +49,7 @@ describe("active page validity after document commands", () => {
 
     expect(engine.scene.getPages()).toEqual([firstPage]);
     expect(engine.getActivePage()).toBe(firstPage);
+    expect(engine.block.exists(added)).toBe(false);
     expect(callback).toHaveBeenCalledExactlyOnceWith({
       pageId: firstPage,
       previousPageId: added,
@@ -56,8 +57,12 @@ describe("active page validity after document commands", () => {
 
     engine.redo();
     expect(engine.scene.getPages()).toEqual([firstPage, added]);
-    expect(engine.scene.getPages()).toContain(engine.getActivePage());
-    expect(callback).toHaveBeenCalledTimes(1);
+    expect(engine.getActivePage()).toBe(added);
+    expect(callback).toHaveBeenNthCalledWith(2, {
+      pageId: added,
+      previousPageId: firstPage,
+    });
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
   it("keeps navigation valid when redo destroys the currently active page", () => {

@@ -1,4 +1,6 @@
 import type { BlockStore } from "./block/block-store";
+import type { Patch } from "./history-manager";
+import { getPageNavigation, type PageNavigationState } from "./page-history";
 
 export interface ActivePageChangedEvent {
   pageId: number | null;
@@ -72,10 +74,12 @@ export function validateNavigation(
 export class ActivePageState {
   sceneId: number | null = null;
   pageId: number | null = null;
+  #publishedPageId: number | null = null;
 
   constructor(
     private readonly store: NavigationStore,
     private readonly onChanged: (event: ActivePageChangedEvent) => void,
+    private readonly deferNotification: (callback: () => void) => void,
   ) {}
 
   setScene(sceneId: number): void {
@@ -97,7 +101,7 @@ export class ActivePageState {
     this.#changePage(pageId);
   }
 
-  reconcile(): void {
+  reconcile(notify = true): ActivePageChangedEvent | null {
     if (this.sceneId !== null && this.store.get(this.sceneId)?.type !== "scene") {
       this.sceneId = null;
     }
@@ -106,15 +110,48 @@ export class ActivePageState {
       this.pageId !== null &&
       isScenePage(this.store, this.sceneId, this.pageId)
     ) {
-      return;
+      return null;
     }
-    this.#changePage(firstScenePage(this.store, this.sceneId));
+    return this.#changePage(firstScenePage(this.store, this.sceneId), notify);
   }
 
-  #changePage(pageId: number | null): void {
-    if (this.pageId === pageId) return;
+  applyPatches(patches: Patch[], reconcile = true): ActivePageChangedEvent | null {
+    let target: PageNavigationState | null = null;
+    for (const patch of patches) {
+      const navigation = getPageNavigation(patch);
+      if (navigation) target = navigation.after;
+    }
+    if (!target) return reconcile ? this.reconcile(false) : null;
+    this.sceneId =
+      target.sceneId !== null && this.store.get(target.sceneId)?.type === "scene"
+        ? target.sceneId
+        : null;
+    const pageId =
+      this.sceneId !== null &&
+      target.pageId !== null &&
+      isScenePage(this.store, this.sceneId, target.pageId)
+        ? target.pageId
+        : firstScenePage(this.store, this.sceneId);
+    return this.#changePage(pageId, false);
+  }
+
+  publish(): void {
+    this.deferNotification(this.#notify);
+  }
+
+  #changePage(pageId: number | null, notify = true): ActivePageChangedEvent | null {
+    if (this.pageId === pageId) return null;
     const previousPageId = this.pageId;
     this.pageId = pageId;
-    this.onChanged({ pageId, previousPageId });
+    const event = { pageId, previousPageId };
+    if (notify) this.publish();
+    return event;
   }
+
+  #notify = (): void => {
+    if (this.#publishedPageId === this.pageId) return;
+    const previousPageId = this.#publishedPageId;
+    this.#publishedPageId = this.pageId;
+    this.onChanged({ pageId: this.pageId, previousPageId });
+  };
 }

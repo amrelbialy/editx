@@ -124,8 +124,6 @@ export class BlockSelectionAPI {
 
   #syncTransformer(): void {
     const ids = [...this.#selection];
-    this.#engine.emit("selection:changed", ids);
-    for (const cb of this.#selectionListeners) cb(ids);
     const renderer = this.#engine.getRenderer();
     if (ids.length > 0 && this.#transformerEnabled) {
       const blockType: BlockType | undefined =
@@ -134,5 +132,12 @@ export class BlockSelectionAPI {
     } else {
       renderer?.hideTransformer();
     }
+    this.#engine._deferNotification(this.#notifySelection);
   }
+
+  #notifySelection = (): void => {
+    const ids = [...this.#selection];
+    this.#engine.emit("selection:changed", ids);
+    for (const cb of this.#selectionListeners) cb(ids);
+  };
 }

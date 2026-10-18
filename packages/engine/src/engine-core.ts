@@ -1,3 +1,4 @@
+import type { ActivePageChangedEvent } from "./active-page";
 import type { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import type { BlockTransformEvent, EditModeChange } from "./engine-callbacks";
@@ -27,6 +28,8 @@ export interface EngineCore {
   getActivePage(): number | null;
   /** @internal — atomically replace navigation after scene creation or loading. */
   _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void;
+  /** @internal — deliver observers after the current command or outer batch settles. */
+  _deferNotification(callback: () => void): void;
   undo(): void;
   redo(): void;
   canUndo(): boolean;
@@ -42,5 +45,3 @@ export interface EngineCore {
   onEditModeChanged(cb: (info: EditModeChange) => void): () => void;
   onBlockTransform(cb: (event: BlockTransformEvent) => void): () => void;
 }
-
-import type { ActivePageChangedEvent } from "./active-page";
