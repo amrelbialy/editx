@@ -15,42 +15,63 @@ export function capturePageExport(
   pageId: number,
   resolveBlock: (id: number) => BlockData | undefined,
 ): PageExportSnapshot {
-  const sources = new Map<number, BlockData>();
-  const visiting = new Set<number>();
-  const visit = (id: number, expectedType?: BlockData["type"]): void => {
-    if (visiting.has(id)) throw new Error(`Cyclic page export graph at block ${id}`);
-    const block = resolveBlock(id);
-    if (!block) throw new Error(`Page export block ${id} not found`);
-    if (expectedType && block.type !== expectedType) {
-      throw new Error(`Page export block ${id} must be a ${expectedType}`);
+  const sourceBlocks = collectPageBlocks(pageId, resolveBlock);
+  const snapshotter = new BlockSnapshot(sourceBlocks);
+  const blocks = new Map<number, BlockData>();
+  for (const blockId of sourceBlocks.keys()) {
+    blocks.set(blockId, snapshotter.snapshot(blockId)!);
+  }
+
+  const page = blocks.get(pageId)!;
+  const dimensions = validatePageDimensions(
+    page.properties[PAGE_WIDTH] ?? 1080,
+    page.properties[PAGE_HEIGHT] ?? 1080,
+  );
+  return { page, blocks, ...dimensions };
+}
+
+function collectPageBlocks(
+  pageId: number,
+  resolveBlock: (id: number) => BlockData | undefined,
+): Map<number, BlockData> {
+  const sourceBlocks = new Map<number, BlockData>();
+  const activePath = new Set<number>();
+
+  function visitBlock(blockId: number, expectedType?: BlockData["type"]): void {
+    if (activePath.has(blockId)) {
+      throw new Error(`Cyclic page export graph at block ${blockId}`);
     }
-    if (sources.has(id)) return;
-    visiting.add(id);
-    sources.set(id, block);
-    if (block.shapeId !== null) visit(block.shapeId, "shape");
-    if (block.fillId !== null) visit(block.fillId, "fill");
-    for (const effectId of block.effectIds) visit(effectId, "effect");
-    const children = new Set<number>();
-    for (const childId of block.children) {
+    const block = resolveBlock(blockId);
+    if (!block) throw new Error(`Page export block ${blockId} not found`);
+    if (expectedType && block.type !== expectedType) {
+      throw new Error(`Page export block ${blockId} must be a ${expectedType}`);
+    }
+    if (sourceBlocks.has(blockId)) return;
+
+    activePath.add(blockId);
+    sourceBlocks.set(blockId, block);
+    if (block.shapeId !== null) visitBlock(block.shapeId, "shape");
+    if (block.fillId !== null) visitBlock(block.fillId, "fill");
+    for (const effectId of block.effectIds) visitBlock(effectId, "effect");
+    visitChildren(block);
+    activePath.delete(blockId);
+  }
+
+  function visitChildren(parent: BlockData): void {
+    const seenChildIds = new Set<number>();
+    for (const childId of parent.children) {
       const child = resolveBlock(childId);
-      if (children.has(childId) || child?.parentId !== id) {
-        throw new Error(`Invalid page export ownership: block ${childId} under ${id}`);
+      if (seenChildIds.has(childId) || child?.parentId !== parent.id) {
+        throw new Error(`Invalid page export ownership: block ${childId} under ${parent.id}`);
       }
       if (child.type === "scene" || child.type === "page") {
         throw new Error(`Invalid nested ${child.type} ${childId} in page ${pageId}`);
       }
-      children.add(childId);
-      visit(childId);
+      seenChildIds.add(childId);
+      visitBlock(childId);
     }
-    visiting.delete(id);
-  };
-  visit(pageId, "page");
-  const copier = new BlockSnapshot(sources);
-  const blocks = new Map([...sources.keys()].map((id) => [id, copier.snapshot(id)!]));
-  const page = blocks.get(pageId)!;
-  const size = validatePageDimensions(
-    page.properties[PAGE_WIDTH] ?? 1080,
-    page.properties[PAGE_HEIGHT] ?? 1080,
-  );
-  return { page, blocks, ...size };
+  }
+
+  visitBlock(pageId, "page");
+  return sourceBlocks;
 }

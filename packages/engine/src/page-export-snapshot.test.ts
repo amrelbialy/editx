@@ -55,6 +55,21 @@ describe("page export snapshots", () => {
     expect(capture).toThrow("must be a fill");
   });
 
+  it("captures shared dependencies once without treating them as cycles", () => {
+    const graphic = store.create("graphic");
+    store.appendChild(page, graphic);
+    const fill = store.create("fill", "gradient");
+    store.get(text)!.fillId = fill;
+    store.get(graphic)!.fillId = fill;
+    store.setProperty(fill, FILL_GRADIENT_STOPS, [{ offset: 0, color: "red" }]);
+
+    const result = capture();
+    expect([...result.blocks.keys()]).toEqual([page, group, text, fill, graphic]);
+    expect(result.blocks.get(text)!.fillId).toBe(fill);
+    expect(result.blocks.get(graphic)!.fillId).toBe(fill);
+    expect(result.blocks.get(fill)).not.toBe(store.get(fill));
+  });
+
   it("rejects duplicate children, broken ownership, and nested pages", () => {
     store.get(page)!.children.push(group);
     expect(capture).toThrow("ownership");
