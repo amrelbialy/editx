@@ -19,7 +19,7 @@ import {
   VISIBLE,
 } from "../block/property-keys";
 import { colorToHex } from "../utils/color";
-import { loadImage } from "../utils/image-loader";
+import { loadNodeImage } from "./konva-image-load";
 import { applyFilters } from "./konva-node-filters";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
@@ -130,19 +130,16 @@ export function updatePageNode(
     }
 
     if (imgNode.getAttr("loadedSrc") !== src) {
-      imgNode.setAttr("loadedSrc", src);
-      loadImage(src).then((htmlImg) => {
-        imgNode.setAttr("_sourceImage", htmlImg);
-        imgNode.image(htmlImg);
-        if (imgNode.filters()?.length) {
-          imgNode.cache();
-        }
+      loadNodeImage(imgNode, src, () => {
+        applyFilters(imgNode, block, stage, webgl, resolveBlock);
         stage?.batchDraw();
       });
     }
 
     applyFilters(imgNode, block, stage, webgl, resolveBlock);
   } else {
+    imgNode.setAttr("__pendingSrc", undefined);
+    imgNode.setAttr("loadedSrc", undefined);
     imgNode.visible(false);
     bgRect.visible(true);
     bgRect.width(pageW);

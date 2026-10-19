@@ -103,6 +103,12 @@ export interface RendererAdapter {
   //
   /** Render the current page to an offscreen canvas and return the result as a Blob. */
   exportScene(options: ExportOptions): Promise<Blob>;
+  /**
+   * Export a direct page of the active scene without touching live renderer state.
+   * Capture committed content before awaiting assets; ignore view-only page filtering.
+   * Optional for compatibility; unsupported adapters reject through the engine.
+   */
+  exportPage?(pageId: number, options: Readonly<Required<ExportOptions>>): Promise<Blob>;
   /** Render one block subtree into a transparent, centered PNG. */
   exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob>;
 

@@ -2,9 +2,11 @@ import type { ImageFillAlignment, ImageFillMode } from "./block/block.types";
 
 // ── Export ──
 
+export type ExportFormat = "png" | "jpeg" | "webp";
+
 export interface ExportOptions {
   /** Image format. Default: 'png'. */
-  format?: "png" | "jpeg" | "webp";
+  format?: ExportFormat;
   /** Quality 0–1 for jpeg/webp. Ignored for png. Default: 0.92. */
   quality?: number;
   /** Device pixel ratio multiplier for high-res export. Default: 1. */

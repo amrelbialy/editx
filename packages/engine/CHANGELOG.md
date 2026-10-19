@@ -45,6 +45,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **engine:** add `updateFillImage` for partial image-fill updates and persist image rotation and
 	horizontal or vertical flips.
 * **engine:** add `exportBlock` for fixed-frame graphic, text, image, and group exports.
+* **engine:** add isolated `exportPage(pageId, options)` for PNG, JPEG, and WebP output
+	without changing navigation, selection, camera, or history; wait for target images/fonts
+	and expose identified failures through `PageExportError`. Custom adapters can opt in
+	through the optional `RendererAdapter.exportPage` capability.
 * **engine:** add deep immutable block snapshots through `engine.block.getSnapshot`.
 * **engine:** add typed pan and live block-transform callbacks.
 * **engine:** emit scene serialization version 2 while retaining version 1 loading compatibility.

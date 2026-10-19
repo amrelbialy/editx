@@ -72,6 +72,44 @@ const unsubscribeTransform = engine.onBlockTransform(({ block, phase }) => { /* 
 
 ## Export
 
+### Export a page by ID
+
+```ts
+const blob = await engine.exportPage(pageId, {
+  format: "webp", // "png" | "jpeg" | "webp"; default "png"
+  quality: 0.92, // finite 0-1; ignored for PNG
+  pixelRatio: 2, // finite and positive; default 1
+});
+```
+
+The page must belong directly to the active scene, but need not be active. Output uses
+that page's dimensions, background, owned content, and child order, clipped to its bounds.
+Other pages and uncommitted crop/transform previews are excluded. Authored visibility and
+opacity are honored independently of view-only page filtering.
+
+Export never changes activation, selection, camera, group context, document state,
+history, or redo, and emits no document events. Concurrent exports capture independent
+committed content before waiting; later edits affect later exports only.
+
+The built-in Konva adapter waits for target page images, image fills, background images,
+processing, and fonts used by text before layout. Browser-observable font loading failures
+reject; a missing family may still resolve to a system fallback until a font registry exists.
+
+Catch the public `PageExportError` to inspect `code` and `pageId`. Codes are
+`NO_ACTIVE_SCENE`, `PAGE_NOT_FOUND`, `NO_RENDERER`, `UNSUPPORTED_RENDERER`,
+`IMAGE_LOAD_FAILED`, `FONT_LOAD_FAILED`, and `RENDER_FAILED`. Identified resource errors
+also include `blockId`, `resource` (source or family), and `cause` where available.
+CORS-tainted images, empty canvas output, and MIME/encoder mismatches reject rather than
+silently returning another format. Invalid options reject with `TypeError` or `RangeError`.
+
+`RendererAdapter.exportPage` is optional for backward compatibility. Implementations must
+capture committed state before awaiting resources and avoid live renderer changes.
+Adapters without the capability reject page export; no activation-based fallback is used.
+
+### Existing scene and block exports
+
+Existing scene export is unchanged:
+
 ```ts
 const blob = await engine.exportScene({
   format: "png",   // "png" | "jpeg" | "webp"

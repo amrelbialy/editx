@@ -1,5 +1,70 @@
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
 import type { EngineCore } from "./engine-core";
+import { PageExportError } from "./page-export-error";
+import { requireScenePage } from "./page-properties";
+
+export async function exportPage(
+  engine: EngineCore,
+  pageId: number,
+  options?: ExportOptions,
+): Promise<Blob> {
+  const sceneId = engine.getActiveScene();
+  try {
+    requireScenePage(engine._getBlockStore(), sceneId, pageId);
+  } catch (cause) {
+    throw new PageExportError(
+      sceneId === null ? "NO_ACTIVE_SCENE" : "PAGE_NOT_FOUND",
+      pageId,
+      cause instanceof Error ? cause.message : "Invalid page",
+      { cause },
+    );
+  }
+  const normalized = normalizePageExportOptions(options);
+  const renderer = engine.getRenderer();
+  if (!renderer) throw new PageExportError("NO_RENDERER", pageId, "no renderer attached");
+  if (!renderer.exportPage) {
+    throw new PageExportError(
+      "UNSUPPORTED_RENDERER",
+      pageId,
+      "renderer does not support page export",
+    );
+  }
+  try {
+    return await renderer.exportPage(pageId, normalized);
+  } catch (cause) {
+    if (cause instanceof PageExportError) throw cause;
+    throw new PageExportError(
+      "RENDER_FAILED",
+      pageId,
+      cause instanceof Error ? cause.message : "rendering failed",
+      { cause },
+    );
+  }
+}
+
+export function normalizePageExportOptions(
+  options?: ExportOptions,
+): Readonly<Required<ExportOptions>> {
+  if (
+    options !== undefined &&
+    (options === null || typeof options !== "object" || Array.isArray(options))
+  ) {
+    throw new TypeError("Page export options must be an object");
+  }
+  const format = options?.format === undefined ? "png" : options.format;
+  if (!["png", "jpeg", "webp"].includes(format)) {
+    throw new TypeError("Page export format must be png, jpeg, or webp");
+  }
+  const quality = options?.quality === undefined ? 0.92 : options.quality;
+  if (!Number.isFinite(quality) || quality < 0 || quality > 1) {
+    throw new RangeError("Page export quality must be a finite number between 0 and 1");
+  }
+  const pixelRatio = options?.pixelRatio === undefined ? 1 : options.pixelRatio;
+  if (!Number.isFinite(pixelRatio) || pixelRatio <= 0) {
+    throw new RangeError("Page export pixelRatio must be a finite positive number");
+  }
+  return Object.freeze({ format, quality, pixelRatio });
+}
 
 export async function exportScene(engine: EngineCore, options?: ExportOptions): Promise<Blob> {
   const renderer = engine.getRenderer();

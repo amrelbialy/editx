@@ -4,7 +4,7 @@ import { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import { EditorAPI } from "./editor/editor-api";
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
-import { exportBlock, exportScene } from "./editx-engine-export";
+import { exportBlock, exportPage, exportScene } from "./editx-engine-export";
 import { type BlockTransformEvent, type EditModeChange, EngineCallbacks } from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
 import { EngineTransactions } from "./engine-transactions";
@@ -180,6 +180,11 @@ export class EditxEngine implements EngineCore {
 
   async exportScene(options?: ExportOptions): Promise<Blob> {
     return exportScene(this, options);
+  }
+
+  /** Export committed page content without changing navigation, view state, or history. */
+  async exportPage(pageId: number, options?: ExportOptions): Promise<Blob> {
+    return exportPage(this, pageId, options);
   }
 
   async exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob> {

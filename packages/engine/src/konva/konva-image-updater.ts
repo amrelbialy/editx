@@ -10,7 +10,7 @@ import {
   CROP_Y,
   IMAGE_SRC,
 } from "../block/property-keys";
-import { loadImage } from "../utils/image-loader";
+import { loadNodeImage } from "./konva-image-load";
 import { applyFilters } from "./konva-node-filters";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
@@ -52,44 +52,11 @@ export function updateImageNode(
   const src = (props[IMAGE_SRC] as string) ?? "";
   const srcChanged = src !== "" && imgNode.getAttr("loadedSrc") !== src;
   if (srcChanged) {
-    imgNode.setAttr("loadedSrc", src);
-    // Track the most recent requested src so a stale async load can't clobber
-    // a newer one when it resolves out of order.
-    imgNode.setAttr("__pendingSrc", src);
-    imgNode.setAttr("__imageLoadError", undefined);
-    const imageReady = loadImage(src)
-      .then((htmlImg) => {
-        // Bail if a newer src load superseded this one, or the node was
-        // destroyed / detached from the stage while the image was loading.
-        if (imgNode.getAttr("__pendingSrc") !== src) return;
-        if (!imgNode.getStage()) return;
-
-        imgNode.setAttr("_sourceImage", htmlImg);
-        imgNode.image(htmlImg);
-        // Re-run filtering now that the real source is loaded — the earlier
-        // synchronous call (if any) had no source and would no-op.
-        if (block) {
-          applyFilters(imgNode, block, stage, webgl, resolveBlock);
-        } else if (imgNode.filters()?.length) {
-          imgNode.cache();
-        }
-        stage?.batchDraw();
-      })
-      .catch((error: unknown) => {
-        // Only act on the failure if this is still the pending load for the
-        // node (a newer src may have superseded it).
-        if (imgNode.getAttr("__pendingSrc") !== src) return;
-        // Clear the "loaded" marker so a subsequent sync with the same src
-        // retries the load instead of being stuck as "already loaded" with no
-        // image. This is a genuine (non-perf) error, surfaced like other
-        // user-facing load issues in image-loader.ts.
-        if (imgNode.getAttr("loadedSrc") === src) {
-          imgNode.setAttr("loadedSrc", undefined);
-        }
-        imgNode.setAttr("__imageLoadError", error);
-        console.error(`[editx] Failed to load image: ${src}`, error);
-      });
-    imgNode.setAttr("__imageReady", imageReady);
+    loadNodeImage(imgNode, src, () => {
+      if (block) applyFilters(imgNode, block, stage, webgl, resolveBlock);
+      else if (imgNode.filters()?.length) imgNode.cache();
+      stage?.batchDraw();
+    });
   }
 
   // Only filter synchronously when the source is already loaded. When the src

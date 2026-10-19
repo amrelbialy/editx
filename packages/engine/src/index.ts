@@ -169,6 +169,7 @@ export type {
   CursorType,
   EditMode,
   EditModeConfig,
+  ExportFormat,
   ExportOptions,
   ImageFillCrop,
   ImageFillCropChange,
@@ -188,8 +189,10 @@ export { EventAPI } from "./event-api";
 export type { FilterPresetInfo } from "./konva/filters/presets";
 export { FILTER_PRESETS, getFilterPreset } from "./konva/filters/presets";
 export type { TextCaretRect, TextSelectionRect } from "./konva/formatted-text-caret";
+export { PageExportError, type PageExportErrorCode } from "./page-export-error";
 export type { PageOrderChangedEvent } from "./page-order";
 export type { PageMetadata, PageProperties, PagePropertiesUpdate } from "./page-properties";
+export type { RendererAdapter } from "./render-adapter";
 export type { CropPreset, CropRect } from "./utils";
 export {
   applyCropRatio,

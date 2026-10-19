@@ -29,25 +29,7 @@ export function updateTextNode(
   block?: BlockData,
   resolveBlock?: (id: number) => BlockData | undefined,
 ): { computedHeight: number | null; computedWidth: number | null } {
-  let runs = props[TEXT_RUNS] as TextRun[] | undefined;
-  if (!runs || !Array.isArray(runs) || runs.length === 0) {
-    // legacy-scene compat; editor no longer seeds these keys.
-    const text = (props[TEXT_CONTENT] as string) ?? "Text";
-    const fillColor = props[FILL_COLOR];
-    const fill =
-      fillColor && typeof fillColor === "object" ? colorToHex(fillColor as Color) : "#000000";
-    runs = [
-      {
-        text,
-        style: {
-          fontSize: (props[FONT_SIZE] as number) ?? 24,
-          fontFamily: (props[FONT_FAMILY] as string) ?? "Arial",
-          fill,
-        },
-      },
-    ];
-  }
-  textNode.textRuns(runs);
+  textNode.textRuns(resolveTextRuns(props));
   const autoWidth = (props[TEXT_AUTO_WIDTH] as boolean) ?? false;
   textNode.align((props[TEXT_ALIGN] as string) ?? "left");
   textNode.lineHeight((props[TEXT_LINE_HEIGHT] as number) ?? 1.2);
@@ -108,4 +90,21 @@ export function updateTextNode(
   }
   textNode.height(height);
   return { computedHeight: null, computedWidth };
+}
+
+export function resolveTextRuns(props: Record<string, unknown>): TextRun[] {
+  const runs = props[TEXT_RUNS] as TextRun[] | undefined;
+  if (Array.isArray(runs) && runs.length > 0) return runs;
+  const fillColor = props[FILL_COLOR];
+  return [
+    {
+      text: (props[TEXT_CONTENT] as string) ?? "Text",
+      style: {
+        fontSize: (props[FONT_SIZE] as number) ?? 24,
+        fontFamily: (props[FONT_FAMILY] as string) ?? "Arial",
+        fill:
+          fillColor && typeof fillColor === "object" ? colorToHex(fillColor as Color) : "#000000",
+      },
+    },
+  ];
 }

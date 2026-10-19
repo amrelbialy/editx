@@ -26,6 +26,7 @@ export function createMockRenderer(): RendererAdapter {
     worldToScreen: vi.fn().mockImplementation((pt) => pt),
     renderFrame: vi.fn(),
     exportScene: vi.fn().mockResolvedValue(new Blob()),
+    exportPage: vi.fn().mockResolvedValue(new Blob([], { type: "image/png" })),
     exportBlock: vi.fn().mockResolvedValue(new Blob([], { type: "image/png" })),
     dispose: vi.fn(),
     setCursor: vi.fn(),

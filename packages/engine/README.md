@@ -247,6 +247,40 @@ engine.block.setFloat(image, POSITION_X, 120);
 > `getSnapshot` returns a `ReadonlyBlockData` (a `DeepReadonly<BlockData>`). It is a clone, so
 > assigning to its fields has no effect on engine state — always route mutations through commands.
 
+## Export a page
+
+Export any direct page of the active scene, including a background page:
+
+```ts
+const blob = await engine.exportPage(pageId, {
+  format: "webp", // "png" (default), "jpeg", or "webp"
+  quality: 0.9, // default 0.92; ignored for PNG
+  pixelRatio: 2, // default 1
+});
+```
+
+The output uses the target page's dimensions, background, and owned artwork, clipped
+to its bounds. It excludes other pages and live editing previews. Authored visibility
+and opacity are honored; view-only filtering does not change the export target.
+Active page, selection, camera, group context, document, history, and redo are untouched.
+Concurrent exports capture independent committed snapshots before waiting for resources.
+
+The built-in Konva adapter waits for target images (including page backgrounds and
+image fills), processing, and used text fonts before laying out text. Browser-detectable
+font failures are reported; family-name-only fonts can still resolve to system fallbacks.
+Strict missing-family detection requires the future font registry.
+
+`PageExportError` identifies the `pageId` and a stable `code`: `NO_ACTIVE_SCENE`,
+`PAGE_NOT_FOUND`, `NO_RENDERER`, `UNSUPPORTED_RENDERER`, `IMAGE_LOAD_FAILED`,
+`FONT_LOAD_FAILED`, or `RENDER_FAILED`. Resource errors include `blockId`, `resource`,
+and the original `cause` when available. Unexportable/CORS-tainted images and unsupported
+encoders reject explicitly. Invalid options reject with `TypeError`/`RangeError`:
+quality must be finite in `[0, 1]`, and pixel ratio must be finite and positive.
+
+Custom `RendererAdapter` implementations may add the optional `exportPage` capability.
+Older adapters remain compatible, but page export rejects rather than switching pages
+or falling back to `exportScene`. Existing scene and block export behavior is unchanged.
+
 ## Export a block
 
 With a renderer attached, export a graphic, text, image, or group into a fixed output frame:

@@ -77,8 +77,8 @@ export function PagePlayground() {
           Known limitations: pages share the canvas origin. Backgrounds follow document order, but
           artwork from different pages overlaps. Changing the active page does not isolate it yet.
           "Bring active to front" is an undoable reorder, not a preview filter. The built-in zoom
-          badge can lag SDK-driven fits; use the SDK state readout below. Page-strip integration and
-          page-targeted export are still pending.
+          badge can lag SDK-driven fits; use the SDK state readout below. Page-strip integration is
+          still pending. SDK page export is isolated from this live view via engine.exportPage.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Button

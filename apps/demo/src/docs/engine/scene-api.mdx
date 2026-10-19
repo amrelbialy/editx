@@ -188,6 +188,12 @@ camera, scene layout, other pages, and new-page defaults are unchanged. Undo/red
 all updated properties together without overriding later valid navigation. Names, mixed
 dimensions, background colors, and metadata survive native save/load and page duplication.
 
+Use `engine.exportPage(pageId, options)` to export any direct page without activating it.
+It uses that page's authored dimensions and owned artwork, clipped to its bounds, and
+does not change navigation, selection, camera, visibility, or history. See
+[page-targeted export](/docs/engine/engine-api#export-a-page-by-id) for formats,
+resource readiness, and identified failures. Legacy `exportScene` behavior is unchanged.
+
 The existing `engine.block.getName/setName`, `getPageDimensions/setPageDimensions`, and
 `getPageFillColor/setPageFillColor` remain available. `block.setPageDimensions` now uses the
 same atomic bounds-only resize command and requires a direct page of the active scene;
