@@ -49,6 +49,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 	without changing navigation, selection, camera, or history; wait for target images/fonts
 	and expose identified failures through `PageExportError`. Custom adapters can opt in
 	through the optional `RendererAdapter.exportPage` capability.
+* **engine:** add `exportPageThumbnail` and `PageThumbnailExportOptions` for aspect-preserving
+	PNG/JPEG/WebP page previews, defaulting to a 256-by-256 maximum box without upscaling.
+	Reuse page export with a private 64-result LRU, page-content/dependency keys, concurrent
+	request deduplication, retryable failures, and disposal cleanup.
 * **engine:** add deep immutable block snapshots through `engine.block.getSnapshot`.
 * **engine:** add typed pan and live block-transform callbacks.
 * **engine:** emit scene serialization version 2 while retaining version 1 loading compatibility.

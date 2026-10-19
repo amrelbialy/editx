@@ -3,7 +3,7 @@ import { BlockAPI } from "./block/block-api";
 import { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
 import { EditorAPI } from "./editor/editor-api";
-import type { BlockExportOptions, ExportOptions } from "./editor-types";
+import type { BlockExportOptions, ExportOptions, PageThumbnailExportOptions } from "./editor-types";
 import { exportBlock, exportPage, exportScene } from "./editx-engine-export";
 import { type BlockTransformEvent, type EditModeChange, EngineCallbacks } from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
@@ -11,6 +11,7 @@ import { EngineTransactions } from "./engine-transactions";
 import { EventAPI } from "./event-api";
 import { EventBus } from "./events/event-bus";
 import type { PageOrderChangedEvent } from "./page-order";
+import { PageThumbnailExporter } from "./page-thumbnail";
 import type { RendererAdapter } from "./render-adapter";
 import { SceneAPI } from "./scene";
 import { clearImageCache } from "./utils/image-loader";
@@ -27,6 +28,7 @@ export class EditxEngine implements EngineCore {
   #navigation: ActivePageState;
   #transactions: EngineTransactions;
   #disposed = false;
+  #pageThumbnails = new PageThumbnailExporter(this);
 
   // Typed public callback registrations (history / zoom / pan / edit-mode / live transform)
   #callbacks = new EngineCallbacks();
@@ -174,6 +176,7 @@ export class EditxEngine implements EngineCore {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#pageThumbnails.dispose();
     this.#renderer?.dispose();
     clearImageCache();
   }
@@ -185,6 +188,11 @@ export class EditxEngine implements EngineCore {
   /** Export committed page content without changing navigation, view state, or history. */
   async exportPage(pageId: number, options?: ExportOptions): Promise<Blob> {
     return exportPage(this, pageId, options);
+  }
+
+  /** Export a cached, aspect-preserving page preview without upscaling. */
+  async exportPageThumbnail(pageId: number, options?: PageThumbnailExportOptions): Promise<Blob> {
+    return this.#pageThumbnails.export(pageId, options);
   }
 
   async exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob> {

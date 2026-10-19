@@ -174,6 +174,7 @@ export type {
   ImageFillCrop,
   ImageFillCropChange,
   ImageFillCropUpdate,
+  PageThumbnailExportOptions,
 } from "./editor-types";
 export { EDIT_MODE_DEFAULTS } from "./editor-types";
 export { EditxEngine } from "./editx-engine";

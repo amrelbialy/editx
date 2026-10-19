@@ -106,6 +106,44 @@ silently returning another format. Invalid options reject with `TypeError` or `R
 capture committed state before awaiting resources and avoid live renderer changes.
 Adapters without the capability reject page export; no activation-based fallback is used.
 
+### Generate a page thumbnail
+
+```ts
+import type { PageThumbnailExportOptions } from "@editx/engine";
+
+const options: PageThumbnailExportOptions = { maxWidth: 320, maxHeight: 180 };
+const blob = await engine.exportPageThumbnail(pageId, options);
+const url = URL.createObjectURL(blob);
+// Consumer cleanup:
+URL.revokeObjectURL(url);
+```
+
+Defaults are `maxWidth: 256`, `maxHeight: 256`, `format: "png"`, and `quality: 0.92`.
+Bounds must be positive integers; JPEG/WebP quality must be finite in `[0, 1]`.
+The page fits within both bounds without cropping, padding, stretching, or upscaling.
+Request a larger box for higher density instead of supplying a pixel ratio.
+Raster dimensions follow `exportPage` canvas rounding, including fractional dimensions
+rounding down and zero-pixel results rejecting explicitly.
+
+The helper uses `exportPage` at a uniformly reduced scale, with the same resource
+readiness, authored visibility, identified errors, and no live editor/history changes.
+It works with existing page-export-capable adapters; no thumbnail renderer method is needed.
+
+Each engine retains at most 64 successful results using least-recently-used eviction.
+Identical concurrent requests share one render. Failed requests are evicted and can retry.
+Content-derived keys track the page and owned descendants/shape/fill/effect dependencies,
+so silent changes, outer batches, undo/redo, and native loads reusing IDs stay correct.
+Only changed pages miss the cache, except that shared dependencies affect each owner.
+Page navigation and scene page order do not invalidate otherwise unchanged thumbnails.
+Returning to equivalent content may reuse an earlier result.
+
+In-flight calls retain invocation-time content; consumers should guard against an older
+request replacing a newer UI preview. Engine disposal clears cached references and rejects
+late thumbnail completions. Cached values are `Blob`s; consumers manage their object URLs.
+Changing bytes behind an unchanged image URL or externally changing font availability
+is not detectable from document content. Use versioned image sources and updated font
+descriptors until the asset/font registry milestones add resource invalidation.
+
 ### Existing scene and block exports
 
 Existing scene export is unchanged:

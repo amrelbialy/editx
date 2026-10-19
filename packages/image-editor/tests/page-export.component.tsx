@@ -1,11 +1,13 @@
-import {
-  PageExportError,
-  type Color,
-  type EditxEngine,
-} from "@editx/engine";
+import { PageExportError, type Color, type EditxEngine } from "@editx/engine";
 import { createEngine } from "@editx/engine/konva";
 import { useEffect, useRef, useState } from "react";
-import type { DecodedExport, ExportFixtureIds, ExportState, PageExportHarness, Pixel } from "./page-export.types";
+import type {
+  DecodedExport,
+  ExportFixtureIds,
+  ExportState,
+  PageExportHarness,
+  Pixel,
+} from "./page-export.types";
 
 declare global {
   interface Window {
@@ -86,6 +88,25 @@ function buildHarness(engine: EditxEngine, ids: ExportFixtureIds): PageExportHar
     ids: () => ids,
     exportDecoded: async (pageId, options, points = []) =>
       decode(await engine.exportPage(pageId, options), points),
+    resizePage: (pageId, width, height) => engine.scene.resizePage(pageId, width, height),
+    comparePageThumbnail: async (pageId, options, pixelRatio) => {
+      const thumbnail = await engine.exportPageThumbnail(pageId, options);
+      const cached = await engine.exportPageThumbnail(pageId, options);
+      const direct = await engine.exportPage(pageId, {
+        format: options.format,
+        quality: options.quality,
+        pixelRatio,
+      });
+      const actual = new Uint8Array(await thumbnail.arrayBuffer());
+      const expected = new Uint8Array(await direct.arrayBuffer());
+      return {
+        thumbnail: await decode(thumbnail, []),
+        matchesPageExport:
+          actual.length === expected.length &&
+          actual.every((byte, index) => byte === expected[index]),
+        cacheHit: thumbnail === cached,
+      };
+    },
     exportFailure: async (pageId) => {
       try {
         await engine.exportPage(pageId);
@@ -190,14 +211,13 @@ async function decode(blob: Blob, points: Array<[number, number]>): Promise<Deco
   context.drawImage(bitmap, 0, 0);
   bitmap.close();
   const pixels = Object.fromEntries(
-    points.map(([x, y]) => [
-      `${x},${y}`,
-      [...context.getImageData(x, y, 1, 1).data] as Pixel,
-    ]),
+    points.map(([x, y]) => [`${x},${y}`, [...context.getImageData(x, y, 1, 1).data] as Pixel]),
   );
   return { mime: blob.type, width: canvas.width, height: canvas.height, pixels };
 }
 
 function nextPaint(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 }

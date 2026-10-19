@@ -1,3 +1,4 @@
+import type { BlockData } from "./block/block.types";
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
 import type { EngineCore } from "./engine-core";
 import { PageExportError } from "./page-export-error";
@@ -8,17 +9,7 @@ export async function exportPage(
   pageId: number,
   options?: ExportOptions,
 ): Promise<Blob> {
-  const sceneId = engine.getActiveScene();
-  try {
-    requireScenePage(engine._getBlockStore(), sceneId, pageId);
-  } catch (cause) {
-    throw new PageExportError(
-      sceneId === null ? "NO_ACTIVE_SCENE" : "PAGE_NOT_FOUND",
-      pageId,
-      cause instanceof Error ? cause.message : "Invalid page",
-      { cause },
-    );
-  }
+  requirePageForExport(engine, pageId);
   const normalized = normalizePageExportOptions(options);
   const renderer = engine.getRenderer();
   if (!renderer) throw new PageExportError("NO_RENDERER", pageId, "no renderer attached");
@@ -37,6 +28,20 @@ export async function exportPage(
       "RENDER_FAILED",
       pageId,
       cause instanceof Error ? cause.message : "rendering failed",
+      { cause },
+    );
+  }
+}
+
+export function requirePageForExport(engine: EngineCore, pageId: number): BlockData {
+  const sceneId = engine.getActiveScene();
+  try {
+    return requireScenePage(engine._getBlockStore(), sceneId, pageId);
+  } catch (cause) {
+    throw new PageExportError(
+      sceneId === null ? "NO_ACTIVE_SCENE" : "PAGE_NOT_FOUND",
+      pageId,
+      cause instanceof Error ? cause.message : "Invalid page",
       { cause },
     );
   }

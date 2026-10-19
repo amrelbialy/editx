@@ -1,4 +1,4 @@
-import type { ExportOptions } from "@editx/engine";
+import type { ExportOptions, PageThumbnailExportOptions } from "@editx/engine";
 
 export type Pixel = [number, number, number, number];
 
@@ -44,7 +44,16 @@ export interface PageExportHarness {
     points?: Array<[number, number]>,
   ): Promise<DecodedExport>;
   exportFailure(pageId: number): Promise<ExportFailure>;
-  addAssetPage(kind: "image" | "fill" | "background", src: string): {
+  resizePage(pageId: number, width: number, height: number): void;
+  comparePageThumbnail(
+    pageId: number,
+    options: PageThumbnailExportOptions,
+    pixelRatio: number,
+  ): Promise<{ thumbnail: DecodedExport; matchesPageExport: boolean; cacheHit: boolean }>;
+  addAssetPage(
+    kind: "image" | "fill" | "background",
+    src: string,
+  ): {
     pageId: number;
     blockId: number;
   };

@@ -13,6 +13,17 @@ export interface ExportOptions {
   pixelRatio?: number;
 }
 
+export interface PageThumbnailExportOptions {
+  /** Maximum raster width in pixels. Default: 256. */
+  maxWidth?: number;
+  /** Maximum raster height in pixels. Default: 256. */
+  maxHeight?: number;
+  /** Image format. Default: 'png'. */
+  format?: ExportFormat;
+  /** Quality 0-1 for JPEG/WebP. Ignored for PNG. Default: 0.92. */
+  quality?: number;
+}
+
 export interface BlockExportOptions {
   /** Logical output width in CSS pixels. */
   width: number;

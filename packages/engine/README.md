@@ -281,6 +281,45 @@ Custom `RendererAdapter` implementations may add the optional `exportPage` capab
 Older adapters remain compatible, but page export rejects rather than switching pages
 or falling back to `exportScene`. Existing scene and block export behavior is unchanged.
 
+## Export a page thumbnail
+
+```ts
+const blob = await engine.exportPageThumbnail(pageId, {
+  maxWidth: 256,
+  maxHeight: 256,
+  format: "png",
+  quality: 0.92,
+});
+const previewUrl = URL.createObjectURL(blob);
+// Revoke the URL when the consumer no longer needs it.
+URL.revokeObjectURL(previewUrl);
+```
+
+All options are optional. The default is a PNG fitted within a 256-by-256-pixel box.
+The complete page keeps its proportions, with no cropping, padding, or enlargement.
+Bounds must be positive integers. Request a larger box for higher-density previews;
+there is no separate thumbnail `pixelRatio` option. JPEG/WebP quality validation and
+resource/rendering errors are the same as `exportPage`.
+
+Thumbnails use the same isolated rendering path, assets/fonts, authored visibility,
+and state guarantees as page exports. Raster dimensions use that path's canvas rounding;
+fractional page sizes can round down, and output that rounds to zero pixels rejects.
+
+Each engine privately remembers up to 64 successful thumbnails with least-recently-used
+eviction. Identical in-flight requests share work; failures are not cached. Lookups use
+page content and its owned shape/fill/effect dependencies, not event delivery timing.
+Editing one page does not invalidate an unrelated page. Shared dependencies affect all
+their owners. Silent/batched edits, undo/redo, and native reloads are handled; returning
+to equivalent content may reuse a cached result. Scene page order and navigation are
+not part of a page's cache key.
+
+An export already in flight returns its invocation-time content, not later edits.
+Engine disposal releases cached references and rejects late thumbnail completions.
+The engine caches `Blob`s, never object URLs; consumers own and revoke their URLs.
+Changing remote image bytes or font availability without changing document references
+cannot be detected. Use versioned image sources and update font descriptors when needed;
+resource-registry invalidation remains part of the later asset/font milestones.
+
 ## Export a block
 
 With a renderer attached, export a graphic, text, image, or group into a fixed output frame:
