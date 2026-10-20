@@ -12,10 +12,12 @@ import type { CropRect } from "../utils/crop-math";
  */
 
 const scene = vi.hoisted(() => {
-  const layer = () => ({ add: vi.fn(), batchDraw: vi.fn() });
+  const layer = () => ({ add: vi.fn(), batchDraw: vi.fn(), on: vi.fn() });
   const contentLayer = layer();
   const uiLayer = layer();
   const stage = {
+    width: vi.fn(() => 0),
+    height: vi.fn(() => 0),
     batchDraw: vi.fn(),
     draw: vi.fn(),
     destroy: vi.fn(),
@@ -35,7 +37,13 @@ const scene = vi.hoisted(() => {
     flipEnabled: vi.fn(),
     listening: vi.fn(),
   };
-  const camera = { setPanChangeListener: vi.fn(), getZoom: vi.fn(() => 1.5), setPageSize: vi.fn() };
+  const camera = {
+    setPanChangeListener: vi.fn(),
+    getZoom: vi.fn(() => 1.5),
+    setPageSize: vi.fn(),
+    setPageNavigationBounds: vi.fn(() => false),
+    reapplyViewport: vi.fn(),
+  };
   const cropOverlay = {
     applyViewportScale: vi.fn(),
     show: vi.fn(),
@@ -141,7 +149,7 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     expect(scene.transformer.nodes).toHaveBeenCalled();
   });
 
-  it("uses uniform corner scaling for groups without disabling rotation", async () => {
+  it("uses uniform corner scaling for groups and keeps rotation available", async () => {
     const adapter = await makeAdapter();
 
     adapter.showTransformer([], "group");
@@ -154,13 +162,14 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     ]);
     expect(scene.transformer.keepRatio).toHaveBeenLastCalledWith(true);
     expect(scene.transformer.flipEnabled).toHaveBeenLastCalledWith(false);
-    expect(scene.transformer.rotateEnabled).not.toHaveBeenCalled();
+    expect(scene.transformer.rotateEnabled).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.listening).toHaveBeenLastCalledWith(true);
   });
 
-  it("keeps all resize anchors for non-group blocks", async () => {
+  it("keeps legacy page transformer controls outside continuous views", async () => {
     const adapter = await makeAdapter();
 
-    adapter.showTransformer([], "graphic");
+    adapter.showTransformer([], "page");
 
     expect(scene.transformer.enabledAnchors).toHaveBeenLastCalledWith([
       "top-left",
@@ -174,6 +183,28 @@ describe("KonvaRendererAdapter scoped/batched redraws", () => {
     ]);
     expect(scene.transformer.keepRatio).toHaveBeenLastCalledWith(true);
     expect(scene.transformer.flipEnabled).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.rotateEnabled).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.listening).toHaveBeenLastCalledWith(true);
+  });
+
+  it("shows continuous page selection as a non-listening outline without handles", async () => {
+    const adapter = await makeAdapter();
+    adapter.setPageView({
+      mode: "vertical-pages",
+      activePageId: 7,
+      pages: [{ id: 7, width: 1080, height: 1080 }],
+    });
+
+    adapter.showTransformer([], "page");
+
+    expect(scene.transformer.enabledAnchors).toHaveBeenLastCalledWith([]);
+    expect(scene.transformer.rotateEnabled).toHaveBeenLastCalledWith(false);
+    expect(scene.transformer.flipEnabled).toHaveBeenLastCalledWith(false);
+    expect(scene.transformer.listening).toHaveBeenLastCalledWith(false);
+
+    adapter.showTransformer([], "graphic");
+    expect(scene.transformer.rotateEnabled).toHaveBeenLastCalledWith(true);
+    expect(scene.transformer.listening).toHaveBeenLastCalledWith(true);
   });
 
   it("showCropOverlay uses a scoped content-layer batchDraw, not stage.batchDraw", async () => {

@@ -1,6 +1,7 @@
 import type React from "react";
 import type { BuiltInPreset, ThemeColorKey } from "../theme/presets";
 import type { PresetGroup, ShapePreset, TextPreset, TextStylePreset } from "./preset.types";
+import type { UIConfig } from "./ui-config.types";
 
 export type { ThemeColorKey } from "../theme/presets";
 export type {
@@ -21,6 +22,7 @@ export type {
   TextStylePreset,
   TextStyleSpec,
 } from "./preset.types";
+export type { PageNavigationLayout, UIConfig } from "./ui-config.types";
 
 export type CloseReason = "save" | "close-button" | "back-button" | "escape";
 
@@ -34,26 +36,6 @@ export interface ThemeConfig {
   colors?: Partial<Record<ThemeColorKey, string>>;
   borderRadius?: string;
   fontFamily?: string;
-}
-
-export interface UIConfig {
-  toolSidebar?: {
-    /**
-     * Compact the tool rail to a tight, icon-only column: hides the text
-     * labels, narrows the rail, and shrinks each button to a square. Tool names
-     * move to the tooltip + `aria-label`. Defaults to `false` (roomy, labelled).
-     */
-    compact?: boolean;
-    groupSeparators?: boolean;
-  };
-  title?: string;
-  showTitle?: boolean;
-  /** Show close button (X) in topbar. Default: true when onClose is provided. */
-  showCloseButton?: boolean;
-  /** Show back arrow instead of X for close. Default: false. */
-  showBackButton?: boolean;
-  /** Show a confirmation dialog when closing with unsaved changes. Default: true. */
-  unsavedChangesWarning?: boolean;
 }
 
 export interface CropToolConfig {

@@ -25,9 +25,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, overl
           {header}
         </div>
       )}
-      <div ref={canvasRef} className="relative flex-1 min-h-0" />
-      {overlay}
-      {children}
+      <div className="group/canvas relative flex-1 min-h-0">
+        <div ref={canvasRef} className="absolute inset-0" />
+        {overlay}
+        {children}
+      </div>
     </section>
   );
 };

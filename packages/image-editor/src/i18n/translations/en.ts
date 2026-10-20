@@ -1,4 +1,7 @@
+import { pageTranslations } from "./pages";
+
 export const en = {
+  ...pageTranslations,
   // Topbar
   "topbar.undo": "Undo",
   "topbar.redo": "Redo",

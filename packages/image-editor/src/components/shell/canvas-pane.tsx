@@ -1,11 +1,12 @@
 import type { EditxEngine, ImageFillCrop, ImageFillCropUpdate } from "@editx/engine";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect } from "react";
 import type { EditorSlots } from "../../config/config.types";
 import { useConfig } from "../../config/config-context";
 import type { UseBlockActionsReturn } from "../../hooks/use-block-actions";
 import { useBlockImageFill } from "../../hooks/use-block-image-fill";
 import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
 import { useImageEditorStore } from "../../store/image-editor-store";
+import { PageNavigation } from "../page-navigation/page-navigation";
 import { TextEditorOverlay } from "../text-editor-overlay";
 import { BlockPropertiesBar } from "./block-properties-bar";
 import { CanvasArea } from "./canvas-area";
@@ -65,8 +66,6 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
     imageFillCrop,
   } = props;
 
-  const editingRef = useRef<number | null>(null);
-
   const blockScreenRect = useBlockScreenRect(engine ?? null, selectedShapeId);
   const hasImageFill = useBlockImageFill(engine, selectedShapeId, selectedBlockType);
   const config = useConfig();
@@ -75,8 +74,6 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   const editingTextClickPos = useImageEditorStore((s) => s.editingTextClickPos);
   const setEditingTextBlockId = useImageEditorStore((s) => s.setEditingTextBlockId);
   const setTextSelectionRange = useImageEditorStore((s) => s.setTextSelectionRange);
-
-  editingRef.current = editingTextBlockId;
 
   const handleCloseTextEditor = useCallback(() => {
     setEditingTextBlockId(null);
@@ -114,7 +111,7 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
   useEffect(() => {
     if (!engine) return;
     const handler = () => {
-      const blockId = editingRef.current;
+      const blockId = useImageEditorStore.getState().editingTextBlockId;
       if (blockId !== null) {
         engine.block.select(blockId);
         setEditingTextBlockId(null);
@@ -200,6 +197,9 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
 
   return (
     <CanvasArea canvasRef={canvasRef} header={header} overlay={overlay}>
+      {config.ui?.pageNavigation && engine && (
+        <PageNavigation engine={engine} layout={config.ui.pageLayout} />
+      )}
       {engine && editingTextBlockId !== null && (
         <TextEditorOverlay
           engine={engine}

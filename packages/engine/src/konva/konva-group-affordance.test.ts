@@ -3,6 +3,24 @@ import { describe, expect, it } from "vitest";
 import { applyGroupContext, createGroupOutline } from "./konva-group-affordance";
 
 describe("applyGroupContext", () => {
+  it("keeps root page children draggable inside transient page wrappers", () => {
+    const contentLayer = new Konva.Group();
+    const wrapper = new Konva.Group();
+    wrapper.setAttr("pageViewPageId", 7);
+    const block = new Konva.Rect();
+    wrapper.add(block);
+    contentLayer.add(wrapper);
+
+    applyGroupContext({
+      stack: [],
+      nodeMap: new Map([[2, block]]),
+      contentLayer,
+      outline: createGroupOutline(),
+    });
+
+    expect(block.draggable()).toBe(true);
+  });
+
   it("preserves block opacity while scoping dragging to the active group", () => {
     const contentLayer = new Konva.Group();
     const activeGroup = new Konva.Group({ opacity: 0.8 });

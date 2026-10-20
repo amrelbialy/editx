@@ -2,27 +2,38 @@ import Konva from "konva";
 import type { BlockClickEvent } from "../render-adapter";
 import type { KonvaCamera } from "./konva-camera";
 import { directChildUnderTarget, isMarqueeCandidate, resolveHit } from "./konva-context-resolver";
+import {
+  continuousPageIdFromTarget,
+  isContinuousPageMode,
+  isPrimaryCompletion,
+  isPrimaryContact,
+} from "./konva-page-interaction";
 import { setupWheelZoom } from "./konva-wheel-zoom";
 
 export interface InteractionCallbacks {
+  onPagePointerDown?: (pageId: number) => void;
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onEnterGroup?: (groupId: number, childId: number | null) => void;
   onStageClick?: (worldPos: { x: number; y: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
+  getOwningPageId?: (blockId: number) => number | null;
 }
 
 export interface InteractionDeps {
   stage: Konva.Stage;
   selectionRect: Konva.Rect;
   uiLayer: Konva.Layer;
+  transformer?: Konva.Transformer;
   nodeMap: Map<number, Konva.Node>;
   camera: KonvaCamera;
   callbacks: InteractionCallbacks;
   /** Active group-context stack (outermost-first); `[]` = top level. */
   getGroupContext: () => number[];
   isInteractionEnabled?: () => boolean;
+  getPageViewMode?: () => string;
+  getActivePageId?: () => number | null;
 }
 
 /** Returns true if the target is a background element (stage or page background). */
@@ -44,6 +55,18 @@ export function setupInteraction(deps: InteractionDeps): void {
     x2 = 0,
     y2 = 0;
   let selecting = false;
+  let marqueePageId: number | null = null;
+
+  const activatePage = (target: Konva.Node): number | null => {
+    if (!isContinuousPageMode(deps.getPageViewMode?.())) return null;
+    let pageId = continuousPageIdFromTarget(target, deps.getPageViewMode);
+    const blockId = target.getAttr("blockId");
+    if (pageId === null && typeof blockId === "number") {
+      pageId = callbacks.getOwningPageId?.(blockId) ?? null;
+    }
+    if (pageId !== null) callbacks.onPagePointerDown?.(pageId);
+    return pageId;
+  };
 
   // Live drag/resize — fires every frame while a block is moved or transformed.
   stage.on("dragmove transform", (e) => {
@@ -54,9 +77,42 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Double-click → enter a group (first) or edit its member (second).
   stage.on("dblclick dbltap", (e) => {
-    if (isBackground(e.target, stage)) return;
     const stack = getGroupContext();
-    const r = resolveHit(e.target as Konva.Node, stack);
+    let r = resolveHit(e.target as Konva.Node, stack);
+    const pointer = stage.getPointerPosition();
+    if (!r && pointer) {
+      const selected = deps.transformer
+        ?.nodes()
+        .find((node) => intersectsScreenPoint(node, pointer));
+      const geometric = selected ?? topmostNodeAtPoint(deps.nodeMap.values(), pointer);
+      if (geometric) r = resolveHit(geometric, stack);
+    }
+
+    function topmostNodeAtPoint(
+      nodes: Iterable<Konva.Node>,
+      point: { x: number; y: number },
+    ): Konva.Node | null {
+      let hit: Konva.Node | null = null;
+      let zIndex = -1;
+      for (const node of nodes) {
+        if (
+          node.getAttr("isPage") ||
+          !node.isVisible() ||
+          !intersectsScreenPoint(node, point) ||
+          node.getAbsoluteZIndex() <= zIndex
+        ) {
+          continue;
+        }
+        hit = node;
+        zIndex = node.getAbsoluteZIndex();
+      }
+      return hit;
+    }
+
+    function intersectsScreenPoint(node: Konva.Node, point: { x: number; y: number }): boolean {
+      return Konva.Util.haveIntersection({ ...point, width: 1, height: 1 }, node.getClientRect());
+    }
+    if (isBackground(e.target, stage) && !r) return;
     if (!r || r.node.getAttr("isPage")) return;
 
     const activeId = stack.length > 0 ? stack[stack.length - 1] : null;
@@ -65,7 +121,6 @@ export function setupInteraction(deps: InteractionDeps): void {
       callbacks.onEnterGroup?.(r.blockId, childId);
       return;
     }
-    const pointer = stage.getPointerPosition();
     const container = stage.container().getBoundingClientRect();
     const screenPos = pointer
       ? { x: container.left + pointer.x, y: container.top + pointer.y }
@@ -75,9 +130,18 @@ export function setupInteraction(deps: InteractionDeps): void {
 
   // Single click → select the resolved block (or deselect on background).
   stage.on("click tap", (e) => {
+    if (!isEnabled() || !isPrimaryCompletion(e.evt)) return;
     if (selectionRect.visible() && selectionRect.width() > 0) return;
 
     if (isBackground(e.target, stage)) {
+      const pageId =
+        e.target === stage
+          ? null
+          : continuousPageIdFromTarget(e.target as Konva.Node, deps.getPageViewMode);
+      if (pageId !== null) {
+        callbacks.onBlockClick?.(pageId, { shiftKey: false, insideContext: false });
+        return;
+      }
       const pos = stage.getPointerPosition();
       const worldPos = pos ? camera.screenToWorld(pos) : { x: 0, y: 0 };
       callbacks.onStageClick?.(worldPos);
@@ -96,7 +160,12 @@ export function setupInteraction(deps: InteractionDeps): void {
   // Marquee — mousedown
   stage.on("mousedown touchstart", (e) => {
     if (!isEnabled()) return;
+    if (!isPrimaryContact(e.evt)) return;
+    const pageId = activatePage(e.target as Konva.Node);
     if (!isBackground(e.target, stage)) return;
+    marqueePageId = isContinuousPageMode(deps.getPageViewMode?.())
+      ? (pageId ?? deps.getActivePageId?.() ?? null)
+      : null;
     const pos = stage.getPointerPosition();
     if (!pos) return;
     const world = camera.screenToWorld(pos);
@@ -146,6 +215,8 @@ export function setupInteraction(deps: InteractionDeps): void {
       const activeId = stack.length > 0 ? stack[stack.length - 1] : null;
       const activeContainer = activeId != null ? (nodeMap.get(activeId) ?? null) : null;
       for (const [blockId, node] of nodeMap) {
+        if (marqueePageId !== null && callbacks.getOwningPageId?.(blockId) !== marqueePageId)
+          continue;
         if (!isMarqueeCandidate(node, activeContainer)) continue;
         if (Konva.Util.haveIntersection(selBox, node.getClientRect())) {
           callbacks.onBlockClick?.(blockId, { shiftKey: true, additive: true });
@@ -159,5 +230,5 @@ export function setupInteraction(deps: InteractionDeps): void {
     });
   });
 
-  setupWheelZoom(stage, camera, nodeMap, callbacks.onZoomChange);
+  setupWheelZoom(stage, camera, nodeMap, callbacks.onZoomChange, deps.getPageViewMode);
 }

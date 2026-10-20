@@ -4,7 +4,7 @@ import type { BlockData } from "../block/block.types";
 import type { ImageFillCrop } from "../editor-types";
 
 const scene = vi.hoisted(() => {
-  const layer = () => ({ add: vi.fn(), batchDraw: vi.fn() });
+  const layer = () => ({ add: vi.fn(), batchDraw: vi.fn(), on: vi.fn() });
   const uiLayer = layer();
   const transformer = {
     nodes: vi.fn((): unknown[] => []),
@@ -36,6 +36,8 @@ const scene = vi.hoisted(() => {
     contentLayer: layer(),
     uiLayer,
     stage: {
+      width: vi.fn(() => 0),
+      height: vi.fn(() => 0),
       destroy: vi.fn(),
       on: vi.fn(),
       off: vi.fn(),

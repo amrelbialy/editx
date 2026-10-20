@@ -1,13 +1,19 @@
-import { type EditorHandle, ImageEditor, type ThemeConfig } from "@editx/image-editor";
+import {
+  type EditorHandle,
+  ImageEditor,
+  type PageNavigationLayout,
+  type ThemeConfig,
+} from "@editx/image-editor";
 import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   theme: ThemeConfig;
   onReady: (handle: EditorHandle) => void;
+  layout: PageNavigationLayout;
 }
 
 export function PagePlaygroundCanvas(props: Props) {
-  const { theme, onReady } = props;
+  const { theme, onReady, layout } = props;
 
   const [source, setSource] = useState<HTMLCanvasElement | null>(null);
 
@@ -16,9 +22,14 @@ export function PagePlaygroundCanvas(props: Props) {
       theme,
       tools: [],
       defaultTool: null,
-      ui: { showTitle: false, unsavedChangesWarning: false },
+      ui: {
+        showTitle: false,
+        unsavedChangesWarning: false,
+        pageNavigation: true,
+        pageLayout: layout,
+      },
     }),
-    [theme],
+    [theme, layout],
   );
 
   useEffect(() => {

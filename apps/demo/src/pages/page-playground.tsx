@@ -1,4 +1,11 @@
-import { Button, downloadBlob, type EditorHandle, ThemeProvider } from "@editx/image-editor";
+import {
+  Button,
+  downloadBlob,
+  type EditorHandle,
+  type PageNavigationLayout,
+  SegmentedControl,
+  ThemeProvider,
+} from "@editx/image-editor";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { PagePlaygroundCanvas } from "../components/page-playground/page-playground-canvas";
@@ -16,6 +23,7 @@ export function PagePlayground() {
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [layout, setLayout] = useState<PageNavigationLayout>("vertical");
 
   const theme = useMemo(() => ({ preset: dark ? ("dark" as const) : ("light" as const) }), [dark]);
   const run = useCallback(
@@ -63,7 +71,7 @@ export function PagePlayground() {
           <div>
             <h1 className="text-xl font-semibold">Multi-page SDK playground</h1>
             <p className="text-sm text-muted-foreground">
-              A1-A5 diagnostic lab / no external images or fonts.
+              A1-A8 multi-page navigation lab / no external images or fonts.
             </p>
           </div>
           <Link to="/playground" className="text-sm text-primary underline">
@@ -74,12 +82,25 @@ export function PagePlayground() {
           className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
           role="note"
         >
-          Known limitations: pages share the canvas origin. Backgrounds follow document order, but
-          artwork from different pages overlaps. Changing the active page does not isolate it yet.
-          "Bring active to front" is an undoable reorder, not a preview filter. The built-in zoom
-          badge can lag SDK-driven fits; use the SDK state readout below. Page-strip integration is
-          still pending. SDK page export is isolated from this live view via engine.exportPage.
+          Cover, Poster, and Card share one continuous canvas. Scroll through the full-size pages
+          vertically or horizontally. Hover a page or its numbered title to highlight it; click its
+          background or title to select its outline without move or resize handles. Layout is
+          view-only; saved page positions and visibility stay unchanged. The side controls are SDK
+          diagnostics for earlier milestones, not A9 editor management controls. Page export and
+          thumbnails remain independent of the active canvas view. The built-in Export Image action
+          still uses legacy scene export; explicit page export is available through
+          engine.exportPage.
         </p>
+        <SegmentedControl
+          ariaLabel="Canvas page layout"
+          className="w-64"
+          value={layout}
+          onValueChange={setLayout}
+          options={[
+            { value: "vertical", label: "Vertical pages" },
+            { value: "horizontal", label: "Horizontal pages" },
+          ]}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Button
             className="px-2"
@@ -101,7 +122,9 @@ export function PagePlayground() {
             className="px-2"
             variant="outline"
             disabled={busy || !engine}
-            onClick={() => engine && void run("Fit active page", () => engine.editor.fitToScreen())}
+            onClick={() =>
+              engine && void run("Fit active page", () => engine.editor.fitToScreen(48))
+            }
           >
             Fit active page
           </Button>
@@ -124,7 +147,7 @@ export function PagePlayground() {
               saved &&
               void run("Load saved snapshot", async () => {
                 await engine.scene.loadFromString(saved);
-                engine.editor.fitToScreen();
+                engine.editor.fitToScreen(48);
               })
             }
           >
@@ -162,7 +185,7 @@ export function PagePlayground() {
           {saved && " / Snapshot saved in memory"}
         </p>
         <div className="grid min-w-0 gap-3 @3xl/editor:grid-cols-[minmax(0,1fr)_22rem]">
-          <PagePlaygroundCanvas key={version} theme={theme} onReady={ready} />
+          <PagePlaygroundCanvas key={version} theme={theme} onReady={ready} layout={layout} />
           {engine && snapshot && (
             <PagePlaygroundControls engine={engine} snapshot={snapshot} busy={busy} run={run} />
           )}

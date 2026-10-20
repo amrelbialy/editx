@@ -1,5 +1,6 @@
 import type { BlockData } from "../block/block.types";
 import type { BlockExportOptions, ExportOptions, ImageFillCrop } from "../editor-types";
+import type { PageViewBounds, RendererPageView } from "../page-view";
 import type { BlockClickEvent, BlockTransform, RendererAdapter } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import { exportPage } from "./konva-export-page";
@@ -29,6 +30,7 @@ export class KonvaRendererAdapter implements RendererAdapter {
   onAutoSize?: (blockId: number, computedHeight: number) => void;
   onAutoWidth?: (blockId: number, computedWidth: number) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
+  onPagePointerDown?: (pageId: number) => void;
 
   async init(root: HTMLElement): Promise<void> {
     return this.#scene.init(root);
@@ -36,6 +38,14 @@ export class KonvaRendererAdapter implements RendererAdapter {
 
   async createScene(sceneBlock: BlockData, pageBlock: BlockData): Promise<void> {
     return this.#scene.createScene(sceneBlock, pageBlock);
+  }
+
+  setPageView(view: RendererPageView): void {
+    this.#blocks.setPageView(view);
+  }
+
+  getPageViewBounds(pageId: number): PageViewBounds | null {
+    return this.#blocks.pageView.getBounds(pageId);
   }
 
   syncBlock(id: number, block: BlockData): void {

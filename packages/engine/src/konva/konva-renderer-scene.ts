@@ -1,6 +1,7 @@
 import type { BlockData } from "../block/block.types";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
 import type { BlockExportOptions, ExportOptions } from "../editor-types";
+import { getOwningPageId } from "../page-view-ownership";
 import { clearImageCache } from "../utils/image-loader";
 import { exportScene } from "./konva-export";
 import { exportBlockNode } from "./konva-export-block";
@@ -32,7 +33,9 @@ export class KonvaRendererScene {
     // entries left in nodeMap would be reused by syncBlock and never attached
     // to the new content layer — leaving the canvas blank.
     if (context.stage) {
+      this.blocks.pageView.dispose();
       context.resizeObserver?.disconnect();
+      context.camera.dispose();
       context.cropOverlay?.destroy();
       context.webgl?.dispose();
       context.webgl = null;
@@ -43,6 +46,7 @@ export class KonvaRendererScene {
     const pageW = (pageBlock.properties[PAGE_WIDTH] as number) ?? 1080;
     const pageH = (pageBlock.properties[PAGE_HEIGHT] as number) ?? 1080;
     const scene = createKonvaScene(context.rootEl, pageW, pageH, context.nodeMap, {
+      onPagePointerDown: (pageId) => callbacks.onPagePointerDown?.(pageId),
       onBlockClick: (blockId, event) => {
         if (!context.imageFillCrop?.isActive()) callbacks.onBlockClick?.(blockId, event);
       },
@@ -61,6 +65,11 @@ export class KonvaRendererScene {
       },
       onCropChange: (rect) => callbacks.onCropChange?.(rect),
       getGroupContext: () => context.groupContext,
+      getOwningPageId: (blockId) =>
+        getOwningPageId({ get: (id) => callbacks.resolveBlock?.(id) }, blockId),
+      getPageViewMode: () => context.pageView.mode,
+      getActivePageId: () =>
+        context.pageView.mode === "all-pages" ? null : context.pageView.activePageId,
       isInteractionEnabled: () => !context.imageFillCrop?.isActive(),
     });
 
@@ -79,6 +88,7 @@ export class KonvaRendererScene {
     context.webgl = scene.webgl;
     context.updateAccentColor = scene.updateAccentColor;
     context.lastPageSize = { width: pageW, height: pageH };
+    this.blocks.pageView.initialize(pageBlock);
 
     context.hoverOutline = new KonvaHoverOutline(
       context.uiLayer,
@@ -109,19 +119,38 @@ export class KonvaRendererScene {
     context.groupOutline = createGroupOutline();
     context.uiLayer.add(context.groupOutline);
 
+    this.blocks.pageView.set(context.pageView);
+    const getCurrentActiveBounds = () => {
+      const view = context.pageView;
+      return view.mode === "all-pages" || view.activePageId === null
+        ? null
+        : this.blocks.pageView.getBounds(view.activePageId);
+    };
+    const activeBounds = getCurrentActiveBounds();
+    const canFitNow = context.stage.width() > 0 && context.stage.height() > 0;
     context.resizeObserver?.disconnect();
     context.resizeObserver = observeViewportResize({
       rootEl: context.rootEl,
       stage: context.stage,
       camera: context.camera,
-      getPageSize: () => context.lastPageSize,
+      getPageSize: () => (canFitNow || getCurrentActiveBounds() ? undefined : context.lastPageSize),
+      getInitialFitRect: () => (canFitNow ? null : getCurrentActiveBounds()),
       getCropFitRect: () => context.getCropFitRect(),
-      onResize: () => context.cropOverlay.refreshBlock(),
+      onResize: () => {
+        context.camera.completeResize?.();
+        context.cropOverlay.refreshBlock();
+      },
     });
+    if (canFitNow) {
+      if (activeBounds) context.camera.fitToRect(activeBounds, 48);
+      else context.camera.fitToScreen?.({ width: pageW, height: pageH, padding: 48 });
+      context.camera.preserveCenterOnNextResize?.();
+    }
   }
 
   renderFrame(): void {
     const context = this.context;
+    this.blocks.pageView.apply();
     this.blocks.applyGroupContext();
     if (context.transformer?.nodes().length > 0) {
       context.transformer.forceUpdate();
@@ -139,15 +168,16 @@ export class KonvaRendererScene {
 
   async exportScene(options: ExportOptions): Promise<Blob> {
     const context = this.context;
-    if (!context.stage || !context.lastPageSize) {
+    if (!context.stage || !context.legacyPageSize) {
       throw new Error("Cannot export: scene not initialised");
     }
     return exportScene(
       context.stage,
       context.contentLayer,
       context.uiLayer,
-      context.lastPageSize,
+      context.legacyPageSize,
       options,
+      (capture) => this.blocks.pageView.withUnfiltered(capture),
     );
   }
 
@@ -156,12 +186,16 @@ export class KonvaRendererScene {
     if (!context.stage) throw new Error("Cannot export: scene not initialised");
     const node = context.nodeMap.get(blockId);
     if (!node) throw new Error(`Cannot export: block ${blockId} has no rendered node`);
-    return exportBlockNode(node, context.contentLayer, options);
+    return exportBlockNode(node, context.contentLayer, options, (capture) =>
+      this.blocks.pageView.withUnfiltered(capture),
+    );
   }
 
   dispose(): void {
     const context = this.context;
+    this.blocks.pageView.dispose();
     context.resizeObserver?.disconnect();
+    context.camera?.dispose();
     context.imageFillCrop?.hide();
     context.cropOverlay?.destroy();
     context.webgl?.dispose();

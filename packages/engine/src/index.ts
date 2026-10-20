@@ -193,6 +193,14 @@ export type { TextCaretRect, TextSelectionRect } from "./konva/formatted-text-ca
 export { PageExportError, type PageExportErrorCode } from "./page-export-error";
 export type { PageOrderChangedEvent } from "./page-order";
 export type { PageMetadata, PageProperties, PagePropertiesUpdate } from "./page-properties";
+export {
+  type PageViewBounds,
+  PageViewError,
+  type PageViewErrorCode,
+  type PageViewMode,
+  type RendererPageView,
+  type RendererPageViewPage,
+} from "./page-view";
 export type { RendererAdapter } from "./render-adapter";
 export type { CropPreset, CropRect } from "./utils";
 export {

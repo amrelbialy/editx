@@ -18,6 +18,11 @@ describe("@editx/image-editor config contract", () => {
   it("keeps a stable default-config shape", () => {
     expect(keyPaths(defaultConfig)).toMatchSnapshot();
   });
+
+  it("keeps page navigation disabled unless explicitly enabled", () => {
+    expect(defaultConfig.ui.pageNavigation).toBe(false);
+    expect(defaultConfig.ui.pageLayout).toBe("vertical");
+  });
 });
 
 /** Collect sorted dotted key paths of an object, recursing into plain objects only. */

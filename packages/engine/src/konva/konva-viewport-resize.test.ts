@@ -75,6 +75,18 @@ describe("observeViewportResize", () => {
     expect(reapplyViewport).not.toHaveBeenCalled();
   });
 
+  it("auto-fits an offset active frame instead of the continuous union", () => {
+    const frame = { x: 80, y: 368, width: 320, height: 480 };
+    const { deps, fitToScreen, fitToRect } = makeDeps({
+      getInitialFitRect: () => frame,
+      getPageSize: () => ({ width: 480, height: 1136 }),
+    });
+    observeViewportResize(deps);
+    fireResize();
+    expect(fitToRect).toHaveBeenCalledWith(frame, 48);
+    expect(fitToScreen).not.toHaveBeenCalled();
+  });
+
   it("preserves zoom/pan on subsequent resizes (reapply, never re-fit)", () => {
     const { deps, fitToScreen, reapplyViewport } = makeDeps();
     observeViewportResize(deps);

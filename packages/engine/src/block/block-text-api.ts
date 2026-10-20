@@ -7,13 +7,13 @@ import type {
   TextCurve,
   TextCurveDirection,
   TextGradient,
-  TextRun,
   TextRunStyle,
   TextRunStyleUpdate,
   TextTransform,
 } from "./block.types";
 import * as H from "./block-api-helpers";
 import { BlockTextBackgroundAPI } from "./block-text-background-api";
+import { BlockTextEditingAPI } from "./block-text-editing-api";
 import { createTextBlock } from "./block-text-placement";
 import {
   TEXT_ALIGN,
@@ -24,83 +24,22 @@ import {
   TEXT_RUNS,
   TEXT_VERTICAL_ALIGN,
 } from "./property-keys";
-import { TextEditorSession } from "./text-editor-session";
-import {
-  getPlainText as utilGetPlainText,
-  insertText as utilInsertText,
-  removeRange as utilRemoveRange,
-  replaceRange as utilReplaceRange,
-  setStyleOnRange as utilSetStyleOnRange,
-} from "./text-run-utils";
+import { setStyleOnRange as utilSetStyleOnRange } from "./text-run-utils";
 
 /** Text editing sessions, range-based text editing, and text block placement. */
-export class BlockTextAPI {
+export class BlockTextAPI extends BlockTextEditingAPI {
   #engine: EngineCore;
   #background: BlockTextBackgroundAPI;
-  #textEditingSessions = new Map<number, TextEditorSession>();
 
   constructor(engine: EngineCore) {
+    super(engine);
     this.#engine = engine;
     this.#background = new BlockTextBackgroundAPI(engine);
   }
 
-  // ── Text editing session lifecycle ────────────────
-
-  beginTextEditing(blockId: number): TextEditorSession {
-    let session = this.#textEditingSessions.get(blockId);
-    if (session) return session;
-    const runs = this.getTextRuns(blockId);
-    session = new TextEditorSession(blockId, runs, (newRuns) => {
-      H.setProperty(this.#engine, blockId, TEXT_RUNS, newRuns);
-    });
-    this.#textEditingSessions.set(blockId, session);
-    return session;
-  }
-
-  getTextEditingSession(blockId: number): TextEditorSession | null {
-    return this.#textEditingSessions.get(blockId) ?? null;
-  }
-
-  endTextEditing(blockId: number): void {
-    const session = this.#textEditingSessions.get(blockId);
-    if (session) {
-      session.dispose();
-      this.#textEditingSessions.delete(blockId);
-    }
-  }
-
-  // ── Range-based text editing ──────────────────────
-
-  getTextRuns(blockId: number): TextRun[] {
-    const val = H.getProperty(this.#engine, blockId, TEXT_RUNS);
-    return Array.isArray(val) ? (val as TextRun[]) : [];
-  }
-
-  getTextContent(blockId: number): string {
-    return utilGetPlainText(this.getTextRuns(blockId));
-  }
-
-  insertTextAt(blockId: number, position: number, text: string): void {
-    const runs = this.getTextRuns(blockId);
-    const newRuns = utilInsertText(runs, position, text);
-    H.setProperty(this.#engine, blockId, TEXT_RUNS, newRuns);
-  }
-
-  removeText(blockId: number, start: number, end: number): void {
-    const runs = this.getTextRuns(blockId);
-    const newRuns = utilRemoveRange(runs, start, end);
-    H.setProperty(this.#engine, blockId, TEXT_RUNS, newRuns);
-  }
-
-  replaceText(blockId: number, start: number, end: number, newText: string): void {
-    const runs = this.getTextRuns(blockId);
-    const newRuns = utilReplaceRange(runs, start, end, newText);
-    H.setProperty(this.#engine, blockId, TEXT_RUNS, newRuns);
-  }
-
   /** Applies a partial style to [start, end). `null` on a field clears it. */
   setTextStyle(blockId: number, start: number, end: number, styleUpdate: TextRunStyleUpdate): void {
-    const session = this.#textEditingSessions.get(blockId);
+    const session = this.getTextEditingSession(blockId);
     if (session) {
       session.setTextStyle(start, end, styleUpdate);
     } else {
@@ -124,7 +63,7 @@ export class BlockTextAPI {
   }
 
   toggleBoldText(blockId: number, start: number, end: number): void {
-    const session = this.#textEditingSessions.get(blockId);
+    const session = this.getTextEditingSession(blockId);
     if (session) {
       session.toggleBold(start, end);
     } else {
@@ -135,7 +74,7 @@ export class BlockTextAPI {
   }
 
   toggleItalicText(blockId: number, start: number, end: number): void {
-    const session = this.#textEditingSessions.get(blockId);
+    const session = this.getTextEditingSession(blockId);
     if (session) {
       session.toggleItalic(start, end);
     } else {

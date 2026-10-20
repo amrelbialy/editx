@@ -83,6 +83,7 @@ export class ActivePageState {
     private readonly onChanged: (event: ActivePageChangedEvent) => void,
     private readonly deferNotification: (callback: () => void) => void,
     onPageOrderChanged: (event: PageOrderChangedEvent) => void,
+    private readonly onSettled?: () => void,
   ) {
     this.#pageOrder = new PageOrderState(
       store,
@@ -155,6 +156,7 @@ export class ActivePageState {
     if (this.pageId === pageId) return null;
     const previousPageId = this.pageId;
     this.pageId = pageId;
+    this.onSettled?.();
     const event = { pageId, previousPageId };
     if (notify) this.publish();
     return event;

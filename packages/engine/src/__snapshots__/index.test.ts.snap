@@ -70,6 +70,8 @@ exports[`@editx/engine public API > exports a stable set of runtime members 1`] 
   "PAGE_WIDTH",
   "POSITION_X",
   "POSITION_Y",
+  "PageExportError",
+  "PageViewError",
   "ROTATION",
   "SCENE_ASPECT_RATIO_LOCK",
   "SCENE_HEIGHT",

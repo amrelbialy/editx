@@ -54,8 +54,9 @@ export function seedPagePlayground(engine: EditxEngine): void {
     engine.endSilent();
     engine.endBatch();
   }
+  engine.scene.setActivePage(first);
   engine.clearHistory();
-  engine.editor.fitToScreen();
+  engine.editor.fitToScreen(48);
 }
 
 export function addPlaygroundPage(engine: EditxEngine): void {

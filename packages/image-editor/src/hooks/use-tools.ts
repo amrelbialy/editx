@@ -44,6 +44,14 @@ export function useTools({
 }: UseToolsOptions) {
   const notify = useNotifications();
 
+  const selectedBlockType =
+    engine && selectedShapeId !== null ? (engine.block.getType(selectedShapeId) ?? null) : null;
+  const hasSelectedBlock =
+    selectedBlockType === "text" ||
+    selectedBlockType === "graphic" ||
+    selectedBlockType === "image" ||
+    selectedBlockType === "group";
+
   // --- Individual tool hooks ---
   const crop = useCropTool({ engineRef, config });
   const rotateFlip = useRotateFlipTool({ engineRef });
@@ -55,7 +63,7 @@ export function useTools({
   const imageFillCrop = useImageFillCrop({ engineRef, engine, enterCropMode: crop.enterCropMode });
   const blockActions = useBlockActions({
     engineRef,
-    selectedBlockId: selectedShapeId,
+    selectedBlockId: hasSelectedBlock ? selectedShapeId : null,
     onDeselect: () => setSelectedShapeId(null),
   });
 
@@ -125,14 +133,16 @@ export function useTools({
   );
 
   const duplicate = useCallback(() => {
+    if (!hasSelectedBlock) return;
     blockActions.duplicate();
     notify.success("Duplicated");
-  }, [blockActions, notify]);
+  }, [blockActions, hasSelectedBlock, notify]);
 
   const deleteBlock = useCallback(() => {
+    if (!hasSelectedBlock) return;
     blockActions.deleteBlock();
     notify.success("Deleted");
-  }, [blockActions, notify]);
+  }, [blockActions, hasSelectedBlock, notify]);
 
   const notifyingBlockActions: UseBlockActionsReturn = useMemo(
     () => ({ ...blockActions, duplicate, deleteBlock }),
@@ -140,16 +150,6 @@ export function useTools({
   );
 
   // --- Block type & effects ---
-  const selectedBlockType =
-    engine && selectedShapeId !== null
-      ? (engine.block.getType(selectedShapeId) as "text" | "graphic" | string)
-      : null;
-  const hasSelectedBlock =
-    selectedBlockType === "text" ||
-    selectedBlockType === "graphic" ||
-    selectedBlockType === "image" ||
-    selectedBlockType === "group";
-
   const blockEffects = useBlockEffects({
     engineRef,
     blockId:

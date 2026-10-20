@@ -8,6 +8,8 @@ export interface ViewportResizeDeps {
   camera: KonvaCamera;
   /** Current page size, used only for the initial auto-fit. */
   getPageSize: () => { width: number; height: number } | undefined;
+  /** Active page frame in layout-world coordinates for the initial auto-fit. */
+  getInitialFitRect?: () => CropRect | null;
   /**
    * World-space rect the camera should stay fitted to while crop mode is
    * active, or `null` when not cropping. When present, a resize re-fits to
@@ -44,9 +46,11 @@ export function observeViewportResize(deps: ViewportResizeDeps): ResizeObserver 
     deps.stage.height(h);
 
     const pageSize = deps.getPageSize();
+    const initialFitRect = deps.getInitialFitRect?.();
     const cropFitRect = deps.getCropFitRect?.();
-    if (!hasFitOnce && pageSize) {
-      deps.camera.fitToScreen({ ...pageSize, padding: 48 });
+    if (!hasFitOnce && (initialFitRect || pageSize)) {
+      if (initialFitRect) deps.camera.fitToRect(initialFitRect, 48);
+      else deps.camera.fitToScreen({ ...pageSize!, padding: 48 });
       hasFitOnce = true;
     } else if (cropFitRect) {
       deps.camera.fitToRect(cropFitRect, 24);

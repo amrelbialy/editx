@@ -38,6 +38,12 @@ describe("konva-context-resolver", () => {
     t = buildTree();
   });
 
+  it("excludes page-filtered nodes from hit and marquee resolution", () => {
+    t.G3.visible(false);
+    expect(resolveHit(t.G3, [])).toBeNull();
+    expect(isMarqueeCandidate(t.G3, null)).toBe(false);
+  });
+
   it("top level: a hit on a grandchild resolves to the OUTERMOST group", () => {
     const r = resolveHit(t.C2, []);
     expect(r?.blockId).toBe(1); // G1

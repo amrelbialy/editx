@@ -117,6 +117,43 @@ and [Customize the Chrome](/docs/image-editor/guides/customize-chrome).
 | `showCloseButton` | `boolean` | auto | Show the close (X) button. |
 | `showBackButton` | `boolean` | `false` | Use a back arrow instead of X. |
 | `unsavedChangesWarning` | `boolean` | `true` | Confirm before closing with unsaved changes. |
+| `pageNavigation` | `boolean` | `false` | Show all full-size pages on a continuous canvas with numbered page titles and hover/selection outlines, without a thumbnail strip. |
+| `pageLayout` | `"vertical" \| "horizontal"` | `"vertical"` | Canvas arrangement when page navigation is enabled; independent of persisted scene layout. |
+
+### Multi-page navigation
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{ ui: { pageNavigation: true, pageLayout: "vertical" } }}
+  onReady={({ engine }) => {
+    engine.scene.addPage({ width: 600, height: 800 });
+  }}
+/>
+```
+
+The strip follows scene page order, shows names and active state, and scrolls horizontally
+when the editor container is narrow. Clicking a thumbnail activates and fits that page.
+All full-size pages remain on one continuous canvas. Set `ui.pageLayout` to `"horizontal"`
+for a side-by-side arrangement, or keep the default `"vertical"` stack.
+Wheel scrolling pans along the layout axis; Ctrl/Cmd-wheel still zooms.
+Clicking a canvas page activates it without moving the camera.
+The [multi-page playground](/playground/pages) starts with Cover, Poster, and Card
+and offers both arrangements. `PageNavigationLayout` is exported for typed configuration.
+
+Navigation does not create undo history or write authored visibility. Native saves retain
+all pages, including those currently outside the view. The setting defaults to `false`;
+disabling it restores the previous engine view mode.
+
+During crop or inline text editing, page controls are disabled until editing finishes.
+External SDK navigation still works and clears old page-editing UI. Thumbnails use
+`engine.exportPageThumbnail`, guard stale asynchronous results, revoke owned object URLs,
+and expose failures with a retry action. Initialization failures are shown explicitly
+instead of silently displaying overlapping pages.
+
+Page-management controls and multi-page export UI belong to later increments.
+The built-in export action retains legacy scene-export behavior; call
+`handle.engine.exportPage(pageId)` when an explicit page export is required.
 
 ## Next steps
 

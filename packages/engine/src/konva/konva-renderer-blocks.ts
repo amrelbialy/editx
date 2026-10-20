@@ -1,15 +1,22 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
-import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import type { RendererPageView } from "../page-view";
 import type { BlockTransform } from "../render-adapter";
 import { getNodeScreenTransform } from "./konva-block-screen-transform";
 import { applyGroupContext } from "./konva-group-affordance";
 import { containerForBlock, nestGroupChildren } from "./konva-group-node";
 import { replaceIncompatibleNode } from "./konva-node-replacement";
+import { KonvaPageView } from "./konva-page-view";
 import type { KonvaRendererContext } from "./konva-renderer-context";
 
 export class KonvaRendererBlocks {
-  constructor(private readonly context: KonvaRendererContext) {}
+  readonly pageView: KonvaPageView;
+  #selectedBlockIds: number[] = [];
+  #selectedBlockType?: string;
+
+  constructor(private readonly context: KonvaRendererContext) {
+    this.pageView = new KonvaPageView(context);
+  }
 
   syncBlock(id: number, block: BlockData): void {
     if (
@@ -45,7 +52,7 @@ export class KonvaRendererBlocks {
       node = created;
       context.nodeMap.set(id, node);
       context.contentLayer.add(node as Konva.Group | Konva.Shape);
-      context.hoverOutline.bind(node);
+      context.hoverOutline.bind(node, () => this.pageView.isContinuous());
     } else {
       node = replaceIncompatibleNode({
         id,
@@ -56,7 +63,9 @@ export class KonvaRendererBlocks {
         callbacks,
         transformer: context.transformer,
         contentLayer: context.contentLayer,
-        bindHover: (replacement) => context.hoverOutline.bind(replacement),
+        bindHover: (replacement) =>
+          context.hoverOutline.bind(replacement, () => this.pageView.isContinuous()),
+        clearHover: (retired) => context.hoverOutline.clearNode(retired),
         resolveBlock: context.callbacks.resolveBlock,
       });
     }
@@ -82,11 +91,9 @@ export class KonvaRendererBlocks {
       context.callbacks.onAutoWidth?.(id, result.autoWidth);
     }
     if (block.type === "page") {
-      const pw = (block.properties[PAGE_WIDTH] as number) ?? 1080;
-      const ph = (block.properties[PAGE_HEIGHT] as number) ?? 1080;
-      context.camera.setPageSize(pw, ph);
-      context.lastPageSize = { width: pw, height: ph };
+      this.pageView.recordPage(block);
     }
+    this.pageView.recordNodeSync(id, node);
   }
 
   setGroupContext(stack: number[]): void {
@@ -116,14 +123,23 @@ export class KonvaRendererBlocks {
     context.transformer?.moveToTop();
   }
 
+  setPageView(view: RendererPageView): void {
+    this.pageView.set(view);
+    if (this.#selectedBlockIds.length > 0) this.#renderTransformerSelection();
+  }
+
   removeBlock(id: number): void {
     const context = this.context;
     const node = context.nodeMap.get(id);
+    this.pageView.remove(id);
+    this.#selectedBlockIds = this.#selectedBlockIds.filter((blockId) => blockId !== id);
+    if (this.#selectedBlockIds.length === 0) this.#selectedBlockType = undefined;
     if (!node) return;
     const trNodes = context.transformer.nodes();
     if (trNodes.includes(node)) {
       context.transformer.nodes(trNodes.filter((candidate) => candidate !== node));
     }
+    context.hoverOutline.clearNode(node);
     node.destroy();
     context.nodeMap.delete(id);
   }
@@ -134,33 +150,52 @@ export class KonvaRendererBlocks {
       this.hideTransformer();
       return;
     }
-    const nodes = blockIds
+    this.#selectedBlockIds = [...blockIds];
+    this.#selectedBlockType = blockType;
+    this.#renderTransformerSelection();
+  }
+
+  #renderTransformerSelection(): void {
+    const context = this.context;
+    if (context.imageFillCrop?.isActive()) {
+      context.transformer.nodes([]);
+      context.uiLayer.batchDraw();
+      return;
+    }
+    const nodes = this.#selectedBlockIds
       .map((id) => context.nodeMap.get(id))
-      .filter((node): node is Konva.Node => !!node);
-    const isGroup = blockType === "group";
+      .filter((node): node is Konva.Node => !!node && node.isVisible());
+    const isOutlineOnlyPage = this.#selectedBlockType === "page" && this.pageView.isContinuous();
+    const isGroup = this.#selectedBlockType === "group";
     context.hoverOutline.hide();
     context.transformer.nodes(nodes);
     context.transformer.enabledAnchors(
-      isGroup
-        ? ["top-left", "top-right", "bottom-left", "bottom-right"]
-        : [
-            "top-left",
-            "top-right",
-            "bottom-left",
-            "bottom-right",
-            "middle-left",
-            "middle-right",
-            "top-center",
-            "bottom-center",
-          ],
+      isOutlineOnlyPage
+        ? []
+        : isGroup
+          ? ["top-left", "top-right", "bottom-left", "bottom-right"]
+          : [
+              "top-left",
+              "top-right",
+              "bottom-left",
+              "bottom-right",
+              "middle-left",
+              "middle-right",
+              "top-center",
+              "bottom-center",
+            ],
     );
     context.transformer.keepRatio(true);
-    context.transformer.flipEnabled(!isGroup);
+    context.transformer.flipEnabled(!isGroup && !isOutlineOnlyPage);
+    context.transformer.rotateEnabled(!isOutlineOnlyPage);
+    context.transformer.listening(!isOutlineOnlyPage);
     context.transformer._bindHoverEvents?.();
     context.uiLayer.batchDraw();
   }
 
   hideTransformer(): void {
+    this.#selectedBlockIds = [];
+    this.#selectedBlockType = undefined;
     this.context.transformer.nodes([]);
     this.context.uiLayer.batchDraw();
   }
@@ -176,7 +211,7 @@ export class KonvaRendererBlocks {
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null {
     const node = this.context.nodeMap.get(blockId);
-    if (!node) return null;
+    if (!node?.isVisible()) return null;
     const rect = node.getClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }
@@ -185,6 +220,6 @@ export class KonvaRendererBlocks {
     blockId: number,
   ): { a: number; b: number; c: number; d: number; e: number; f: number } | null {
     const node = this.context.nodeMap.get(blockId);
-    return node ? getNodeScreenTransform(node) : null;
+    return node?.isVisible() ? getNodeScreenTransform(node) : null;
   }
 }

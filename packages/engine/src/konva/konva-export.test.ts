@@ -80,6 +80,30 @@ async function blobBytes(blob: Blob): Promise<Uint8Array> {
 }
 
 describe("exportScene", () => {
+  it("restores a temporary page unfilter before blob conversion settles", async () => {
+    const content = makeLayer();
+    const ui = makeLayer();
+    let filtered = true;
+    const stage = {
+      toDataURL() {
+        expect(filtered).toBe(false);
+        return "data:image/png;base64,QUJD";
+      },
+    } as unknown as Konva.Stage;
+
+    const result = exportScene(stage, content, ui, PAGE, {}, (capture) => {
+      filtered = false;
+      try {
+        return capture();
+      } finally {
+        filtered = true;
+      }
+    });
+
+    expect(filtered).toBe(true);
+    await expect(result).resolves.toBeInstanceOf(Blob);
+  });
+
   it("produces byte-identical output for identical inputs (idempotent)", async () => {
     const content = makeLayer({ scaleX: 2, x: 40 });
     const ui = makeLayer();

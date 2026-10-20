@@ -45,7 +45,15 @@ export class KonvaRendererControls {
     animate = false,
   ): void {
     if (!this.context.stage) return;
-    this.context.camera.fitToRect(rect, padding, animate);
+    const offset =
+      this.context.cropOverlay?.isVisible() && !this.context.cropOverlay.isBlockMode()
+        ? this.context.cropPageOffset
+        : { x: 0, y: 0 };
+    this.context.camera.fitToRect(
+      { ...rect, x: rect.x + offset.x, y: rect.y + offset.y },
+      padding,
+      animate,
+    );
   }
 
   screenToWorld(pt: { x: number; y: number }): { x: number; y: number } {
@@ -70,6 +78,16 @@ export class KonvaRendererControls {
   ): void {
     const context = this.context;
     this.blocks.hideTransformer();
+    const offset = this.blocks.pageView.getBlockOffset(blockId);
+    context.cropPageOffset = offset;
+    const layoutImageRect = {
+      ...imageRect,
+      x: imageRect.x + offset.x,
+      y: imageRect.y + offset.y,
+    };
+    const layoutCrop = initialCrop
+      ? { ...initialCrop, x: initialCrop.x + offset.x, y: initialCrop.y + offset.y }
+      : undefined;
     // expandPageNodeForCrop mutates page nodes on the content layer; the crop
     // overlay itself lives on (and redraws) the UI layer via cropOverlay.show.
     expandPageNodeForCrop(context.nodeMap, blockId, imageRect, transform);
@@ -77,9 +95,11 @@ export class KonvaRendererControls {
     // crop. Point the camera's pan-clamp bounds at that expanded canvas so the
     // fitToRect(crop) that follows can center the crop instead of being clamped
     // back to the (smaller) committed page size.
-    context.camera.setPageSize(imageRect.width, imageRect.height);
+    if (!this.blocks.pageView.isContinuous()) {
+      context.camera.setPageSize(imageRect.width, imageRect.height);
+    }
     context.cropOverlay.applyViewportScale(context.camera.getZoom());
-    context.cropOverlay.show(imageRect, initialCrop);
+    context.cropOverlay.show(layoutImageRect, layoutCrop);
     context.contentLayer.batchDraw();
   }
 
@@ -89,9 +109,10 @@ export class KonvaRendererControls {
     clearCropOverlayFlags(context.nodeMap);
     // Restore pan-clamp bounds to the committed page size now that the full
     // image is no longer shown.
-    if (context.lastPageSize) {
+    if (context.lastPageSize && !this.blocks.pageView.isContinuous()) {
       context.camera.setPageSize(context.lastPageSize.width, context.lastPageSize.height);
     }
+    context.cropPageOffset = { x: 0, y: 0 };
   }
 
   offsetCropChildNodes(childIds: number[], dx: number, dy: number): void {
@@ -108,7 +129,8 @@ export class KonvaRendererControls {
   }
 
   setCropRect(rect: CropRect): void {
-    this.context.cropOverlay.setCropRect(rect);
+    const { x, y } = this.context.cropPageOffset;
+    this.context.cropOverlay.setCropRect({ ...rect, x: rect.x + x, y: rect.y + y });
   }
 
   setCropRatio(ratio: number | null): void {
@@ -117,12 +139,18 @@ export class KonvaRendererControls {
 
   getCropRect(): CropRect | null {
     const overlay = this.context.cropOverlay;
-    return overlay.isVisible() ? overlay.getCropRect() : null;
+    if (!overlay.isVisible()) return null;
+    const rect = overlay.getCropRect();
+    const { x, y } = this.context.cropPageOffset;
+    return { ...rect, x: rect.x - x, y: rect.y - y };
   }
 
   getCropImageRect(): CropRect | null {
     const overlay = this.context.cropOverlay;
-    return overlay.isVisible() ? overlay.getImageRect() : null;
+    if (!overlay.isVisible()) return null;
+    const rect = overlay.getImageRect();
+    const { x, y } = this.context.cropPageOffset;
+    return { ...rect, x: rect.x - x, y: rect.y - y };
   }
 
   showImageFillCropPreview(blockId: number, crop: ImageFillCrop): ImageFillCrop | null {

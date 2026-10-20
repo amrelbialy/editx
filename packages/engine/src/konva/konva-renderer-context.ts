@@ -1,6 +1,7 @@
 import type Konva from "konva";
 import type { BlockData } from "../block/block.types";
 import type { ImageFillCrop } from "../editor-types";
+import type { RendererPageView } from "../page-view";
 import type { BlockClickEvent, BlockTransform } from "../render-adapter";
 import type { CropRect } from "../utils/crop-math";
 import type { KonvaCamera } from "./konva-camera";
@@ -11,6 +12,7 @@ import type { KonvaNodeFactory } from "./konva-node-factory";
 import type { WebGLFilterRenderer } from "./webgl-filter-renderer";
 
 export interface KonvaRendererCallbacks {
+  onPagePointerDown?: (pageId: number) => void;
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onEnterGroup?: (groupId: number, childId: number | null) => void;
@@ -45,9 +47,13 @@ export class KonvaRendererContext {
   readonly nodeMap = new Map<number, Konva.Node>();
   resizeObserver?: ResizeObserver;
   lastPageSize?: { width: number; height: number };
+  legacyPageSize?: { width: number; height: number };
+  readonly pageSizes = new Map<number, { width: number; height: number }>();
+  pageView: RendererPageView = { mode: "all-pages" };
   webgl: WebGLFilterRenderer | null = null;
   updateAccentColor?: (color: string) => void;
   groupContext: number[] = [];
+  cropPageOffset = { x: 0, y: 0 };
 
   constructor(readonly callbacks: KonvaRendererCallbacks) {}
 

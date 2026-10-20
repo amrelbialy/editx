@@ -18,12 +18,13 @@ function dataUrlToBlob(dataUrl: string, mimeType: string): Promise<Blob> {
   });
 }
 
-export async function exportScene(
+export function exportScene(
   stage: Konva.Stage,
   contentLayer: Konva.Layer,
   uiLayer: Konva.Layer,
   pageSize: { width: number; height: number },
   options: ExportOptions,
+  withUnfiltered: <T>(capture: () => T) => T = (capture) => capture(),
 ): Promise<Blob> {
   const format = options.format ?? "png";
   const quality = options.quality ?? 0.92;
@@ -44,18 +45,21 @@ export async function exportScene(
   const uiWasVisible = uiLayer.visible();
   uiLayer.visible(false);
 
+  let dataUrl: string;
   try {
-    const dataUrl = stage.toDataURL({
-      x: 0,
-      y: 0,
-      width: pageW,
-      height: pageH,
-      pixelRatio,
-      mimeType,
-      quality: format === "png" ? undefined : quality,
-    });
-
-    return await dataUrlToBlob(dataUrl, mimeType);
+    dataUrl = withUnfiltered(() =>
+      stage.toDataURL({
+        x: 0,
+        y: 0,
+        width: pageW,
+        height: pageH,
+        pixelRatio,
+        mimeType,
+        quality: format === "png" ? undefined : quality,
+      }),
+    );
+  } catch (error) {
+    return Promise.reject(error);
   } finally {
     contentLayer.scaleX(savedScaleX);
     contentLayer.scaleY(savedScaleY);
@@ -63,4 +67,5 @@ export async function exportScene(
     contentLayer.y(savedY);
     uiLayer.visible(uiWasVisible);
   }
+  return dataUrlToBlob(dataUrl, mimeType);
 }

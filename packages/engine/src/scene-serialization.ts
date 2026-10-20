@@ -40,6 +40,7 @@ export async function loadSceneFromString(engine: EngineCore, json: string): Pro
   const pageId = payload.activePageId ?? firstScenePage(candidate, sceneId);
   validateNavigation(candidate, sceneId, pageId);
 
+  engine._prepareSceneReplacement();
   const store = engine._getBlockStore();
   store.clear();
   let maxId = 0;
@@ -61,6 +62,7 @@ export async function loadSceneFromString(engine: EngineCore, json: string): Pro
         if (block) renderer?.syncBlock(id, block);
       }
       renderer?.syncChildOrder?.(scene.children);
+      engine._reconcilePageView();
     }
   }
   engine.clearHistory();

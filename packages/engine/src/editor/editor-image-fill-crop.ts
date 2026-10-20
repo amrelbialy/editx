@@ -88,6 +88,10 @@ export class EditorImageFillCrop {
     return this.#session ? { ...this.#session.value } : null;
   }
 
+  getBlockId(): number | null {
+    return this.#session?.blockId ?? null;
+  }
+
   update(update: ImageFillCropUpdate): ImageFillCrop | null {
     if (!this.#session) return null;
     const normalized = normalizeUpdate(this.#session.value, update);

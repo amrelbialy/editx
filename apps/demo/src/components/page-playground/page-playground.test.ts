@@ -20,8 +20,8 @@ describe("multi-page playground public SDK integration", () => {
       { name: "Poster", width: 600, height: 800 },
       { name: "Card", width: 400, height: 400 },
     ]);
-    expect(state.activePageId).toBe(state.pages[2].id);
-    expect(state.topPageId).toBe(state.activePageId);
+    expect(state.activePageId).toBe(state.pages[0].id);
+    expect(state.topPageId).toBe(state.pages[2].id);
     expect(state.selection).toEqual([]);
     expect(state.canUndo).toBe(false);
     expect(state.canRedo).toBe(false);

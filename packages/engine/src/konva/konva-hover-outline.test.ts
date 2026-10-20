@@ -9,6 +9,7 @@ describe("KonvaHoverOutline", () => {
   let transformer: Konva.Transformer;
   let context: number[];
   let enabled: boolean;
+  let zoom: number;
   let outline: KonvaHoverOutline;
 
   beforeEach(() => {
@@ -29,11 +30,12 @@ describe("KonvaHoverOutline", () => {
     uiLayer.add(transformer);
     context = [];
     enabled = true;
+    zoom = 1.75;
     outline = new KonvaHoverOutline(
       uiLayer,
       contentLayer,
       transformer,
-      { getZoom: () => 1.75 } as KonvaCamera,
+      { getZoom: () => zoom } as KonvaCamera,
       () => context,
       "#4971FF",
       () => enabled,
@@ -114,6 +116,66 @@ describe("KonvaHoverOutline", () => {
 
     child.fire("mouseenter", { target: child }, false);
 
+    expect(hoverRect().visible()).toBe(false);
+  });
+
+  it("tracks continuous-page wrapper layout and zoom without intercepting hits", () => {
+    const wrapper = new Konva.Group({ x: 40, y: 90 });
+    const page = new Konva.Group();
+    page.setAttrs({ blockId: 7, isPage: true });
+    const background = new Konva.Rect({ width: 240, height: 160 });
+    page.add(background);
+    wrapper.add(page);
+    contentLayer.add(wrapper);
+    outline.bind(page, () => true);
+
+    background.fire("mouseenter", { target: background }, true);
+    expectOutlineToMatch(page);
+    expect(hoverRect().listening()).toBe(false);
+
+    wrapper.position({ x: 180, y: 35 });
+    zoom = 0.5;
+    uiLayer.fire("beforeDraw");
+
+    expectOutlineToMatch(page);
+    expect(hoverRect().strokeWidth()).toBe(4);
+  });
+
+  it("does not show page hover outside continuous views or over a selected page", () => {
+    const page = new Konva.Group();
+    page.setAttrs({ blockId: 7, isPage: true });
+    const background = new Konva.Rect({ width: 100, height: 80 });
+    page.add(background);
+    contentLayer.add(page);
+    let continuous = false;
+    outline.bind(page, () => continuous);
+
+    background.fire("mouseenter", { target: background }, true);
+    expect(hoverRect().visible()).toBe(false);
+
+    continuous = true;
+    transformer.nodes([page]);
+    background.fire("mouseenter", { target: background }, true);
+    expect(hoverRect().visible()).toBe(false);
+  });
+
+  it("clears a retired hovered page by node identity only", () => {
+    const page = new Konva.Group();
+    page.setAttrs({ blockId: 7, isPage: true });
+    const background = new Konva.Rect({ width: 100, height: 80 });
+    const unrelated = new Konva.Rect({ width: 20, height: 20 });
+    page.add(background);
+    contentLayer.add(page, unrelated);
+    outline.bind(page, () => true);
+    background.fire("mouseenter", { target: background }, true);
+
+    outline.clearNode(unrelated);
+    uiLayer.fire("beforeDraw");
+    expect(hoverRect().visible()).toBe(true);
+
+    outline.clearNode(page);
+    page.destroy();
+    uiLayer.fire("beforeDraw");
     expect(hoverRect().visible()).toBe(false);
   });
 });

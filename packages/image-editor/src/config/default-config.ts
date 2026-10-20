@@ -107,6 +107,8 @@ export const defaultConfig: Required<
   colors: DEFAULT_COLOR_SWATCHES,
 
   ui: {
+    pageNavigation: false,
+    pageLayout: "vertical",
     toolSidebar: {
       compact: false,
       groupSeparators: true,

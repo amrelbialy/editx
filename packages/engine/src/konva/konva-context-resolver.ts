@@ -35,6 +35,7 @@ function blockAncestry(target: Konva.Node): Konva.Node[] {
  * group ancestor when the stack is empty.
  */
 export function resolveHit(target: Konva.Node, stack: readonly number[]): ResolvedHit | null {
+  if (!target.isVisible()) return null;
   const chain = blockAncestry(target);
   if (chain.length === 0) return null;
 
@@ -86,7 +87,7 @@ export function directChildUnderTarget(target: Konva.Node, groupNode: Konva.Node
  * layer — i.e. not nested inside any group). Pages are never selectable.
  */
 export function isMarqueeCandidate(node: Konva.Node, activeContainer: Konva.Node | null): boolean {
-  if (node.getAttr("isPage")) return false;
+  if (node.getAttr("isPage") || !node.isVisible()) return false;
   const parent = node.getParent();
   if (activeContainer) return parent === activeContainer;
   return !(parent && parent.getAttr("isGroup") === true);

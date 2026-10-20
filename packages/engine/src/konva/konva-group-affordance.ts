@@ -20,7 +20,10 @@ export function applyGroupContext(deps: GroupContextVisualDeps): void {
 
   for (const node of nodeMap.values()) {
     if (node.getAttr("isPage")) continue;
-    node.draggable(node.getParent() === activeContainer);
+    const parent = node.getParent();
+    const topLevelPageChild =
+      activeId === null && typeof parent?.getAttr("pageViewPageId") === "number";
+    node.draggable(parent === activeContainer || topLevelPageChild);
   }
 
   if (activeNode) {

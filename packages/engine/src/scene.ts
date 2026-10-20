@@ -60,6 +60,7 @@ export class SceneAPI {
       await renderer?.createScene(sceneBlock, pageBlock);
       // Sync the page block so the page node is rendered
       renderer?.syncBlock(pageId, pageBlock);
+      this.#engine._reconcilePageView();
     }
 
     // Clear history so scene creation isn't undoable

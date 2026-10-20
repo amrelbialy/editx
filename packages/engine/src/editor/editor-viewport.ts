@@ -1,4 +1,7 @@
+import { absoluteTransformOf } from "../block/block-group-api";
+import { rotatedUnionBBox } from "../block/group-transform";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "../block/property-keys";
+import { getOwningPageId } from "../page-view-ownership";
 import type { EditorContext } from "./editor-context";
 
 /**
@@ -62,6 +65,11 @@ export class EditorViewport {
 
     const pageBlock = store.get(pageId);
     if (!pageBlock) return;
+    const bounds = this.#ctx.renderer?.getPageViewBounds?.(pageId);
+    if (bounds && (bounds.x !== 0 || bounds.y !== 0)) {
+      this.#ctx.renderer?.fitToRect(bounds, padding, animate);
+      return;
+    }
 
     this.#ctx.renderer?.fitToScreen(
       {
@@ -84,25 +92,36 @@ export class EditorViewport {
     const ids = block.findAllSelected();
     if (ids.length === 0) return;
 
-    // Compute union bounding box of all selected blocks
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-    for (const id of ids) {
-      const pos = block.getPosition(id);
+    const store = this.#ctx.engine._getBlockStore();
+    const rects = ids.map((id) => {
+      const renderer = this.#ctx.renderer;
+      const screenRect = renderer?.getBlockScreenRect(id);
+      if (renderer && screenRect) {
+        const origin = renderer.screenToWorld(screenRect);
+        const end = renderer.screenToWorld({
+          x: screenRect.x + screenRect.width,
+          y: screenRect.y + screenRect.height,
+        });
+        return {
+          ...origin,
+          width: end.x - origin.x,
+          height: end.y - origin.y,
+          rotation: 0,
+        };
+      }
+      const transform = absoluteTransformOf(store, id);
       const size = block.getSize(id);
-      minX = Math.min(minX, pos.x);
-      minY = Math.min(minY, pos.y);
-      maxX = Math.max(maxX, pos.x + size.width);
-      maxY = Math.max(maxY, pos.y + size.height);
-    }
-
-    this.#ctx.renderer?.fitToRect(
-      { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
-      padding,
-      animate,
-    );
+      const pageId = getOwningPageId(store, id);
+      const bounds =
+        pageId === null ? null : (this.#ctx.renderer?.getPageViewBounds?.(pageId) ?? null);
+      return {
+        ...transform,
+        ...size,
+        x: transform.x + (bounds?.x ?? 0),
+        y: transform.y + (bounds?.y ?? 0),
+      };
+    });
+    this.#ctx.renderer?.fitToRect(rotatedUnionBBox(rects), padding, animate);
   }
 
   // ─── Coordinate Transforms ────────────────────────────

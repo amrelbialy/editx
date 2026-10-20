@@ -13,6 +13,7 @@ interface ReplaceNodeOptions {
   transformer: Konva.Transformer;
   contentLayer: Konva.Layer;
   bindHover: (node: Konva.Node) => void;
+  clearHover: (node: Konva.Node) => void;
   resolveBlock?: (id: number) => BlockData | undefined;
 }
 
@@ -35,6 +36,7 @@ export function replaceIncompatibleNode(options: ReplaceNodeOptions): Konva.Node
   if (transformerNodes.includes(node)) {
     transformer.nodes(transformerNodes.map((item) => (item === node ? replacement : item)));
   }
+  options.clearHover(node);
   node.destroy();
   return replacement;
 }

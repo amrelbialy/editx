@@ -19,6 +19,7 @@ describe("replaceIncompatibleNode", () => {
       createNode: vi.fn(() => replacement),
     } as unknown as KonvaNodeFactory;
     const bindHover = vi.fn();
+    const clearHover = vi.fn(() => expect(destroy).not.toHaveBeenCalled());
 
     const result = replaceIncompatibleNode({
       id: 7,
@@ -30,6 +31,7 @@ describe("replaceIncompatibleNode", () => {
       transformer,
       contentLayer: { add: vi.fn() } as unknown as Konva.Layer,
       bindHover,
+      clearHover,
     });
 
     expect(result).toBe(replacement);
@@ -38,6 +40,7 @@ describe("replaceIncompatibleNode", () => {
     expect(replacement.zIndex()).toBe(1);
     expect(transformerNodes).toHaveBeenLastCalledWith([replacement]);
     expect(bindHover).toHaveBeenCalledWith(replacement);
+    expect(clearHover).toHaveBeenCalledWith(oldNode);
     expect(destroy).toHaveBeenCalledOnce();
   });
 });

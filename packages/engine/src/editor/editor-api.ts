@@ -1,62 +1,72 @@
-import type { BlockAPI } from "../block/block-api";
-import type {
-  CropEditTarget,
-  CursorType,
-  EditMode,
-  EditModeConfig,
-  ImageFillCrop,
-  ImageFillCropChange,
-  ImageFillCropUpdate,
-} from "../editor-types";
+import type { CursorType, EditMode, EditModeConfig } from "../editor-types";
 import { EDIT_MODE_DEFAULTS } from "../editor-types";
 import type { EngineCore } from "../engine-core";
+import type { PageViewBounds, PageViewMode } from "../page-view";
 import type { CropRect } from "../utils/crop-math";
-import type { EditorContext } from "./editor-context";
-import { EditorCrop } from "./editor-crop";
+import { EditorCropAPI } from "./editor-crop-api";
 import { EditorCursor } from "./editor-cursor";
 import { EditorHistory } from "./editor-history";
-import { EditorImageFillCrop } from "./editor-image-fill-crop";
+import { EditorPageView } from "./editor-page-view";
 import { EditorViewport } from "./editor-viewport";
 
-export class EditorAPI {
-  #ctx: EditorContext;
-
+export class EditorAPI extends EditorCropAPI {
   // ── Sub-modules ────────────────────────────────────────
-  #crop: EditorCrop;
   #cursor: EditorCursor;
   #history: EditorHistory;
-  #imageFillCrop: EditorImageFillCrop;
+  #pageView: EditorPageView;
   #viewport: EditorViewport;
+  #removeHistoryHook: () => void;
 
   // ── Edit-mode state (cross-cuts crop & cursor) ─────────
   #editMode: EditMode = "Transform";
   #editModeConfig: EditModeConfig = EDIT_MODE_DEFAULTS.Transform;
 
   constructor(engine: EngineCore) {
-    this.#ctx = {
-      engine,
-      renderer: engine.getRenderer(),
-      block: null,
-    };
-
-    this.#crop = new EditorCrop(this.#ctx);
-    this.#cursor = new EditorCursor(this.#ctx);
-    this.#history = new EditorHistory(this.#ctx);
-    this.#imageFillCrop = new EditorImageFillCrop(this.#ctx);
-    this.#viewport = new EditorViewport(this.#ctx);
+    super(engine);
+    this.#cursor = new EditorCursor(this.ctx);
+    this.#history = new EditorHistory(this.ctx);
+    this.#viewport = new EditorViewport(this.ctx);
+    this.#pageView = new EditorPageView(this.ctx, {
+      activeBlockId: () => this.imageFillCrop.getBlockId() ?? this.crop.getCropBlockId(),
+      cancel: () => this.cancelCrop(),
+    });
 
     // Auto-refresh the crop overlay after undo/redo so it reflects
     // restored rotation, flip, and page dimensions.
-    engine.onHistoryChanged(() => {
+    this.#removeHistoryHook = engine.onHistoryChanged(() => {
       if (this.#editMode === "Crop") {
-        this.#crop.refreshCropOverlay();
+        this.crop.refreshCropOverlay();
       }
     });
   }
 
-  /** @internal — called by EditxEngine after construction */
-  _setBlockAPI(block: BlockAPI): void {
-    this.#ctx.block = block;
+  getPageViewMode(): PageViewMode {
+    return this.#pageView.getMode();
+  }
+
+  setPageViewMode(mode: PageViewMode): void {
+    this.#pageView.setMode(mode);
+  }
+
+  getPageViewBounds(pageId: number): PageViewBounds | null {
+    return this.#pageView.getBounds(pageId);
+  }
+
+  /** @internal */
+  _reconcilePageView(): void {
+    this.#pageView.reconcile();
+  }
+
+  /** @internal */
+  _prepareSceneReplacement(): void {
+    this.#pageView.prepareSceneReplacement();
+    if (this.#editMode !== "Transform") this.setEditMode("Transform");
+  }
+
+  /** @internal */
+  _dispose(): void {
+    this.#pageView.dispose();
+    this.#removeHistoryHook();
   }
 
   setEditMode(mode: EditMode, opts?: { baseMode?: string; blockId?: number }): void {
@@ -80,25 +90,25 @@ export class EditorAPI {
     // ── Enter new mode ───────────────────────────────
     this.#enterMode(mode, opts?.blockId);
 
-    this.#ctx.engine.emit("editMode:changed", { mode, previousMode: prev });
+    this.ctx.engine.emit("editMode:changed", { mode, previousMode: prev });
   }
 
   #enterMode(mode: EditMode, blockId?: number): void {
     if (mode === "Crop") {
-      const targetId = blockId ?? (this.#ctx.block?.findAllSelected() ?? [])[0] ?? null;
+      const targetId = blockId ?? (this.ctx.block?.findAllSelected() ?? [])[0] ?? null;
       if (targetId === null) return;
       if (this.getCropEditTarget(targetId) === "shape-image") {
-        this.#imageFillCrop.setup(targetId);
+        this.imageFillCrop.setup(targetId);
       } else {
-        this.#crop.setupCropOverlay(targetId);
+        this.crop.setupCropOverlay(targetId);
       }
     }
   }
 
   #exitMode(mode: EditMode): void {
     if (mode === "Crop") {
-      if (this.#imageFillCrop.get()) this.#imageFillCrop.teardown(false);
-      else this.#crop.teardownCropOverlay();
+      if (this.imageFillCrop.get()) this.imageFillCrop.teardown(false);
+      else this.crop.teardownCropOverlay();
     }
   }
 
@@ -190,125 +200,42 @@ export class EditorAPI {
   }
 
   getSelectedBlockScreenRect(): { x: number; y: number; width: number; height: number } | null {
-    return this.#ctx.renderer?.getSelectedBlockScreenRect() ?? null;
+    return this.ctx.renderer?.getSelectedBlockScreenRect() ?? null;
   }
 
   getBlockScreenRect(
     blockId: number,
   ): { x: number; y: number; width: number; height: number } | null {
-    return this.#ctx.renderer?.getBlockScreenRect(blockId) ?? null;
+    return this.ctx.renderer?.getBlockScreenRect(blockId) ?? null;
   }
 
   /** @internal Full local-to-screen affine transform for DOM editing overlays. */
   _getBlockScreenTransform(
     blockId: number,
   ): { a: number; b: number; c: number; d: number; e: number; f: number } | null {
-    return this.#ctx.renderer?.getBlockScreenTransform?.(blockId) ?? null;
-  }
-
-  /** @internal */
-  _getCrop(): EditorCrop {
-    return this.#crop;
+    return this.ctx.renderer?.getBlockScreenTransform?.(blockId) ?? null;
   }
 
   commitCrop(): CropRect | null {
-    if (this.#imageFillCrop.get()) {
-      this.#imageFillCrop.teardown(true);
+    if (this.imageFillCrop.get()) {
+      this.imageFillCrop.teardown(true);
       this.setEditMode("Transform");
       return null;
     }
-    if (this.#crop.getCropBlockId() === null) return null;
-    const rect = this.#ctx.renderer?.getCropRect() ?? null;
+    if (this.crop.getCropBlockId() === null) return null;
+    const rect = this.ctx.renderer?.getCropRect() ?? null;
     this.setEditMode("Transform");
     return rect;
   }
 
   cancelCrop(): void {
-    if (this.#imageFillCrop.get()) this.#imageFillCrop.teardown(false);
-    else this.#crop.teardownCropOverlay(false);
+    if (this.imageFillCrop.get()) this.imageFillCrop.teardown(false);
+    else this.crop.teardownCropOverlay(false);
     this.setEditMode("Transform");
   }
 
-  getCropEditTarget(blockId: number): CropEditTarget | null {
-    if (this.#imageFillCrop.isEligible(blockId)) return "shape-image";
-    return this.#ctx.block?.supportsCrop(blockId) ? "source" : null;
-  }
-
-  getImageFillCrop(): ImageFillCrop | null {
-    return this.#imageFillCrop.get();
-  }
-
-  updateImageFillCrop(update: ImageFillCropUpdate): ImageFillCrop | null {
-    return this.#imageFillCrop.update(update);
-  }
-
-  resetImageFillCrop(): ImageFillCrop | null {
-    return this.#imageFillCrop.reset();
-  }
-
-  onImageFillCropChanged(cb: (change: ImageFillCropChange) => void): () => void {
-    return this.#imageFillCrop.onChanged(cb);
-  }
-
   resetCrop(blockId?: number): void {
-    this.#crop.resetCrop(blockId);
+    this.crop.resetCrop(blockId);
     this.fitToScreen();
-  }
-
-  getCropBlockId(): number | null {
-    return this.#crop.getCropBlockId();
-  }
-
-  applyCropRatio(ratio: number | null): CropRect | null {
-    return this.#imageFillCrop.get()
-      ? this.#imageFillCrop.applyRatio(ratio)
-      : this.#crop.applyCropRatio(ratio);
-  }
-
-  applyCropDimensions(width: number, height: number): CropRect | null {
-    return this.#imageFillCrop.get()
-      ? this.#imageFillCrop.applyDimensions(width, height)
-      : this.#crop.applyCropDimensions(width, height);
-  }
-
-  getCropVisualDimensions(): { width: number; height: number } | null {
-    return this.#imageFillCrop.get()
-      ? this.#imageFillCrop.getDimensions()
-      : this.#crop.getCropVisualDimensions();
-  }
-
-  refreshCropOverlay(): void {
-    this.#crop.refreshCropOverlay();
-  }
-
-  showCropOverlay(
-    blockId: number,
-    imageRect: CropRect,
-    initialCrop?: CropRect,
-    transform?: {
-      rotation: number;
-      flipH: boolean;
-      flipV: boolean;
-      sourceWidth: number;
-      sourceHeight: number;
-    },
-  ): void {
-    this.#ctx.renderer?.showCropOverlay(blockId, imageRect, initialCrop, transform);
-  }
-
-  hideCropOverlay(): void {
-    this.#ctx.renderer?.hideCropOverlay();
-  }
-
-  setCropRect(rect: CropRect): void {
-    this.#ctx.renderer?.setCropRect(rect);
-  }
-
-  getCropRect(): CropRect | null {
-    return this.#ctx.renderer?.getCropRect() ?? null;
-  }
-
-  setCropRatio(ratio: number | null): void {
-    this.#ctx.renderer?.setCropRatio(ratio);
   }
 }

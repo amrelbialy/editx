@@ -16,6 +16,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import type { LexicalEditor } from "lexical";
 import type React from "react";
 import { useCallback, useEffect, useMemo } from "react";
+import { useBlockScreenRect } from "../../hooks/use-block-screen-rect";
 import { useImageEditorStore } from "../../store/image-editor-store";
 import {
   AutoFocusPlugin,
@@ -46,6 +47,8 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   clickScreenPos,
   onClose,
 }) => {
+  const screenRect = useBlockScreenRect(engine, blockId);
+
   // Compute screen position and size of the text block
   const getOverlayStyle = useCallback((): React.CSSProperties => {
     const pos = engine.block.getPosition(blockId);
@@ -53,7 +56,15 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     const zoom = engine.editor.getZoom();
     const rotation = engine.block.getRotation(blockId);
 
-    const topLeft = engine.editor.worldToScreen({ x: pos.x, y: pos.y });
+    let parent = engine.block.getParent(blockId);
+    while (parent !== null && engine.block.getType(parent) !== "page") {
+      parent = engine.block.getParent(parent);
+    }
+    const frame = parent === null ? null : engine.editor.getPageViewBounds(parent);
+    const topLeft = engine.editor.worldToScreen({
+      x: pos.x + (frame?.x ?? 0),
+      y: pos.y + (frame?.y ?? 0),
+    });
     const positionStyle = toOverlayPositionStyle(
       engine.editor._getBlockScreenTransform(blockId),
       topLeft ? { x: topLeft.x, y: topLeft.y, zoom, rotation } : null,
@@ -115,8 +126,8 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
   // Re-run the style (which reads the auto-sized block height) whenever the
   // editing selection/content changes, so the outline box tracks new lines.
   const textSelectionRange = useImageEditorStore((s) => s.textSelectionRange);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: textSelectionRange forces a re-read of the auto-sized height
-  const overlayStyle = useMemo(getOverlayStyle, [getOverlayStyle, textSelectionRange]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection and screen geometry trigger a fresh style measurement
+  const overlayStyle = useMemo(getOverlayStyle, [getOverlayStyle, textSelectionRange, screenRect]);
 
   // Build the LexicalComposerContext value for child plugins
   const composerCtx: [LexicalEditor, ReturnType<typeof createLexicalComposerContext>] = useMemo(

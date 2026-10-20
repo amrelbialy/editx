@@ -1,5 +1,6 @@
 import type { BlockData } from "./block/block.types";
 import type { BlockExportOptions, CursorType, ExportOptions, ImageFillCrop } from "./editor-types";
+import type { PageViewBounds, RendererPageView } from "./page-view";
 import type { CropRect } from "./utils/crop-math";
 
 /**
@@ -35,6 +36,10 @@ export interface RendererAdapter {
   // Scene setup
   //
   createScene(sceneBlock: BlockData, pageBlock: BlockData): Promise<void>;
+  /** Apply a transient page visibility/camera filter synchronously and idempotently. */
+  setPageView?(view: RendererPageView): void;
+  /** Return a currently presented page frame in layout-world coordinates. */
+  getPageViewBounds?(pageId: number): PageViewBounds | null;
 
   //
   // Block lifecycle
@@ -165,6 +170,8 @@ export interface RendererAdapter {
   // Interaction callbacks (renderer → engine)
   //
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
+  /** In continuous views, fired once at primary pointer/single-touch start before page-local gestures. */
+  onPagePointerDown?: (pageId: number) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   /** Called on a double-click that should descend into a group (child under cursor, if any). */
   onEnterGroup?: (groupId: number, childId: number | null) => void;

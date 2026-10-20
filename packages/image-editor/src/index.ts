@@ -34,6 +34,7 @@ export type {
   FilterToolConfig,
   ImageEditorConfig,
   ImageEditorToolId,
+  PageNavigationLayout,
   PresetGroup,
   PresetPreview,
   PreviewBoxStyle,

@@ -58,6 +58,10 @@ export function containerForBlock(
   if (pid != null) {
     const parentNode = nodeMap.get(pid);
     if (parentNode?.getAttr("isGroup")) return parentNode as Konva.Group;
+    const pageContainer = parentNode?.getAttr("isPage") ? parentNode.getParent() : null;
+    if (typeof pageContainer?.getAttr("pageViewPageId") === "number") {
+      return pageContainer as Konva.Group;
+    }
   }
   return contentLayer;
 }

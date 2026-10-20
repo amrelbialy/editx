@@ -29,6 +29,10 @@ export interface EngineCore {
   getActivePage(): number | null;
   /** @internal — atomically replace navigation after scene creation or loading. */
   _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void;
+  /** @internal — synchronously reconcile transient page isolation after document settlement. */
+  _reconcilePageView(): void;
+  /** @internal — settle interactions before replacing the current document's block identities. */
+  _prepareSceneReplacement(): void;
   /** @internal — deliver observers after the current command or outer batch settles. */
   _deferNotification(callback: () => void): void;
   undo(): void;

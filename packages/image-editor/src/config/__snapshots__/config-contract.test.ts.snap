@@ -34,6 +34,8 @@ exports[`@editx/image-editor config contract > keeps a stable default-config sha
   "theme.fontFamily",
   "theme.preset",
   "tools",
+  "ui.pageLayout",
+  "ui.pageNavigation",
   "ui.showTitle",
   "ui.title",
   "ui.toolSidebar.compact",

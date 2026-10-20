@@ -19,12 +19,44 @@ export interface Vec2 {
   y: number;
 }
 
+export interface CameraCenterRange {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export interface CameraPageBounds {
+  width: number;
+  height: number;
+  /** Optional world-space centers reachable at the viewport center. */
+  centerRange?: CameraCenterRange;
+}
+
 export interface ClampPanOpts {
   stageW: number;
   stageH: number;
   zoom: number;
   /** World-space page size, or null when unknown (no clamping applied). */
-  pageSize: { width: number; height: number } | null;
+  pageSize: CameraPageBounds | null;
+}
+
+function clampAxis(
+  pan: number,
+  stageSize: number,
+  contentSize: number,
+  zoom: number,
+  minCenter?: number,
+  maxCenter?: number,
+): number {
+  const screenSize = contentSize * zoom;
+  let minPan = screenSize <= stageSize ? (stageSize - screenSize) / 2 : stageSize - screenSize;
+  let maxPan = screenSize <= stageSize ? minPan : 0;
+  if (minCenter !== undefined && maxCenter !== undefined) {
+    minPan = Math.min(minPan, stageSize / 2 - maxCenter * zoom);
+    maxPan = Math.max(maxPan, stageSize / 2 - minCenter * zoom);
+  }
+  return Math.min(maxPan, Math.max(minPan, pan));
 }
 
 /**
@@ -34,24 +66,9 @@ export interface ClampPanOpts {
 export function clampPan(pan: Vec2, opts: ClampPanOpts): Vec2 {
   const { stageW, stageH, zoom, pageSize } = opts;
   if (!pageSize) return pan;
-
-  const pageScreenW = pageSize.width * zoom;
-  const pageScreenH = pageSize.height * zoom;
-  const result: Vec2 = { x: pan.x, y: pan.y };
-
-  // Horizontal: if page narrower than viewport, center it; otherwise clamp edges
-  if (pageScreenW <= stageW) {
-    result.x = (stageW - pageScreenW) / 2;
-  } else {
-    result.x = Math.min(0, Math.max(stageW - pageScreenW, pan.x));
-  }
-
-  // Vertical: same logic
-  if (pageScreenH <= stageH) {
-    result.y = (stageH - pageScreenH) / 2;
-  } else {
-    result.y = Math.min(0, Math.max(stageH - pageScreenH, pan.y));
-  }
-
-  return result;
+  const range = pageSize.centerRange;
+  return {
+    x: clampAxis(pan.x, stageW, pageSize.width, zoom, range?.minX, range?.maxX),
+    y: clampAxis(pan.y, stageH, pageSize.height, zoom, range?.minY, range?.maxY),
+  };
 }

@@ -6,11 +6,9 @@ export async function exportBlockNode(
   node: Konva.Node,
   contentLayer: Konva.Layer,
   options: BlockExportOptions,
+  withUnfiltered: <T>(capture: () => T) => T = (capture) => capture(),
 ): Promise<Blob> {
   await waitForBlockAssets(node);
-  if (!node.isVisible() || node.getAbsoluteOpacity() <= 0) {
-    throw new Error("Cannot export a hidden block");
-  }
 
   const stageContainer = document.createElement("div");
   const stage = new Konva.Stage({
@@ -24,36 +22,48 @@ export async function exportBlockNode(
   layer.add(fitGroup);
 
   try {
-    const branch = cloneBranch(node, contentLayer);
-    usePaintBoundsForExport(branch);
-    fitGroup.add(branch);
-    const bounds = fitGroup.getClientRect({ relativeTo: layer });
-    if (!(bounds.width > 0) || !(bounds.height > 0)) {
-      throw new Error("Cannot export a block with zero paint bounds");
-    }
+    return await captureBlockToPng(() => {
+      if (!node.isVisible() || node.getAbsoluteOpacity() <= 0) {
+        throw new Error("Cannot export a hidden block");
+      }
+      const branch = cloneBranch(node, contentLayer);
+      usePaintBoundsForExport(branch);
+      fitGroup.add(branch);
+      const bounds = fitGroup.getClientRect({ relativeTo: layer });
+      if (!(bounds.width > 0) || !(bounds.height > 0)) {
+        throw new Error("Cannot export a block with zero paint bounds");
+      }
 
-    const padding = options.padding ?? 0;
-    const availableWidth = options.width - padding * 2;
-    const availableHeight = options.height - padding * 2;
-    const scale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
-    fitGroup.scale({ x: scale, y: scale });
-    fitGroup.position({
-      x: (options.width - bounds.width * scale) / 2 - bounds.x * scale,
-      y: (options.height - bounds.height * scale) / 2 - bounds.y * scale,
-    });
-    layer.draw();
-
-    const canvas = layer.toCanvas({
-      x: 0,
-      y: 0,
-      width: options.width,
-      height: options.height,
-      pixelRatio: options.pixelRatio ?? 1,
-    });
-    return await canvasToPng(canvas);
+      const padding = options.padding ?? 0;
+      const availableWidth = options.width - padding * 2;
+      const availableHeight = options.height - padding * 2;
+      const scale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
+      fitGroup.scale({ x: scale, y: scale });
+      fitGroup.position({
+        x: (options.width - bounds.width * scale) / 2 - bounds.x * scale,
+        y: (options.height - bounds.height * scale) / 2 - bounds.y * scale,
+      });
+      layer.draw();
+      return layer.toCanvas({
+        x: 0,
+        y: 0,
+        width: options.width,
+        height: options.height,
+        pixelRatio: options.pixelRatio ?? 1,
+      });
+    }, withUnfiltered);
   } finally {
     stage.destroy();
   }
+}
+
+/** Capture synchronously inside a temporary view, then encode after that view is restored. */
+export function captureBlockToPng(
+  capture: () => HTMLCanvasElement,
+  withUnfiltered: <T>(operation: () => T) => T,
+): Promise<Blob> {
+  const canvas = withUnfiltered(capture);
+  return canvasToPng(canvas);
 }
 
 function usePaintBoundsForExport(node: Konva.Node): void {

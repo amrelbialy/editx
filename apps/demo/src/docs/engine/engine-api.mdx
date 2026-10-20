@@ -54,6 +54,64 @@ engine.setActivePage(pageId);
 engine.getActivePage(); // number | null
 ```
 
+### Transient page view
+
+```ts
+import type { PageViewMode } from "@editx/engine";
+
+const mode: PageViewMode = engine.editor.getPageViewMode(); // "all-pages" by default
+engine.editor.setPageViewMode("vertical-pages"); // also "horizontal-pages" or "active-page"
+engine.scene.setActivePage(pageId);
+engine.editor.fitToScreen();
+const frame = engine.editor.getPageViewBounds(pageId);
+engine.editor.setPageViewMode(mode);
+```
+
+`"vertical-pages"` and `"horizontal-pages"` arrange all full-size pages on one canvas,
+in document order with a 48-world-unit gap and centered cross-axis alignment. Layout is
+transient, independent of persisted `scene.setPageLayout`, and never rewrites authored
+page/block positions. Edits remain page-local. `"active-page"` optionally isolates one
+page; `"all-pages"` preserves the legacy shared origin.
+
+Continuous camera bounds cover all frames; `fitToScreen()` centers the active frame and
+`fitToSelection()` uses rendered bounds, including group transforms, center-origin shape
+rotation, and the page offset. Hidden containers defer their first fit until measurable;
+later resizes preserve zoom and re-clamp the current pan. Canvas contact activates pages
+without a camera jump. Wheel input pans along the layout axis; Ctrl/Cmd-wheel zooms. Page switches clear
+old selection/group/crop/text state. Layout reconciles across commands, silent/nested
+batches, scene loading, page order/size changes, removal, and undo/redo.
+Native loading ends crop/text sessions and clears selection/group context before replacing
+blocks, including sessions for previously removed blocks and reused IDs.
+
+In continuous modes, clicking/tapping a page background selects the page block with an
+outline only, without resize/rotation handles or movement. Artwork remains independently
+selectable, and additive artwork selection excludes any previously selected page.
+
+`getPageViewBounds(pageId)` returns layout-world `{ x, y, width, height }`, or `null` for
+unknown/unpresented pages or unsupported adapters. `worldToScreen` and `screenToWorld`
+remain inverse camera transforms: add the page frame origin to page-local coordinates
+before conversion, and subtract it on the way back. Block screen rects/transforms already
+include page offsets and must not receive them a second time.
+
+The mode is not saved or restored by document history. After disposal its getter returns
+the last mode, while its setter throws `PageViewError` with `ENGINE_DISPOSED`.
+Invalid modes throw `TypeError`. Requesting a nonlegacy mode throws `PageViewError` with
+`NO_RENDERER` or `UNSUPPORTED_RENDERER` when the capability is unavailable, without
+changing the current mode. `"all-pages"` remains valid for headless and legacy engines.
+
+The optional adapter capability is `setPageView(view: RendererPageView): void`.
+It is synchronous/idempotent and accepts legacy/isolation descriptors or continuous
+`{ mode, activePageId, pages: readonly { id, width, height }[] }` descriptors.
+Continuous modes also require `getPageViewBounds(pageId)`. The optional
+`onPagePointerDown(pageId)` callback runs once at primary pointer/single-touch start
+in continuous views, before click, drag, or marquee handling, not again on click/tap.
+Marquee selection stays on its starting page, or the active page for inter-page starts.
+Camera pan/zoom, transformer handles, editing overlays, and legacy views do not activate pages.
+Continuous page-background clicks use `onBlockClick` with the page ID; clicks between
+pages still use `onStageClick`. Legacy background-click behavior is unchanged.
+All exports ignore transient layout/filtering; legacy scene/block sizing and order remain
+unchanged, and page/thumbnail exports still resolve their explicit target.
+
 ## Events
 
 ```ts

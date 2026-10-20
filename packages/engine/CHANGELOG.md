@@ -31,6 +31,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Added
 
+* **engine:** add transient page-view modes for continuous vertical/horizontal canvases and
+	optional active-page isolation, with public bounds queries, primary-pointer page activation,
+	page hover and outline-only background selection, axis-aware wheel panning, and page-local
+	editing through transient layout wrappers. Preserve
+	legacy defaults, authored visibility/coordinates, history, and view-independent exports;
+	report unsupported renderer capabilities with `PageViewError`.
 * **engine:** add undoable sibling grouping with transform preservation, nested bounds refitting,
 	membership commands, and editor group-context navigation.
 * **engine:** export the `ShapeGeometry` descriptor union and add undoable

@@ -22,6 +22,7 @@ export interface SceneComponents {
 }
 
 export interface SceneCallbacks {
+  onPagePointerDown?: (pageId: number) => void;
   onBlockClick?: (blockId: number, event: BlockClickEvent) => void;
   onBlockDblClick?: (blockId: number, screenPos: { x: number; y: number }) => void;
   onEnterGroup?: (groupId: number, childId: number | null) => void;
@@ -30,6 +31,9 @@ export interface SceneCallbacks {
   onCropChange?: (rect: CropRect) => void;
   onBlockTransform?: (blockId: number, phase: "drag" | "resize") => void;
   getGroupContext?: () => number[];
+  getOwningPageId?: (blockId: number) => number | null;
+  getPageViewMode?: () => string;
+  getActivePageId?: () => number | null;
   isInteractionEnabled?: () => boolean;
 }
 
@@ -85,18 +89,22 @@ export function createKonvaScene(
     stage,
     selectionRect,
     uiLayer,
+    transformer,
     nodeMap,
     camera,
     getGroupContext: callbacks.getGroupContext ?? (() => []),
     isInteractionEnabled: callbacks.isInteractionEnabled,
     callbacks: {
+      onPagePointerDown: (pageId) => callbacks.onPagePointerDown?.(pageId),
       onBlockClick: (blockId, event) => callbacks.onBlockClick?.(blockId, event),
       onBlockDblClick: (blockId, screenPos) => callbacks.onBlockDblClick?.(blockId, screenPos),
       onEnterGroup: (groupId, childId) => callbacks.onEnterGroup?.(groupId, childId),
       onStageClick: (worldPos) => callbacks.onStageClick?.(worldPos),
-      onZoomChange: (zoom) => callbacks.onZoomChange?.(zoom),
       onBlockTransform: (blockId, phase) => callbacks.onBlockTransform?.(blockId, phase),
+      getOwningPageId: callbacks.getOwningPageId,
     },
+    getPageViewMode: callbacks.getPageViewMode,
+    getActivePageId: callbacks.getActivePageId,
   });
 
   // The transformer (block + crop) counter-scales itself for zoom via Konva, so
@@ -106,10 +114,10 @@ export function createKonvaScene(
     selectionRect.strokeWidth(1 / zoom);
     cropOverlay.applyViewportScale(zoom);
     cropOverlay.refreshBlock();
+    callbacks.onZoomChange?.(zoom);
   });
 
   camera.setPageSize(pageW, pageH);
-  camera.fitToScreen({ width: pageW, height: pageH, padding: 48 });
 
   return {
     stage,

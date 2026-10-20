@@ -13,7 +13,24 @@ export async function createEngine(opts: { container: HTMLElement }): Promise<Ed
 
   const engine = new EditxEngine({ renderer: adapter });
 
+  adapter.onPagePointerDown = (pageId) => {
+    if (engine.getActivePage() !== pageId) engine.scene.setActivePage(pageId);
+  };
   adapter.onBlockClick = (blockId, event) => {
+    const store = engine._getBlockStore();
+    const blockType = store.getType(blockId);
+    if (blockType === "page") {
+      engine.block._clearGroupContext();
+      engine.block.select(blockId);
+      return;
+    }
+    const hasSelectedPage = engine.block
+      .findAllSelected()
+      .some((selectedId) => store.getType(selectedId) === "page");
+    if (hasSelectedPage) {
+      engine.block.select(blockId);
+      return;
+    }
     if (event.additive) {
       // Marquee selection always adds hit blocks to the current selection.
       engine.block.setSelected(blockId, true);

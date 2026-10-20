@@ -38,6 +38,50 @@ Text presets can insert editable layered text-and-shape compositions. See
 [Configure Text](docs/guides/configure-fonts.md#layered-text-combinations) and
 [Configure Shapes](docs/guides/configure-shapes.md#customize-the-gallery).
 
+## Optional multi-page navigation
+
+Arrange all full-size pages on a continuous canvas, with numbered titles above each page:
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{ ui: { pageNavigation: true, pageLayout: "vertical" } }}
+  onReady={({ engine }) => {
+    // Populate or load pages using the public engine scene APIs.
+    engine.scene.addPage({ width: 600, height: 800 });
+  }}
+/>
+```
+
+`ui.pageNavigation` defaults to `false`, so existing single-image integrations keep
+their current UI and rendering behavior. Enabled navigation follows document page order,
+shows `Page 1`, `Page 2`, etc., and includes each page's name in its accessible title.
+Hover a page background or title to highlight its frame. Clicking the background or title
+selects the page with an outline, without move, resize, or rotation handles.
+`ui.pageLayout` accepts `"vertical"` (default) or `"horizontal"`; ordinary wheel scrolling
+pans along that canvas axis, while Ctrl/Cmd-wheel zooms. Clicking a canvas page activates
+it without moving the camera. Pointer selection never fits or pans the view. Keyboard
+focus on a page title selects and fits that page so offscreen pages remain reachable.
+There is no bottom thumbnail strip. Try both arrangements in the three-page
+`/playground/pages` demo.
+
+Canvas arrangement is transient and independent of persisted `engine.scene.setPageLayout`.
+It never rewrites authored page/block positions. `PageNavigationLayout` is exported for
+typed host configuration.
+
+Changing pages does not create undo entries or persist other pages as hidden.
+`saveScene()` still includes all pages. Navigation is temporarily disabled during crop
+or inline text editing; external SDK page changes safely end the old editing state.
+Artwork remains independently selectable and editable. Artwork shortcuts do not move,
+duplicate, delete, or reorder an outlined page; page management is a separate increment.
+Page navigation does not generate thumbnails; `engine.exportPageThumbnail()` remains
+available independently.
+Disabling navigation restores the previous engine page-view mode.
+
+This increment adds navigation only, not page-management or multi-page export controls.
+The built-in export action retains legacy scene-export semantics; use
+`handle.engine.exportPage(pageId)` to export an explicit page independently of the view.
+
 ## Installation
 
 ```bash

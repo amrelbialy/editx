@@ -31,6 +31,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **image-editor:** add opt-in `ui.pageNavigation` with a continuous full-size page canvas,
+	vertical by default or horizontal via `ui.pageLayout`, with numbered on-canvas page titles,
+	hover highlights and outline-only page selection instead of a thumbnail strip. Preserve
+	authored coordinates, visibility, and history; guard editing sessions and artwork shortcuts.
+	Enable both canvas arrangements in the three-page multi-page demo.
 * **image-editor:** add categorized text and shape preset galleries with built-in search and replaceable or extensible custom catalogs
 * **image-editor:** add rich single-block text preset run styles, UTF-16 range overrides, and character-aware previews
 * **image-editor:** add layered text preset compositions with editable shape layers, derived thumbnails, and group contextual controls

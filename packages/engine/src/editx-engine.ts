@@ -42,6 +42,7 @@ export class EditxEngine implements EngineCore {
       (event) => this.#callbacks.fireActivePage(event),
       (callback) => this._deferNotification(callback),
       (event) => this.#callbacks.firePageOrder(event),
+      () => this.editor?._reconcilePageView(),
     );
     this.#transactions = new EngineTransactions(this, this.#navigation, this.#callbacks);
 
@@ -81,6 +82,14 @@ export class EditxEngine implements EngineCore {
   /** @internal */
   _setActiveSceneAndPage(sceneId: number | null, pageId: number | null): void {
     this.#navigation.replace(sceneId, pageId);
+  }
+  /** @internal */
+  _reconcilePageView(): void {
+    this.editor._reconcilePageView();
+  }
+  /** @internal */
+  _prepareSceneReplacement(): void {
+    this.editor._prepareSceneReplacement();
   }
   /** @internal */
   _deferNotification(callback: () => void): void {
@@ -176,6 +185,7 @@ export class EditxEngine implements EngineCore {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.editor._dispose();
     this.#pageThumbnails.dispose();
     this.#renderer?.dispose();
     clearImageCache();

@@ -53,6 +53,7 @@ export class EngineTransactions {
     try {
       if (this.#batchDepth > 0) return;
       this.navigation.reconcile(false);
+      this.engine._reconcilePageView();
       const historyChanged = this.#batchHistoryPatches.length > 0;
       if (historyChanged) this.#history.push(this.#batchHistoryPatches);
       enqueueBlockEvents(this.#batchPatches, this.engine.event);
@@ -71,6 +72,7 @@ export class EngineTransactions {
     this.#notifications.run(() => {
       const patches = command.do();
       this.navigation.applyPatches(patches, this.#batchDepth === 0);
+      this.engine._reconcilePageView();
       const historyChanged =
         patches.length > 0 && this.#batchDepth === 0 && this.#silentDepth === 0;
       for (const patch of patches) this.#dirty.add(patch.id);
@@ -119,9 +121,13 @@ export class EngineTransactions {
   #applyHistory(action: "undo" | "redo"): void {
     this.#notifications.run(() => {
       const patches = this.#history[action]();
-      if (!patches) return;
+      if (!patches) {
+        this.engine._reconcilePageView();
+        return;
+      }
       applyHistoryPatches(patches, this.engine._getBlockStore(), this.#dirty, this.engine.event);
       this.navigation.applyPatches(patches);
+      this.engine._reconcilePageView();
       this.#cleanupSelections();
       this.navigation.publish();
       this.deferNotification(() => this.engine.emit(`history:${action}`));
