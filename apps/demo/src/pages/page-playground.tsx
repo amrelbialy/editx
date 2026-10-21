@@ -71,7 +71,7 @@ export function PagePlayground() {
           <div>
             <h1 className="text-xl font-semibold">Multi-page SDK playground</h1>
             <p className="text-sm text-muted-foreground">
-              A1-A8 multi-page navigation lab / no external images or fonts.
+              Three original, editable social posts / no external images or fonts.
             </p>
           </div>
           <Link to="/playground" className="text-sm text-primary underline">
@@ -82,14 +82,13 @@ export function PagePlayground() {
           className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
           role="note"
         >
-          Cover, Poster, and Card share one continuous canvas. Scroll through the full-size pages
-          vertically or horizontally. Hover a page or its numbered title to highlight it; click its
-          background or title to select its outline without move or resize handles. Layout is
-          view-only; saved page positions and visibility stay unchanged. The side controls are SDK
-          diagnostics for earlier milestones, not A9 editor management controls. Page export and
-          thumbnails remain independent of the active canvas view. The built-in Export Image action
-          still uses legacy scene export; explicit page export is available through
-          engine.exportPage.
+          Try Slow Mornings, Open Studio, and Weekend Reset: square and portrait posts with editable
+          text, shapes, and grouped illustrations. Double-click text to edit it, or select artwork
+          to change its styling. Save snapshot / Load saved snapshot keeps the editable document in
+          memory; Download JSON saves all three editable posts to a file. Export Image saves the
+          current post as an image, or selected/all posts as an ordered ZIP at their original sizes.
+          Choose a post in the side list to bring it into view. The side controls remain SDK
+          diagnostics.
         </p>
         <SegmentedControl
           ariaLabel="Canvas page layout"
@@ -123,7 +122,7 @@ export function PagePlayground() {
             variant="outline"
             disabled={busy || !engine}
             onClick={() =>
-              engine && void run("Fit active page", () => engine.editor.fitToScreen(48))
+              engine && void run("Fit active page", () => engine.editor.fitToScreen(24))
             }
           >
             Fit active page
@@ -147,7 +146,7 @@ export function PagePlayground() {
               saved &&
               void run("Load saved snapshot", async () => {
                 await engine.scene.loadFromString(saved);
-                engine.editor.fitToScreen(48);
+                engine.editor.fitToScreen(24);
               })
             }
           >
@@ -162,7 +161,7 @@ export function PagePlayground() {
               void run("Download JSON", () =>
                 downloadBlob(
                   new Blob([engine.scene.saveToString()], { type: "application/json" }),
-                  "page-playground.editx",
+                  "studio-posts.editx",
                 ),
               )
             }

@@ -78,18 +78,18 @@ describe("KonvaPageView continuous wrappers", () => {
       ],
     });
     expect(view.getBounds(1)).toEqual({ x: 50, y: 0, width: 100, height: 80 });
-    expect(view.getBounds(2)).toEqual({ x: 0, y: 128, width: 200, height: 120 });
+    expect(view.getBounds(2)).toEqual({ x: 0, y: 160, width: 200, height: 120 });
     expect(page1.getParent()).toBe(group.getParent());
     expect(page2.getParent()).toBe(graphic.getParent());
     expect(group.position()).toEqual({ x: 10, y: 20 });
     expect(graphic.position()).toEqual({ x: 7, y: 9 });
     expect(text.getAbsolutePosition()).toEqual({ x: 62, y: 23 });
-    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 137 });
-    expect(context.camera.setPageNavigationBounds).toHaveBeenLastCalledWith(200, 248, {
+    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 169 });
+    expect(context.camera.setPageNavigationBounds).toHaveBeenLastCalledWith(200, 280, {
       minX: 100,
       maxX: 100,
       minY: 40,
-      maxY: 188,
+      maxY: 220,
     });
 
     view.set({
@@ -101,12 +101,12 @@ describe("KonvaPageView continuous wrappers", () => {
       ],
     });
     expect(view.getBounds(1)).toEqual({ x: 0, y: 20, width: 100, height: 80 });
-    expect(view.getBounds(2)).toEqual({ x: 148, y: 0, width: 200, height: 120 });
+    expect(view.getBounds(2)).toEqual({ x: 180, y: 0, width: 200, height: 120 });
     expect(group.position()).toEqual({ x: 10, y: 20 });
-    expect(graphic.getAbsolutePosition()).toEqual({ x: 155, y: 9 });
-    expect(context.camera.setPageNavigationBounds).toHaveBeenLastCalledWith(348, 120, {
+    expect(graphic.getAbsolutePosition()).toEqual({ x: 187, y: 9 });
+    expect(context.camera.setPageNavigationBounds).toHaveBeenLastCalledWith(380, 120, {
       minX: 50,
-      maxX: 248,
+      maxX: 280,
       minY: 60,
       maxY: 60,
     });
@@ -130,9 +130,9 @@ describe("KonvaPageView continuous wrappers", () => {
 
     view.recordNodeSync(6, text);
     expect(text.position()).toEqual({ x: 90, y: 40 });
-    expect(text.getAbsolutePosition()).toEqual({ x: 90, y: 168 });
+    expect(text.getAbsolutePosition()).toEqual({ x: 90, y: 200 });
     view.recordNodeSync(6, text);
-    expect(text.getAbsolutePosition()).toEqual({ x: 90, y: 168 });
+    expect(text.getAbsolutePosition()).toEqual({ x: 90, y: 200 });
   });
 
   it("keeps union camera bounds when the active page is resynced", () => {
@@ -152,7 +152,7 @@ describe("KonvaPageView continuous wrappers", () => {
 
     expect(context.camera.setPageNavigationBounds).not.toHaveBeenCalled();
     expect(context.camera.reapplyViewport).not.toHaveBeenCalled();
-    expect(context.lastPageSize).toEqual({ width: 200, height: 248 });
+    expect(context.lastPageSize).toEqual({ width: 200, height: 280 });
   });
 
   it("restores parents, local positions, and authored visibility across all modes", () => {
@@ -186,14 +186,14 @@ describe("KonvaPageView continuous wrappers", () => {
       ],
     });
     expect(view.withUnfiltered(() => graphic.getParent())).toBe(content);
-    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 137 });
+    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 169 });
     expect(() =>
       view.withUnfiltered(() => {
         expect(graphic.getParent()).toBe(content);
         throw new Error("capture");
       }),
     ).toThrow("capture");
-    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 137 });
+    expect(graphic.getAbsolutePosition()).toEqual({ x: 7, y: 169 });
   });
 
   it("clears presented bounds and camera clamping for an empty scene", () => {

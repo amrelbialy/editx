@@ -13,7 +13,6 @@ for (const layout of ["vertical", "horizontal"] as const) {
       const titles = await page.evaluate(() => {
         const { engine } = window.__pageNavigationHarness!;
         const canvas = document.querySelector(".konvajs-content")!.getBoundingClientRect();
-        const scale = Math.min(1, engine.editor.getZoom());
         return engine.scene.getPages().map((id, index) => {
           const frame = engine.editor.getPageViewBounds(id)!;
           const origin = engine.editor.worldToScreen(frame)!;
@@ -21,15 +20,16 @@ for (const layout of ["vertical", "horizontal"] as const) {
           const rect = title.getBoundingClientRect();
           return {
             title: title.textContent,
+            name: engine.scene.getPageProperties(id).name,
             number: index + 1,
             actual: { x: rect.x - canvas.x, y: rect.y - canvas.y },
-            expected: { x: origin.x, y: origin.y - 36 * scale },
+            expected: { x: origin.x, y: origin.y - 24 },
           };
         });
       });
       expect(titles).toHaveLength(3);
       for (const title of titles) {
-        expect(title.title).toBe(`Page ${title.number}`);
+        expect(title.title).toBe(`Page ${title.number}: ${title.name}`);
         expect(title.actual.x).toBeCloseTo(title.expected.x, 1);
         expect(title.actual.y).toBeCloseTo(title.expected.y, 1);
       }

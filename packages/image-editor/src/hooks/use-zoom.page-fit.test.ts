@@ -12,9 +12,9 @@ describe("page title fit padding", () => {
   it.each([
     ["all-pages", 24],
     ["active-page", 24],
-    ["vertical-pages", 48],
-    ["horizontal-pages", 48],
-  ] as const)("preserves legacy padding and reserves title space in %s", async (mode: PageViewMode, padding) => {
+    ["vertical-pages", 24],
+    ["horizontal-pages", 24],
+  ] as const)("preserves legacy padding without excessive page gutters in %s", async (mode: PageViewMode, padding) => {
     const engine = new EditxEngine();
     await engine.scene.create();
     vi.spyOn(engine.editor, "getPageViewMode").mockReturnValue(mode);

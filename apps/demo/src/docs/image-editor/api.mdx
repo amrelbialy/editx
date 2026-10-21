@@ -10,7 +10,7 @@ The main editor component. Renders inline at the given dimensions.
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `src` | `string \| File \| Blob \| HTMLImageElement \| HTMLCanvasElement` | — | **Required.** Image source. |
-| `onSave` | `(blob: Blob) => void` | — | Called when the user exports the image. |
+| `onSave` | `(blob: Blob) => void` | — | Receives the exported image or, in opt-in multi-page mode, an `application/zip` blob for Selected/All pages. Async handlers are awaited. |
 | `onClose` | `(reason?: CloseReason, hasUnsavedChanges?: boolean) => void` | — | Called when the editor closes. |
 | `onReady` | `(handle: EditorHandle) => void` | — | Fires once when the engine is ready, exposing an imperative handle. |
 | `width` | `string \| number` | `"100%"` | Editor width. |
@@ -52,7 +52,7 @@ React to editor lifecycle events. See [React to Editor Events](/docs/image-edito
 | Callback | Type | Description |
 |---|---|---|
 | `onToolChange` | `(toolId: string \| null) => void` | Fires when the active tool changes. |
-| `onBeforeSave` | `(blob: Blob) => Promise<Blob \| undefined> \| Blob \| undefined` | Transform the export blob before save. |
+| `onBeforeSave` | `(blob: Blob) => Promise<Blob \| undefined> \| Blob \| undefined` | Transform the image or complete multi-page ZIP before save. Called once per export. |
 
 ## ImageValidationOptions
 

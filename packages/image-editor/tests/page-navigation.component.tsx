@@ -30,7 +30,7 @@ function populate(engine: EditxEngine): number[] {
   });
   engine.scene.setActivePage(first);
   engine.clearHistory();
-  engine.editor.fitToScreen(48);
+  engine.editor.fitToScreen(24);
   return ids;
 }
 

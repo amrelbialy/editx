@@ -19,7 +19,8 @@ export interface UIConfig {
   unsavedChangesWarning?: boolean;
   /**
    * Arrange all pages on one continuous canvas with numbered page titles and
-   * hover/selection outlines, without changing saved visibility. Default: false.
+   * hover/selection outlines and page-management controls, without changing saved
+   * visibility. Default: false.
    */
   pageNavigation?: boolean;
   /** Continuous canvas direction when page navigation is enabled. Default: "vertical". */

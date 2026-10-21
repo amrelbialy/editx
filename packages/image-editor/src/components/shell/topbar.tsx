@@ -155,6 +155,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           onClick={onExport}
           disabled={isExporting}
           aria-busy={isExporting}
+          aria-label={isExporting ? t("topbar.exporting") : t("topbar.export")}
         >
           {isExporting ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin @5xl/editor:h-4 @5xl/editor:w-4" />

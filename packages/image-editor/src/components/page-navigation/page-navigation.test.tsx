@@ -24,11 +24,9 @@ describe("on-canvas page navigation", () => {
       </I18nProvider>,
     );
     expect(view.getByRole("navigation", { name: "Pages" })).toBeInTheDocument();
-    expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "Page 1",
-      "Page 2",
-      "Page 3",
-    ]);
+    expect(
+      view.getAllByRole("button", { name: /^Select page/ }).map((button) => button.textContent),
+    ).toEqual(["Page 1: Cover", "Page 2: Poster", "Page 3: Card"]);
     expect(view.container.querySelectorAll("img")).toHaveLength(0);
     expect(exportThumbnail).not.toHaveBeenCalled();
     const cover = view.getByRole("button", { name: "Select page 1: Cover" });
@@ -100,7 +98,7 @@ describe("on-canvas page navigation", () => {
     });
     expect(view.getByRole("button", { name: "Select page 1: Card" })).toHaveTextContent("Page 1");
     expect(view.getByRole("button", { name: "Select page 2: Cover" })).toBeInTheDocument();
-    expect(view.getAllByRole("button")).toHaveLength(2);
+    expect(view.getAllByRole("button", { name: /^Select page/ })).toHaveLength(2);
   });
 
   it("disables title selection while inline editing is active", async () => {
@@ -112,5 +110,71 @@ describe("on-canvas page navigation", () => {
     );
     act(() => useImageEditorStore.getState().setEditingTextBlockId(42));
     for (const button of view.getAllByRole("button")) expect(button).toBeDisabled();
+  });
+
+  it("reveals actions only for the selected page, not the active page or selected artwork", async () => {
+    const { engine, poster } = await createNavigationEngine();
+    const text = engine.block.addText(poster, 10, 20, 100, 40, "Artwork");
+    const view = render(
+      <I18nProvider>
+        <PageNavigation engine={engine} />
+      </I18nProvider>,
+    );
+    expect(view.queryByRole("button", { name: /^Page actions:/ })).not.toBeInTheDocument();
+    expect(view.queryByRole("toolbar")).not.toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Add page" })).toBeEnabled();
+    fireEvent.click(view.getByRole("button", { name: "Select page 1: Cover" }));
+    expect(view.getByRole("button", { name: "Page actions: Page 1: Cover" })).toBeInTheDocument();
+    expect(view.getByRole("toolbar", { name: "Page properties" })).toBeInTheDocument();
+    expect(view.getByRole("toolbar", { name: "Page actions" })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Add page" })).toHaveClass("left-1/2", "top-full");
+    fireEvent.click(view.getByRole("button", { name: "Select page 2: Poster" }));
+    expect(view.getAllByRole("button", { name: /^Page actions:/ })).toHaveLength(1);
+    expect(view.getByRole("button", { name: "Page actions: Page 2: Poster" })).toBeInTheDocument();
+    act(() => engine.block.select(text));
+    expect(engine.scene.getCurrentPage()).toBe(poster);
+    expect(view.queryByRole("button", { name: /^Page actions:/ })).not.toBeInTheDocument();
+    expect(view.queryByRole("toolbar")).not.toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Add page" })).toBeEnabled();
+  });
+
+  it("opens properties on a title double-click without creating history", async () => {
+    const { engine, poster } = await createNavigationEngine();
+    const view = render(
+      <I18nProvider>
+        <PageNavigation engine={engine} />
+      </I18nProvider>,
+    );
+    const title = view.getByRole("button", { name: "Select page 2: Poster" });
+    fireEvent.click(title);
+    expect(view.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.doubleClick(title);
+    expect(view.getByRole("dialog", { name: "Rename and resize page" })).toBeInTheDocument();
+    expect(view.getByRole("textbox", { name: "Name" })).toHaveValue("Poster");
+    expect(engine.scene.getCurrentPage()).toBe(poster);
+    expect(engine.canUndo()).toBe(false);
+    fireEvent.click(view.getByRole("button", { name: "Cancel" }));
+    expect(view.queryByRole("dialog")).not.toBeInTheDocument();
+    act(() => useImageEditorStore.getState().setEditingTextBlockId(42));
+    expect(view.getByRole("button", { name: "Add page" })).toBeDisabled();
+    expect(
+      view.queryByRole("button", { name: "Page actions: Page 2: Poster" }),
+    ).not.toBeInTheDocument();
+    fireEvent.doubleClick(title);
+    expect(view.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(engine.canUndo()).toBe(false);
+  });
+
+  it("opens the properties dialog from the selected page's Resize button", async () => {
+    const { engine } = await createNavigationEngine();
+    const view = render(
+      <I18nProvider>
+        <PageNavigation engine={engine} />
+      </I18nProvider>,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Select page 1: Cover" }));
+    fireEvent.click(view.getByRole("button", { name: "Resize" }));
+    expect(view.getByRole("dialog", { name: "Rename and resize page" })).toBeInTheDocument();
+    expect(engine.canUndo()).toBe(false);
   });
 });

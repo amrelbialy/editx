@@ -131,7 +131,8 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
         blockType={selectedBlockType as "text" | "graphic" | "image" | "group"}
         onCropImageFill={onCropImageFill}
       />
-    ) : activeTool !== "select" ? (
+    ) : activeTool !== "select" &&
+      (selectedBlockType !== "page" || !config.ui?.pageNavigation || activeTool === "crop") ? (
       <ToolPropertiesBar
         activeTool={activeTool}
         onReset={onContextualReset}
@@ -196,7 +197,12 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (props) => {
     ) : undefined;
 
   return (
-    <CanvasArea canvasRef={canvasRef} header={header} overlay={overlay}>
+    <CanvasArea
+      canvasRef={canvasRef}
+      header={header}
+      overlay={overlay}
+      reservePageControlsSpace={!!config.ui?.pageNavigation}
+    >
       {config.ui?.pageNavigation && engine && (
         <PageNavigation engine={engine} layout={config.ui.pageLayout} />
       )}

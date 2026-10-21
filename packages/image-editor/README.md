@@ -55,7 +55,7 @@ Arrange all full-size pages on a continuous canvas, with numbered titles above e
 
 `ui.pageNavigation` defaults to `false`, so existing single-image integrations keep
 their current UI and rendering behavior. Enabled navigation follows document page order,
-shows `Page 1`, `Page 2`, etc., and includes each page's name in its accessible title.
+shows numbered page titles with each page's name and selection-based page controls.
 Hover a page background or title to highlight its frame. Clicking the background or title
 selects the page with an outline, without move, resize, or rotation handles.
 `ui.pageLayout` accepts `"vertical"` (default) or `"horizontal"`; ordinary wheel scrolling
@@ -73,14 +73,54 @@ Changing pages does not create undo entries or persist other pages as hidden.
 `saveScene()` still includes all pages. Navigation is temporarily disabled during crop
 or inline text editing; external SDK page changes safely end the old editing state.
 Artwork remains independently selectable and editable. Artwork shortcuts do not move,
-duplicate, delete, or reorder an outlined page; page management is a separate increment.
+duplicate, delete, or reorder an outlined page; use its page actions menu instead.
 Page navigation does not generate thumbnails; `engine.exportPageThumbnail()` remains
 available independently.
 Disabling navigation restores the previous engine page-view mode.
 
-This increment adds navigation only, not page-management or multi-page export controls.
-The built-in export action retains legacy scene-export semantics; use
-`handle.engine.exportPage(pageId)` to export an explicit page independently of the view.
+Select a page background or title to reveal two bars, following the editor's block UI:
+a top properties bar with **Resize** and **Color**, and a floating action bar near the
+page's top edge with **Duplicate page** and a **...** menu. The menu offers **Rename page**,
+**Move page earlier/later**, and **Delete page**. **Add page** is always visible in a
+bottom-center footer, even without a page selection or while artwork is selected.
+It appends a blank page using the scene's default dimensions.
+The multi-page canvas reserves compact, stable header and footer lanes, so showing the properties
+bar does not resize the canvas or move the camera, and Add page never covers page content.
+Page fits use 24px padding. Captions stay screen-sized rather than shrinking with zoom;
+at very low zoom, a caption moves inside its page when the gap cannot fit its label.
+The floating action bar sits at the selected page's top-right edge, clear of its caption.
+Selecting artwork hides both page bars, restoring the artwork's normal controls.
+Double-click a page title to open **Rename and resize page** directly; artwork
+double-click editing is unchanged. Name and dimensions are
+saved together as one undoable operation; resizing changes bounds, not artwork.
+Background color changes are staged in the color picker until **Apply color** is clicked,
+then saved as one undoable operation while preserving existing background transparency.
+Add and duplicate activate, select, and fit the new page. Deleting the active page
+fits its fallback; deleting the final page reports an error without changing the document.
+All document changes use public engine commands and support undo/redo. Page bars are
+hidden during cropping and inline text editing; page titles and Add page remain visible
+but disabled during editing.
+
+With `ui.pageNavigation`, **Export Image** opens **Export pages**:
+
+- **Current page** (default) exports the active page as a PNG, JPEG, or WebP image.
+- **Selected pages** lets users choose pages independently of artwork selection.
+- **All pages** includes every document page, regardless of the current canvas view.
+
+Selected and All always produce one ZIP, even when only one page is included.
+Entries use document order and safe, unique names such as `01-Cover.png`; each image
+keeps its page's own dimensions. An empty selection cannot be exported.
+`events.onBeforeSave` and `onSave` run once for the final blob. For ZIP output its MIME
+type is `application/zip`, so image-only transforms should check `blob.type`.
+Async save callbacks are awaited; failures show an error and leave the dialog open,
+without delivering a partial archive.
+Partial exports retain unsaved changes and keep the editor open, even with
+`closeAfterSave`. Only an unchanged export covering every page marks the document
+clean and can auto-close. Editing or replacing the document during rendering aborts
+the export; reopening or replacing a document resets page-export selection.
+
+Without `ui.pageNavigation`, the built-in action retains legacy scene export.
+`handle.engine.exportPage(pageId)` also remains available for explicit SDK page exports.
 
 ## Installation
 

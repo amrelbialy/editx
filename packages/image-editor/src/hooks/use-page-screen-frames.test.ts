@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("page screen frames", () => {
-  it("tracks camera transforms once and scales labels to fit the world-space page gap", async () => {
+  it("tracks camera transforms once while keeping title lanes in screen pixels", async () => {
     const { engine, cover } = await createNavigationEngine();
     const pages = [{ id: cover }];
     let zoom = 1;
@@ -21,7 +21,7 @@ describe("page screen frames", () => {
     }));
     const { result, unmount } = renderHook(() => usePageScreenFrames(engine, pages));
     expect(result.current).toEqual([
-      { id: cover, x: 100, y: 120, width: 800, height: 600, scale: 1 },
+      { id: cover, x: 100, y: 120, width: 800, height: 600, titleY: 96 },
     ]);
     act(() => {
       zoom = 0.5;
@@ -30,17 +30,35 @@ describe("page screen frames", () => {
       engine.emit("pan:changed", pan);
     });
     expect(result.current).toEqual([
-      { id: cover, x: 70, y: 30, width: 400, height: 300, scale: 0.5 },
+      { id: cover, x: 70, y: 30, width: 400, height: 300, titleY: 6 },
     ]);
     act(() => {
       zoom = 2;
       engine.emit("zoom:changed", zoom);
     });
-    expect(result.current[0].scale).toBe(1);
+    expect(result.current[0].titleY).toBe(result.current[0].y - 24);
     unmount();
     const convert = vi.mocked(engine.editor.worldToScreen);
     convert.mockClear();
     engine.emit("pan:changed", { x: 0, y: 0 });
     expect(convert).not.toHaveBeenCalled();
+  });
+
+  it("insets low-zoom vertical titles rather than overlapping the preceding page", async () => {
+    const { engine, cover, poster } = await createNavigationEngine();
+    engine.editor.setPageViewMode("vertical-pages");
+    vi.spyOn(engine.editor, "getZoom").mockReturnValue(0.05);
+    vi.mocked(engine.editor.getPageViewBounds).mockImplementation((id) =>
+      id === cover
+        ? { x: 0, y: 0, width: 800, height: 600 }
+        : { x: 100, y: 680, width: 600, height: 800 },
+    );
+    vi.mocked(engine.editor.worldToScreen).mockImplementation(({ x, y }) => ({
+      x: x * 0.05,
+      y: y * 0.05,
+    }));
+    const pages = [{ id: cover }, { id: poster }];
+    const { result } = renderHook(() => usePageScreenFrames(engine, pages));
+    expect(result.current.map(({ titleY }) => titleY)).toEqual([-24, 38]);
   });
 });

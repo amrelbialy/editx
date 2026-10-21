@@ -4,7 +4,7 @@ import type { ScreenRect } from "./use-block-screen-rect";
 
 export interface PageScreenFrame extends ScreenRect {
   id: number;
-  scale: number;
+  titleY: number;
 }
 
 export function usePageScreenFrames(
@@ -16,21 +16,26 @@ export function usePageScreenFrames(
   useEffect(() => {
     const update = () => {
       const zoom = engine.editor.getZoom();
+      const projected = pages.flatMap(({ id }) => {
+        const bounds = engine.editor.getPageViewBounds(id);
+        if (!bounds || !engine.block.isVisible(id)) return [];
+        const origin = engine.editor.worldToScreen(bounds);
+        if (!origin) return [];
+        return [
+          {
+            id,
+            ...origin,
+            width: bounds.width * zoom,
+            height: bounds.height * zoom,
+          },
+        ];
+      });
+      const vertical = engine.editor.getPageViewMode() === "vertical-pages";
       setFrames(
-        pages.flatMap(({ id }) => {
-          const bounds = engine.editor.getPageViewBounds(id);
-          if (!bounds || !engine.block.isVisible(id)) return [];
-          const origin = engine.editor.worldToScreen(bounds);
-          if (!origin) return [];
-          return [
-            {
-              id,
-              ...origin,
-              width: bounds.width * zoom,
-              height: bounds.height * zoom,
-              scale: Math.min(1, zoom),
-            },
-          ];
+        projected.map((frame, index) => {
+          const previous = projected[index - 1];
+          const inset = vertical && previous && frame.y - previous.y - previous.height < 24;
+          return { ...frame, titleY: inset ? frame.y + 4 : frame.y - 24 };
         }),
       );
     };

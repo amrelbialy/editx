@@ -6,11 +6,6 @@ interface UseZoomOptions {
   engine: EditxEngine | null;
 }
 
-function isContinuousPageView(engine: EditxEngine): boolean {
-  const mode = engine.editor.getPageViewMode();
-  return mode === "vertical-pages" || mode === "horizontal-pages";
-}
-
 export function useZoom({ engineRef, engine }: UseZoomOptions) {
   const [zoomPercent, setZoomPercent] = useState<number | null>(null);
 
@@ -39,7 +34,7 @@ export function useZoom({ engineRef, engine }: UseZoomOptions) {
   const handleAutoFitPage = useCallback(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    ce.editor.fitToScreen(isContinuousPageView(ce) ? 48 : 24, true);
+    ce.editor.fitToScreen(24, true);
     updateZoomLabel();
   }, [engineRef, updateZoomLabel]);
 
@@ -51,8 +46,7 @@ export function useZoom({ engineRef, engine }: UseZoomOptions) {
   const handleFitSelection = useCallback(() => {
     const ce = engineRef.current;
     if (!ce) return;
-    const pageSelected = ce.block.findAllSelected().some((id) => ce.block.getType(id) === "page");
-    ce.editor.fitToSelection(isContinuousPageView(ce) && pageSelected ? 48 : 24, true);
+    ce.editor.fitToSelection(24, true);
     updateZoomLabel();
   }, [engineRef, updateZoomLabel]);
 

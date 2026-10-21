@@ -13,26 +13,31 @@ describe("multi-page playground public SDK integration", () => {
     seedPagePlayground(engine);
   });
 
-  it("seeds resource-free mixed pages and grouped artwork without initial history or selection", () => {
+  it("seeds editable social posts at native sizes without initial history or selection", () => {
     const state = readPlaygroundSnapshot(engine);
     expect(state.pages.map(({ name, width, height }) => ({ name, width, height }))).toEqual([
-      { name: "Cover", width: 800, height: 600 },
-      { name: "Poster", width: 600, height: 800 },
-      { name: "Card", width: 400, height: 400 },
+      { name: "Slow Mornings", width: 1080, height: 1080 },
+      { name: "Open Studio", width: 1080, height: 1350 },
+      { name: "Weekend Reset", width: 1080, height: 1080 },
     ]);
     expect(state.activePageId).toBe(state.pages[0].id);
     expect(state.topPageId).toBe(state.pages[2].id);
     expect(state.selection).toEqual([]);
     expect(state.canUndo).toBe(false);
     expect(state.canRedo).toBe(false);
-    expect(state.pages[0].backgroundColor).toEqual(hexToColor("#fff1f2"));
+    expect(state.pages[0].backgroundColor).toEqual(hexToColor("#F7F2E8"));
     for (const page of state.pages) {
       expect(page.metadata?.thumbnailAlt).toBe(`${page.name} preview`);
       expect(engine.block.getPageImageSrc(page.id)).toBe("");
       const children = engine.block.getChildren(page.id);
-      expect(children).toHaveLength(2);
+      expect(
+        children.filter((id) => engine.block.getType(id) === "text").length,
+      ).toBeGreaterThanOrEqual(6);
       const group = children.find((id) => engine.block.getType(id) === "group")!;
-      expect(engine.block.getChildren(group)).toHaveLength(2);
+      expect(engine.block.getChildren(group).length).toBeGreaterThanOrEqual(6);
+      expect(
+        engine.block.getChildren(group).some((id) => engine.block.getType(id) === "graphic"),
+      ).toBe(true);
     }
   });
 
@@ -43,9 +48,9 @@ describe("multi-page playground public SDK integration", () => {
     const state = readPlaygroundSnapshot(engine);
     expect(state.pages).toHaveLength(4);
     const added = state.pages[3];
-    expect(added).toMatchObject({ name: "Cover", width: 800, height: 600 });
+    expect(added).toMatchObject({ name: "Slow Mornings", width: 1080, height: 1080 });
     expect(state.activePageId).toBe(added.id);
-    expect(engine.block.getChildren(added.id)).toHaveLength(2);
+    expect(engine.block.getChildren(added.id).length).toBeGreaterThan(10);
     engine.undo();
     expect(engine.scene.saveToString()).toBe(before);
     expect(engine.canUndo()).toBe(false);
@@ -86,6 +91,52 @@ describe("multi-page playground public SDK integration", () => {
     expect(engine.block.exists(duplicate)).toBe(false);
     expect(engine.canUndo()).toBe(false);
     expect(engine.canRedo()).toBe(false);
+  });
+
+  it("reopens edited posts in a fresh engine with editable text and vector layers intact", async () => {
+    const pages = engine.scene.getPages();
+    const headline = engine.block
+      .getChildren(pages[0])
+      .find((id) => engine.block.getName(id) === "Coffee headline")!;
+    engine.block.replaceText(
+      headline,
+      0,
+      engine.block.getTextContent(headline).length,
+      "Great days\nstart here.",
+    );
+    const saved = engine.scene.saveToString();
+    const restored = new EditxEngine();
+    await restored.scene.loadFromString(saved);
+    expect(restored.scene.saveToString()).toBe(saved);
+    expect(
+      restored.block
+        .getTextRuns(headline)
+        .map((run) => run.text)
+        .join(""),
+    ).toBe("Great days\nstart here.");
+    restored.block.replaceText(
+      headline,
+      0,
+      restored.block.getTextContent(headline).length,
+      "Still editable.",
+    );
+    expect(
+      restored.block
+        .getTextRuns(headline)
+        .map((run) => run.text)
+        .join(""),
+    ).toBe("Still editable.");
+    const illustration = restored.block
+      .getChildren(pages[0])
+      .find((id) => restored.block.getType(id) === "group")!;
+    const graphic = restored.block
+      .getChildren(illustration)
+      .find((id) => restored.block.getType(id) === "graphic")!;
+    restored.block.setFillSolidColor(graphic, hexToColor("#FF0000"));
+    expect(restored.block.getFillSolidColor(graphic)).toEqual(hexToColor("#FF0000"));
+    restored.undo();
+    restored.undo();
+    expect(restored.scene.saveToString()).toBe(saved);
   });
 
   it("registers the diagnostic route with distinct noindex metadata", () => {

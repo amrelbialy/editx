@@ -120,8 +120,8 @@ export class EditxImageEditorElement extends HTMLElement {
       slots: this._slots,
       events: this._events,
       validation: this._validation,
-      onSave: (blob) => {
-        this._onSave?.(blob);
+      onSave: async (blob) => {
+        await this._onSave?.(blob);
         this.dispatchEvent(new CustomEvent("save", { detail: { blob }, bubbles: true }));
       },
       onClose: (reason, hasUnsavedChanges) => {

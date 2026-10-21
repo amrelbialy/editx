@@ -25,6 +25,8 @@ for (const layout of ["vertical", "horizontal"] as const) {
     await page.mouse.dblclick(canvas.x + rect.x + 20, canvas.y + rect.y + 15);
     const overlay = component.getByTestId("text-editor-overlay");
     await expect(overlay).toBeVisible();
+    await expect(component.getByRole("button", { name: /^Page actions:/ })).toHaveCount(0);
+    await expect(component.getByRole("dialog")).toHaveCount(0);
     await page.keyboard.type("!");
     await expect
       .poll(() =>
@@ -49,6 +51,9 @@ for (const layout of ["vertical", "horizontal"] as const) {
     await expect(overlay).toBeVisible();
     await page.mouse.click(canvas.x + before.point.x, canvas.y + before.point.y);
     await expect(overlay).toHaveCount(0);
+    await expect(component.getByRole("button", {
+      name: "Page actions: Page 2: Poster", exact: true,
+    })).toBeVisible();
     expect(
       await page.evaluate((id) => {
         const { engine } = window.__pageNavigationHarness!;

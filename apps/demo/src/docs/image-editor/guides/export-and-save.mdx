@@ -20,7 +20,7 @@ closes itself once the save completes.
 | `export.formats` | `("png" \| "jpeg" \| "webp")[]` | all | Formats offered in the export dialog. |
 | `export.defaultFormat` | `"png" \| "jpeg" \| "webp"` | first | Pre-selected format. Must be one of `formats`. |
 | `export.quality` | `number` | `0.92` | Encoder quality (0–1) for lossy formats. |
-| `export.closeAfterSave` | `boolean` | `false` | Call `onClose` automatically after a successful export. |
+| `export.closeAfterSave` | `boolean` | `false` | Call `onClose` after an unchanged full-document export; partial page exports stay open. |
 | `export.filename` | `string` | derived | Base filename for the built-in download when no `onSave` is provided. |
 | `events.onBeforeSave` | `(blob: Blob) => Blob \| Promise<Blob \| undefined> \| undefined` | — | Transform the rendered blob before `onSave`. |
 
@@ -46,6 +46,49 @@ supported format. Open the export dialog — only **PNG** and **JPEG** are offer
 with JPEG pre-selected:
 
 <GuideScenario config={{ export: { formats: ["png", "jpeg"], defaultFormat: "jpeg" } }} />
+
+## Export multiple pages
+
+Enable `config.ui.pageNavigation` to add page targets to the existing export dialog.
+**Current page** is the default and downloads one image at that page's dimensions.
+**Selected pages** opens a page checklist, independent of canvas/artwork selection.
+**All pages** exports every document page, including pages filtered out of the canvas view.
+
+Selected and All always return a ZIP, even for one page. Entries follow document order,
+keep each page's own dimensions, and have safe, unique numbered names such as
+`01-Cover.png` and `02-Poster.png`. The chosen PNG/JPEG/WebP format and quality apply
+to every image. Empty selections are disabled.
+
+Without `onSave`, the ZIP downloads with the configured base filename and a `.zip`
+extension. With `onSave`, it receives one `application/zip` blob; it is not called once
+per page. The Web Component's `save` event similarly carries the final blob.
+Async save callbacks are awaited, and rejected saves or page export failures display
+an error while keeping the dialog open for retry. No partial ZIP is delivered.
+
+`onBeforeSave` also receives the complete ZIP once, so image-only transforms must
+check its type:
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{ ui: { pageNavigation: true } }}
+  onSave={(blob) => uploadToServer(blob)}
+  events={{
+    onBeforeSave: async (blob) => {
+      if (blob.type === "application/zip") return blob;
+      return stampWatermark(blob);
+    },
+  }}
+/>
+```
+
+The default single-image mode still uses legacy scene export.
+
+Partial exports do not mark the whole document saved and do not auto-close the editor,
+even when `closeAfterSave` is enabled. Only an unchanged export covering every page
+can clear unsaved changes and auto-close. New edits while an async save callback is
+pending remain unsaved. Replacing a document resets the export selector to Current page;
+changes or replacement during page rendering abort the operation for a safe retry.
 
 ## Transform the blob before save
 
@@ -96,6 +139,8 @@ automatically after a successful export.
 `onClose` receives a `reason` — `"save"`, `"close-button"`, `"back-button"`, or
 `"escape"` — plus a `hasUnsavedChanges` flag. After a successful export the reason
 is `"save"` with no unsaved changes, so you can close without a discard prompt.
+In multi-page mode, this requires exporting every page without intervening edits;
+partial exports keep the editor open.
 
 This editor has `closeAfterSave` enabled — export to see the save flow complete:
 
@@ -107,4 +152,4 @@ This editor has `closeAfterSave` enabled — export to see the save flow complet
 - [Open in a Modal](/docs/image-editor/guides/open-in-modal) — export from a dialog flow.
 - [Customize the Chrome](/docs/image-editor/guides/customize-chrome) — pair with a back button for wizard flows.
 
-> Verified by `tests/guides/export-formats.spec.tsx`, `tests/guides/watermark-on-save.spec.tsx`, and `tests/guides/save-and-close.spec.tsx` in the `@editx/image-editor` package.
+> Verified by `tests/page-export-dialog.spec.tsx`, `tests/guides/export-formats.spec.tsx`, `tests/guides/watermark-on-save.spec.tsx`, and `tests/guides/save-and-close.spec.tsx` in the `@editx/image-editor` package.

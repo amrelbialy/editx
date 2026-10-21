@@ -1,24 +1,15 @@
-import type { EditxEngine } from "@editx/engine";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "./components/panels/export-dialog";
 import { announce } from "./components/shell/announcer";
-import { CanvasPane } from "./components/shell/canvas-pane";
 import { DiscardConfirmationDialog } from "./components/shell/discard-confirmation-dialog";
 import { EditorShell } from "./components/shell/editor-shell";
+import { EditorWorkspace } from "./components/shell/editor-workspace";
 import { ErrorPlaceholder } from "./components/shell/error-placeholder";
 import { LoadingOverlay } from "./components/shell/loading-overlay";
 import { getToolPanelTitle } from "./components/shell/panel-titles";
 import { Providers } from "./components/shell/providers";
-import { SidePanel } from "./components/shell/side-panel";
-import { ToolNav } from "./components/shell/tool-nav";
-import { Topbar } from "./components/shell/topbar";
-import type {
-  CloseReason,
-  EditorEventCallbacks,
-  EditorSlots,
-  ImageEditorConfig,
-} from "./config/config.types";
+import type { CloseReason, ImageEditorConfig } from "./config/config.types";
 import { defaultConfig } from "./config/default-config";
 import { useEngine } from "./hooks/use-engine";
 import { useExport } from "./hooks/use-export";
@@ -27,46 +18,12 @@ import { useHistory } from "./hooks/use-history";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTools } from "./hooks/use-tools";
 import { useZoom } from "./hooks/use-zoom";
+import type { ImageEditorProps } from "./image-editor.types";
 import { useImageEditorStore } from "./store/image-editor-store";
 import { deepMerge } from "./utils/deep-merge";
 import { extractFilename } from "./utils/extract-filename";
-import type { ImageValidationOptions } from "./utils/validate-image";
 
-export type ImageSource = string | File | Blob | HTMLImageElement | HTMLCanvasElement;
-
-/**
- * Imperative handle surfaced through {@link ImageEditorProps.onReady} once the
- * engine is initialized. Lets embedders serialize, restore, and script the
- * editor programmatically.
- */
-export interface EditorHandle {
-  /** Serialize the full scene (all blocks) to a JSON string. */
-  saveScene(): string;
-  /** Restore a scene previously produced by {@link saveScene}. */
-  loadScene(json: string): Promise<void>;
-  /** The underlying engine instance, for advanced/headless use. */
-  engine: EditxEngine;
-}
-
-export interface ImageEditorProps {
-  src: ImageSource;
-  onSave?: (blob: Blob) => void;
-  onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
-  /** Fires once when the engine is ready, exposing an imperative editor handle. */
-  onReady?: (handle: EditorHandle) => void;
-  width?: string | number;
-  height?: string | number;
-  /** Validation options for file type, size, and dimension limits. */
-  validation?: ImageValidationOptions;
-  /** When true, preserve zoom/pan when src changes instead of resetting to fit-to-screen. */
-  keepZoomOnSourceChange?: boolean;
-  /** SDK configuration — tools, theme, per-tool options, UI tweaks. */
-  config?: ImageEditorConfig;
-  /** Named render slots for injecting custom UI into the editor shell. */
-  slots?: EditorSlots;
-  /** Event callbacks for editor lifecycle events. */
-  events?: EditorEventCallbacks;
-}
+export type { EditorHandle, ImageEditorProps, ImageSource } from "./image-editor.types";
 
 export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   const {
@@ -87,17 +44,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   const onReadyFiredRef = useRef(false);
   const defaultToolAppliedRef = useRef(false);
 
-  const {
-    containerRef,
-    engine,
-    engineRef,
-    handleRetry,
-    handleDragOver,
-    handleDrop,
-    handlePaste,
-    selectedShapeId,
-    setSelectedShapeId,
-  } = useEngine({ src, validation, keepZoomOnSourceChange });
+  const engineState = useEngine({ src, validation, keepZoomOnSourceChange });
+  const { containerRef, engine, engineRef, handleRetry, selectedShapeId, setSelectedShapeId } =
+    engineState;
 
   // Tool hooks run outside <Providers>, so `useConfig()` would return the
   // context default. Merge the user config the same way the provider does and
@@ -170,7 +119,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
 
   const handleCloseButton = useCallback(() => requestClose("close-button"), [requestClose]);
 
-  const { canUndo, canRedo, handleUndo, handleRedo } = useHistory(engine, engineRef);
+  const history = useHistory(engine, engineRef);
 
   const { handleGroup, handleUngroup, exitGroupIfActive } = useGroupActions(engineRef);
 
@@ -191,8 +140,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   useShortcuts({
     enabled: !isLoading && !error,
     onToolSelect: tools.handleSidebarToolSelect,
-    onUndo: handleUndo,
-    onRedo: handleRedo,
+    onUndo: history.handleUndo,
+    onRedo: history.handleRedo,
     onZoomIn: zoom.handleZoomIn,
     onZoomOut: zoom.handleZoomOut,
     onZoomFit: zoom.handleAutoFitPage,
@@ -255,89 +204,23 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     if (primary && engine.setAccentColor) engine.setAccentColor(primary);
   }, [engine, containerRef, userConfig]);
 
-  // --- Derived state ---
-  const activeCustomTool = userConfig?.customTools?.find((t) => t.id === tools.activeTool);
-
   return (
     <Providers config={userConfig}>
       <EditorShell style={{ width, height }} className="relative">
-        <div
-          className="flex flex-col h-full w-full"
-          role="application"
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onPaste={handlePaste}
-        >
-          <Topbar
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onZoomIn={zoom.handleZoomIn}
-            onZoomOut={zoom.handleZoomOut}
-            onAutoFitPage={zoom.handleAutoFitPage}
-            onFitPage={zoom.handleFitPage}
-            onFitSelection={zoom.handleFitSelection}
-            canFitSelection={selectedShapeId !== null}
-            onZoomPreset={zoom.handleZoomPreset}
-            zoomLabel={zoom.zoomLabel}
-            onExport={openExportDialog}
-            isExporting={isExporting}
-            topbarRight={slots?.topbarRight}
-            onClose={onClose ? handleCloseButton : undefined}
-          />
-
-          <div className="flex flex-col-reverse @xl/editor:flex-row flex-1 overflow-hidden">
-            <ToolNav
-              activeTool={tools.activeToolId}
-              onToolSelect={tools.handleSidebarToolSelect}
-              customTools={userConfig?.customTools}
-              sidebarBottom={slots?.sidebarBottom}
-            />
-
-            <SidePanel
-              engine={engine}
-              selectedShapeId={selectedShapeId}
-              selectedBlockType={tools.selectedBlockType}
-              activeTool={tools.activeTool}
-              crop={tools.crop}
-              rotateFlip={tools.rotateFlip}
-              adjustments={tools.adjustments}
-              filter={tools.filter}
-              addShape={tools.addShape}
-              addText={tools.addText}
-              addTextPreset={tools.addTextPreset}
-              addShapePreset={tools.addShapePreset}
-              addImage={tools.addImage}
-              replaceImage={tools.replaceImage}
-              blockEffects={tools.blockEffects}
-              blockActions={tools.blockActions}
-              activeCustomToolPanel={activeCustomTool?.panel}
-              customTools={userConfig?.customTools}
-            />
-
-            <CanvasPane
-              canvasRef={containerRef}
-              engine={engine}
-              activeTool={tools.activeTool}
-              selectedShapeId={selectedShapeId}
-              selectedBlockType={tools.selectedBlockType}
-              hasSelectedBlock={tools.hasSelectedBlock}
-              blockActions={tools.blockActions}
-              rotateFlip={tools.rotateFlip}
-              replaceImage={tools.replaceImage}
-              activeCustomToolBar={activeCustomTool?.contextualBar}
-              slots={slots}
-              onContextualReset={tools.handleContextualReset}
-              onDone={tools.handleDone}
-              onCropImageFill={tools.imageFillCrop.enter}
-              onCropCancel={tools.crop.handleCropCancel}
-              imageFillCrop={tools.imageFillCrop}
-            />
-          </div>
-        </div>
+        <EditorWorkspace
+          engineState={engineState}
+          tools={tools}
+          zoom={zoom}
+          history={history}
+          config={userConfig}
+          slots={slots}
+          onExport={openExportDialog}
+          isExporting={isExporting}
+          onClose={onClose ? handleCloseButton : undefined}
+        />
 
         <ExportDialog
+          engine={engine}
           open={exportDialogOpen}
           onOpenChange={setExportDialogOpen}
           onExport={handleExport}

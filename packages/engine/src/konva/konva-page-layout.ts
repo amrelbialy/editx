@@ -1,6 +1,6 @@
 import type { PageViewBounds, RendererPageViewPage } from "../page-view";
 
-export const CONTINUOUS_PAGE_GAP = 48;
+export const CONTINUOUS_PAGE_GAP = 80;
 
 export interface ContinuousPageLayout {
   readonly bounds: ReadonlyMap<number, PageViewBounds>;

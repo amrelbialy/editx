@@ -8,7 +8,7 @@ import { useNotifications } from "./use-notifications";
 function readPages(engine: EditxEngine) {
   const pages = engine.scene.getPages().map((id) => ({
     id,
-    name: engine.scene.getPageProperties(id).name,
+    ...engine.scene.getPageProperties(id),
   }));
   const selected = engine.block.findAllSelected();
   return {
@@ -73,7 +73,7 @@ export function usePageNavigation(engine: EditxEngine, layout: PageNavigationLay
         engine.scene.setActivePage(pageId);
         while (engine.block.getGroupContext().length > 0) engine.block.exitGroup();
         engine.block.select(pageId);
-        if (fit) engine.editor.fitToScreen(48);
+        if (fit) engine.editor.fitToScreen(24);
       } catch (cause) {
         notify.error(
           `${t("pages.switchError")}: ${cause instanceof Error ? cause.message : String(cause)}`,
@@ -91,7 +91,7 @@ export function usePageNavigation(engine: EditxEngine, layout: PageNavigationLay
       engine.editor.setPageViewMode(
         layout === "horizontal" ? "horizontal-pages" : "vertical-pages",
       );
-      engine.editor.fitToScreen(48);
+      engine.editor.fitToScreen(24);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
       return;

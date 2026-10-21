@@ -18,8 +18,8 @@ for (const layout of ["vertical", "horizontal"] as const) {
       return {
         zoom,
         expectedZoom: Math.min(
-          (viewport.width - 96) / frame.width,
-          (viewport.height - 96) / frame.height,
+          (viewport.width - 48) / frame.width,
+          (viewport.height - 48) / frame.height,
         ),
         center: engine.editor.worldToScreen({
           x: frame.x + frame.width / 2,

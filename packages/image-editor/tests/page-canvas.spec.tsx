@@ -7,16 +7,16 @@ const layouts = [
     layout: "vertical",
     frames: [
       { x: 0, y: 0, width: 480, height: 320 },
-      { x: 80, y: 368, width: 320, height: 480 },
-      { x: 120, y: 896, width: 240, height: 240 },
+      { x: 80, y: 400, width: 320, height: 480 },
+      { x: 120, y: 960, width: 240, height: 240 },
     ],
   },
   {
     layout: "horizontal",
     frames: [
       { x: 0, y: 80, width: 480, height: 320 },
-      { x: 528, y: 0, width: 320, height: 480 },
-      { x: 896, y: 120, width: 240, height: 240 },
+      { x: 560, y: 0, width: 320, height: 480 },
+      { x: 960, y: 120, width: 240, height: 240 },
     ],
   },
 ] as const;

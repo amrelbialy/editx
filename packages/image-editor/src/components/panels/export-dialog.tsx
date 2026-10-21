@@ -3,6 +3,8 @@ import type React from "react";
 import { useCallback, useState } from "react";
 import { useConfig } from "../../config/config-context";
 import type { ExportFormat, ExportOverrides } from "../../hooks/use-export";
+import { useExportPages } from "../../hooks/use-export-pages";
+import { useTranslation } from "../../i18n/i18n-context";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -14,6 +16,7 @@ import {
 } from "../ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { SliderField } from "../ui/slider-field";
+import { ExportPageSelector } from "./export-page-selector";
 
 const FORMAT_LABELS: Record<ExportFormat, string> = {
   png: "PNG",
@@ -22,15 +25,19 @@ const FORMAT_LABELS: Record<ExportFormat, string> = {
 };
 
 interface ExportDialogProps {
+  engine: EditxEngine | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: (overrides: ExportOverrides) => Promise<void>;
+  onExport: (overrides: ExportOverrides) => Promise<boolean>;
   isExporting: boolean;
 }
 
 export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
-  const { open, onOpenChange, onExport, isExporting } = props;
+  const { engine, open, onOpenChange, onExport, isExporting } = props;
+
   const config = useConfig();
+  const { t } = useTranslation();
+  const pageSelection = useExportPages(engine, open, !!config.ui?.pageNavigation);
 
   const exportConfig = config.export;
   const availableFormats = exportConfig?.formats ?? ["png", "jpeg", "webp"];
@@ -43,28 +50,48 @@ export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
   const showQuality = format === "jpeg" || format === "webp";
 
   const handleExport = useCallback(async () => {
-    await onExport({ format, quality: showQuality ? quality : undefined });
-    onOpenChange(false);
-  }, [onExport, format, quality, showQuality, onOpenChange]);
+    const success = await onExport({
+      format,
+      quality: showQuality ? quality : undefined,
+      pages: pageSelection.target,
+    });
+    if (success) onOpenChange(false);
+  }, [onExport, format, quality, showQuality, onOpenChange, pageSelection.target]);
 
   const formatQuality = useCallback((v: number): string => `${Math.round(v * 100)}%`, []);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!isExporting) onOpenChange(next);
+      }}
+    >
       <DialogContent className="w-sm @3xl/editor:w-md">
         <DialogHeader>
-          <DialogTitle>Export Image</DialogTitle>
+          <DialogTitle>
+            {config.ui?.pageNavigation ? t("pages.exportTitle") : "Export Image"}
+          </DialogTitle>
           <DialogDescription>
             Choose the format and quality for your exported image.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4">
+        <div className="flex flex-col gap-4 py-4" inert={isExporting}>
+          {config.ui?.pageNavigation && (
+            <ExportPageSelector selection={pageSelection} disabled={isExporting} />
+          )}
           {/* Format selector */}
           <div className="flex flex-col gap-1.5">
             <span className="text-fluid font-medium text-muted-foreground">Format</span>
-            <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)}>
-              <SelectTrigger>
+            <Select
+              value={format}
+              disabled={isExporting}
+              onValueChange={(v) => {
+                if (v === "png" || v === "jpeg" || v === "webp") setFormat(v);
+              }}
+            >
+              <SelectTrigger aria-label="Format">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -92,10 +119,19 @@ export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isExporting}
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button size="sm" onClick={handleExport} disabled={isExporting}>
+          <Button
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting || !pageSelection.canExport}
+          >
             {isExporting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -108,3 +144,5 @@ export const ExportDialog: React.FC<ExportDialogProps> = (props) => {
     </Dialog>
   );
 };
+
+import type { EditxEngine } from "@editx/engine";

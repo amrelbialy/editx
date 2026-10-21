@@ -40,6 +40,11 @@ describe("downloadBlob", () => {
     expect(anchor.download).toBe("shot.jpg");
   });
 
+  it("downloads a page archive with a zip extension", () => {
+    downloadBlob(new Blob(["zip"], { type: "application/zip" }), "document");
+    expect(anchor.download).toBe("document.zip");
+  });
+
   it("defaults the base filename to 'edited'", () => {
     downloadBlob(new Blob(["x"], { type: "image/webp" }));
     expect(anchor.download).toBe("edited.webp");

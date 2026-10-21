@@ -102,7 +102,7 @@ describe("continuous page-view scene restoration", () => {
     await adapter.init({ clientWidth: 800, clientHeight: 600 } as HTMLElement);
     await adapter.createScene(page(10, 100, 80), page(1, 100, 80));
 
-    expect(fitToRect).toHaveBeenCalledWith({ x: 0, y: 128, width: 200, height: 120 }, 48);
+    expect(fitToRect).toHaveBeenCalledWith({ x: 0, y: 160, width: 200, height: 120 }, 48);
     expect(fitToScreen).not.toHaveBeenCalled();
     fitToRect.mockClear();
     reapplyViewport.mockClear();
@@ -148,7 +148,7 @@ describe("continuous page-view scene restoration", () => {
     ControlledResizeObserver.callback?.();
 
     expect(fitToRect).toHaveBeenCalledTimes(1);
-    expect(fitToRect).toHaveBeenCalledWith({ x: 348, y: 0, width: 150, height: 200 }, 48);
+    expect(fitToRect).toHaveBeenCalledWith({ x: 380, y: 0, width: 150, height: 200 }, 48);
     expect(fitToScreen).not.toHaveBeenCalled();
     expect(reapplyViewport).toHaveBeenCalledTimes(1);
     adapter.dispose();

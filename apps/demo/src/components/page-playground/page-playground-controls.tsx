@@ -28,7 +28,12 @@ export function PagePlaygroundControls(props: Props) {
               aria-pressed={page.id === snapshot.activePageId}
               aria-label={`Activate ${page.name || "unnamed"} (page ${page.id})`}
               disabled={busy}
-              onClick={() => void run("Activate page", () => engine.scene.setActivePage(page.id))}
+              onClick={() =>
+                void run("Activate page", () => {
+                  engine.scene.setActivePage(page.id);
+                  engine.editor.fitToScreen(24, true);
+                })
+              }
             >
               <span className="truncate">
                 {position + 1}. {page.name || "(unnamed)"}

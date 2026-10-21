@@ -9,15 +9,25 @@ interface CanvasAreaProps {
   header?: React.ReactNode;
   /** Absolutely-positioned overlay rendered inside the canvas region (e.g. floating action bar) */
   overlay?: React.ReactNode;
+  reservePageControlsSpace?: boolean;
   children?: React.ReactNode;
 }
 
-export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasRef, header, overlay, children }) => {
+export const CanvasArea: React.FC<CanvasAreaProps> = ({
+  canvasRef,
+  header,
+  overlay,
+  children,
+  reservePageControlsSpace = false,
+}) => {
   const { t } = useTranslation();
 
   return (
     <section
-      className={cn("relative flex flex-col flex-1 min-w-0 overflow-hidden")}
+      className={cn(
+        "relative flex flex-col flex-1 min-w-0 overflow-hidden",
+        reservePageControlsSpace && "pt-16 pb-12",
+      )}
       aria-label={t("a11y.canvas")}
     >
       {header && (

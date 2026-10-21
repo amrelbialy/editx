@@ -22,6 +22,7 @@ export function PagePlaygroundCanvas(props: Props) {
       theme,
       tools: [],
       defaultTool: null,
+      export: { filename: "studio-posts" },
       ui: {
         showTitle: false,
         unsavedChangesWarning: false,
@@ -34,14 +35,14 @@ export function PagePlaygroundCanvas(props: Props) {
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 800;
-    canvas.height = 600;
+    canvas.width = 1080;
+    canvas.height = 1080;
     setSource(canvas);
   }, []);
 
   return (
     <section
-      className="h-[520px] overflow-hidden rounded-xl border border-border bg-card @3xl/editor:h-[620px]"
+      className="h-[640px] overflow-hidden rounded-xl border border-border bg-card @3xl/editor:h-[720px]"
       aria-label="Multi-page canvas"
     >
       {source ? (

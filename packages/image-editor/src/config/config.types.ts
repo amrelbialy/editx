@@ -173,7 +173,7 @@ export interface ExportConfig {
   formats?: ("png" | "jpeg" | "webp")[];
   defaultFormat?: "png" | "jpeg" | "webp";
   quality?: number;
-  /** Automatically close the editor after a successful save. Default: false. */
+  /** Close after an unchanged, full-document save; partial page exports stay open. Default: false. */
   closeAfterSave?: boolean;
   /**
    * Base filename (without extension) for the default download that runs when
@@ -212,7 +212,7 @@ export interface EditorSlots {
 export interface EditorEventCallbacks {
   /** Called when the active tool changes. */
   onToolChange?: (toolId: string | null) => void;
-  /** Called before save — return a transformed blob, or undefined to use original. */
+  /** Transform the image or complete multi-page ZIP before save; undefined keeps the original. */
   onBeforeSave?: (blob: Blob) => Promise<Blob | undefined> | Blob | undefined;
 }
 

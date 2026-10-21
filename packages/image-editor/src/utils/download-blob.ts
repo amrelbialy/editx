@@ -2,6 +2,7 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "application/zip": "zip",
 };
 
 /** Derive a file extension from a blob's MIME type, defaulting to `png`. */
@@ -10,7 +11,7 @@ function extensionForBlob(blob: Blob): string {
 }
 
 /**
- * Trigger a browser download for an exported image blob.
+ * Trigger a browser download for an exported image or ZIP blob.
  *
  * Used as the default `onSave` behavior when a consumer does not provide one,
  * so the built-in "Export" action saves a file out of the box. No-ops in
