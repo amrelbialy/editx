@@ -1,8 +1,11 @@
 import type { BlockData } from "./block/block.types";
+import { getDocumentRootSceneId } from "./document-state";
 import type { BlockExportOptions, ExportOptions } from "./editor-types";
 import type { EngineCore } from "./engine-core";
 import { PageExportError } from "./page-export-error";
-import { requireScenePage } from "./page-properties";
+import { readPageProperties, requireScenePage } from "./page-properties";
+
+const DOCUMENT_PREVIEW_MAX_EDGE = 512;
 
 export async function exportPage(
   engine: EngineCore,
@@ -20,8 +23,49 @@ export async function exportPage(
       "renderer does not support page export",
     );
   }
+
   try {
     return await renderer.exportPage(pageId, normalized);
+  } catch (cause) {
+    if (cause instanceof PageExportError) throw cause;
+    throw new PageExportError(
+      "RENDER_FAILED",
+      pageId,
+      cause instanceof Error ? cause.message : "rendering failed",
+      { cause },
+    );
+  }
+}
+
+export async function exportDocumentPreview(engine: EngineCore): Promise<Blob | null> {
+  const rootSceneId = getDocumentRootSceneId(engine);
+  if (rootSceneId === null) return null;
+  const store = engine._getBlockStore();
+  const scene = store.get(rootSceneId);
+  let pageId: number | undefined;
+  const seen = new Set<number>();
+  for (const childId of scene?.children ?? []) {
+    const child = store.get(childId);
+    if (!child || child.parentId !== rootSceneId || seen.has(childId)) {
+      throw new PageExportError("RENDER_FAILED", childId, "invalid authored root graph");
+    }
+    seen.add(childId);
+    if (pageId === undefined && child.type === "page") pageId = childId;
+  }
+  if (pageId === undefined) return null;
+  const renderer = engine.getRenderer();
+  if (!renderer?.exportDocumentPreview) return null;
+
+  try {
+    const page = requireScenePage(store, rootSceneId, pageId);
+    const { width, height } = readPageProperties(page);
+    const pixelRatio = Math.min(1, DOCUMENT_PREVIEW_MAX_EDGE / Math.max(width, height));
+    const blob = await renderer.exportDocumentPreview(
+      pageId,
+      Object.freeze({ format: "png", quality: 0.92, pixelRatio }),
+    );
+    if (blob.type !== "image/png") throw new Error(`received ${blob.type || "an untyped blob"}`);
+    return blob;
   } catch (cause) {
     if (cause instanceof PageExportError) throw cause;
     throw new PageExportError(

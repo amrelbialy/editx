@@ -1,5 +1,6 @@
 export type { ActivePageChangedEvent, ActivePageErrorCode } from "./active-page";
 export { ActivePageError } from "./active-page";
+export * from "./archive";
 export type {
   AdjustmentConfig,
   AdjustmentParam,

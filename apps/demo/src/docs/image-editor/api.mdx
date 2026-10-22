@@ -23,6 +23,19 @@ The main editor component. Renders inline at the given dimensions.
 
 `CloseReason` is one of `"save"`, `"close-button"`, `"back-button"`, or `"escape"`.
 
+### EditorHandle
+
+| Member | Type | Description |
+|---|---|---|
+| `engine` | `EditxEngine` | Native document/command APIs. |
+| `saveScene()` | `string` | Compatible legacy scene JSON. |
+| `loadScene(json)` | `Promise<void>` | Compatible legacy scene replacement. |
+| `saveProject()` | `Promise<Blob>` | Native `.editx` archive with authored-root preview. |
+| `loadProject(source)` | `Promise<EditxArchiveInfoV1>` | Validate/open an archive `Blob`, `File`, or `Uint8Array`. |
+
+See [Project files](/docs/image-editor/guides/project-files) for confirmation, race,
+portability, and save-baseline semantics. Project operations do not call `onSave`.
+
 ## ImageEditorModal
 
 Wraps `ImageEditor` in a Radix Dialog for modal usage. Accepts all `ImageEditor`

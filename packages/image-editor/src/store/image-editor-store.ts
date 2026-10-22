@@ -66,12 +66,12 @@ interface ImageEditorState {
   hasUnsavedChanges: boolean;
 
   setActiveTool: (tool: ImageEditorTool) => void;
-  setOriginalImage: (info: OriginalImageInfo) => void;
+  setOriginalImage: (info: OriginalImageInfo | null) => void;
   setLoading: (loading: boolean) => void;
   setEditableBlockId: (id: number | null) => void;
   setError: (msg: string | null) => void;
   clearError: () => void;
-  setShownImageDimensions: (dims: ShownImageDimensions) => void;
+  setShownImageDimensions: (dims: ShownImageDimensions | null) => void;
   setCropPreset: (preset: CropPresetId) => void;
   setEditingTextBlockId: (id: number | null, clickPos?: { x: number; y: number }) => void;
   setTextSelectionRange: (range: { from: number; to: number } | null) => void;

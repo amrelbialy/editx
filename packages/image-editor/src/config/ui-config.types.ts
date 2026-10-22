@@ -25,4 +25,6 @@ export interface UIConfig {
   pageNavigation?: boolean;
   /** Continuous canvas direction when page navigation is enabled. Default: "vertical". */
   pageLayout?: PageNavigationLayout;
+  /** Show separate Open Project / Save Project controls for `.editx` files. Default: false. */
+  projectFiles?: boolean;
 }

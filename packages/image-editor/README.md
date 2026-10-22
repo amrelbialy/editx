@@ -239,6 +239,22 @@ function App() {
 
 ## Configuration
 
+### Editable `.editx` projects
+
+Enable `config.ui.projectFiles: true` for separate **Open Project** / **Save Project**
+controls (default: `false`). They validate before replacement, confirm unsaved work,
+download `.editx` rather than image ZIPs, and surface failures through notifications.
+Archives contain native JSON, a PNG preview, and dependency manifests; images/fonts
+are referenced, not embedded, so offline portability is not claimed.
+
+The `onReady` handle exposes `saveProject(): Promise<Blob>` and
+`loadProject(fileOrBytes): Promise<EditxArchiveInfoV1>` in React and vanilla.
+The custom element exposes that handle through its `onReady` property and bubbling
+`ready` event. The project Blob MIME is `application/vnd.editx+zip`.
+`src` remains image-only; `onSave`, `onBeforeSave`, and the element's `save` event
+remain rendered-export-only. Programmatic save returns bytes, not a storage acknowledgment.
+See [Project files](https://editx-sdk.vercel.app/docs/image-editor/guides/project-files).
+
 Everything is driven by a single `config` object — the same shape across every integration (React prop, vanilla option, or Web Component property). Enable only the tools you need, theme it, and localize it:
 
 ```ts

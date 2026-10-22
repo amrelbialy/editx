@@ -12,15 +12,13 @@ import {
 
 interface DiscardConfirmationDialogProps {
   open: boolean;
+  description?: string;
   onDiscard: () => void;
   onCancel: () => void;
 }
 
-export const DiscardConfirmationDialog: React.FC<DiscardConfirmationDialogProps> = ({
-  open,
-  onDiscard,
-  onCancel,
-}) => {
+export const DiscardConfirmationDialog: React.FC<DiscardConfirmationDialogProps> = (props) => {
+  const { open, description, onDiscard, onCancel } = props;
   const { t } = useTranslation();
 
   return (
@@ -28,7 +26,7 @@ export const DiscardConfirmationDialog: React.FC<DiscardConfirmationDialogProps>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("dialog.unsavedTitle")}</DialogTitle>
-          <DialogDescription>{t("dialog.unsavedDescription")}</DialogDescription>
+          <DialogDescription>{description ?? t("dialog.unsavedDescription")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>

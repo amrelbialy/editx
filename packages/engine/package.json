@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "@lexical/selection": "^0.42.0",
+    "fflate": "^0.8.2",
     "lexical": "^0.42.0"
   },
   "peerDependencies": {

@@ -1,7 +1,9 @@
 import { pageTranslations } from "./pages";
+import { projectTranslations } from "./project";
 
 export const en = {
   ...pageTranslations,
+  ...projectTranslations,
   // Topbar
   "topbar.undo": "Undo",
   "topbar.redo": "Redo",

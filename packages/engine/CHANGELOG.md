@@ -31,6 +31,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Added
 
+* **engine:** add deterministic `.editx` v1 ZIP archives containing native JSON,
+	asset/font dependency manifests, and an optional PNG preview. Export byte-only
+	archive helpers, typed errors and fixed limits; validate ZIP structure, paths,
+	bounded inflation, integrity, schema, and dependency reports before replacement.
+	Add `document.saveToArchive()`, `loadFromArchive()`, and read-only authored-root
+	`exportPreview()`. Dependencies remain referenced, not embedded or resolved.
 * **engine:** add `document.onChanged()` with frozen transaction IDs, document identity,
 	change origin, changed block IDs, and affected pages for headless autosave.
 	Coalesce batches and renderer corrections, include silent writes and undo/redo,

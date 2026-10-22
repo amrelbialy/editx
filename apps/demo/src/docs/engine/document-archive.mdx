@@ -1,0 +1,163 @@
+# Native .editx archives
+
+An `.editx` file is a versioned ZIP container for an editable native document.
+It is not the rendered-image ZIP produced by multi-page Export Image.
+The canonical JSON schema remains version 1; the archive has its own version.
+
+**B5 archives are not self-contained.** Images and fonts remain referenced, not
+embedded. Even an archive with no discovered external URLs has `selfContained: false`.
+Asset/font embedding and offline portability are future D8 work.
+
+## Byte APIs
+
+```ts
+import {
+  createEditxArchive,
+  readEditxArchive,
+  EDITX_ARCHIVE_MEDIA_TYPE,
+} from "@editx/engine";
+
+// Rendering-free: optional preview is a complete PNG Uint8Array.
+const bytes = engine.document.saveToArchive({ preview: pngBytes });
+const inspected = readEditxArchive(bytes);
+console.info(inspected.assets, inspected.fonts);
+
+// Full validation happens before live document replacement.
+const info = await engine.document.loadFromArchive(bytes);
+
+// For an already-captured native snapshot:
+const snapshotBytes = createEditxArchive({
+  documentJson: engine.document.saveToString(),
+});
+```
+
+`createEditxArchive()` and `saveToArchive()` are synchronous, read-only, and return
+owned `Uint8Array` bytes. They do not fetch dependencies or generate a preview.
+`readEditxArchive()` is also synchronous and never changes an engine. Its result
+contains validated `documentJson`, `manifest`, `assets`, `fonts`, and optional owned
+`preview` PNG bytes.
+
+`loadFromArchive()` returns the manifest/dependency information after delegating
+replacement to the existing native loader. Archive documents must be native schema 1;
+legacy scene v1/v2 remain supported by `loadFromString()`, not inside archives.
+
+The browser media type is `application/vnd.editx+zip`.
+Use `.editx` for archives and `.editx.json` for raw native JSON.
+
+## Version 1 layout
+
+```text
+manifest.json
+document.json
+assets/manifest.json
+fonts/manifest.json
+previews/preview.png     (optional)
+```
+
+The three manifests are required even when dependency lists are empty.
+`document.json` is the authoritative, unchanged `editx-document` schema-1 envelope.
+Preview/dependency metadata cannot replace it.
+
+```json
+{
+  "kind": "editx-archive",
+  "schemaVersion": 1,
+  "selfContained": false,
+  "members": {
+    "document": "document.json",
+    "assetsManifest": "assets/manifest.json",
+    "fontsManifest": "fonts/manifest.json",
+    "preview": "previews/preview.png"
+  }
+}
+```
+
+Omit `members.preview` when no preview is included. Other member names, undeclared
+files, embedded binaries, and directory entries are not part of this strict version-1
+profile. `assets/` and `fonts/` reserve future resource namespaces.
+
+The writer uses fixed entry order, timestamps, attributes, and compression settings:
+DEFLATE for compact UTF-8 JSON and STORE for PNG. Repeated writes of the same JSON
+and preview bytes are deterministic; independent JSON producers need not use the
+same object-key order.
+
+## External dependencies
+
+`assets/manifest.json` has kind `editx-assets-manifest`, schema version 1, and a
+`dependencies` array. Known image sources are discovered from `image/src` and
+`fill/image/src` and classified as:
+
+- `external-url`: an external URL.
+- `inline-data`: inline data already carried by the document JSON.
+- `blob-url`: an ephemeral browser object URL.
+- `relative-or-opaque`: a reference whose resolution belongs to the host.
+- `unresolved`: an empty or missing source.
+
+Repeated references are coalesced with all block/property locations retained.
+Inline payloads are not duplicated into dependency manifests.
+
+`fonts/manifest.json` has kind `editx-fonts-manifest`, schema version 1, and a
+`dependencies` array. It reports persisted `text/fontFamily`, rich-text run families,
+and implicit fallback locations. Every font has `resolution: "unresolved"` in B5.
+An omitted family is represented by `family: null`, not a portability assumption.
+The editor font picker allowlist is not a registry or a guarantee of availability.
+
+Reports are derived from the saved snapshot and validated against that snapshot
+when reading. No URLs are probed and no font/provider lookup happens in the codec.
+Blob URLs may stop working after a reload; relative URLs need the same host context.
+
+## Preview rendering
+
+```ts
+const preview = await engine.document.exportPreview();
+const bytes = engine.document.saveToArchive(
+  preview ? { preview: new Uint8Array(await preview.arrayBuffer()) } : undefined,
+);
+```
+
+The preview is PNG, at most 512 pixels on its longest edge, without upscaling.
+It uses the first direct page of the authored root, not the active page/scene.
+Offscreen rendering does not change navigation, selection, viewport, view filtering,
+history, or document content.
+
+The method returns `null` for page-less documents or renderers without the optional
+preview capability. A capable renderer's resource/render/encoding failures reject
+with `PageExportError`. Supplied previews are checked for PNG signature and byte
+limits; the codec does not decode them.
+
+The example above leaves race policy to its host. The image-editor's
+[project-file APIs](/docs/image-editor/guides/project-files) guard the document and
+engine instance throughout asynchronous preview work and abort stale saves.
+
+## Limits and rejected input
+
+Limits are fixed, exported as `EDITX_ARCHIVE_LIMITS`, and apply to writing and reading:
+
+| Limit | Maximum |
+|---|---|
+| Compressed archive | 32 MiB |
+| Aggregate uncompressed data | 64 MiB |
+| Compressed/uncompressed entry | 32 MiB each |
+| Native document JSON | 16 MiB |
+| Each manifest | 1 MiB |
+| Entry count | 64 |
+| Entry path | 240 UTF-8 bytes |
+
+Readers preflight central/local ZIP structure before inflation, enforce bounded
+inflation, and verify actual sizes and CRC. Unsafe paths are rejected, not repaired.
+Traversal, absolute paths, backslashes, control characters, duplicate/colliding
+paths, encrypted files, ZIP64, multi-disk archives, unsupported compression, and
+non-regular entries are rejected. Only STORE and DEFLATE members are supported.
+The strict v1 ZIP profile also rejects data descriptors, ZIP comments, directory
+entries, and general-purpose flags other than UTF-8. Arbitrary ZIP repackaging
+may therefore produce an unsupported container; use the archive helpers to write it.
+
+Malformed containers, manifests, embedded documents, previews, integrity failures,
+and limits use `EditxArchiveError` with a typed `code`, optional `entryPath`, optional
+`limit`, and optional `cause`. Embedded `DocumentValidationError` can be inspected
+through `cause` when `code` is `INVALID_DOCUMENT`.
+
+Invalid archive input leaves document, identity, history/redo, selection, navigation,
+and rendering untouched. After validated replacement begins, existing renderer/setup
+failure caveats still apply: rejection does not guarantee rollback.
+Successful loads clear history and use the existing `load` document-change origin.

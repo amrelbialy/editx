@@ -20,6 +20,7 @@ import { useTools } from "./hooks/use-tools";
 import { useZoom } from "./hooks/use-zoom";
 import type { ImageEditorProps } from "./image-editor.types";
 import { useImageEditorStore } from "./store/image-editor-store";
+import { createEditorHandle } from "./utils/create-editor-handle";
 import { deepMerge } from "./utils/deep-merge";
 import { extractFilename } from "./utils/extract-filename";
 
@@ -89,8 +90,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [pendingCloseReason, setPendingCloseReason] = useState<CloseReason>("close-button");
+  const [projectOperations, setProjectOperations] = useState(0);
 
   // --- useCallback ---
+  const setProjectBusy = useCallback((busy: boolean) => {
+    setProjectOperations((count) => count + (busy ? 1 : -1));
+  }, []);
   const openExportDialog = useCallback(() => setExportDialogOpen(true), []);
 
   const unsavedChangesWarning = userConfig?.ui?.unsavedChangesWarning ?? true;
@@ -138,7 +143,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
 
   // --- useEffect ---
   useShortcuts({
-    enabled: !isLoading && !error,
+    enabled: !isLoading && !error && projectOperations === 0,
     onToolSelect: tools.handleSidebarToolSelect,
     onUndo: history.handleUndo,
     onRedo: history.handleRedo,
@@ -177,12 +182,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
     const ce = engineRef.current;
     if (!ce || !engine || !onReady || onReadyFiredRef.current) return;
     onReadyFiredRef.current = true;
-    onReady({
-      engine: ce,
-      saveScene: () => ce.scene.saveToString(),
-      loadScene: (json: string) => ce.scene.loadFromString(json),
-    });
-  }, [engine, engineRef, onReady]);
+    onReady(createEditorHandle(ce, engineRef, setProjectBusy));
+  }, [engine, engineRef, onReady, setProjectBusy]);
 
   // Open the editor on the configured default tool (once, after load).
   useEffect(() => {
@@ -216,6 +217,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = (props) => {
           slots={slots}
           onExport={openExportDialog}
           isExporting={isExporting}
+          projectBusy={projectOperations > 0}
+          onProjectBusyChange={setProjectBusy}
           onClose={onClose ? handleCloseButton : undefined}
         />
 

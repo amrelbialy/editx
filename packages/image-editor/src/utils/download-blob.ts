@@ -3,6 +3,7 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/webp": "webp",
   "application/zip": "zip",
+  "application/vnd.editx+zip": "editx",
 };
 
 /** Derive a file extension from a blob's MIME type, defaulting to `png`. */

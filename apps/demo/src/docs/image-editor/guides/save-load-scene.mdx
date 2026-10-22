@@ -27,6 +27,10 @@ This is not an asset-bundled `.editx` archive. See
 [Document API](/docs/engine/document-api) for the schema, resource limitations,
 legacy compatibility, and load-error behavior.
 
+For downloadable editable files, use `handle.saveProject()` / `loadProject()` or
+enable `ui.projectFiles`. See [Editable Project Files](/docs/image-editor/guides/project-files);
+B5 archives include dependency manifests and a preview but do not embed images/fonts.
+
 ### Existing scene integrations
 
 The following example and live demo intentionally exercise the compatible legacy

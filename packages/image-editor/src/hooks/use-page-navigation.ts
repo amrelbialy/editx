@@ -3,6 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { PageNavigationLayout } from "../config/ui-config.types";
 import { useTranslation } from "../i18n/i18n-context";
 import { useImageEditorStore } from "../store/image-editor-store";
+import {
+  synchronizeDimensions,
+  synchronizePageImage,
+  synchronizePageTools,
+} from "../utils/page-editor-state";
 import { useNotifications } from "./use-notifications";
 
 function readPages(engine: EditxEngine) {
@@ -16,44 +21,6 @@ function readPages(engine: EditxEngine) {
     activePageId: engine.scene.getCurrentPage(),
     selectedPageId: pages.find(({ id }) => selected.includes(id))?.id ?? null,
   };
-}
-
-function synchronizeDimensions(engine: EditxEngine): void {
-  const pageId = engine.scene.getCurrentPage();
-  if (pageId === null) return;
-  const page = engine.scene.getPageProperties(pageId);
-  const zoom = engine.editor.getZoom();
-  useImageEditorStore.getState().setShownImageDimensions({
-    width: page.width * zoom,
-    height: page.height * zoom,
-    scale: zoom,
-  });
-}
-
-function synchronizePageImage(engine: EditxEngine): void {
-  const pageId = engine.scene.getCurrentPage();
-  const store = useImageEditorStore.getState();
-  store.setEditableBlockId(pageId);
-  if (pageId === null) return;
-
-  const page = engine.scene.getPageProperties(pageId);
-  const original = engine.block.getPageImageOriginalDimensions(pageId);
-  store.setOriginalImage({
-    src: engine.block.getPageImageSrc(pageId),
-    width: original.width > 0 ? original.width : page.width,
-    height: original.height > 0 ? original.height : page.height,
-    name: page.name,
-  });
-  synchronizeDimensions(engine);
-}
-
-function synchronizePageTools(engine: EditxEngine): void {
-  const store = useImageEditorStore.getState();
-  store.setEditingTextBlockId(null);
-  store.setTextSelectionRange(null);
-  store.setActiveTool("select");
-  store.setCropPreset("free");
-  synchronizePageImage(engine);
 }
 
 export function usePageNavigation(engine: EditxEngine, layout: PageNavigationLayout = "vertical") {

@@ -1,9 +1,17 @@
+import {
+  createEditxArchive,
+  type EditxArchiveInfoV1,
+  readEditxArchive,
+  type SaveEditxArchiveOptions,
+} from "./archive";
+import { archiveInfo } from "./archive/document-archive";
 import type { DocumentChangedCallback } from "./document-change";
 import { getDocumentChanges } from "./document-change-tracker";
 import { cloneDocumentMetadata } from "./document-json";
 import { loadDocumentFromString, saveDocumentToString } from "./document-serialization";
 import { getDocumentRootSceneId, getDocumentState } from "./document-state";
 import type { DocumentMetadata } from "./document-types";
+import { exportDocumentPreview } from "./editx-engine-export";
 import type { EngineCore } from "./engine-core";
 
 export type {
@@ -51,6 +59,13 @@ export class DocumentAPI {
     return saveDocumentToString(this.#engine);
   }
 
+  saveToArchive(options?: SaveEditxArchiveOptions): Uint8Array {
+    return createEditxArchive({
+      documentJson: this.saveToString(),
+      ...(options?.preview !== undefined ? { preview: options.preview } : {}),
+    });
+  }
+
   /**
    * Load either an EditxDocumentV1 envelope or a legacy raw scene v1/v2 payload.
    *
@@ -59,5 +74,15 @@ export class DocumentAPI {
    */
   async loadFromString(json: string): Promise<void> {
     return loadDocumentFromString(this.#engine, json);
+  }
+
+  async loadFromArchive(bytes: Uint8Array): Promise<EditxArchiveInfoV1> {
+    const result = readEditxArchive(bytes);
+    await this.loadFromString(result.documentJson);
+    return archiveInfo(result);
+  }
+
+  async exportPreview(): Promise<Blob | null> {
+    return exportDocumentPreview(this.#engine);
   }
 }

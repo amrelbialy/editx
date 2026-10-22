@@ -5,6 +5,7 @@ import type { UseHistoryResult } from "../../hooks/use-history";
 import type { useTools } from "../../hooks/use-tools";
 import type { useZoom } from "../../hooks/use-zoom";
 import { CanvasPane } from "./canvas-pane";
+import { ProjectFileActions } from "./project-file-actions.component";
 import { SidePanel } from "./side-panel";
 import { ToolNav } from "./tool-nav";
 import { Topbar } from "./topbar";
@@ -18,12 +19,25 @@ interface EditorWorkspaceProps {
   slots?: EditorSlots;
   onExport: () => void;
   isExporting: boolean;
+  projectBusy: boolean;
+  onProjectBusyChange: (busy: boolean) => void;
   onClose?: () => void;
 }
 
 export const EditorWorkspace: React.FC<EditorWorkspaceProps> = (props) => {
-  const { engineState, tools, zoom, history, config, slots, onExport, isExporting, onClose } =
-    props;
+  const {
+    engineState,
+    tools,
+    zoom,
+    history,
+    config,
+    slots,
+    onExport,
+    isExporting,
+    projectBusy,
+    onProjectBusyChange,
+    onClose,
+  } = props;
   const { engine, containerRef, selectedShapeId, handleDragOver, handleDrop, handlePaste } =
     engineState;
   const activeCustomTool = config?.customTools?.find((tool) => tool.id === tools.activeTool);
@@ -33,14 +47,14 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = (props) => {
       className="flex flex-col h-full w-full"
       role="application"
       onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onPaste={handlePaste}
+      onDrop={projectBusy ? undefined : handleDrop}
+      onPaste={projectBusy ? undefined : handlePaste}
     >
       <Topbar
         onUndo={history.handleUndo}
         onRedo={history.handleRedo}
-        canUndo={history.canUndo}
-        canRedo={history.canRedo}
+        canUndo={history.canUndo && !projectBusy}
+        canRedo={history.canRedo && !projectBusy}
         onZoomIn={zoom.handleZoomIn}
         onZoomOut={zoom.handleZoomOut}
         onAutoFitPage={zoom.handleAutoFitPage}
@@ -51,10 +65,24 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = (props) => {
         zoomLabel={zoom.zoomLabel}
         onExport={onExport}
         isExporting={isExporting}
+        exportDisabled={projectBusy}
+        projectActions={
+          config?.ui?.projectFiles ? (
+            <ProjectFileActions
+              engineRef={engineState.engineRef}
+              filename={config.export?.filename}
+              disabled={isExporting || projectBusy}
+              onBusyChange={onProjectBusyChange}
+            />
+          ) : undefined
+        }
         topbarRight={slots?.topbarRight}
         onClose={onClose}
       />
-      <div className="flex flex-col-reverse @xl/editor:flex-row flex-1 overflow-hidden">
+      <div
+        className="flex flex-col-reverse @xl/editor:flex-row flex-1 overflow-hidden"
+        inert={projectBusy}
+      >
         <ToolNav
           activeTool={tools.activeToolId}
           onToolSelect={tools.handleSidebarToolSelect}

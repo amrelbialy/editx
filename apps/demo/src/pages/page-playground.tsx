@@ -90,6 +90,10 @@ export function PagePlayground() {
           Choose a post in the side list to bring it into view. The side controls remain SDK
           diagnostics.
         </p>
+        <p className="text-sm text-muted-foreground" role="note">
+          Save Project downloads an editable .editx archive with a PNG preview. Open Project reopens
+          it. Images and fonts are referenced, not embedded; archives are not yet self-contained.
+        </p>
         <SegmentedControl
           ariaLabel="Canvas page layout"
           className="w-64"

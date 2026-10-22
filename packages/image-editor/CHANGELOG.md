@@ -31,6 +31,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **image-editor:** add opt-in `ui.projectFiles` Open/Save Project controls and
+	`EditorHandle.saveProject()` / `loadProject()` for editable `.editx` archives.
+	Generate authored-root PNG previews, validate before replacement, confirm unsaved
+	work, reject stale async saves, and distinguish project files from rendered exports.
+	Expose the same handle through the custom element's `onReady` and `ready` event.
+	Report unresolved dependencies without claiming embedded assets/fonts or offline portability.
 * **image-editor:** add opt-in `ui.pageNavigation` with a continuous full-size page canvas,
 	vertical by default or horizontal via `ui.pageLayout`, with numbered on-canvas page titles,
 	hover highlights and outline-only page selection instead of a thumbnail strip. Preserve

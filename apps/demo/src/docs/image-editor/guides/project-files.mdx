@@ -1,0 +1,105 @@
+# Editable project files
+
+Use `.editx` files to download and reopen editable projects. They contain native
+JSON, dependency manifests, and a PNG preview of the authored root's first page.
+They are separate from rendered PNG/JPEG/WebP files and multi-page image ZIPs.
+
+**Images and fonts are referenced, not embedded.** These archives are not yet
+self-contained or guaranteed to work offline. Blob URLs are particularly temporary.
+Asset/font embedding is deferred to D8.
+
+## Enable built-in controls
+
+```tsx
+<ImageEditor
+  src="/photo.jpg"
+  config={{ ui: { projectFiles: true } }}
+/>
+```
+
+`ui.projectFiles` defaults to `false`, preserving existing editor chrome.
+When enabled, the topbar includes **Open Project** and **Save Project**:
+
+- Save downloads an `application/vnd.editx+zip` Blob with an `.editx` extension.
+- Open reads and validates the complete archive before replacing anything.
+- Open always confirms existing unsaved changes, independently of the close-warning
+  setting. Canceling or rejecting invalid input retains the current artwork.
+- Errors use the editor's notifications; failed/stale saves do not mark work clean.
+- A successful unchanged download marks clean. A successful open marks clean only
+  when no additional persisted changes happened during loading.
+
+The three-post [SDK playground](/playground/pages) enables these controls.
+Export Image remains the separate image/ordered-image-ZIP action.
+
+## Use the imperative handle
+
+```ts
+import type { EditorHandle } from "@editx/image-editor";
+
+let handle: EditorHandle;
+
+const onReady = (ready: EditorHandle) => {
+  handle = ready;
+};
+
+// Upload/persist this Blob yourself; report storage failures in your host.
+const project = await handle.saveProject();
+await uploadProject(project);
+
+// File extends Blob; Uint8Array is also accepted.
+const info = await handle.loadProject(selectedFile);
+console.info(info.assets, info.fonts);
+```
+
+`saveProject()` captures native JSON once, generates a maximum-512-pixel PNG preview,
+and checks document content/identity and engine instance after asynchronous steps.
+Any content change, replacement, or stale engine aborts the operation.
+Navigation alone does not invalidate it. A renderer that cannot preview a document
+with pages causes rejection rather than a preview of the wrong active page.
+Page-less documents may omit the preview.
+
+Creating a Blob is not a host storage acknowledgment: programmatic `saveProject()`
+does not mark the editor clean. The host owns upload ordering, errors, and its saved
+baseline. Programmatic loading is explicit and does not show the built-in discard
+confirmation; obtain permission before calling it when needed.
+
+`loadProject()` validates before live replacement, clears undo history after
+successful loading, and returns manifest/dependency information. Invalid archives
+leave the current document and redo intact. Renderer/resource failures after valid
+replacement may reject without rollback, as with native JSON loading.
+
+While project operations are pending, the editor disables document controls,
+drop/paste, and keyboard shortcuts. This includes handle calls and overlapping
+operations. Host code must coordinate its own direct engine commands with pending
+project loads.
+
+## React, vanilla, and custom elements
+
+React and `createImageEditor()` expose the same handle through `onReady`.
+The web component also supports an `onReady` property and a bubbling `ready` event:
+
+```ts
+element.onReady = (handle) => {
+  // Keep the handle for handle.saveProject() / handle.loadProject(file).
+};
+
+element.addEventListener("ready", (event) => {
+  const { handle } = event.detail;
+});
+```
+
+Register readiness handlers before mounting/loading the element. Readiness is not
+replayed when a callback is attached after the editor is already ready.
+
+## Compatibility
+
+- `src` remains an image source, not an archive source.
+- `onSave`, `events.onBeforeSave`, and the element's `save` event remain
+  rendered-export-only. They do not receive `.editx` project bytes.
+- `saveScene()`/`loadScene()` remain legacy scene JSON conveniences.
+- `handle.engine.document.saveToString()`/`loadFromString()` remain the native JSON
+  API for databases, drafts, and autosave.
+- Engine-only integrations can create/read bytes without React, DOM, or rendering.
+
+See [Native archive format](/docs/engine/document-archive) for exact layout, fixed
+limits, typed errors, dependency classifications, and preview behavior.

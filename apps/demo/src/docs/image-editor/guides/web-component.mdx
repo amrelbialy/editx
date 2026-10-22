@@ -33,6 +33,12 @@ el.config = { tools: ["crop", "adjust"] };
 el.addEventListener("save", (e) => upload(e.detail.blob));
 ```
 
+Attach `el.onReady = (handle) => { ... }` or listen for the bubbling `ready` event
+with `event.detail.handle` before readiness. That handle includes `saveProject()`
+and `loadProject(fileOrBytes)`. Enable `el.config.ui.projectFiles` for built-in
+`.editx` Open/Save controls; project files do not use the rendered-image `save` event.
+See [Editable project files](/docs/image-editor/guides/project-files).
+
 The element uses **light DOM** (not Shadow DOM) so Radix portals and global
 Tailwind styles keep working. It mounts on connect and tears down automatically
 when removed from the DOM.

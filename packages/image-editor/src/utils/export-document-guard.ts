@@ -4,8 +4,7 @@ function documentContent(engine: EditxEngine): string {
   return engine.document.saveToString();
 }
 
-export function watchExportDocument(engine: EditxEngine) {
-  const content = documentContent(engine);
+export function watchExportDocument(engine: EditxEngine, content = documentContent(engine)) {
   let changed = false;
   const invalidate = () => {
     changed = true;

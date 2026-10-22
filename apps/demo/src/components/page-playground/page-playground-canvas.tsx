@@ -27,6 +27,7 @@ export function PagePlaygroundCanvas(props: Props) {
         showTitle: false,
         unsavedChangesWarning: false,
         pageNavigation: true,
+        projectFiles: true,
         pageLayout: layout,
       },
     }),

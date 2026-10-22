@@ -203,6 +203,13 @@ export class KonvaRendererAdapter implements RendererAdapter {
     return exportPage(pageId, this.resolveBlock, options);
   }
 
+  async exportDocumentPreview(
+    pageId: number,
+    options: Readonly<Required<ExportOptions>>,
+  ): Promise<Blob> {
+    return this.exportPage(pageId, options);
+  }
+
   dispose(): void {
     this.#scene.dispose();
   }

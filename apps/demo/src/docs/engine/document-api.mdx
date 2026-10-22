@@ -216,9 +216,9 @@ The current native representation is JSON, conventionally `.editx.json`.
 It references external images/fonts rather than packaging all dependencies.
 It does not promise offline portability.
 
-The planned `.editx` file is a ZIP project container; archive support is not part
-of this API increment. The editor's existing multi-page ZIP export contains
-rendered images, not an editable project.
+The [`.editx` archive API](/docs/engine/document-archive) packages this JSON with
+dependency manifests and an optional PNG preview. Assets/fonts are not embedded yet.
+The editor's multi-page image ZIP contains rendered images, not an editable project.
 
 Keep these boundaries distinct:
 

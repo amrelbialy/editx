@@ -1,4 +1,4 @@
-import type { EditxEngine } from "@editx/engine";
+import type { EditxArchiveInfoV1, EditxEngine } from "@editx/engine";
 import type {
   CloseReason,
   EditorEventCallbacks,
@@ -15,6 +15,10 @@ export interface EditorHandle {
   saveScene(): string;
   /** Restore a scene previously produced by saveScene. */
   loadScene(json: string): Promise<void>;
+  /** Create an editable `.editx` archive Blob, including an authored-root PNG preview. */
+  saveProject(): Promise<Blob>;
+  /** Open a validated `.editx` archive. File is accepted because it extends Blob. */
+  loadProject(source: Blob | Uint8Array): Promise<EditxArchiveInfoV1>;
   /** The underlying engine instance, for advanced/headless use. */
   engine: EditxEngine;
 }

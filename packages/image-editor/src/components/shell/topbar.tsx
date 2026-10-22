@@ -24,6 +24,8 @@ interface TopbarProps {
   onExport?: () => void;
   /** Whether an export is currently in progress. */
   isExporting?: boolean;
+  exportDisabled?: boolean;
+  projectActions?: React.ReactNode;
   /** Slot: extra content rendered on the right side before export. */
   topbarRight?: React.ReactNode;
   /** Called when the close/back button is clicked. */
@@ -45,6 +47,8 @@ export const Topbar: React.FC<TopbarProps> = ({
   zoomLabel = "Auto",
   onExport,
   isExporting = false,
+  exportDisabled = false,
+  projectActions,
   topbarRight,
   onClose,
 }) => {
@@ -148,12 +152,13 @@ export const Topbar: React.FC<TopbarProps> = ({
         </div>
         <Separator orientation="vertical" className="mx-0.5 h-5 @5xl/editor:mx-1 @5xl/editor:h-6" />
         {topbarRight}
+        {projectActions}
         <Button
           variant="default"
           size="sm"
           className="h-7 text-xs px-2 @sm/editor:px-2.5 @5xl/editor:h-8 @5xl/editor:px-3"
           onClick={onExport}
-          disabled={isExporting}
+          disabled={isExporting || exportDisabled}
           aria-busy={isExporting}
           aria-label={isExporting ? t("topbar.exporting") : t("topbar.export")}
         >

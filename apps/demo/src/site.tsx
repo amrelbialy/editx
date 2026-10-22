@@ -9,6 +9,7 @@ import EngineBlockApi from "./docs/engine/block-api.mdx";
 import EngineBlocks from "./docs/engine/blocks.mdx";
 import EngineCommands from "./docs/engine/commands.mdx";
 import EngineDocumentApi from "./docs/engine/document-api.mdx";
+import EngineDocumentArchive from "./docs/engine/document-archive.mdx";
 import EngineDocumentEvents from "./docs/engine/document-events.mdx";
 import EngineEditorApi from "./docs/engine/editor-api.mdx";
 import EngineApi from "./docs/engine/engine-api.mdx";
@@ -34,6 +35,7 @@ import IeGuideImageUploadLimits from "./docs/image-editor/guides/image-upload-li
 import IeGuideInjectSlots from "./docs/image-editor/guides/inject-slots.mdx";
 import IeGuideLocalize from "./docs/image-editor/guides/localize.mdx";
 import IeGuideOpenInModal from "./docs/image-editor/guides/open-in-modal.mdx";
+import IeGuideProjectFiles from "./docs/image-editor/guides/project-files.mdx";
 import IeGuideSaveLoadScene from "./docs/image-editor/guides/save-load-scene.mdx";
 import IeGuideTrackToolChanges from "./docs/image-editor/guides/track-tool-changes.mdx";
 import IeGuideVanillaMount from "./docs/image-editor/guides/vanilla-mount.mdx";
@@ -66,6 +68,7 @@ const DOC_ROUTES: { path: string; component: ComponentType }[] = [
   { path: "/docs/image-editor/guides/custom-theme", component: IeGuideCustomTheme },
   { path: "/docs/image-editor/guides/localize", component: IeGuideLocalize },
   { path: "/docs/image-editor/guides/export-and-save", component: IeGuideExportAndSave },
+  { path: "/docs/image-editor/guides/project-files", component: IeGuideProjectFiles },
   { path: "/docs/image-editor/guides/track-tool-changes", component: IeGuideTrackToolChanges },
   { path: "/docs/image-editor/guides/save-load-scene", component: IeGuideSaveLoadScene },
   { path: "/docs/image-editor/guides/open-in-modal", component: IeGuideOpenInModal },
@@ -76,6 +79,7 @@ const DOC_ROUTES: { path: string; component: ComponentType }[] = [
   { path: "/docs/engine/commands", component: EngineCommands },
   { path: "/docs/engine/engine-api", component: EngineApi },
   { path: "/docs/engine/document-api", component: EngineDocumentApi },
+  { path: "/docs/engine/document-archive", component: EngineDocumentArchive },
   { path: "/docs/engine/document-events", component: EngineDocumentEvents },
   { path: "/docs/engine/block-api", component: EngineBlockApi },
   { path: "/docs/engine/graphics-api", component: EngineGraphicsApi },

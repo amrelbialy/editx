@@ -45,6 +45,10 @@ describe("downloadBlob", () => {
     expect(anchor.download).toBe("document.zip");
   });
 
+  it("downloads native project archives as editx rather than zip", () => {
+    downloadBlob(new Blob(["project"], { type: "application/vnd.editx+zip" }), "studio-posts");
+    expect(anchor.download).toBe("studio-posts.editx");
+  });
   it("appends the JSON extension to an .editx base name exactly once", () => {
     downloadBlob(new Blob(["{}"], { type: "application/json" }), "studio-posts.editx");
     expect(anchor.download).toBe("studio-posts.editx.json");

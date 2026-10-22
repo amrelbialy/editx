@@ -4,7 +4,7 @@ import type {
   EditorSlots,
   ImageEditorConfig,
 } from "./config/config.types";
-import type { ImageSource } from "./image-editor";
+import type { EditorHandle, ImageSource } from "./image-editor";
 import type { ImageValidationOptions } from "./utils/validate-image";
 import {
   type CreateImageEditorOptions,
@@ -40,6 +40,7 @@ export class EditxImageEditorElement extends HTMLElement {
   private _validation?: ImageValidationOptions;
   private _onSave?: (blob: Blob) => void;
   private _onClose?: (reason?: CloseReason, hasUnsavedChanges?: boolean) => void;
+  private _onReady?: (handle: EditorHandle) => void;
 
   connectedCallback(): void {
     if (this.style.display === "") this.style.display = "block";
@@ -105,6 +106,10 @@ export class EditxImageEditorElement extends HTMLElement {
     this._onClose = value;
     this.sync();
   }
+  set onReady(value: ((handle: EditorHandle) => void) | undefined) {
+    this._onReady = value;
+    this.sync();
+  }
 
   // ── Internals ──
 
@@ -120,6 +125,10 @@ export class EditxImageEditorElement extends HTMLElement {
       slots: this._slots,
       events: this._events,
       validation: this._validation,
+      onReady: (handle) => {
+        this._onReady?.(handle);
+        this.dispatchEvent(new CustomEvent("ready", { detail: { handle }, bubbles: true }));
+      },
       onSave: async (blob) => {
         await this._onSave?.(blob);
         this.dispatchEvent(new CustomEvent("save", { detail: { blob }, bubbles: true }));

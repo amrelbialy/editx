@@ -20,7 +20,12 @@ describe("@editx/engine public API", () => {
     expect(engine).toHaveProperty("BlockAPI");
     expect(engine).toHaveProperty("DocumentAPI");
     expect(engine).toHaveProperty("DocumentValidationError");
+    expect(engine).toHaveProperty("EditxArchiveError");
     expect(engine).toHaveProperty("EventAPI");
+    expect(engine).toHaveProperty("createEditxArchive");
+    expect(engine).toHaveProperty("readEditxArchive");
+    expect(engine.EDITX_ARCHIVE_KIND).toBe("editx-archive");
+    expect(engine.EDITX_ARCHIVE_SCHEMA_VERSION).toBe(1);
     expect(engine.EDITX_DOCUMENT_KIND).toBe("editx-document");
     expect(engine.EDITX_DOCUMENT_SCHEMA_VERSION).toBe(1);
   });

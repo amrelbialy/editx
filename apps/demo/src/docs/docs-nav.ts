@@ -56,6 +56,7 @@ export const DOCS_NAV: DocGroup[] = [
     description: "Control export output, transform the result, and react to editor events.",
     links: [
       { label: "Export & Save", href: "/docs/image-editor/guides/export-and-save" },
+      { label: "Editable Project Files", href: "/docs/image-editor/guides/project-files" },
       { label: "React to Editor Events", href: "/docs/image-editor/guides/track-tool-changes" },
     ],
   },
@@ -79,6 +80,7 @@ export const DOCS_NAV: DocGroup[] = [
       { label: "Engine API", href: "/docs/engine/engine-api" },
       { label: "Document API", href: "/docs/engine/document-api" },
       { label: "Document events", href: "/docs/engine/document-events" },
+      { label: "Native .editx archives", href: "/docs/engine/document-archive" },
       { label: "Block API", href: "/docs/engine/block-api" },
       { label: "Graphics API", href: "/docs/engine/graphics-api" },
       { label: "Text API", href: "/docs/engine/text-api" },

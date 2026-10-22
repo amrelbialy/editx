@@ -114,6 +114,11 @@ export interface RendererAdapter {
    * Optional for compatibility; unsupported adapters reject through the engine.
    */
   exportPage?(pageId: number, options: Readonly<Required<ExportOptions>>): Promise<Blob>;
+  /**
+   * Export an authored-root preview without consulting or mutating active navigation.
+   * Optional for headless and third-party renderers.
+   */
+  exportDocumentPreview?(pageId: number, options: Readonly<Required<ExportOptions>>): Promise<Blob>;
   /** Render one block subtree into a transparent, centered PNG. */
   exportBlock(blockId: number, options: BlockExportOptions): Promise<Blob>;
 

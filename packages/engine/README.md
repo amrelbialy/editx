@@ -123,11 +123,35 @@ Legacy identity is generated only when replacement begins, after migration succe
 Deprecated scene saves continue writing v2; canonical saves always write native v1.
 
 Save JSON as `.editx.json`. It references external resources and is not an
-offline-portable archive. `.editx` ZIP project packaging is planned separately;
+offline-portable archive. `.editx` ZIP project packaging is available separately;
 rendered multi-page ZIP output is not a native project. Native document codecs
 preserve Editx semantics; media importers insert content, structured import/export
 converts foreign designs, and render exporters produce final images.
 See the [Document API reference](https://editx-sdk.vercel.app/docs/engine/document-api).
+
+### Native project archives
+
+```ts
+const bytes = engine.document.saveToArchive({ preview: pngBytes });
+const info = await engine.document.loadFromArchive(bytes);
+```
+
+Engine-root exports `createEditxArchive()` and `readEditxArchive()` also work on
+native JSON snapshots without an engine or renderer. The strict version-1 ZIP layout
+contains `manifest.json`, `document.json`, `assets/manifest.json`, `fonts/manifest.json`,
+and an optional `previews/preview.png`. All archives declare `selfContained: false`;
+image/font dependencies are reported, not embedded or resolved. Offline portability
+remains future D8 work. Use `.editx` and `application/vnd.editx+zip`.
+
+Readers enforce compressed/inflated size, entry-count/path limits, structural
+consistency and CRC before loading; malformed archives throw `EditxArchiveError`.
+Native document validation precedes all live replacement. Raw/legacy JSON APIs and
+rendered-image ZIP exports remain separate and compatible.
+`document.exportPreview()` produces a maximum-512-pixel PNG from the authored root's
+first direct page without changing navigation. Headless/unsupported renderers and
+page-less documents return `null`; codec callers can supply PNG bytes instead.
+See [Native archives](https://editx-sdk.vercel.app/docs/engine/document-archive) for
+the wire contract, limits, errors, and dependency classifications.
 
 ### Document change events
 
