@@ -163,6 +163,7 @@ export {
   textRunStyleToCssPatch,
   VISIBLE,
 } from "./block";
+export * from "./document-api";
 export type {
   BlockExportOptions,
   CropEditTarget,

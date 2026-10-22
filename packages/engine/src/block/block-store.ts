@@ -7,76 +7,53 @@ import type {
   PropertyValue,
   ShapeType,
 } from "./block.types";
-import {
-  getBlockDefaults,
-  getEffectDefaults,
-  getFillDefaults,
-  getShapeDefaults,
-} from "./block-defaults";
 import { BlockHierarchy } from "./block-hierarchy";
 import { BlockProperties } from "./block-properties";
+import { BlockReferences } from "./block-references";
 import { BlockSnapshot } from "./block-snapshot";
-import { createBlockData, destroyBlock } from "./block-store-crud";
+import { BlockCreation, destroyBlock } from "./block-store-crud";
 
 export class BlockStore {
   #blocks = new Map<number, BlockData>();
-  #nextId = 1;
+  #observers = new Set<(id: number) => void>();
+  #changing = (id: number): void => {
+    for (const observer of this.#observers) observer(id);
+  };
+  #creation = new BlockCreation(this.#blocks, this.#changing);
+  #references = new BlockReferences(this.#blocks, this.#changing);
 
   #hierarchy: BlockHierarchy;
   #properties: BlockProperties;
   #snapshots: BlockSnapshot;
 
   constructor() {
-    this.#hierarchy = new BlockHierarchy(this.#blocks);
-    this.#properties = new BlockProperties(this.#blocks);
+    this.#hierarchy = new BlockHierarchy(this.#blocks, this.#changing);
+    this.#properties = new BlockProperties(this.#blocks, this.#changing);
     this.#snapshots = new BlockSnapshot(this.#blocks);
   }
 
-  // --- CRUD ---
+  /** @internal — observe persisted writes before their records change. */
+  _observeMutations(observer: (id: number) => void): () => void {
+    this.#observers.add(observer);
+    return () => {
+      this.#observers.delete(observer);
+    };
+  }
 
   create(type: BlockType, kind = ""): number {
-    const id = this.#nextId++;
-    this.#blocks.set(id, createBlockData(id, type, kind, `${type}-${id}`, getBlockDefaults(type)));
-    return id;
+    return this.#creation.create(type, kind);
   }
 
   createEffect(effectType: EffectType): number {
-    const id = this.#nextId++;
-    this.#blocks.set(
-      id,
-      createBlockData(
-        id,
-        "effect",
-        effectType,
-        `effect-${effectType}-${id}`,
-        getEffectDefaults(effectType),
-      ),
-    );
-    return id;
+    return this.#creation.createEffect(effectType);
   }
 
   createShape(shapeType: ShapeType): number {
-    const id = this.#nextId++;
-    this.#blocks.set(
-      id,
-      createBlockData(
-        id,
-        "shape",
-        shapeType,
-        `shape-${shapeType}-${id}`,
-        getShapeDefaults(shapeType),
-      ),
-    );
-    return id;
+    return this.#creation.createShape(shapeType);
   }
 
   createFill(fillType: FillType): number {
-    const id = this.#nextId++;
-    this.#blocks.set(
-      id,
-      createBlockData(id, "fill", fillType, `fill-${fillType}-${id}`, getFillDefaults(fillType)),
-    );
-    return id;
+    return this.#creation.createFill(fillType);
   }
 
   get(id: number): BlockData | undefined {
@@ -88,10 +65,15 @@ export class BlockStore {
   }
 
   destroy(id: number): void {
-    destroyBlock(this.#blocks, this.#hierarchy, id, (childId) => this.destroy(childId));
+    this.#changing(id);
+    destroyBlock(
+      this.#blocks,
+      this.#hierarchy,
+      id,
+      (childId) => this.destroy(childId),
+      this.#changing,
+    );
   }
-
-  // --- Type / Kind / Name ---
 
   getType(id: number): BlockType | undefined {
     return this.#blocks.get(id)?.type;
@@ -103,11 +85,13 @@ export class BlockStore {
 
   setKind(id: number, kind: string): void {
     const block = this.#blocks.get(id);
+    if (block) this.#changing(id);
     if (block) block.kind = kind;
   }
 
   setName(id: number, name: string): void {
     const block = this.#blocks.get(id);
+    if (block) this.#changing(id);
     if (block) block.name = name;
   }
 
@@ -115,22 +99,19 @@ export class BlockStore {
     return this.#blocks.get(id)?.name ?? "";
   }
 
-  // --- Bulk operations ---
-
   getAllBlockIds(): number[] {
     return [...this.#blocks.keys()];
   }
 
   clear(): void {
+    for (const id of this.#blocks.keys()) this.#changing(id);
     this.#blocks.clear();
-    this.#nextId = 1;
+    this.#creation.resetNextId(1);
   }
 
   resetNextId(nextId: number): void {
-    this.#nextId = nextId;
+    this.#creation.resetNextId(nextId);
   }
-
-  // --- Query ---
 
   findByType(type: BlockType): number[] {
     const result: number[] = [];
@@ -177,58 +158,39 @@ export class BlockStore {
   // --- Effects ---
 
   appendEffect(blockId: number, effectId: number): void {
-    const block = this.#blocks.get(blockId);
-    if (!block) return;
-    if (!block.effectIds.includes(effectId)) {
-      block.effectIds.push(effectId);
-    }
+    this.#references.appendEffect(blockId, effectId);
   }
 
   insertEffect(blockId: number, effectId: number, index: number): void {
-    const block = this.#blocks.get(blockId);
-    if (!block) return;
-    if (!block.effectIds.includes(effectId)) {
-      block.effectIds.splice(index, 0, effectId);
-    }
+    this.#references.insertEffect(blockId, effectId, index);
   }
 
   removeEffect(blockId: number, index: number): number | null {
-    const block = this.#blocks.get(blockId);
-    if (!block || index < 0 || index >= block.effectIds.length) return null;
-    const [removed] = block.effectIds.splice(index, 1);
-    return removed;
+    return this.#references.removeEffect(blockId, index);
   }
 
   getEffects(id: number): number[] {
-    return this.#blocks.get(id)?.effectIds.slice() ?? [];
+    return this.#references.getEffects(id);
   }
 
   /** Find the design block that owns this effect block. */
   findEffectOwner(effectId: number): number | null {
-    for (const [id, block] of this.#blocks) {
-      if (block.effectIds.includes(effectId)) return id;
-    }
-    return null;
+    return this.#references.findEffectOwner(effectId);
   }
 
   /** Find the owner of any sub-block (fill, shape, or effect). */
   findSubBlockOwner(subId: number): number | null {
-    for (const [id, block] of this.#blocks) {
-      if (block.fillId === subId || block.shapeId === subId || block.effectIds.includes(subId))
-        return id;
-    }
-    return null;
+    return this.#references.findSubBlockOwner(subId);
   }
 
   // --- Shape sub-block ---
 
   setShape(blockId: number, shapeId: number): void {
-    const block = this.#blocks.get(blockId);
-    if (block) block.shapeId = shapeId;
+    this.#references.setShape(blockId, shapeId);
   }
 
   getShape(blockId: number): number | null {
-    return this.#blocks.get(blockId)?.shapeId ?? null;
+    return this.#references.getShape(blockId);
   }
 
   supportsShape(blockId: number): boolean {
@@ -238,19 +200,16 @@ export class BlockStore {
   // --- Fill sub-block ---
 
   setFill(blockId: number, fillId: number): void {
-    const block = this.#blocks.get(blockId);
-    if (block) block.fillId = fillId;
+    this.#references.setFill(blockId, fillId);
   }
 
   getFill(blockId: number): number | null {
-    return this.#blocks.get(blockId)?.fillId ?? null;
+    return this.#references.getFill(blockId);
   }
 
   supportsFill(blockId: number): boolean {
     return this.#blocks.get(blockId)?.type === "graphic";
   }
-
-  // --- Properties (delegated) ---
 
   setProperty(id: number, key: string, value: PropertyValue): void {
     this.#properties.setProperty(id, key, value);
@@ -280,13 +239,12 @@ export class BlockStore {
     return this.#properties.findAllProperties(id);
   }
 
-  // --- Snapshots (delegated) ---
-
   snapshot(id: number): BlockData | null {
     return this.#snapshots.snapshot(id);
   }
 
   restore(data: BlockData): void {
+    this.#changing(data.id);
     this.#snapshots.restore(data);
   }
 }

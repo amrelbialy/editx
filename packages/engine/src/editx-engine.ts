@@ -2,6 +2,9 @@ import { type ActivePageChangedEvent, ActivePageState } from "./active-page";
 import { BlockAPI } from "./block/block-api";
 import { BlockStore } from "./block/block-store";
 import type { Command } from "./controller/commands";
+import { DocumentAPI } from "./document-api";
+import { disposeDocumentChanges } from "./document-change-tracker";
+import { initializeDocumentState } from "./document-state";
 import { EditorAPI } from "./editor/editor-api";
 import type { BlockExportOptions, ExportOptions, PageThumbnailExportOptions } from "./editor-types";
 import { exportBlock, exportPage, exportScene } from "./editx-engine-export";
@@ -18,6 +21,7 @@ import { clearImageCache } from "./utils/image-loader";
 
 export class EditxEngine implements EngineCore {
   readonly block: BlockAPI;
+  readonly document: DocumentAPI;
   readonly editor: EditorAPI;
   readonly event: EventAPI;
   readonly scene: SceneAPI;
@@ -52,6 +56,8 @@ export class EditxEngine implements EngineCore {
     this.block._setApplyCropRatioHandler((r) => this.editor.applyCropRatio(r));
     this.block._setApplyCropDimensionsHandler((w, h) => this.editor.applyCropDimensions(w, h));
     this.block._setGetCropVisualDimensionsHandler(() => this.editor.getCropVisualDimensions());
+    initializeDocumentState(this);
+    this.document = new DocumentAPI(this);
     this.scene = new SceneAPI(this, this.block);
   }
 
@@ -185,6 +191,7 @@ export class EditxEngine implements EngineCore {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    disposeDocumentChanges(this);
     this.editor._dispose();
     this.#pageThumbnails.dispose();
     this.#renderer?.dispose();

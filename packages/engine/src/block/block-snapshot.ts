@@ -36,22 +36,28 @@ export class BlockSnapshot {
 /** Deep-copy colors, flat string maps, and nested text/gradient arrays. */
 function deepCopyProperties(props: Record<string, PropertyValue>): Record<string, PropertyValue> {
   const copy: Record<string, PropertyValue> = {};
-  for (const key in props) {
-    const v = props[key];
+  for (const [key, v] of Object.entries(props)) {
+    let cloned: PropertyValue;
     if (Array.isArray(v)) {
       // Discriminate on element shape: a GradientStop has `offset`, a TextRun
       // has `text`. Cloning every array as TextRun[] silently corrupted
       // GradientStop[] on snapshot/restore (broke undo/redo + save/load).
       const first = v[0];
       const isGradient = first != null && typeof first === "object" && "offset" in first;
-      copy[key] = isGradient
+      cloned = isGradient
         ? (v as GradientStop[]).map((s) => ({ offset: s.offset, color: s.color }))
         : (v as TextRun[]).map((r) => ({ text: r.text, style: cloneRunStyle(r.style) }));
     } else if (v && typeof v === "object") {
-      copy[key] = { ...v };
+      cloned = { ...v };
     } else {
-      copy[key] = v;
+      cloned = v;
     }
+    Object.defineProperty(copy, key, {
+      value: cloned,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return copy;
 }

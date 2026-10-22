@@ -2,17 +2,35 @@ import { GuideSceneIo } from "../../../components/guide-scene-io";
 
 # Save & Restore Scenes
 
-Serialize the full editing state — every block, its transforms, and the active
-page — to a JSON string, then restore it later. Grab the imperative editor handle
-from the `onReady` prop.
+Persist editable artwork through the imperative editor handle from `onReady`.
+For new integrations, use `handle.engine.document`: it saves versioned native
+JSON with document identity and metadata, separately from active-page navigation.
 
 ## When to use this
 
 - You want to persist work-in-progress and resume it later.
-- You're building autosave, drafts, or undo across sessions.
+- You're building host-managed autosave or drafts. Undo history itself is not persisted.
 - You need to script the editor from outside (headless, tests).
 
 ## Capture the handle
+
+The canonical document API is available through the existing handle:
+
+```ts
+const json = handle.engine.document.saveToString();
+await handle.engine.document.loadFromString(json);
+```
+
+Store this JSON as a database value or `.editx.json` file. Loading native
+documents selects the first root page; store navigation separately if needed.
+This is not an asset-bundled `.editx` archive. See
+[Document API](/docs/engine/document-api) for the schema, resource limitations,
+legacy compatibility, and load-error behavior.
+
+### Existing scene integrations
+
+The following example and live demo intentionally exercise the compatible legacy
+handle methods. They save raw scene JSON, including active-page navigation:
 
 ```tsx
 import { useRef } from "react";
@@ -40,6 +58,10 @@ function Editor() {
 - `saveScene()` returns a JSON string of the entire scene.
 - `loadScene(json)` restores a scene previously produced by `saveScene()`.
 - `engine` is the underlying engine instance for advanced/headless use.
+
+Neither persistence path saves undo history. Successful loading clears history.
+Legacy scene loading creates a fresh document identity; canonical document loading
+preserves its saved ID and metadata.
 
 ## Try it
 

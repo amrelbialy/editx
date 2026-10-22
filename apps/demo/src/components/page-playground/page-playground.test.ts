@@ -93,7 +93,36 @@ describe("multi-page playground public SDK integration", () => {
     expect(engine.canRedo()).toBe(false);
   });
 
-  it("reopens edited posts in a fresh engine with editable text and vector layers intact", async () => {
+  it("round-trips the canonical editable document with stable identity", async () => {
+    const pages = engine.scene.getPages();
+    const headline = engine.block
+      .getChildren(pages[0])
+      .find((id) => engine.block.getName(id) === "Coffee headline")!;
+    engine.block.replaceText(
+      headline,
+      0,
+      engine.block.getTextContent(headline).length,
+      "Canonical and editable.",
+    );
+    const saved = engine.document.saveToString();
+    const id = engine.document.getId();
+    const restored = new EditxEngine();
+
+    await restored.document.loadFromString(saved);
+
+    expect(restored.document.getId()).toBe(id);
+    expect(restored.document.saveToString()).toBe(saved);
+    expect(restored.scene.getCurrentPage()).toBe(pages[0]);
+    restored.block.replaceText(
+      headline,
+      0,
+      restored.block.getTextContent(headline).length,
+      "Edited after reopening.",
+    );
+    expect(restored.block.getTextContent(headline)).toBe("Edited after reopening.");
+  });
+
+  it("retains legacy scene compatibility with editable text and vector layers", async () => {
     const pages = engine.scene.getPages();
     const headline = engine.block
       .getChildren(pages[0])

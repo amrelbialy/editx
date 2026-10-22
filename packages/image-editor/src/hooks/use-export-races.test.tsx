@@ -94,6 +94,48 @@ describe("export document races", () => {
     }
   });
 
+  it("rejects same-block canonical replacement when only document identity changes", async () => {
+    const onBeforeSave = vi.fn((blob: Blob) => blob);
+    const { result, engine, page, onSave, notify } = await setup({
+      events: { onBeforeSave },
+    });
+    const replacement = JSON.parse(engine.document.saveToString()) as { id: string };
+    replacement.id = "replacement-document";
+    let finishLoad!: () => void;
+    const loading = new Promise<void>((resolve) => {
+      finishLoad = resolve;
+    });
+    vi.spyOn(engine, "getRenderer").mockReturnValue(loadingRenderer(() => loading));
+    let finishExport!: (blob: Blob) => void;
+    page.mockImplementationOnce(
+      () =>
+        new Promise<Blob>((resolve) => {
+          finishExport = resolve;
+        }),
+    );
+    let pending!: Promise<boolean>;
+    await act(async () => {
+      pending = result.current.handleExport({ pages: { mode: "all" } });
+    });
+    const replaced = engine.document.loadFromString(JSON.stringify(replacement));
+    expect(engine.document.getId()).toBe("replacement-document");
+    try {
+      await act(async () => {
+        finishExport(new Blob(["old first page"]));
+        expect(await pending).toBe(false);
+      });
+      expect(page).toHaveBeenCalledTimes(1);
+      expect(onBeforeSave).not.toHaveBeenCalled();
+      expect(onSave).not.toHaveBeenCalled();
+      expect(notify.error).toHaveBeenCalledWith(
+        "The document changed during export. Please try again.",
+      );
+    } finally {
+      finishLoad();
+      await replaced;
+    }
+  });
+
   it("rejects silent page changes that create no history notification", async () => {
     const { result, engine, poster, page, onSave, notify } = await setup();
     let finish!: (blob: Blob) => void;

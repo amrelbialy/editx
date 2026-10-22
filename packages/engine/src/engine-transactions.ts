@@ -1,6 +1,8 @@
 import type { ActivePageState } from "./active-page";
 import type { BlockAPI } from "./block/block-api";
 import type { Command } from "./controller/commands";
+import type { DocumentChangeOrigin } from "./document-change";
+import { type DocumentChangeScope, getDocumentChanges } from "./document-change-tracker";
 import { applyHistoryPatches, enqueueBlockEvents, flushDirtyBlocks } from "./editx-engine-flush";
 import type { EngineCallbacks } from "./engine-callbacks";
 import type { EngineCore } from "./engine-core";
@@ -19,6 +21,7 @@ export class EngineTransactions {
   #batchPatches: Patch[] = [];
   #batchHistoryPatches: Patch[] = [];
   #silentDepth = 0;
+  #documentBatch: DocumentChangeScope | null = null;
 
   constructor(
     private readonly engine: TransactionEngine,
@@ -40,6 +43,7 @@ export class EngineTransactions {
 
   beginBatch(): void {
     if (this.#batchDepth === 0) {
+      this.#documentBatch = getDocumentChanges(this.engine).begin("edit");
       this.#batchPatches = [];
       this.#batchHistoryPatches = [];
     }
@@ -64,12 +68,17 @@ export class EngineTransactions {
       if (historyChanged) this.deferNotification(this.#notifyHistory);
       this.#notifications.render(this.#flush);
     } finally {
+      if (this.#batchDepth === 0 && this.#documentBatch) {
+        const scope = this.#documentBatch;
+        this.#documentBatch = null;
+        this.#notifications.settle(() => getDocumentChanges(this.engine).finish(scope));
+      }
       this.#notifications.end();
     }
   }
 
   exec(command: Command): void {
-    this.#notifications.run(() => {
+    this.#run("edit", () => {
       const patches = command.do();
       this.navigation.applyPatches(patches, this.#batchDepth === 0);
       this.engine._reconcilePageView();
@@ -119,7 +128,7 @@ export class EngineTransactions {
   }
 
   #applyHistory(action: "undo" | "redo"): void {
-    this.#notifications.run(() => {
+    this.#run(action, () => {
       const patches = this.#history[action]();
       if (!patches) {
         this.engine._reconcilePageView();
@@ -133,6 +142,18 @@ export class EngineTransactions {
       this.deferNotification(() => this.engine.emit(`history:${action}`));
       this.deferNotification(this.#notifyHistory);
       this.#notifications.render(this.#flush);
+    });
+  }
+
+  #run(origin: DocumentChangeOrigin, operation: () => void): void {
+    this.#notifications.run(() => {
+      const changes = getDocumentChanges(this.engine);
+      const scope = changes.begin(origin);
+      try {
+        operation();
+      } finally {
+        if (scope.owned) this.#notifications.settle(() => changes.finish(scope));
+      }
     });
   }
 

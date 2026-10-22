@@ -79,6 +79,10 @@ describe("page navigation during scene replacement", () => {
 
   it("clears stale navigation when an empty document is loaded", async () => {
     const previousPageId = engine.getActivePage();
+    const previousBlockIds = engine._getBlockStore().getAllBlockIds();
+    const renderer = engine.getRenderer()!;
+    vi.mocked(renderer.removeBlock).mockClear();
+    vi.mocked(renderer.renderFrame).mockClear();
     const callback = vi.fn();
     engine.onActivePageChanged(callback);
     const empty = new EditxEngine();
@@ -89,6 +93,8 @@ describe("page navigation during scene replacement", () => {
     expect(engine.getActivePage()).toBeNull();
     expect(engine.scene.getPages()).toEqual([]);
     expect(callback).toHaveBeenCalledExactlyOnceWith({ pageId: null, previousPageId });
+    expect(vi.mocked(renderer.removeBlock).mock.calls.map(([id]) => id)).toEqual(previousBlockIds);
+    expect(renderer.renderFrame).toHaveBeenCalledOnce();
   });
 
   it.each([

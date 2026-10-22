@@ -132,7 +132,7 @@ export function PagePlayground() {
             variant="outline"
             disabled={busy || !engine}
             onClick={() =>
-              engine && void run("Save snapshot", () => setSaved(engine.scene.saveToString()))
+              engine && void run("Save snapshot", () => setSaved(engine.document.saveToString()))
             }
           >
             Save snapshot
@@ -145,7 +145,7 @@ export function PagePlayground() {
               engine &&
               saved &&
               void run("Load saved snapshot", async () => {
-                await engine.scene.loadFromString(saved);
+                await engine.document.loadFromString(saved);
                 engine.editor.fitToScreen(24);
               })
             }
@@ -160,7 +160,7 @@ export function PagePlayground() {
               engine &&
               void run("Download JSON", () =>
                 downloadBlob(
-                  new Blob([engine.scene.saveToString()], { type: "application/json" }),
+                  new Blob([engine.document.saveToString()], { type: "application/json" }),
                   "studio-posts.editx",
                 ),
               )

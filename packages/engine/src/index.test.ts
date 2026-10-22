@@ -18,7 +18,11 @@ describe("@editx/engine public API", () => {
     // A few load-bearing names asserted explicitly as a human-readable contract.
     expect(engine).toHaveProperty("EditxEngine");
     expect(engine).toHaveProperty("BlockAPI");
+    expect(engine).toHaveProperty("DocumentAPI");
+    expect(engine).toHaveProperty("DocumentValidationError");
     expect(engine).toHaveProperty("EventAPI");
+    expect(engine.EDITX_DOCUMENT_KIND).toBe("editx-document");
+    expect(engine.EDITX_DOCUMENT_SCHEMA_VERSION).toBe(1);
   });
 
   describe("mutable-store side door is sealed", () => {
@@ -44,6 +48,12 @@ describe("@editx/engine public API", () => {
       expect(typeof (instance as unknown as { _getBlockStore: unknown })._getBlockStore).toBe(
         "function",
       );
+    });
+
+    it("does not expose document state mutation side doors", () => {
+      const instance = new engine.EditxEngine({});
+      expect("setMetadata" in instance.document).toBe(false);
+      expect("_replaceDocumentState" in instance).toBe(false);
     });
   });
 });

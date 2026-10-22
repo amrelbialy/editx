@@ -52,4 +52,43 @@ describe("transaction notifications", () => {
     notifications.enqueue(observer);
     expect(observer).toHaveBeenCalledTimes(1);
   });
+
+  it("preserves renderer failures while draining throwing settlements and observers", () => {
+    const notifications = new EngineNotifications();
+    const renderError = new Error("Render failed");
+    const settlementError = new Error("Settlement failed");
+    const observerError = new Error("Observer failed");
+    const calls: string[] = [];
+    const report = vi.spyOn(console, "error").mockImplementation(() => {});
+    let failure: unknown;
+    try {
+      try {
+        notifications.run(() => {
+          notifications.render(() => {
+            calls.push("render");
+            throw renderError;
+          });
+          notifications.settle(() => {
+            calls.push("bad settlement");
+            throw settlementError;
+          });
+          notifications.settle(() => calls.push("settled"));
+          notifications.enqueue(() => {
+            calls.push("bad observer");
+            throw observerError;
+          });
+          notifications.enqueue(() => calls.push("notified"));
+        });
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toBe(renderError);
+      expect(calls).toEqual(["render", "bad settlement", "settled", "bad observer", "notified"]);
+      expect(report.mock.calls.map((call) => call[1])).toEqual([settlementError, observerError]);
+      notifications.enqueue(() => calls.push("next"));
+      expect(calls[calls.length - 1]).toBe("next");
+    } finally {
+      report.mockRestore();
+    }
+  });
 });

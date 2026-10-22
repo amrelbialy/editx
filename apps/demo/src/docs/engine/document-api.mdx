@@ -1,0 +1,239 @@
+# Document API
+
+`engine.document` is the canonical native persistence API. It saves editable
+artwork as versioned JSON, separately from the editor's current viewing state.
+It works headlessly and is also available through `EditorHandle.engine`.
+
+## Save and load
+
+```ts
+import { EditxEngine } from "@editx/engine";
+
+const engine = new EditxEngine();
+await engine.scene.create({ width: 1080, height: 1350 });
+
+const json = engine.document.saveToString();
+localStorage.setItem("draft.editx.json", json);
+
+const reopened = new EditxEngine();
+await reopened.document.loadFromString(json);
+```
+
+Store the string in a database, send it through your API, or download it as
+`.editx.json`. No ZIP encoding is needed for database storage.
+
+| Method | Returns | Purpose |
+|---|---|---|
+| `getId()` | `string` | Stable, opaque identity of this logical document. |
+| `getRootSceneId()` | `number \| null` | Authored root scene, not runtime navigation. |
+| `getMetadata()` | `DocumentMetadata` | Deeply frozen, defensive JSON metadata snapshot. |
+| `saveToString()` | `string` | Serialize the native document envelope. |
+| `loadFromString(json)` | `Promise<void>` | Load an envelope or a legacy v1/v2 scene. |
+| `onChanged(callback)` | `() => void` | Subscribe to logical persisted-document changes. |
+
+See [Document change events](/docs/engine/document-events) for typed transaction/origin
+payloads, affected pages, batching, and autosave guidance.
+
+Saving does not mutate the document or history. An unchanged document produces
+the same string within an engine. This is not a canonical-JSON hashing standard:
+key sorting or byte equality between independently produced documents is not promised.
+
+## Native JSON schema, version 1
+
+A newly constructed, empty engine saves this shape, with its own generated ID:
+
+```json
+{
+  "kind": "editx-document",
+  "schemaVersion": 1,
+  "id": "opaque-document-id",
+  "metadata": {},
+  "scene": {
+    "rootSceneId": null,
+    "blocks": []
+  }
+}
+```
+
+`EditxDocument` currently aliases `EditxDocumentV1`. The root package exports
+these types, `EditxDocumentSceneV1`, `DocumentMetadata`, `JsonObject`, `JsonValue`,
+`JsonPrimitive`, and the runtime `DocumentAPI` class. The constants
+`EDITX_DOCUMENT_KIND` and `EDITX_DOCUMENT_SCHEMA_VERSION` identify the format.
+
+- **`kind`** is exactly `"editx-document"`, including for ordinary image projects.
+- **`schemaVersion`** is `1` and versions the complete envelope and scene content.
+  There is no nested legacy scene `version`.
+- **`id`** is a nonempty, opaque string. Do not depend on the generated ID's format.
+- **`metadata`** is a JSON object, initially `{}`.
+- **`scene.rootSceneId`** identifies the authored scene block, or is `null` for
+  an empty document.
+- **`scene.blocks`** contains the full block snapshots: pages, membership and
+  order, dimensions, transforms, content, styles, sub-blocks, and authored visibility.
+  The public snapshot type is `ReadonlyBlockData`.
+
+Metadata supports nested plain objects, arrays, strings, booleans, null, and
+finite numbers. Non-JSON values are not supported. Loaded metadata round-trips;
+the returned snapshot cannot mutate internal state. There is no metadata setter
+in this increment. A future editing API must use undoable document commands.
+
+## Document state versus viewing state
+
+The envelope does **not** include active scene/page, selection, camera, zoom, pan,
+page-view mode, crop/text sessions, or export targets. Changing pages or arranging
+them continuously does not change saved document content.
+
+Authored visibility is different: deliberately hiding artwork remains part of
+the saved blocks. Choosing an export target or temporarily filtering the canvas
+does not hide or remove content from the native document.
+
+Loading a native envelope activates its root scene and the first direct page in
+that scene. Hosts can restore their own navigation separately:
+
+```ts
+const rememberedPageId = engine.scene.getCurrentPage();
+const json = engine.document.saveToString();
+
+await engine.document.loadFromString(json);
+if (rememberedPageId !== null && engine.scene.getPages().includes(rememberedPageId)) {
+  engine.scene.setActivePage(rememberedPageId);
+}
+```
+
+A new engine receives a fresh document ID immediately. `scene.create()` establishes
+or replaces the authored root but retains that document ID and metadata.
+Loading an envelope adopts its saved ID and metadata. To start a new logical
+document with a new identity in this increment, create a new engine.
+
+Destroying the authored root makes `getRootSceneId()` and the saved root `null`;
+undo restores that root and redo removes it again. Switching the active scene
+does not silently substitute a different authored root.
+
+## Compatibility with existing scenes
+
+| Input | `document.loadFromString()` | Deprecated `scene.loadFromString()` |
+|---|---|---|
+| Native `schemaVersion: 1` | Supported | Not supported |
+| Legacy scene `version: 1` | Supported | Supported |
+| Legacy scene `version: 2` | Supported | Supported |
+| Other versions | Rejected | Rejected |
+
+Native schema versions and legacy scene versions are separate version families.
+The native schema remains `1`. Legacy v1 advances through an explicit v2 migration,
+then both legacy versions convert to the current native representation.
+Migrations are forward-only; unknown versions are never guessed or downgraded.
+
+Content conversion is deterministic, but legacy files have no document identity:
+each successful legacy load receives a fresh ID and `{}` metadata. Native loads
+preserve their ID and metadata. The next canonical save writes the native envelope;
+deprecated `scene.saveToString()` continues writing legacy v2.
+
+An explicit legacy active page is honored in either version. Missing/null page IDs
+select the active scene's first direct page; missing/null scene IDs do not infer a
+scene from existing blocks. Missing feature properties stay absent and retain their
+established getter/renderer fallbacks, rather than receiving current creation defaults.
+
+`EditorHandle.saveScene()` and `loadScene()` remain compatible legacy conveniences.
+For new persistence, use `handle.engine.document`.
+
+## Loading, history, and errors
+
+A successful load replaces the current document and clears history; it is not an
+undoable edit. Replacement also ends current editing interactions and clears selection.
+
+Both loaders validate the original source and complete migration before
+replacement or identity generation. Checks cover required fields, unique safe block IDs, property value
+shapes (including nested colors, gradients, and text styles), reciprocal parent/child
+links, page ownership, typed shape/fill/effect references, cycles, and root/active IDs.
+
+All blocks are checked, including detached components and non-root scenes.
+Detached blocks and shared acyclic shape/fill/effect resources remain valid.
+Resource blocks must be hierarchy-detached leaves. An attached page must belong
+directly to a scene.
+
+Block IDs are nonnegative safe integers below `Number.MAX_SAFE_INTEGER`.
+If a loaded document exhausts that ID space, subsequent creation throws
+`RangeError` before inserting a block instead of reusing or emitting invalid IDs.
+
+Unknown property keys are retained when their values match `PropertyValue`.
+Missing feature property keys remain valid: loading does not insert new defaults
+or rewrite v1/v2 content. Unknown envelope, scene, and block members are accepted
+but not guaranteed to round-trip.
+
+Malformed JSON rejects with native `SyntaxError`. Syntactically valid but invalid
+content rejects with the exported `DocumentValidationError`:
+
+```ts
+import { DocumentValidationError } from "@editx/engine";
+
+try {
+  await engine.document.loadFromString(json);
+} catch (error) {
+  if (error instanceof DocumentValidationError) {
+    for (const issue of error.issues) {
+      // Forward diagnostics to your host application's error UI.
+      showValidationIssue(issue.code, issue.path, issue.blockId, issue.message);
+    }
+  } else {
+    // Parsing and renderer/resource errors are not schema issues.
+    throw error;
+  }
+}
+```
+
+`DocumentValidationIssue` has a stable `code`, a root-relative `path` array of
+string keys/array indices, a human-readable `message`, and optional source
+`blockId`. For example, `["scene", "blocks", 3, "fillId"]` identifies the failing
+reference field, not its target. Legacy paths begin at `["blocks", ...]`.
+Invalid or duplicate IDs omit `blockId` because the source cannot be identified
+unambiguously. Issues and their paths are defensive, frozen snapshots.
+
+| Issue code | Meaning |
+|---|---|
+| `UNSUPPORTED_KIND` / `UNSUPPORTED_VERSION` | Unrecognized native kind or format version. |
+| `MISSING_FIELD` / `INVALID_FIELD` | Missing core field or invalid value shape. |
+| `DUPLICATE_BLOCK_ID` | Block IDs are not unique. |
+| `MISSING_BLOCK_REFERENCE` | A referenced block does not exist. |
+| `INVALID_BLOCK_TYPE` | Unknown block type or wrong referenced type. |
+| `INVALID_BLOCK_OWNERSHIP` | Inconsistent hierarchy, page placement, or resource edge. |
+| `CYCLIC_BLOCK_GRAPH` | Hierarchy/resource dependencies contain a cycle. |
+
+Branch on codes, not message text. A recognized format can report multiple issues;
+header failures stop before interpreting the graph.
+
+Parsing or validation failure preserves document identity, metadata, blocks,
+navigation, selection, editing state, undo/redo, and ID allocation. It makes no
+renderer calls and publishes no document/history/navigation events.
+
+Once replacement begins, the incoming document identity and content belong to
+the live engine. A later renderer/setup error can reject **after** state has
+changed. Validation does not check remote asset availability or arbitrary renderer
+behavior. Such failures do not guarantee rollback. Source validation and forward
+migration complete before any live replacement.
+
+## Files, resources, and exports
+
+The current native representation is JSON, conventionally `.editx.json`.
+It references external images/fonts rather than packaging all dependencies.
+It does not promise offline portability.
+
+The planned `.editx` file is a ZIP project container; archive support is not part
+of this API increment. The editor's existing multi-page ZIP export contains
+rendered images, not an editable project.
+
+Keep these boundaries distinct:
+
+| Role | Meaning |
+|---|---|
+| **Native document codec** | Reads/writes Editx JSON while preserving native editing semantics. |
+| **Media importer** | Inserts supported media into a document through commands; it does not reopen a project. |
+| **Structured design importer** | Future conversion of a foreign design into editable blocks, with fidelity reporting. |
+| **Render exporter** | Produces final PNG/JPEG/WebP output through page, scene, or block export. |
+| **Structured exporter** | Future interchange output preserving supported structure and reporting lost semantics. |
+
+This separation does not introduce an adapter/plugin framework.
+
+## Next steps
+
+- [Scene & Events](/docs/engine/scene-api) - page creation, properties, ordering, and legacy scenes.
+- [Save & Restore Scenes](/docs/image-editor/guides/save-load-scene) - use the engine through the editor handle.
+- [Export & Save](/docs/image-editor/guides/export-and-save) - rendered images and multi-page ZIP output.

@@ -7,7 +7,10 @@ import type { BlockData } from "./block.types";
 export class BlockHierarchy {
   #blocks: Map<number, BlockData>;
 
-  constructor(blocks: Map<number, BlockData>) {
+  constructor(
+    blocks: Map<number, BlockData>,
+    private readonly changing: (id: number) => void = () => {},
+  ) {
     this.#blocks = blocks;
   }
 
@@ -15,11 +18,14 @@ export class BlockHierarchy {
     const parent = this.#blocks.get(parentId);
     const child = this.#blocks.get(childId);
     if (!parent || !child || !this.canAppendChild(parentId, childId)) return;
+    this.changing(parentId);
+    this.changing(childId);
 
     // Remove from old parent if any
     if (child.parentId !== null && child.parentId !== parentId) {
       const oldParent = this.#blocks.get(child.parentId);
       if (oldParent) {
+        this.changing(oldParent.id);
         oldParent.children = oldParent.children.filter((c) => c !== childId);
       }
     }
@@ -47,6 +53,8 @@ export class BlockHierarchy {
     const parent = this.#blocks.get(parentId);
     const child = this.#blocks.get(childId);
     if (!parent || !child) return;
+    this.changing(parentId);
+    this.changing(childId);
 
     parent.children = parent.children.filter((c) => c !== childId);
     if (child.parentId === parentId) {
@@ -69,6 +77,7 @@ export class BlockHierarchy {
 
     const currentIndex = parent.children.indexOf(childId);
     if (currentIndex === -1) return;
+    this.changing(parentId);
 
     parent.children.splice(currentIndex, 1);
     const clampedIndex = Math.max(0, Math.min(newIndex, parent.children.length));
@@ -79,8 +88,10 @@ export class BlockHierarchy {
   unparent(id: number): void {
     const block = this.#blocks.get(id);
     if (!block || block.parentId === null) return;
+    this.changing(id);
     const parent = this.#blocks.get(block.parentId);
     if (parent) {
+      this.changing(parent.id);
       parent.children = parent.children.filter((c) => c !== id);
     }
     block.parentId = null;

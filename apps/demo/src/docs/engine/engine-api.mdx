@@ -10,6 +10,9 @@ The `EditxEngine` class is the main entry point for the engine.
 | `editor` | `EditorAPI` | Editor state, viewport, and edit mode |
 | `event` | `EventAPI` | Block lifecycle event subscriptions |
 | `scene` | `SceneAPI` | Scene and page management |
+| `document` | `DocumentAPI` | Versioned native JSON persistence, identity, and metadata |
+
+Use [Document API](/docs/engine/document-api) for new persistence; scene serialization remains a legacy codec.
 
 ## History
 
@@ -126,7 +129,12 @@ const unsubscribeZoom = engine.onZoomChanged((zoom) => { /* ... */ });
 const unsubscribePan = engine.onPanChanged(({ x, y }) => { /* ... */ });
 const unsubscribeMode = engine.onEditModeChanged(({ mode, previousMode }) => { /* ... */ });
 const unsubscribeTransform = engine.onBlockTransform(({ block, phase }) => { /* ... */ });
+const unsubscribeDocument = engine.document.onChanged((event) => { /* autosave */ });
 ```
+
+Use [Document change events](/docs/engine/document-events) for persistence signals,
+including headless/silent writes, batching, undo/redo, and replacement origins.
+History or block lifecycle callbacks are not reliable substitutes for autosave.
 
 ## Export
 

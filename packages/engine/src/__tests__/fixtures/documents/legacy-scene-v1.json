@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": 0,
+      "type": "scene",
+      "kind": "",
+      "name": "Golden scene",
+      "parentId": null,
+      "children": [10, 2],
+      "effectIds": [],
+      "shapeId": null,
+      "fillId": null,
+      "properties": {}
+    },
+    {
+      "id": 10,
+      "type": "page",
+      "kind": "",
+      "name": "First page",
+      "parentId": 0,
+      "children": [20],
+      "effectIds": [],
+      "shapeId": null,
+      "fillId": null,
+      "properties": { "page/width": 320, "page/height": 240 }
+    },
+    {
+      "id": 2,
+      "type": "page",
+      "kind": "",
+      "name": "Second page",
+      "parentId": 0,
+      "children": [],
+      "effectIds": [],
+      "shapeId": null,
+      "fillId": null,
+      "properties": { "page/width": 320, "page/height": 240 }
+    },
+    {
+      "id": 20,
+      "type": "text",
+      "kind": "",
+      "name": "Headline",
+      "parentId": 10,
+      "children": [],
+      "effectIds": [],
+      "shapeId": null,
+      "fillId": null,
+      "properties": {
+        "text/content": "Vintage headline",
+        "plugin/map": { "source": "host" }
+      }
+    }
+  ],
+  "activeSceneId": 0
+}

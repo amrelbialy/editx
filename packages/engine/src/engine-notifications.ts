@@ -3,6 +3,7 @@ export class EngineNotifications {
   #depth = 0;
   #draining = false;
   #pending = new Set<() => void>();
+  #settlements = new Set<() => void>();
   #frame: (() => void) | null = null;
 
   begin(): void {
@@ -33,23 +34,50 @@ export class EngineNotifications {
     this.#drain();
   }
 
+  settle(callback: () => void): void {
+    this.#settlements.add(callback);
+    this.#drain();
+  }
+
   #drain(): void {
     if (this.#depth > 0 || this.#draining) return;
     this.#draining = true;
+    let renderFailed = false;
+    let renderError: unknown;
     try {
-      while (this.#depth === 0 && (this.#frame || this.#pending.size > 0)) {
+      while (
+        this.#depth === 0 &&
+        (this.#frame || this.#settlements.size > 0 || this.#pending.size > 0)
+      ) {
         if (this.#frame) {
           const frame = this.#frame;
           this.#frame = null;
-          frame();
+          if (!renderFailed) {
+            try {
+              frame();
+            } catch (error) {
+              renderFailed = true;
+              renderError = error;
+            }
+          }
         } else {
-          const callback = this.#pending.values().next().value!;
-          this.#pending.delete(callback);
-          callback();
+          const queue = this.#settlements.size > 0 ? this.#settlements : this.#pending;
+          const callback = queue.values().next().value!;
+          queue.delete(callback);
+          if (!renderFailed) {
+            callback();
+          } else {
+            try {
+              callback();
+            } catch (error) {
+              console.error("[editx] Observer failed while draining a renderer error:", error);
+            }
+          }
         }
       }
     } finally {
       this.#draining = false;
     }
+    if (renderFailed) throw renderError;
   }
 }

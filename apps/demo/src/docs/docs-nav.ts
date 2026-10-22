@@ -77,6 +77,8 @@ export const DOCS_NAV: DocGroup[] = [
       { label: "Blocks", href: "/docs/engine/blocks" },
       { label: "Commands", href: "/docs/engine/commands" },
       { label: "Engine API", href: "/docs/engine/engine-api" },
+      { label: "Document API", href: "/docs/engine/document-api" },
+      { label: "Document events", href: "/docs/engine/document-events" },
       { label: "Block API", href: "/docs/engine/block-api" },
       { label: "Graphics API", href: "/docs/engine/graphics-api" },
       { label: "Text API", href: "/docs/engine/text-api" },

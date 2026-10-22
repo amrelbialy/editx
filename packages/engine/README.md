@@ -74,6 +74,81 @@ For advanced setups you can construct the adapter yourself with `KonvaRendererAd
 - **Viewport & transform callbacks** — Typed subscriptions for viewport/interaction: `onZoomChanged`, `onPanChanged`, and the live (pre-commit) `onBlockTransform`. Camera zoom/pan is always clamped (`MIN_ZOOM`–`MAX_ZOOM`).
 - **Properties** — Typed property keys (`POSITION_X`, `SIZE_WIDTH`, `FILL_COLOR`, etc.) for reading/writing block state.
 
+### Native document persistence
+
+Use `engine.document` for new editable project storage:
+
+```ts
+const json = engine.document.saveToString();
+await engine.document.loadFromString(json);
+const id = engine.document.getId();
+const metadata = engine.document.getMetadata();
+```
+
+The JSON envelope is `{ kind: "editx-document", schemaVersion: 1, id, metadata,
+scene: { rootSceneId, blocks } }`. It preserves complete authored block state,
+including visibility, but excludes active-page/scene navigation, selection, camera,
+page-view mode, edit sessions, and export targets. Native loading activates the
+root's first page. Identity is stable across saves and canonical loads;
+metadata is JSON-only, read-only, and returned as a deeply frozen defensive snapshot.
+`scene.create()` retains identity/metadata while establishing the authored root.
+
+The canonical loader also reads legacy v1/v2 scenes, assigning a fresh document ID
+and empty metadata while honoring their navigation. Deprecated scene serializers
+retain their existing shape and behavior. Successful loading clears history;
+renderer/setup failures can reject after replacement, without rollback.
+Both loaders validate required fields, unique safe IDs, property shapes, typed
+references, reciprocal hierarchy, page ownership, cycles, and navigation before
+changing live state. Invalid documents throw exported `DocumentValidationError`
+with frozen `issues` (`code`, root-relative `path`, optional source `blockId`,
+and `message`); malformed JSON keeps native `SyntaxError`. Validation failure
+preserves identity, content, history/redo, editing state, selection, and rendering.
+Detached blocks/shared acyclic resources and absent legacy feature properties remain
+valid; validation does not insert defaults. Renderer/resource failures after valid
+replacement still do not guarantee rollback.
+
+| Input format | `document.loadFromString()` | Deprecated `scene.loadFromString()` |
+|---|---|---|
+| Native schema v1 | Supported | Not supported |
+| Legacy scene v1/v2 | Supported | Supported |
+| Other versions | Rejected | Rejected |
+
+Legacy scene versions and native schema versions are separate families. Validated
+legacy v1 advances through an explicit v2 step, then both legacy versions convert
+to native-v1-compatible content. Conversion is deterministic and forward-only;
+no native schema bump is needed. Missing feature properties stay absent, explicit
+legacy page selection is honored, and absent/null page selection falls back to the
+active scene's first direct page. An absent/null active scene is never inferred.
+Legacy identity is generated only when replacement begins, after migration succeeds.
+Deprecated scene saves continue writing v2; canonical saves always write native v1.
+
+Save JSON as `.editx.json`. It references external resources and is not an
+offline-portable archive. `.editx` ZIP project packaging is planned separately;
+rendered multi-page ZIP output is not a native project. Native document codecs
+preserve Editx semantics; media importers insert content, structured import/export
+converts foreign designs, and render exporters produce final images.
+See the [Document API reference](https://editx-sdk.vercel.app/docs/engine/document-api).
+
+### Document change events
+
+```ts
+const unsubscribe = engine.document.onChanged((event) => {
+  if (event.documentId !== engine.document.getId() || event.origin === "load") return;
+  queueAutosave(engine.document.saveToString(), event.documentId, event.transactionId);
+});
+```
+
+`queueAutosave` is host-provided and should coalesce/serialize saves and report errors.
+The frozen event includes `transactionId`, captured `documentId`, `origin`
+(`edit`, `undo`, `redo`, `load`, `create`), `changedBlockIds`, and `affectedPageIds`.
+One outer batch emits one semantic change; no-op/net-zero transactions emit nothing.
+Headless and history-silent mutations are included. Navigation, selection, previews,
+saving, and history maintenance alone are excluded. Shared resources report all
+affected pages, including deleted IDs. There is no engine-owned clean/saved flag.
+Create/load publish once after settlement, even if a later renderer failure rejects;
+concurrent edits remain separate. Delayed events keep their original document ID.
+See [Document events](https://editx-sdk.vercel.app/docs/engine/document-events).
+
 ### Page navigation
 
 `engine.scene.setActivePage(pageId)` validates that the target is a direct page of the active

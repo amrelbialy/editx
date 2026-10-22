@@ -31,6 +31,25 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Added
 
+* **engine:** add `document.onChanged()` with frozen transaction IDs, document identity,
+	change origin, changed block IDs, and affected pages for headless autosave.
+	Coalesce batches and renderer corrections, include silent writes and undo/redo,
+	suppress semantic no-ops, and keep concurrent edits separate from async replacements.
+	Report retained partial mutations and shared-resource page impacts.
+* **engine:** add explicit forward-only legacy scene v1-to-v2 migration and conversion
+	to the native-v1 document representation, with deterministic golden fixtures.
+	Validate source paths before migration; defer fresh legacy identity until replacement.
+	Preserve navigation, omitted feature properties, native schema version, and legacy v2 writes.
+* **konva:** allow document replacement before the first scene initializes selection overlays.
+* **engine:** validate native documents and legacy scenes before replacement, including
+	required fields, property shapes, block identity, ownership, references, cycles, and navigation.
+	Export `DocumentValidationError` and typed, immutable issue diagnostics. Invalid documents
+	preserve live content, editing/navigation state, undo/redo, allocation, and rendering.
+	Block creation rejects exhausted ID space before inserting invalid IDs.
+* **engine:** add `engine.document` and the versioned native JSON envelope with stable
+	document identity, authored root scene, and read-only JSON metadata. Keep navigation
+	and viewing state separate from authored content; retain v1/v2 scene compatibility
+	through the canonical loader and deprecated legacy scene codecs.
 * **engine:** add transient page-view modes for continuous vertical/horizontal canvases and
 	optional active-page isolation, with public bounds queries, primary-pointer page activation,
 	page hover and outline-only background selection, axis-aware wheel panning, and page-local

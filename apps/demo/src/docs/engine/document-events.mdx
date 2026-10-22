@@ -1,0 +1,165 @@
+# Document change events
+
+Use `engine.document.onChanged()` for persistence and autosave signals. It reports
+logical changes to the native document, independently of rendering and undo history.
+It works in headless engines and through `EditorHandle.engine`.
+
+```ts
+import type { DocumentChangedEvent } from "@editx/engine";
+
+const unsubscribe = engine.document.onChanged((event: DocumentChangedEvent) => {
+  if (event.documentId !== engine.document.getId()) return;
+  if (event.origin === "load") return;
+
+  queueAutosave({
+    documentId: event.documentId,
+    transactionId: event.transactionId,
+    json: engine.document.saveToString(),
+  });
+});
+
+// Disconnect when the host no longer needs the subscription.
+unsubscribe();
+```
+
+`queueAutosave` above is supplied by your host. Debounce/coalesce saves per document,
+serialize network writes or reject stale revisions server-side, and report save
+failures to the user. The engine does not provide storage or an autosave service.
+Transaction IDs order changes within one engine instance; they are not durable
+server versions and must not be compared across engine instances.
+
+The callback is synchronous; its return value or promise is not awaited.
+Do not throw from observers: an exception surfaces to the initiating engine call
+but does not roll back its persisted mutation. Unsubscribe is idempotent.
+Subscriptions do not immediately replay previous changes and are released on disposal.
+After a renderer failure, that original error takes precedence; secondary queued
+observer failures are logged while remaining notifications drain.
+
+## Event shape
+
+```ts
+interface DocumentChangedEvent {
+  readonly transactionId: number;
+  readonly documentId: string;
+  readonly origin: DocumentChangeOrigin;
+  readonly changedBlockIds: readonly number[];
+  readonly affectedPageIds: readonly number[];
+}
+
+type DocumentChangeOrigin = "edit" | "undo" | "redo" | "load" | "create";
+```
+
+`DocumentChangedEvent`, `DocumentChangedCallback`, and `DocumentChangeOrigin` are
+exported by `@editx/engine`. The event and both arrays are runtime-frozen defensive
+values. They contain IDs, not mutable block objects or historical document snapshots.
+
+| Field | Meaning |
+|---|---|
+| `transactionId` | Positive safe integer, increasing per engine in notification order. Never reset by save, load, create, or history clearing. |
+| `documentId` | Captured identity of the document changed by this transaction. |
+| `origin` | Engine operation responsible for the change. |
+| `changedBlockIds` | Unique IDs whose persisted records differ between the transaction's initial and final state. |
+| `affectedPageIds` | Unique page IDs whose content, ownership, references, or page-order position may be affected. |
+
+Block IDs follow their first occurrence in the mutation journal, not numeric sort
+order. For replacement, prior-store IDs precede incoming-only IDs. Page impact is
+resolved in changed-block order, old ownership before new ownership, with additional
+root/page-order impacts appended. Deleted block and page IDs may appear.
+
+Affected pages include old/new owners when moving or deleting descendants and every
+page using a changed shared fill, shape, or effect, including through groups.
+This is a conservative impact set, not a claim that each page block itself changed.
+Unattached blocks may have no affected page. Identity/metadata-only changes may have
+both ID arrays empty; do not discard an event simply because those arrays are empty.
+
+## Origins and transaction boundaries
+
+| Origin | Meaning |
+|---|---|
+| `edit` | Ordinary command or explicit batch, including history-silent persisted writes. |
+| `undo` | Undo and its synchronous renderer-derived persisted corrections. |
+| `redo` | Redo and its synchronous renderer-derived persisted corrections. |
+| `load` | Native or migrated legacy document replacement. |
+| `create` | `scene.create()` establishes an authored root and initial page. |
+
+One command emits at most one document event. Nested batches emit one event at the
+outermost settlement. Repeated changes to one record contribute one block ID:
+
+```ts
+engine.beginBatch();
+try {
+  engine.block.setName(blockId, "Headline");
+  engine.block.setFloat(blockId, "transform/position/x", 120);
+} finally {
+  engine.endBatch();
+}
+```
+
+History-silent writes remain persistence-visible: `beginSilent()` disables history
+recording, not document events. An undo or redo inside an explicit batch joins that
+batch's `edit` transaction. Load/create inside a batch remain allowed and determine
+its replacement origin; the final replacement wins if more than one is combined.
+
+Synchronous renderer-time command corrections join their initiating transaction.
+Document observers run after renderer settlement; a write made from an `onChanged`
+callback starts a subsequent transaction rather than recursively publishing into
+the current event.
+
+## No-op suppression
+
+Only semantic native-document changes emit. The engine compares changed records,
+identity, metadata, and the effective authored root, not the whole serialized scene.
+
+No event is emitted for a setter writing the same value, a change-then-revert batch,
+a create-then-destroy net-zero batch, or an identical native reload. Object key order
+and block-map iteration order alone are not document changes. Suppressed changes
+do not consume transaction identifiers.
+
+Events do not track a saved/clean baseline. Undoing to a host's saved content still
+produces an `undo` event when persisted content changes. There is no `isDirty`,
+`markSaved`, public revision getter, or custom-origin registration in this API.
+
+## Loading and asynchronous rendering
+
+Create and both native/legacy loaders publish one replacement event rather than
+their intermediate setup commands. Native loads preserve identity; every successful
+legacy import receives a fresh identity and therefore normally emits a `load` event,
+even when its block records match.
+
+Parsing, validation, and migration failures before replacement emit nothing.
+If a command leaves partial persisted mutations before throwing, those changes are
+reported. Complete rollback suppresses the event. Renderer/setup failure after live
+replacement still publishes the retained document change before rejecting; it does
+not imply rollback.
+
+The engine does not hold an internal global command batch across an asynchronous
+renderer wait. Concurrent host edits form separate `edit` transactions. Operation-owned
+synchronous renderer continuations join their pending replacement transaction.
+
+A replacement can settle after a newer document has already loaded. Its event retains
+the original target `documentId`, which may differ from the current engine ID.
+Filter stale identities before saving, as in the example above. Transaction IDs order
+settled notifications, not the first low-level write, and are not historical snapshots.
+
+If a caller deliberately opens an outer batch around an asynchronous load/create,
+await the operation before ending that batch to keep its corrections in one event.
+Corrections occurring after an early batch end are separate edits, not silently lost.
+
+Hosts commonly treat `load` as a new clean baseline rather than immediately autosaving
+it. Imported legacy content may instead need a first native save; choose that policy
+in the host. Changes during an in-flight load remain separately observable.
+
+## What does not emit
+
+- Saving, querying, or clearing history without content changes.
+- Active scene/page navigation or page-view isolation alone.
+- Zoom, pan, camera, viewport, selection, and group-context navigation.
+- Edit-mode changes, cursors, and uncommitted crop/transform previews.
+- Renderer-only state and nonpersisted editing-session state.
+
+A committed crop, text edit, transform, or other document command emits normally.
+Use [Engine API](/docs/engine/engine-api) and the existing block lifecycle
+`engine.event.subscribe()` for their separate UI/interaction concerns.
+Those block events are not a substitute for a headless document autosave signal.
+
+See [Document API](/docs/engine/document-api) for native persistence and migration rules.

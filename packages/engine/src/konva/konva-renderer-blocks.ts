@@ -196,7 +196,9 @@ export class KonvaRendererBlocks {
   hideTransformer(): void {
     this.#selectedBlockIds = [];
     this.#selectedBlockType = undefined;
-    this.context.transformer.nodes([]);
+    const transformer = this.context.transformer;
+    if (!transformer) return;
+    transformer.nodes([]);
     this.context.uiLayer.batchDraw();
   }
 

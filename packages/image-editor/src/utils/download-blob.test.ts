@@ -45,6 +45,11 @@ describe("downloadBlob", () => {
     expect(anchor.download).toBe("document.zip");
   });
 
+  it("appends the JSON extension to an .editx base name exactly once", () => {
+    downloadBlob(new Blob(["{}"], { type: "application/json" }), "studio-posts.editx");
+    expect(anchor.download).toBe("studio-posts.editx.json");
+  });
+
   it("defaults the base filename to 'edited'", () => {
     downloadBlob(new Blob(["x"], { type: "image/webp" }));
     expect(anchor.download).toBe("edited.webp");

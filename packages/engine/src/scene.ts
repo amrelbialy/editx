@@ -2,8 +2,6 @@ import type { ActivePageChangedEvent } from "./active-page";
 import type { PageLayoutMode } from "./block/block.types";
 import type { BlockAPI } from "./block/block-api";
 import {
-  PAGE_HEIGHT,
-  PAGE_WIDTH,
   SCENE_ASPECT_RATIO_LOCK,
   SCENE_LAYOUT,
   SCENE_PAGE_DIMS_HEIGHT,
@@ -21,6 +19,7 @@ import {
   validatePageDimensions,
 } from "./page-properties";
 import { getPageProperties, setPageProperties } from "./page-properties-api";
+import { createScene } from "./scene-create";
 import { loadSceneFromString, saveSceneToString } from "./scene-serialization";
 
 export class SceneAPI {
@@ -33,38 +32,7 @@ export class SceneAPI {
   }
 
   async create(opts: { width?: number; height?: number } = {}) {
-    const width = opts.width ?? 1080;
-    const height = opts.height ?? 1080;
-    validatePageDimensions(width, height);
-
-    // Create scene block
-    const sceneId = this.#block.create("scene");
-    this.#block.setFloat(sceneId, "scene/width", width);
-    this.#block.setFloat(sceneId, "scene/height", height);
-    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_WIDTH, width);
-    this.#block.setFloat(sceneId, SCENE_PAGE_DIMS_HEIGHT, height);
-
-    // Create first page block
-    const pageId = this.#block.create("page");
-    this.#block.setFloat(pageId, PAGE_WIDTH, width);
-    this.#block.setFloat(pageId, PAGE_HEIGHT, height);
-    this.#block.appendChild(sceneId, pageId);
-    this.#engine._setActiveSceneAndPage(sceneId, pageId);
-
-    // Tell renderer to set up the canvas
-    const store = this.#engine._getBlockStore();
-    const sceneBlock = store.get(sceneId);
-    const pageBlock = store.get(pageId);
-    if (sceneBlock && pageBlock) {
-      const renderer = this.#engine.getRenderer();
-      await renderer?.createScene(sceneBlock, pageBlock);
-      // Sync the page block so the page node is rendered
-      renderer?.syncBlock(pageId, pageBlock);
-      this.#engine._reconcilePageView();
-    }
-
-    // Clear history so scene creation isn't undoable
-    this.#engine.clearHistory();
+    return createScene(this.#engine, this.#block, opts);
   }
 
   getScene(): number | null {
@@ -211,12 +179,12 @@ export class SceneAPI {
 
   // ── Serialization ──────────────────────────────────────
 
-  /** Serialize the entire scene (all blocks) to a JSON string. */
+  /** @deprecated Use `engine.document.saveToString()` for new persistence. */
   saveToString(): string {
     return saveSceneToString(this.#engine);
   }
 
-  /** Deserialize a JSON string and restore the full scene. */
+  /** @deprecated Use `engine.document.loadFromString()` for new persistence. */
   async loadFromString(json: string): Promise<void> {
     return loadSceneFromString(this.#engine, json);
   }

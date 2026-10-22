@@ -8,6 +8,8 @@ import { Seo } from "./components/seo";
 import EngineBlockApi from "./docs/engine/block-api.mdx";
 import EngineBlocks from "./docs/engine/blocks.mdx";
 import EngineCommands from "./docs/engine/commands.mdx";
+import EngineDocumentApi from "./docs/engine/document-api.mdx";
+import EngineDocumentEvents from "./docs/engine/document-events.mdx";
 import EngineEditorApi from "./docs/engine/editor-api.mdx";
 import EngineApi from "./docs/engine/engine-api.mdx";
 import EngineGraphicsApi from "./docs/engine/graphics-api.mdx";
@@ -73,6 +75,8 @@ const DOC_ROUTES: { path: string; component: ComponentType }[] = [
   { path: "/docs/engine/blocks", component: EngineBlocks },
   { path: "/docs/engine/commands", component: EngineCommands },
   { path: "/docs/engine/engine-api", component: EngineApi },
+  { path: "/docs/engine/document-api", component: EngineDocumentApi },
+  { path: "/docs/engine/document-events", component: EngineDocumentEvents },
   { path: "/docs/engine/block-api", component: EngineBlockApi },
   { path: "/docs/engine/graphics-api", component: EngineGraphicsApi },
   { path: "/docs/engine/text-api", component: EngineTextApi },

@@ -7,13 +7,17 @@ import type { BlockData, Color, PropertyValue, TextRun } from "./block.types";
 export class BlockProperties {
   #blocks: Map<number, BlockData>;
 
-  constructor(blocks: Map<number, BlockData>) {
+  constructor(
+    blocks: Map<number, BlockData>,
+    private readonly changing: (id: number) => void = () => {},
+  ) {
     this.#blocks = blocks;
   }
 
   setProperty(id: number, key: string, value: PropertyValue): void {
     const block = this.#blocks.get(id);
     if (!block) return;
+    this.changing(id);
     block.properties[key] = value;
   }
 

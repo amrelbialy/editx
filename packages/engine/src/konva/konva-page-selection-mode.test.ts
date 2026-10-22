@@ -2,7 +2,7 @@ import type Konva from "konva";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RendererPageView } from "../page-view";
 import { KonvaRendererBlocks } from "./konva-renderer-blocks";
-import type { KonvaRendererContext } from "./konva-renderer-context";
+import { KonvaRendererContext } from "./konva-renderer-context";
 
 vi.mock("./konva-page-view", () => ({
   KonvaPageView: class {
@@ -136,5 +136,20 @@ describe("page selection transformer across page-view modes", () => {
 
     expect(clearHover).toHaveBeenCalledWith(page);
     expect(page.destroy).toHaveBeenCalledOnce();
+  });
+
+  it("allows replacement cleanup before the first scene creates its transformer", () => {
+    const uninitialized = new KonvaRendererBlocks(new KonvaRendererContext({}));
+    expect(() => uninitialized.hideTransformer()).not.toThrow();
+    expect(uninitialized.getSelectedBlockScreenRect()).toBeNull();
+  });
+
+  it("clears initialized selection without restoring it on a subsequent view update", () => {
+    blocks.showTransformer([7], "page");
+    blocks.hideTransformer();
+    expect(selectedNodes).toEqual([]);
+    blocks.setPageView(view("vertical-pages"));
+    expect(selectedNodes).toEqual([]);
+    expect(transformer.nodes).toHaveBeenLastCalledWith([]);
   });
 });

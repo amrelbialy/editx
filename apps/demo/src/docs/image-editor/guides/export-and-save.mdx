@@ -7,6 +7,10 @@ Control the save step end to end: which output formats users can pick, how the
 rendered blob is transformed before it leaves the editor, and whether the editor
 closes itself once the save completes.
 
+These are rendered exports, not editable native projects. Use
+[`handle.engine.document`](/docs/engine/document-api) for versioned JSON persistence.
+The multi-page ZIP described below contains images, not an editable `.editx` archive.
+
 ## When to use this
 
 - Your pipeline only accepts certain formats (e.g. JPEG-only uploads).

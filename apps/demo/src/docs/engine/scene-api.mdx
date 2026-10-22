@@ -1,6 +1,7 @@
 # Scene API
 
-The `engine.scene` API manages scene creation, pages, layout, and serialization.
+The `engine.scene` API manages scene creation, pages, layout, and legacy scene serialization.
+Use [Document API](/docs/engine/document-api) for new native project persistence.
 
 ## Creating a Scene
 
@@ -238,9 +239,9 @@ engine.scene.setPageLayout("Free"); // PageLayoutMode
 engine.scene.getPageLayout();
 ```
 
-## Serialization
+## Legacy scene serialization
 
-Save and restore the entire scene:
+These deprecated codecs retain compatibility with existing scene files:
 
 ```ts
 const json = engine.scene.saveToString();
@@ -249,17 +250,30 @@ await engine.scene.loadFromString(json);
 
 `saveToString()` emits scene format version `2`. Version 2 persists groups, SVG
 paths, gradient and image fills, text curves, rich run styles, and text background
-geometry. `loadFromString()` accepts versions `1` and `2`; version 1 documents
-use feature defaults for fields that did not exist yet. Other versions throw an
+geometry. `loadFromString()` accepts versions `1` and `2`; an explicit forward-only
+pipeline advances v1 through v2, then converts legacy content to the current native
+representation. Missing feature fields keep their established getter/renderer
+fallbacks without being inserted. Other versions throw an
 `Unsupported scene version` error.
 
 Loading rebuilds the block hierarchy and renderer state, then clears history so
 the restored document starts with a clean undo stack.
 
-Active scene/page references are validated before replacing live blocks. Invalid references
-reject loading without changing the current document or history. A scene with a `null` active
+The complete block graph, property shapes, and active scene/page references are validated
+before migration or replacing live blocks. Invalid input rejects with `DocumentValidationError`
+without changing document, history, editing state, or rendering. Malformed JSON remains
+a `SyntaxError`. A scene with a `null` active
 page selects its first direct page, if any; loading an empty document clears stale navigation.
-This is navigation validation, not full document-schema validation.
+Missing feature properties retain their existing getter/renderer fallbacks rather than
+being populated during validation. See [Document API](/docs/engine/document-api)
+for issue codes, paths, and compatibility rules.
+
+Each legacy load assigns a fresh document ID and empty document metadata.
+For new saves, `engine.document.saveToString()` writes a versioned envelope without
+active-page navigation; `engine.document.loadFromString()` reads that envelope
+and these legacy scenes. The legacy scene loader does not read envelopes.
+Successful loading clears history. Renderer/setup failures may reject after live
+state has changed; loading does not yet guarantee asynchronous rollback.
 
 ## Event API
 
